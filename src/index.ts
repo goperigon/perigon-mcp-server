@@ -3,7 +3,6 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { Hono } from "hono";
 import { Configuration, V1Api } from "@goperigon/perigon-ts";
-import { layout, homeContent } from "./utils";
 
 type Bindings = Env;
 
@@ -51,11 +50,6 @@ export class MyMCP extends McpAgent<Bindings, State, Props> {
     );
   }
 }
-
-app.get("/", async (c) => {
-  const content = await homeContent(c.req.raw);
-  return c.html(layout(content, "MCP Remote Auth Demo - Home"));
-});
 
 app.mount("/", async (req, env, ctx) => {
   const authHeader = req.headers.get("authorization")?.toLowerCase();
