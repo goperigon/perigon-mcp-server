@@ -6,6 +6,33 @@
 <p align="center">Official MCP Server for the <strong>Perigon&nbsp;API</strong></p>
 
 
+## Usage
+
+You can connect to our remote MCP server using local MCP clients, by using the mcp-remote proxy.
+
+You can simply add the following JSON to your MCP config for your application. **Don't forget to update `PERIGON_API_KEY` to
+have your apiKey**.
+
+```json
+{
+  "mcpServers": {
+    "perigon_news_api": {
+      "command": "npx",
+      "args": [
+        "mcp-remote",
+        "https://mcp.perigon.io/sse",
+        "--header",
+        "Authorization: Bearer ${PERIGON_API_KEY}"
+      ],
+      "env": {
+        "PERIGON_API_KEY": "..."
+      }
+    }
+  }
+}
+```
+
+
 ## Local Development
 
 We are using bun for package mgmt.
