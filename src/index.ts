@@ -11,7 +11,7 @@ const app = new Hono<{
 }>();
 
 type Props = {
-  bearerToken: string;
+  apiKey: string;
 };
 
 type State = null;
@@ -25,7 +25,7 @@ export class MyMCP extends McpAgent<Bindings, State, Props> {
   async init() {
     const perigon = new V1Api(
       new Configuration({
-        apiKey: this.props.bearerToken,
+        apiKey: this.props.apiKey,
       }),
     );
 
@@ -68,13 +68,13 @@ app.mount("/", async (req, env, ctx) => {
     return new Response("Unauthorized", { status: 401 });
   }
 
-  const token = authHeader.replace("bearer ", "");
-  if (!token) {
+  const apiKey = authHeader.replace("bearer ", "");
+  if (!apiKey) {
     return new Response("Unauthorized", { status: 401 });
   }
 
   ctx.props = {
-    bearerToken: token,
+    apiKey,
   };
 
   try {
