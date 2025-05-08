@@ -78,7 +78,7 @@ app.mount("/", async (req, env, ctx) => {
   };
 
   try {
-    const response = await MyMCP.mount("/sse").fetch(req, env, ctx);
+    const response = await MyMCP.mount("/v1/sse").fetch(req, env, ctx);
     return response ?? new Response("No Results", { status: 200 });
   } catch (error) {
     return new Response(

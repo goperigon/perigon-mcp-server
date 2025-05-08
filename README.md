@@ -20,7 +20,7 @@ have your apiKey**.
       "command": "npx",
       "args": [
         "mcp-remote",
-        "https://mcp.perigon.io/sse",
+        "https://mcp.perigon.io/v1/sse",
         "--header",
         "Authorization: Bearer ${PERIGON_API_KEY}"
       ],
