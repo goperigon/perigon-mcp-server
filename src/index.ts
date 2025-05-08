@@ -1,8 +1,8 @@
 import { McpAgent } from "agents/mcp";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { z } from "zod";
 import { Hono } from "hono";
 import { Configuration, V1Api } from "@goperigon/perigon-ts";
+import { q, from, to, sevenDaysAgo, country, sortArticlesBy } from "./types";
 
 type Bindings = Env;
 
@@ -30,13 +30,24 @@ export class MyMCP extends McpAgent<Bindings, State, Props> {
     );
 
     this.server.tool(
-      "Read articles",
+      "read_news_articles",
       {
-        q: z.string().describe("The query to search for articles."),
+        q,
+        from,
+        to,
+        country,
+        sortBy: sortArticlesBy,
       },
-      async ({ q }) => {
+      async ({ q, from, to, country, sortBy }) => {
+        if (!from) {
+          from = sevenDaysAgo();
+        }
         const result = await perigon.searchArticles({
           q: q,
+          from,
+          to,
+          locationsCountry: country,
+          sortBy,
         });
         return {
           content: [

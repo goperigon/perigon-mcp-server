@@ -5,7 +5,7 @@
       "name": "perigon-mcp-server",
       "dependencies": {
         "@cloudflare/workers-oauth-provider": "^0.0.2",
-        "@goperigon/perigon-ts": "^1.0.4",
+        "@goperigon/perigon-ts": "^1.0.5",
         "@modelcontextprotocol/sdk": "^1.7.0",
         "agents": "^0.0.53",
         "hono": "^4.7.4",
@@ -106,7 +106,7 @@
 
     "@fastify/busboy": ["@fastify/busboy@2.1.1", "", {}, "sha512-vBZP4NlzfOlerQTnba4aqZoMhE/a9HY7HRqoOPaETQcSQuWEIyZMHGfVu6w9wGtGK5fED5qRs2DteVCjOH60sA=="],
 
-    "@goperigon/perigon-ts": ["@goperigon/perigon-ts@1.0.4", "", { "peerDependencies": { "undici": ">=5" } }, "sha512-BLCxsVZS1aj7jUqeCxtra445iJ6WW61GmKWFrARYZV424Xza/OQfAkK62+KeF1ro96en1wYijreg7JU4HkXm3w=="],
+    "@goperigon/perigon-ts": ["@goperigon/perigon-ts@1.0.5", "", { "peerDependencies": { "undici": ">=5" } }, "sha512-ZQAR5xo7VcA2HUTNZRDP2Ed/dDiQ6hSO8KNcXLX/K/Z9d1Ei8KWJYh5HeB8/IImwoiO3ZwvIY7DRmwZdnNnmeg=="],
 
     "@img/sharp-darwin-arm64": ["@img/sharp-darwin-arm64@0.33.5", "", { "optionalDependencies": { "@img/sharp-libvips-darwin-arm64": "1.0.4" }, "os": "darwin", "cpu": "arm64" }, "sha512-UT4p+iz/2H4twwAoLCqfA9UH5pI6DggwKEGuaPy7nCVQ8ZsiY5PIcrRvD1DzuY3qYL07NtIQcWnBSY/heikIFQ=="],
 

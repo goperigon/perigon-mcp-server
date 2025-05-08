@@ -25,5 +25,16 @@
   "observability": {
     "enabled": true,
   },
-  // "assets": { "directory": "./static/", "binding": "ASSETS" }
+  "env": {
+    "production": {
+      "name": "mcp-perigon-production",
+      "account_id": "8de3c02e1e299ec1561c53e44fb76ad7",
+      "routes": [
+        {
+          "pattern": "mcp.perigon.io",
+          "custom_domain": true,
+        },
+      ],
+    },
+  },
 }
