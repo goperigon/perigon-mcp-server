@@ -1,0 +1,38 @@
+{
+  "name": "perigon-mcp-server",
+  "version": "1.0.0",
+  "description": "Official MCP server for the Perigon API",
+  "homepage": "https://github.com/goperigon/perigon-mcp-server#readme",
+  "bugs": {
+    "url": "https://github.com/goperigon/perigon-mcp-server/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/goperigon/perigon-mcp-server.git"
+  },
+  "license": "Apache-2.0",
+  "author": "Perigon (https://www.perigon.io)",
+  "type": "commonjs",
+  "main": "index.ts",
+  "scripts": {
+    "start": "(bun run dev) & (bun run mcp-inspector) & wait",
+    "deploy": "bunx wrangler deploy",
+    "dev": "bunx wrangler dev",
+    "mcp-inspector": "bunx @modelcontextprotocol/inspector",
+    "cf-typegen": "bunx wrangler types"
+  },
+  "devDependencies": {
+    "marked": "^15.0.7",
+    "typescript": "^5.5.2",
+    "workers-mcp": "^0.1.0-3",
+    "wrangler": "^4.2.0"
+  },
+  "dependencies": {
+    "@cloudflare/workers-oauth-provider": "^0.0.2",
+    "@goperigon/perigon-ts": "^1.0.4",
+    "@modelcontextprotocol/sdk": "^1.7.0",
+    "agents": "^0.0.53",
+    "hono": "^4.7.4",
+    "zod": "^3.24.2"
+  }
+}
