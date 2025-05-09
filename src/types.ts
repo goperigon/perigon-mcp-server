@@ -5,7 +5,11 @@ export const q = z
   .string()
   .optional()
   .describe(
-    "Primary search query for filtering articles based on their title, description, and content. Supports Boolean operators (AND, OR, NOT), exact phrases with quotes, and wildcards (* and ?) for flexible searching.",
+    `Primary search query for filtering articles based on their title, description,
+and content. Supports Boolean operators (AND, OR, NOT), exact phrases with quotes,
+and wildcards (* and ?) for flexible searching. If searching for news from a particular
+country or timeframe, use the "country" and/or "from" parameters, and when necessary the "to"
+as well.`,
   );
 
 export function sevenDaysAgo() {
