@@ -43,7 +43,12 @@ export const country = z
   .array(z.string())
   .optional()
   .describe(
-    "A list of counties to include (or specify) in the search results. This field filters the returned articles based on the county associated with the event or news. Only articles tagged with one of these counties will be included.",
+    `A list of counties to include (or specify) in the search results. This field
+filters the returned articles based on the county associated with the event or news.
+Only articles tagged with one of these counties will be included.
+
+If you are searching for news regarding a particular country, you should pass the country code
+to this field.`,
   );
 
 export const sortArticlesBy = z
