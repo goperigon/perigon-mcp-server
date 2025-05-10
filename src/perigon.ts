@@ -1,5 +1,21 @@
-import { AllEndpointSortBy, SortBy } from "@goperigon/perigon-ts";
+import {
+  AllEndpointSortBy,
+  ArticleSearchFilter,
+  SortBy,
+} from "@goperigon/perigon-ts";
 import { z } from "zod";
+
+export const defaultNewsFilter = {
+  language: ["en"],
+  excludeLabel: [
+    "Non-news",
+    "Opinion",
+    "Paid News",
+    "Roundup",
+    "Low Content",
+    "Synthetic",
+  ],
+};
 
 export const q = z
   .string()
@@ -8,8 +24,7 @@ export const q = z
     `Primary search query for filtering articles based on their title, description,
 and content. Supports Boolean operators (AND, OR, NOT), exact phrases with quotes,
 and wildcards (* and ?) for flexible searching. If searching for news from a particular
-country or timeframe, use the "country" and/or "from" parameters, and when necessary the "to"
-as well.`,
+timeframe, use "from" parameter, and when it is far in the past, the "to" as well.`,
   );
 
 export function sevenDaysAgo() {

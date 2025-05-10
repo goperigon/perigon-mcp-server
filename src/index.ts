@@ -2,7 +2,15 @@ import { McpAgent } from "agents/mcp";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { Hono } from "hono";
 import { Configuration, V1Api } from "@goperigon/perigon-ts";
-import { q, from, to, sevenDaysAgo, country, sortArticlesBy } from "./types";
+import {
+  q,
+  from,
+  to,
+  sevenDaysAgo,
+  country,
+  sortArticlesBy,
+  defaultNewsFilter,
+} from "./perigon";
 
 type Bindings = Env;
 
@@ -31,14 +39,14 @@ export class MyMCP extends McpAgent<Bindings, State, Props> {
 
     this.server.tool(
       "read_news_articles",
+      `this is a powerful tool that can help be used to search across news articles.`,
       {
         q,
         from,
         to,
-        country,
         sortBy: sortArticlesBy,
       },
-      async ({ q, from, to, country, sortBy }) => {
+      async ({ q, from, to, sortBy }) => {
         if (!from) {
           from = sevenDaysAgo();
         }
@@ -46,14 +54,36 @@ export class MyMCP extends McpAgent<Bindings, State, Props> {
           q: q,
           from,
           to,
-          locationsCountry: country,
           sortBy,
+          showReprints: false,
+          ...defaultNewsFilter,
         });
+
+        if (result.numResults === 0) {
+          return {
+            content: [
+              {
+                type: "text",
+                text: "No results found",
+              },
+            ],
+          };
+        }
+
+        const simplifiedResult = result.articles.map((article) => {
+          const description = article.summary ?? article.content;
+          return {
+            pubDate: article.pubDate,
+            title: article.title,
+            description: description,
+          };
+        });
+
         return {
           content: [
             {
               type: "text",
-              text: JSON.stringify(result),
+              text: JSON.stringify(simplifiedResult),
             },
           ],
         };
