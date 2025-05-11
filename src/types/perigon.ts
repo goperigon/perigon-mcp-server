@@ -1,8 +1,4 @@
-import {
-  AllEndpointSortBy,
-  ArticleSearchFilter,
-  SortBy,
-} from "@goperigon/perigon-ts";
+import { AllEndpointSortBy, SortBy } from "@goperigon/perigon-ts";
 import { z } from "zod";
 
 export const defaultNewsFilter = {
@@ -71,7 +67,6 @@ export const to = z
 export const country = z
   .array(z.string())
   .optional()
-  .nullable()
   .describe(
     `A list of counties to include (or specify) in the search results. This field
 filters the returned articles based on the county associated with the event or news.
@@ -98,8 +93,26 @@ export const numStories = z
   .describe(`The number of headlines to get`);
 
 export const category = z
-  .array(z.string())
+  .array(
+    z.enum([
+      "Politics",
+      "Tech",
+      "Sports",
+      "Business",
+      "Finance",
+      "Entertainment",
+      "Health",
+      "Weather",
+      "Lifestyle",
+      "Auto",
+      "Science",
+      "Travel",
+      "Environment",
+      "World",
+      "General",
+    ]),
+  )
   .optional()
   .describe(
-    `Filter stories by Google Content Categories. Must pass the full hierarchical path of the category. Example: taxonomy&#x3D;/Finance/Banking/Other,/Finance/Investing/Funds. Stories are categorized based on their constituent articles. Multiple values create an OR filter.`,
+    `Will only grab news that falls under specified category or categories`,
   );

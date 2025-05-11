@@ -3,8 +3,8 @@
 </p>
 
 <h1 align="center">Perigon&nbsp;MCP&nbsp;Server</h1>
-<p align="center">Official MCP Server for the <strong>Perigon&nbsp;API</strong></p>
 
+This is the official MCP server for the Perigon news API.
 
 ## Usage
 
@@ -31,6 +31,10 @@ have your apiKey**.
   }
 }
 ```
+
+## Supported tools
+
+WIP: will add a list once tools are in more of a complete state...
 
 ## Issues / Contributing
 
