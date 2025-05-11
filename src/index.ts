@@ -46,7 +46,11 @@ export class MyMCP extends McpAgent<Bindings, State, Props> {
     if (this.props.scopes.includes(Scopes.CLUSTERS)) {
       this.server.tool(
         "get_top_headlines",
-        `use when you want to read top news headlines over some timeframe`,
+        `This tool is best used when you want the top headlines (news stories) for:
+          - a given time frame
+          - for a specific country
+          - for a given "category" of News
+        And if you just want the latest news, you can use this too!`,
         {
           from,
           to,
@@ -101,14 +105,17 @@ export class MyMCP extends McpAgent<Bindings, State, Props> {
 
     this.server.tool(
       "read_news_articles",
-      `this is a powerful tool that can be used to search across news articles.`,
+      `This tool gives a bit more control when searching across lots of news articles.
+      The q field will search across article title, content, and description and grab matching
+      articles.`,
       {
         q,
         from,
         to,
         sortBy: sortArticlesBy,
+        country,
       },
-      async ({ q, from, to, sortBy }) => {
+      async ({ q, from, to, sortBy, country }) => {
         if (!from) {
           from = sevenDaysAgo();
         }
@@ -118,6 +125,7 @@ export class MyMCP extends McpAgent<Bindings, State, Props> {
           from,
           to,
           sortBy,
+          country,
           showReprints: false,
         });
 
@@ -133,11 +141,11 @@ export class MyMCP extends McpAgent<Bindings, State, Props> {
         }
 
         const simplifiedResult = result.articles.map((article) => {
-          const description = article.summary ?? article.content;
           return {
-            pubDate: article.pubDate,
+            source: article.source?.domain,
             title: article.title,
-            description: description,
+            description: article.summary ?? article.content,
+            pubDate: article.pubDate,
           };
         });
 
