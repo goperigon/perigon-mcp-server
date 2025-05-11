@@ -21,10 +21,24 @@ export const q = z
   .string()
   .optional()
   .describe(
-    `Primary search query for filtering articles based on their title, description,
-and content. Supports Boolean operators (AND, OR, NOT), exact phrases with quotes,
-and wildcards (* and ?) for flexible searching. If searching for news from a particular
-timeframe, use "from" parameter, and when it is far in the past, the "to" as well.`,
+    `Primary search query parameter for filtering articles by specific topics, keywords, or phrases.
+
+    WHEN TO USE:
+    - Only include this parameter when searching for specific content (e.g., topics, entities, events)
+    - Omit this parameter entirely when requesting general news, top headlines, or random articles
+
+    FEATURES:
+    - Searches across article title, description, and content
+    - Supports Boolean operators: "Ukraine AND diplomacy", "climate OR environment", "politics NOT local"
+    - Supports exact phrase matching with quotes: "artificial intelligence"
+    - Supports wildcards: "econom*" (matches economy, economics, economical)
+
+    EXAMPLES:
+    - Specific topic: q=coronavirus
+    - News about a country: q="South Korea" (use quotes for multi-word entities)
+    - Topic combinations: q=technology AND healthcare
+
+    NOTE: For temporal filtering, use "from" and "to" parameters instead of including date terms in this query.`,
   );
 
 export function sevenDaysAgo() {
