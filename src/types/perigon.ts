@@ -57,13 +57,11 @@ export const to = z
 export const country = z
   .array(z.string())
   .optional()
+  .nullable()
   .describe(
     `A list of counties to include (or specify) in the search results. This field
 filters the returned articles based on the county associated with the event or news.
-Only articles tagged with one of these counties will be included.
-
-If you are searching for news regarding a particular country, you should pass the country code
-to this field.`,
+Only articles tagged with one of these counties will be included.`,
   );
 
 export const sortArticlesBy = z
@@ -72,4 +70,22 @@ export const sortArticlesBy = z
 
 export const sortStoriesBy = z
   .enum([SortBy.Count, SortBy.TotalCount])
+  .describe(
+    `Use "count" when you want to sort by number
+    of unique articles per story (a cluster of articles).
+    Use "totalCount" when you want to sort by the total number
+    of articles per story.`,
+  )
   .optional();
+
+export const numStories = z
+  .number()
+  .optional()
+  .describe(`The number of headlines to get`);
+
+export const category = z
+  .array(z.string())
+  .optional()
+  .describe(
+    `Filter stories by Google Content Categories. Must pass the full hierarchical path of the category. Example: taxonomy&#x3D;/Finance/Banking/Other,/Finance/Investing/Funds. Stories are categorized based on their constituent articles. Multiple values create an OR filter.`,
+  );
