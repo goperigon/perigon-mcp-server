@@ -42,7 +42,6 @@ export class MyMCP extends McpAgent<Bindings, State, Props> {
         apiKey: this.props.apiKey,
       }),
     );
-    console.log(this.props.scopes);
 
     if (this.props.scopes.includes(Scopes.CLUSTERS)) {
       this.server.tool(
@@ -178,12 +177,12 @@ app.mount("/", async (req, env, ctx) => {
     if (!scopesResp.success) {
       return new Response("Unauthorized", { status: 401 });
     }
-    // console.log(scopesResp.value);
 
     ctx.props = {
       apiKey,
       scopes: scopesResp.value.scopes,
     };
+
     const response = await MyMCP.mount("/v1/sse").fetch(req, env, ctx);
     return response ?? new Response("No Results", { status: 200 });
   } catch (error) {
