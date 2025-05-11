@@ -32,10 +32,22 @@ have your apiKey**.
 }
 ```
 
+## Issues / Contributing
 
-## Local Development
+### Issues
 
-We are using bun for package mgmt.
+This MCP server is still in development as we determine what use cases our users want to
+solve with this server. But if you have any special requests or features you would like to
+see, don't hesitate to open a github issue on this Repo. We will gladly accept any feedback
+
+### Contributing
+
+This tool is intentionally open source so if you want to see some particular feature you
+open an issue or open a PR and someone at Perigon will review it.
+
+## Local development
+
+We are using [bun](https://bun.sh/).
 
 ```zsh
 bun i
