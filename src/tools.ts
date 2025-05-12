@@ -1,5 +1,5 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { Configuration, SortBy, V1Api } from "@goperigon/perigon-ts";
+import { SortBy, V1Api } from "@goperigon/perigon-ts";
 import {
   q,
   from,
@@ -27,7 +27,9 @@ export function registerTools(
   articlesTool(server, perigon);
 }
 
-function toolResult(text: string): CallToolResult {
+function toolResult(result: string | object): CallToolResult {
+  const text = typeof result === "string" ? result : JSON.stringify(result);
+
   return {
     content: [
       {
@@ -66,7 +68,7 @@ function storiesTool(server: McpServer, perigon: V1Api) {
         to,
         sortBy: sortBy ?? SortBy.Count,
         size: size ?? 5,
-        country: country ?? undefined,
+        country,
         category,
       });
 
@@ -77,11 +79,11 @@ function storiesTool(server: McpServer, perigon: V1Api) {
       const simplifiedResult = result.results.map((story) => {
         return {
           title: story.name,
-          details: story.summary ?? story,
+          details: story.summary,
         };
       });
 
-      return toolResult(JSON.stringify(simplifiedResult));
+      return toolResult(simplifiedResult);
     },
   );
 }
@@ -126,7 +128,7 @@ function articlesTool(server: McpServer, perigon: V1Api) {
         };
       });
 
-      return toolResult(JSON.stringify(simplifiedResult));
+      return toolResult(simplifiedResult);
     },
   );
 }
