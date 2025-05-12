@@ -15,7 +15,8 @@ import {
   category,
 } from "./types/perigon";
 import { AuthIntrospectionResponse, Scopes } from "./types/scopes";
-import { fetchWithResult } from "./fetch";
+import { typedFetch } from "./fetch";
+import { HttpError } from "./types/error";
 
 type Bindings = Env;
 
@@ -174,7 +175,7 @@ app.mount("/", async (req, env, ctx) => {
       return new Response("Unauthorized", { status: 401 });
     }
 
-    const scopesResp = await fetchWithResult<AuthIntrospectionResponse>(
+    const apiKeyDetails = await typedFetch<AuthIntrospectionResponse>(
       "https://api.perigon.io/v1/auth/introspect",
       {
         headers: {
@@ -182,22 +183,23 @@ app.mount("/", async (req, env, ctx) => {
         },
       },
     );
-    if (!scopesResp.success) {
-      return new Response("Unauthorized", { status: 401 });
-    }
 
     ctx.props = {
       apiKey,
-      scopes: scopesResp.value.scopes,
+      scopes: apiKeyDetails.scopes,
     };
 
     const response = await MyMCP.mount("/v1/sse").fetch(req, env, ctx);
     return response ?? new Response("No Results", { status: 200 });
   } catch (error) {
-    return new Response(
-      "Error: " + (error instanceof Error ? error.message : String(error)),
-      { status: 500 },
-    );
+    if (!(error instanceof HttpError)) {
+      return new Response(
+        "Error: " + (error instanceof Error ? error.message : String(error)),
+        { status: 500 },
+      );
+    }
+
+    return new Response(error.responseBody, { status: error.statusCode });
   }
 });
 
