@@ -34,7 +34,10 @@ have your apiKey**.
 
 ## Supported tools
 
-WIP: will add a list once tools are in more of a complete state...
+| Tool | Description |
+|------|-------------|
+| `get_top_headlines` | Fetches trending news stories by country, category, and timeframe |
+| `read_news_articles` | Searches news articles with flexible query options and filtering |
 
 ## Issues / Contributing
 
