@@ -70,7 +70,9 @@ export const country = z
   .describe(
     `A list of counties to include (or specify) in the search results. This field
 filters the returned articles based on the county associated with the event or news.
-Only articles tagged with one of these counties will be included.`,
+Only articles tagged with one of these counties will be included.
+
+The countries should each be listed by their 2 letter country code, ex "us", "ca", "mx".`,
   );
 
 export const sortArticlesBy = z
