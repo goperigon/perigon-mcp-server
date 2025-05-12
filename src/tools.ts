@@ -79,6 +79,8 @@ function storiesTool(server: McpServer, perigon: V1Api) {
       const simplifiedResult = result.results.map((story) => {
         return {
           title: story.name,
+          createdAt: story.createdAt,
+          lastUpdated: story.updatedAt,
           details: story.summary,
         };
       });
