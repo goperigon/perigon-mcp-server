@@ -54,7 +54,7 @@ open an issue or open a PR and someone at Perigon will review it.
 
 ## Local development
 
-We are using [bun](https://bun.sh/).
+We are using [bun](https://bun.sh/) for package mgmt.
 
 ```zsh
 bun i
