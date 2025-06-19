@@ -8,6 +8,8 @@ This is the official MCP server for the Perigon news API.
 
 ## Usage
 
+### Connecting
+
 You can connect to our remote MCP server using local MCP clients, by using the mcp-remote proxy.
 
 You can simply add the following JSON to your MCP config for your application. **Don't forget to update `PERIGON_API_KEY` to
@@ -31,6 +33,17 @@ have your apiKey**.
   }
 }
 ```
+
+### Prompt Examples
+
+When prompting your agent we recommend providing the current date (or a tool to get it) unless the agent already has
+access to such information, this is because some models like Claude will otherwise think the current date is their knowledge
+cutoff and they will retrieve outdated information frequently.
+
+- Give me the top headlines in the United States today.
+- What is happening in Ireland today?
+- Give me top stories this past week in North American countries.
+
 
 ## Supported tools
 
