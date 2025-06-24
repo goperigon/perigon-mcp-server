@@ -15,7 +15,7 @@
   "type": "module",
   "scripts": {
     "start": "(bun run dev) & (bun run mcp-inspector) & wait",
-    "deploy": "wrangler deploy",
+    "deploy": "bun run build && wrangler deploy",
     "dev": "vite dev",
     "build": "vite build",
     "mcp": "bunx @modelcontextprotocol/inspector",
