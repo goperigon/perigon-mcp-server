@@ -15,11 +15,12 @@
   "type": "module",
   "scripts": {
     "start": "(bun run dev) & (bun run mcp-inspector) & wait",
-    "deploy": "bun run build && wrangler deploy",
+    "deploy": "bunx wrangler deploy",
+    "deploy:versions": "bunx wrangler versions upload",
     "dev": "vite dev",
     "build": "vite build",
     "mcp": "bunx @modelcontextprotocol/inspector",
-    "gen": "wrangler types"
+    "gen": "bunx wrangler types"
   },
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "^0.8.32",
