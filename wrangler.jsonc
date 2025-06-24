@@ -10,8 +10,17 @@
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
   "migrations": [
     {
-      "new_sqlite_classes": ["PerigonMCP"],
+      "new_sqlite_classes": ["MyMCP"],
       "tag": "v1",
+    },
+    {
+      "tag": "v2",
+      "renamed_classes": [
+        {
+          "from": "MyMCP",
+          "to": "PerigonMCP",
+        },
+      ],
     },
   ],
   "durable_objects": {
