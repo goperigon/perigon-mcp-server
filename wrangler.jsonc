@@ -32,8 +32,10 @@
     ],
   },
   "assets": {
+    "directory": "./dist/",
+    "not_found_handling": "single-page-application",
     "binding": "ASSETS",
-    "directory": "./public",
+    "run_worker_first": ["/v1/*"],
   },
   "observability": {
     "enabled": true,
@@ -82,7 +84,7 @@
         ],
       },
       "vars": {
-        "MCP_URL": "https://mcp.perigon.io",
+        "MCP_URL": "https://mcp.staging.perigon.io",
       },
     },
   },

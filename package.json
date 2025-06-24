@@ -17,6 +17,7 @@
     "start": "(bun run dev) & (bun run mcp-inspector) & wait",
     "deploy": "wrangler deploy",
     "dev": "vite dev",
+    "build": "vite build",
     "mcp": "bunx @modelcontextprotocol/inspector",
     "gen": "wrangler types"
   },
