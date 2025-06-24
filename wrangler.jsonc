@@ -5,28 +5,44 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "perigon-mcp-server",
-  "main": "src/index.ts",
-  "compatibility_date": "2025-03-10",
-  "compatibility_flags": ["nodejs_compat"],
+  "main": "worker/index.ts",
+  "compatibility_date": "2025-04-01",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
   "migrations": [
     {
       "new_sqlite_classes": ["MyMCP"],
       "tag": "v1",
     },
+    {
+      "tag": "v2",
+      "renamed_classes": [
+        {
+          "from": "MyMCP",
+          "to": "PerigonMCP",
+        },
+      ],
+    },
   ],
   "durable_objects": {
     "bindings": [
       {
-        "class_name": "MyMCP",
+        "class_name": "PerigonMCP",
         "name": "MCP_OBJECT",
       },
     ],
   },
+  "assets": {
+    "directory": "./dist/",
+    "not_found_handling": "single-page-application",
+    "binding": "ASSETS",
+    "run_worker_first": ["/v1/*"],
+  },
   "observability": {
     "enabled": true,
   },
-  "dev": {
-    "port": 8787,
+  "upload_source_maps": true,
+  "vars": {
+    "MCP_URL": "http://localhost:5173",
   },
   "env": {
     "production": {
@@ -38,6 +54,17 @@
           "custom_domain": true,
         },
       ],
+      "durable_objects": {
+        "bindings": [
+          {
+            "class_name": "PerigonMCP",
+            "name": "MCP_OBJECT",
+          },
+        ],
+      },
+      "vars": {
+        "MCP_URL": "https://mcp.perigon.io",
+      },
     },
   },
 }

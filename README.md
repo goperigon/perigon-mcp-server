@@ -10,7 +10,8 @@ This is the official MCP server for the Perigon news API.
 
 ### Connecting
 
-You can connect to our remote MCP server using local MCP clients, by using the mcp-remote proxy.
+You can connect to our remote MCP server using local or remote MCP clients.
+We support both `SSE` and `Streamable HTTP`.
 
 You can simply add the following JSON to your MCP config for your application. **Don't forget to update `PERIGON_API_KEY` to
 have your apiKey**.
@@ -40,17 +41,33 @@ When prompting your agent we recommend providing the current date (or a tool to 
 access to such information, this is because some models like Claude will otherwise think the current date is their knowledge
 cutoff and they will retrieve outdated information frequently.
 
+**News Articles & Stories:**
 - Give me the top headlines in the United States today.
 - What is happening in Ireland today?
 - Give me top stories this past week in North American countries.
+- Search for articles about "artificial intelligence" from the last week.
+
+**Journalists & Sources:**
+- Find journalists who cover technology news.
+- Search for news sources based in California.
+- Who are the top journalists covering climate change?
+
+**People & Companies:**
+- Search for information about Elon Musk.
+- Find companies in the tech industry.
+- Look up people associated with renewable energy.
 
 
 ## Supported tools
 
 | Tool | Description |
 |------|-------------|
-| `get_top_headlines` | Fetches trending news stories by country, category, and timeframe |
-| `read_news_articles` | Searches news articles with flexible query options and filtering |
+| `search_news_articles` | Search across news articles with various filters including location, time range, sources, and more |
+| `read_news_stories` | Search across news stories / headlines to get ideas about big picture events |
+| `search_journalists` | Search across journalists with various filters including location, time range, sources, and more |
+| `search_sources` | Search across news sources with various filters including location, time range, and more |
+| `search_people` | Search across people with various filters |
+| `search_companies` | Search across companies with various filters |
 
 ## Issues / Contributing
 

@@ -1,0 +1,48 @@
+@import "tailwindcss";
+
+@theme {
+  --color-dark: #1e1e1e;
+  --color-surface: #2d2d2d;
+  --color-surface-elevated: #3a3a3a;
+  --color-gold: #f6b627;
+  --color-gold-muted: #d4941e;
+  --color-gold-soft: #f6b62720;
+  --color-accent: #f6b627;
+  --color-accent-soft: #f6b62720;
+  --color-light-gray: #a1a1aa;
+  --color-light: #f4f4f5;
+  --color-text-secondary: #71717a;
+  --color-border: #52525b;
+  --color-border-soft: #3f3f46;
+}
+
+/* Custom animations */
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+@keyframes glow {
+  0%, 100% { box-shadow: 0 0 5px var(--color-gold-soft); }
+  50% { box-shadow: 0 0 20px var(--color-gold-soft), 0 0 30px var(--color-gold-soft); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-2px); }
+}
+
+/* Glass morphism utility */
+.glass {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  background: rgba(45, 45, 45, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.glass-light {
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  background: rgba(58, 58, 58, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
