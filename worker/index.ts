@@ -9,9 +9,9 @@ import {
   NoSuchToolError,
   InvalidToolArgumentsError,
   ToolExecutionError,
-  experimental_createMCPClient,
 } from "ai";
 import { PerigonMCP } from "./mcp/mcp";
+import { createAISDKTools } from "./tools/ai-sdk-adapter";
 
 const SYSTEM_PROMPT = `
 <identity>
@@ -120,26 +120,13 @@ async function handleChatRequest(
       apiKey: env.ANTHROPIC_API_KEY,
     });
 
-    const perigonMcp = await experimental_createMCPClient({
-      transport: {
-        type: "sse",
-        url: `${env.MCP_URL}/v1/sse`,
-        headers: {
-          Authorization: `Bearer ${env.PERIGON_API_KEY}`,
-        },
-      },
-    });
-    await perigonMcp.init();
-    const tools = await perigonMcp.tools();
+    const tools = createAISDKTools(env.PERIGON_API_KEY);
 
     const result = streamText({
       model: anthropic("claude-4-sonnet-20250514"),
       tools,
       messages,
       maxSteps: 5,
-      onFinish: async () => {
-        await perigonMcp.close();
-      },
     });
 
     return result.toDataStreamResponse({

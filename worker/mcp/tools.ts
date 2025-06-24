@@ -622,3 +622,50 @@ Country: ${company.country}
       });
   };
 }
+
+export const TOOL_DEFINITIONS = {
+  search_news_articles: {
+    name: "search_news_articles",
+    description:
+      "Search individual news articles with advanced filtering by keywords, location, time range, sources, and journalists. Returns full article content or summaries with metadata.",
+    parameters: articleArgs,
+    createHandler: (perigon: V1Api) => searchNewsArticles(perigon),
+  },
+  read_news_stories: {
+    name: "read_news_stories",
+    description:
+      "Search clustered news stories and headlines. Returns story summaries, sentiment analysis, and metadata for understanding major news events and trends across multiple sources.",
+    parameters: searchStoriesArgs,
+    createHandler: (perigon: V1Api) => searchNewsStories(perigon),
+  },
+  search_journalists: {
+    name: "search_journalists",
+    description:
+      "Find journalists and reporters by name, publication, location, or coverage area. Returns journalist profiles with their top sources, locations, and monthly posting activity.",
+    parameters: journalistArgs,
+    createHandler: (perigon: V1Api) => searchJournalists(perigon),
+  },
+  search_sources: {
+    name: "search_sources",
+    description:
+      "Discover news publications and media outlets by name, domain, location, or audience size. Returns source details including monthly visits, top topics, and geographic focus.",
+    parameters: sourceArgs,
+    createHandler: (perigon: V1Api) => searchSources(perigon),
+  },
+  search_people: {
+    name: "search_people",
+    description:
+      "Search for public figures, politicians, celebrities, and newsworthy individuals. Returns biographical information including occupation, position, and detailed descriptions.",
+    parameters: peopleArgs,
+    createHandler: (perigon: V1Api) => searchPeople(perigon),
+  },
+  search_companies: {
+    name: "search_companies",
+    description:
+      "Find corporations and businesses by name, domain, or industry. Returns company profiles with CEO information, employee count, industry classification, and business descriptions.",
+    parameters: companyArgs,
+    createHandler: (perigon: V1Api) => searchCompanies(perigon),
+  },
+} as const;
+
+export type ToolName = keyof typeof TOOL_DEFINITIONS;

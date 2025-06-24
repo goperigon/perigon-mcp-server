@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useChat } from "@ai-sdk/react";
 import { MessageBubble } from "./components/MessageBubble";
 import { ChatInput } from "./components/ChatInput";
@@ -7,6 +7,9 @@ function App() {
   const [collapsedToolCalls, setCollapsedToolCalls] = useState<Set<string>>(
     new Set(),
   );
+  const [isUserScrolling, setIsUserScrolling] = useState(false);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const { messages, input, handleInputChange, handleSubmit, status } = useChat({
     api: "/v1/api/chat",
@@ -37,13 +40,53 @@ function App() {
     }
   }, [messages]);
 
-  // Auto-scroll to bottom when new messages arrive
-  useEffect(() => {
-    const container = document.getElementById('messages-container');
-    if (container) {
-      container.scrollTop = container.scrollHeight;
+  // Check if user is near bottom of scroll
+  const isNearBottom = useCallback(() => {
+    const container = messagesContainerRef.current;
+    if (!container) return true;
+    const threshold = 100; // pixels from bottom
+    return (
+      container.scrollHeight - container.scrollTop - container.clientHeight <
+      threshold
+    );
+  }, []);
+
+  // Handle scroll events to detect user scrolling
+  const handleScroll = useCallback(() => {
+    if (!isNearBottom()) {
+      setIsUserScrolling(true);
+      // Clear existing timeout
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+      // Reset user scrolling flag after 2 seconds of no scrolling
+      scrollTimeoutRef.current = setTimeout(() => {
+        setIsUserScrolling(false);
+      }, 2000);
+    } else {
+      setIsUserScrolling(false);
     }
-  }, [messages]);
+  }, [isNearBottom]);
+
+  // Smooth auto-scroll to bottom when new messages arrive (only if user isn't scrolling)
+  useEffect(() => {
+    const container = messagesContainerRef.current;
+    if (container && !isUserScrolling && isNearBottom()) {
+      container.scrollTo({
+        top: container.scrollHeight,
+        behavior: "smooth",
+      });
+    }
+  }, [messages, isUserScrolling, isNearBottom]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleToggleToolCall = (toolCallId: string) => {
     setCollapsedToolCalls((prev) => {
@@ -91,7 +134,12 @@ function App() {
 
       <main className="flex-1 flex justify-center overflow-hidden">
         <div className="flex flex-col h-full w-full max-w-4xl px-8">
-          <div className="flex-1 overflow-y-auto py-4 flex flex-col gap-4" id="messages-container">
+          <div
+            className="flex-1 overflow-y-auto py-4 flex flex-col gap-4"
+            id="messages-container"
+            ref={messagesContainerRef}
+            onScroll={handleScroll}
+          >
             {messages?.map((message) => (
               <MessageBubble
                 key={message.id}
@@ -106,9 +154,7 @@ function App() {
                 <div className="max-w-[80%] px-4 py-3 rounded-2xl bg-surface text-light rounded-bl-sm shadow-md border border-border">
                   <div className="flex items-center space-x-2">
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gold"></div>
-                    <span className="text-sm text-light-gray">
-                      AI is thinking...
-                    </span>
+                    <span className="text-sm text-light-gray">Thinking...</span>
                   </div>
                 </div>
               </div>

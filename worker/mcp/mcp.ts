@@ -2,20 +2,7 @@ import { McpAgent } from "agents/mcp";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { Configuration, V1Api } from "@goperigon/perigon-ts";
 import { Scopes } from "../types/types";
-import {
-  searchNewsArticles,
-  articleArgs,
-  searchStoriesArgs,
-  searchNewsStories,
-  searchJournalists,
-  journalistArgs,
-  sourceArgs,
-  searchSources,
-  peopleArgs,
-  searchPeople,
-  companyArgs,
-  searchCompanies,
-} from "./tools";
+import { TOOL_DEFINITIONS, ToolName } from "./tools";
 
 type Bindings = Env;
 
@@ -25,6 +12,15 @@ type Props = {
 };
 
 type State = null;
+
+// Map scopes to tool names
+const SCOPE_TO_TOOLS: Partial<Record<Scopes, ToolName>> = {
+  [Scopes.CLUSTERS]: "read_news_stories",
+  [Scopes.JOURNALISTS]: "search_journalists",
+  [Scopes.SOURCES]: "search_sources",
+  [Scopes.PEOPLE]: "search_people",
+  [Scopes.COMPANIES]: "search_companies",
+};
 
 export class PerigonMCP extends McpAgent<Bindings, State, Props> {
   server = new McpServer({
@@ -39,56 +35,27 @@ export class PerigonMCP extends McpAgent<Bindings, State, Props> {
       }),
     );
 
-    if (this.props.scopes.includes(Scopes.CLUSTERS)) {
-      this.server.tool(
-        "read_news_stories",
-        "Search clustered news stories and headlines. Returns story summaries, sentiment analysis, and metadata for understanding major news events and trends across multiple sources.",
-        searchStoriesArgs.shape,
-        searchNewsStories(perigon),
-      );
-    }
-
-    if (this.props.scopes.includes(Scopes.JOURNALISTS)) {
-      this.server.tool(
-        "search_journalists",
-        "Find journalists and reporters by name, publication, location, or coverage area. Returns journalist profiles with their top sources, locations, and monthly posting activity.",
-        journalistArgs.shape,
-        searchJournalists(perigon),
-      );
-    }
-
-    if (this.props.scopes.includes(Scopes.SOURCES)) {
-      this.server.tool(
-        "search_sources",
-        "Discover news publications and media outlets by name, domain, location, or audience size. Returns source details including monthly visits, top topics, and geographic focus.",
-        sourceArgs.shape,
-        searchSources(perigon),
-      );
-    }
-
-    if (this.props.scopes.includes(Scopes.PEOPLE)) {
-      this.server.tool(
-        "search_people",
-        "Search for public figures, politicians, celebrities, and newsworthy individuals. Returns biographical information including occupation, position, and detailed descriptions.",
-        peopleArgs.shape,
-        searchPeople(perigon),
-      );
-    }
-
-    if (this.props.scopes.includes(Scopes.COMPANIES)) {
-      this.server.tool(
-        "search_companies",
-        "Find corporations and businesses by name, domain, or industry. Returns company profiles with CEO information, employee count, industry classification, and business descriptions.",
-        companyArgs.shape,
-        searchCompanies(perigon),
-      );
-    }
-
+    // Always include articles search
+    const articlesDefinition = TOOL_DEFINITIONS.search_news_articles;
     this.server.tool(
-      "search_news_articles",
-      "Search individual news articles with advanced filtering by keywords, location, time range, sources, and journalists. Returns full article content or summaries with metadata.",
-      articleArgs.shape,
-      searchNewsArticles(perigon),
+      articlesDefinition.name,
+      articlesDefinition.description,
+      articlesDefinition.parameters.shape,
+      articlesDefinition.createHandler(perigon),
     );
+
+    // Add tools based on scopes
+    for (const scope of this.props.scopes) {
+      const toolName = SCOPE_TO_TOOLS[scope];
+      if (toolName) {
+        const definition = TOOL_DEFINITIONS[toolName];
+        this.server.tool(
+          definition.name,
+          definition.description,
+          definition.parameters.shape,
+          definition.createHandler(perigon),
+        );
+      }
+    }
   }
 }

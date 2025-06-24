@@ -1,3 +1,4 @@
+import React from "react";
 import ReactMarkdown from "react-markdown";
 import { ToolInvocation } from "./ToolInvocation";
 
@@ -17,7 +18,7 @@ export function MessageBubble({
       className={`flex w-full ${message.role === "user" ? "justify-end" : "justify-start"}`}
     >
       <div
-        className={`${message.role === "user" ? "max-w-[60%]" : "max-w-[80%]"} px-4 py-3 rounded-2xl break-words transition-shadow duration-200 ${
+        className={`${message.role === "user" ? "max-w-[50%]" : "max-w-[65%]"} px-4 py-3 rounded-2xl break-words transition-shadow duration-200 ${
           message.role === "user"
             ? "bg-gold text-dark rounded-br-sm shadow-md hover:shadow-lg"
             : "bg-surface text-light rounded-bl-sm shadow-md hover:shadow-lg border border-border"
