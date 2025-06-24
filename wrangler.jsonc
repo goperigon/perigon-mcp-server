@@ -52,9 +52,9 @@
           "custom_domain": true,
         },
       ],
-    },
-    "vars": {
-      "MCP_URL": "https://mcp.perigon.io",
+      "vars": {
+        "MCP_URL": "https://mcp.perigon.io",
+      },
     },
   },
 }
