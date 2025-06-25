@@ -22,14 +22,15 @@ have your apiKey**.
     "perigon_news_api": {
       "command": "npx",
       "args": [
-        "mcp-remote",
+        "-y",
+        "mcp-remote@latest",
         "https://mcp.perigon.io/v1/sse",
         "--header",
         "Authorization: Bearer ${PERIGON_API_KEY}"
       ],
       "env": {
         "PERIGON_API_KEY": "..."
-      }
+      },
     }
   }
 }
@@ -37,9 +38,7 @@ have your apiKey**.
 
 ### Prompt Examples
 
-When prompting your agent we recommend providing the current date (or a tool to get it) unless the agent already has
-access to such information, this is because some models like Claude will otherwise think the current date is their knowledge
-cutoff and they will retrieve outdated information frequently.
+When prompting your agent we recommend providing the current date (or a tool to get it) unless the agent already has access to such information, this is because some models like Claude will otherwise think the current date is their knowledge cutoff and they will retrieve outdated information frequently.
 
 **News Articles & Stories:**
 - Give me the top headlines in the United States today.
@@ -48,7 +47,6 @@ cutoff and they will retrieve outdated information frequently.
 - Search for articles about "artificial intelligence" from the last week.
 
 **Journalists & Sources:**
-- Find journalists who cover technology news.
 - Search for news sources based in California.
 - Who are the top journalists covering climate change?
 
@@ -86,9 +84,19 @@ open an issue or open a PR and someone at Perigon will review it.
 
 We are using [bun](https://bun.sh/) for package mgmt.
 
-```zsh
-bun i
 
-# Runs the mcp server and the mcp inspector
-bun start
+### Environment Variables
+
+Add the following environment variables to `.dev.vars`
+
+| Variable | Description |
+|----------|-------------|
+| `ANTHROPIC_API_KEY` | Anthropic API key (used for playground) |
+| `PERIGON_API_KEY` | Perigon API key (used for playground) |
+
+```zsh
+# install deps
+bun i
+# Runs the mcp server and the mcp playground
+bun dev
 ```
