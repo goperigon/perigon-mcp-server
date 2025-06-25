@@ -4,7 +4,7 @@ import { MessageBubble } from "./components/MessageBubble";
 import { ChatInput } from "./components/ChatInput";
 
 function App() {
-  const [collapsedToolCalls, setCollapsedToolCalls] = useState<Set<string>>(
+  const [expandedToolCalls, setExpandedToolCalls] = useState<Set<string>>(
     new Set(),
   );
   const [isUserScrolling, setIsUserScrolling] = useState(false);
@@ -36,7 +36,7 @@ function App() {
       }
 
       if (hasTextAfterTools && toolCallIds.size > 0) {
-        setCollapsedToolCalls((prev) => new Set([...prev, ...toolCallIds]));
+        setExpandedToolCalls((prev) => new Set([...prev, ...toolCallIds]));
       }
     }
   }, [messages]);
@@ -133,7 +133,7 @@ function App() {
   }, []);
 
   const handleToggleToolCall = (toolCallId: string) => {
-    setCollapsedToolCalls((prev) => {
+    setExpandedToolCalls((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(toolCallId)) {
         newSet.delete(toolCallId);
@@ -188,7 +188,7 @@ function App() {
               <MessageBubble
                 key={message.id}
                 message={message}
-                collapsedToolCalls={collapsedToolCalls}
+                expandedToolCalls={expandedToolCalls}
                 onToggleToolCall={handleToggleToolCall}
               />
             ))}

@@ -4,13 +4,13 @@ import { ToolInvocation } from "./ToolInvocation";
 
 interface MessageBubbleProps {
   message: any;
-  collapsedToolCalls: Set<string>;
+  expandedToolCalls: Set<string>;
   onToggleToolCall: (toolCallId: string) => void;
 }
 
 export function MessageBubble({
   message,
-  collapsedToolCalls,
+  expandedToolCalls,
   onToggleToolCall,
 }: MessageBubbleProps) {
   return (
@@ -112,8 +112,8 @@ export function MessageBubble({
                   </div>
                 );
               case "tool-invocation":
-                const toolCallId = `${message.id}-${part.toolInvocation.toolName}`;
-                const isCollapsed = collapsedToolCalls.has(toolCallId);
+                const toolCallId = `${message.id}-${index}-${part.toolInvocation.toolName}`;
+                const isCollapsed = !expandedToolCalls.has(toolCallId);
 
                 return (
                   <ToolInvocation

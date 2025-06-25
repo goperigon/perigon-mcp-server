@@ -111,6 +111,7 @@ const paginationArgs = z.object({
     .number()
     .min(1)
     .default(1)
+    // It is easier to tell the llm to start at 1 than 0
     .transform((page) => page - 1)
     .describe(
       "The specific page of results to retrieve in the paginated response. Starts at 1.",
@@ -238,7 +239,7 @@ Journalist Ids: ${journalistIds}
 
         let totalPages = Math.ceil(result.numResults / size);
         let output = `Got ${result.numResults} articles (page ${page} of ${totalPages})`;
-        output += "\n<articles>";
+        output += "\n<articles>\n";
         output += articles.join("\n\n");
         output += "\n</articles>";
 
@@ -326,7 +327,7 @@ Sentiment: ${JSON.stringify(story.sentiment)}
         let totalPages = Math.ceil(result.numResults / size);
         let output = `Got ${result.numResults} stories (page ${page} of ${totalPages})`;
 
-        output += "\n<stories>";
+        output += "\n<stories>\n";
         output += stories.join("\n\n");
         output += "\n</stories>";
 
