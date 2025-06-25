@@ -41,12 +41,9 @@
     "enabled": true,
   },
   "upload_source_maps": true,
-  "vars": {
-    "MCP_URL": "http://localhost:5173",
-  },
   "env": {
     "production": {
-      "name": "mcp-perigon-production",
+      "name": "mcp-perigon-server",
       "account_id": "8de3c02e1e299ec1561c53e44fb76ad7",
       "routes": [
         {
@@ -61,9 +58,6 @@
             "name": "MCP_OBJECT",
           },
         ],
-      },
-      "vars": {
-        "MCP_URL": "https://mcp.perigon.io",
       },
     },
   },
