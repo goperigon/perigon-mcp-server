@@ -12,6 +12,22 @@ import { z } from "zod";
 const query = z
   .string()
   .optional()
+  .transform((value) => {
+    if (!value?.trim()) return value;
+    
+    // If already has operators, quotes, or special chars, leave as-is
+    if (/\b(AND|OR|NOT)\b|[()*?"]/.test(value)) {
+      return value;
+    }
+    
+    // Split on whitespace and join with AND for simple phrases
+    const words = value.trim().split(/\s+/);
+    if (words.length > 1) {
+      return words.join(' AND ');
+    }
+    
+    return value;
+  })
   .describe(
     `Elasticsearch-style search query for filtering content. Supports advanced search syntax including:
 
@@ -28,7 +44,7 @@ const query = z
     • Wildcards: climat* AND (warming OR change)
     • Complex queries: ("artificial intelligence" OR AI) AND (healthcare OR medical) NOT cryptocurrency
 
-    Note: Terms are joined with implicit AND if no operator is specified. Phrases containing spaces must be wrapped in double quotes.`,
+    Note: Simple phrases will be automatically joined with AND operators. Use quotes for exact phrase matching.`,
   );
 
 function parseTime(str: string) {
