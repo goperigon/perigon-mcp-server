@@ -93,10 +93,10 @@ const locationArgs = z.object({
     .optional()
     .transform((states) => {
       if (!states) return undefined;
-      return states.map((state) => state.toLowerCase());
+      return states.map((state) => state.toUpperCase());
     })
     .describe(
-      "Filter results where a specified state plays a central role in the content, beyond mere mentions. States should be listed by their 2 character ISO code, Example: tx",
+      "Filter results where a specified state plays a central role in the content, beyond mere mentions. States should be listed by their 2 character ISO code, Example: TX",
     ),
   cities: z
     .array(z.string())
