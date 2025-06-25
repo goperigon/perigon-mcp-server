@@ -238,7 +238,7 @@ Journalist Ids: ${journalistIds}
         });
 
         let totalPages = Math.ceil(result.numResults / size);
-        let output = `Got ${result.numResults} articles (page ${page} of ${totalPages})`;
+        let output = `Got ${result.numResults} articles (page ${page + 1} of ${totalPages})`;
         output += "\n<articles>\n";
         output += articles.join("\n\n");
         output += "\n</articles>";
@@ -325,7 +325,7 @@ Sentiment: ${JSON.stringify(story.sentiment)}
         });
 
         let totalPages = Math.ceil(result.numResults / size);
-        let output = `Got ${result.numResults} stories (page ${page} of ${totalPages})`;
+        let output = `Got ${result.numResults} stories (page ${page + 1} of ${totalPages})`;
 
         output += "\n<stories>\n";
         output += stories.join("\n\n");
@@ -415,7 +415,7 @@ Locations: ${journalist?.locations?.map((location) => `Country: ${location.count
         });
 
         let totalPages = Math.ceil(result.numResults / size);
-        let output = `Got ${result.numResults} journalists (page ${page} of ${totalPages})`;
+        let output = `Got ${result.numResults} journalists (page ${page + 1} of ${totalPages})`;
         output += "\n<journalists>\n";
         output += journalists.join("\n\n");
         output += "\n</journalists>";
@@ -515,7 +515,7 @@ Top Topics: ${source.topTopics?.join(", ")}
         });
 
         let totalPages = Math.ceil(result.numResults / size);
-        let output = `Got ${result.numResults} sources (page ${page} of ${totalPages})`;
+        let output = `Got ${result.numResults} sources (page ${page + 1} of ${totalPages})`;
         output += "\n<sources>\n";
         output += sources.join("\n\n");
         output += "\n</sources>";
@@ -570,7 +570,7 @@ Description: ${person.description}
         });
 
         let totalPages = Math.ceil(result.numResults / size);
-        let output = `Got ${result.numResults} people (page ${page} of ${totalPages})`;
+        let output = `Got ${result.numResults} people (page ${page + 1} of ${totalPages})`;
         output += "\n<people>\n";
         output += people.join("\n\n");
         output += "\n</people>";
@@ -625,7 +625,7 @@ Country: ${company.country}
         });
 
         let totalPages = Math.ceil(result.numResults / size);
-        let output = `Got ${result.numResults} companies (page ${page} of ${totalPages})`;
+        let output = `Got ${result.numResults} companies (page ${page + 1} of ${totalPages})`;
         output += "\n<companies>\n";
         output += companies.join("\n\n");
         output += "\n</companies>";
