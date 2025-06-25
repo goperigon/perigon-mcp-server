@@ -12,6 +12,22 @@ import { z } from "zod";
 const query = z
   .string()
   .optional()
+  .transform((value) => {
+    if (!value?.trim()) return value;
+
+    // If already has operators, quotes, or special chars, leave as-is
+    if (/\b(AND|OR|NOT)\b|[(){}*?"']/.test(value)) {
+      return value;
+    }
+
+    // Split on whitespace and join with AND for simple phrases
+    const words = value.trim().split(/\s+/);
+    if (words.length > 1) {
+      return words.join(" AND ");
+    }
+
+    return value;
+  })
   .describe(
     `Elasticsearch-style search query for filtering content. Supports advanced search syntax including:
 
@@ -28,7 +44,7 @@ const query = z
     • Wildcards: climat* AND (warming OR change)
     • Complex queries: ("artificial intelligence" OR AI) AND (healthcare OR medical) NOT cryptocurrency
 
-    Note: Terms are joined with implicit AND if no operator is specified. Phrases containing spaces must be wrapped in double quotes.`,
+    Note: Simple phrases will be automatically joined with AND operators. Use quotes for exact phrase matching.`,
   );
 
 function parseTime(str: string) {
@@ -77,10 +93,10 @@ const locationArgs = z.object({
     .optional()
     .transform((states) => {
       if (!states) return undefined;
-      return states.map((state) => state.toLowerCase());
+      return states.map((state) => state.toUpperCase());
     })
     .describe(
-      "Filter results where a specified state plays a central role in the content, beyond mere mentions. States should be listed by their 2 character ISO code, Example: tx",
+      "Filter results where a specified state plays a central role in the content, beyond mere mentions. States should be listed by their 2 character ISO code, Example: TX",
     ),
   cities: z
     .array(z.string())
@@ -93,10 +109,12 @@ const locationArgs = z.object({
 const paginationArgs = z.object({
   page: z
     .number()
-    .min(0)
-    .default(0)
+    .min(1)
+    .default(1)
+    // It is easier to tell the llm to start at 1 than 0
+    .transform((page) => page - 1)
     .describe(
-      "The specific page of results to retrieve in the paginated response. Starts at 0.",
+      "The specific page of results to retrieve in the paginated response. Starts at 1.",
     ),
   size: z
     .number()
@@ -221,7 +239,7 @@ Journalist Ids: ${journalistIds}
 
         let totalPages = Math.ceil(result.numResults / size);
         let output = `Got ${result.numResults} articles (page ${page} of ${totalPages})`;
-        output += "\n<articles>";
+        output += "\n<articles>\n";
         output += articles.join("\n\n");
         output += "\n</articles>";
 
@@ -309,7 +327,7 @@ Sentiment: ${JSON.stringify(story.sentiment)}
         let totalPages = Math.ceil(result.numResults / size);
         let output = `Got ${result.numResults} stories (page ${page} of ${totalPages})`;
 
-        output += "\n<stories>";
+        output += "\n<stories>\n";
         output += stories.join("\n\n");
         output += "\n</stories>";
 

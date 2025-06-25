@@ -1,19 +1,52 @@
 @import "tailwindcss";
 
 @theme {
-  --color-dark: #1e1e1e;
-  --color-surface: #2d2d2d;
+  /* Perigon Brand Colors */
+  --color-primary: #227C9D;
+  --color-primary-dark: #34B3E2;
+  
+  /* Light Theme Colors */
+  --color-background-light: #FBFBF9;
+  --color-text-light: #121212;
+  --color-muted-light: #44403C;
+  --color-card-border-light: #E4E4E4;
+  --color-surface-light: #FFFFFF;
+  
+  /* Dark Theme Colors (existing) */
+  --color-dark: #1F1F1F;
+  --color-surface: #2D2D2D;
   --color-surface-elevated: #3a3a3a;
+  --color-light: #FFFFFF;
+  --color-light-gray: #C1C1C1;
+  --color-text-secondary: #71717a;
+  --color-border: #2D2D2D;
+  --color-border-soft: #3f3f46;
+  
+  /* Accent Colors */
   --color-gold: #f6b627;
   --color-gold-muted: #d4941e;
   --color-gold-soft: #f6b62720;
   --color-accent: #f6b627;
   --color-accent-soft: #f6b62720;
-  --color-light-gray: #a1a1aa;
-  --color-light: #f4f4f5;
-  --color-text-secondary: #71717a;
-  --color-border: #52525b;
-  --color-border-soft: #3f3f46;
+  
+  /* Typography */
+  --font-family: "Px Grotesk", Inter, Roboto, sans-serif;
+  --font-size-h1: 1.875rem;
+  --font-size-h2: 1.45rem;
+  --font-size-body: 0.875rem;
+  --font-size-code: 0.75rem;
+  --font-weight-h1: 600;
+  --font-weight-h2: 600;
+  --font-weight-body: 400;
+  --letter-spacing-tight: -0.0025em;
+  --letter-spacing-normal: 0.01em;
+  
+  /* Layout */
+  --radius: 1rem;
+  --card-padding: 1.5rem;
+  --button-radius: 0.75rem;
+  --button-min-width: 200px;
+  --transition: all 0.2s ease;
 }
 
 /* Custom animations */

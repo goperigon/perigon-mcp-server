@@ -12,7 +12,7 @@ export function ToolInvocation({
   const { toolName, state, args } = toolInvocation;
 
   return (
-    <div className="bg-surface-elevated p-4 rounded-lg border-l-4 border-accent my-3 text-light shadow-md hover:shadow-lg transition-shadow duration-200 border border-border-soft">
+    <div className="bg-surface-elevated p-4 rounded-lg border-l-4 border-accent my-3 text-light shadow-md hover:shadow-lg transition-shadow duration-200 border">
       <div
         className="text-sm font-semibold text-accent mb-3 cursor-pointer hover:text-accent/80 flex items-center gap-2 transition-colors duration-200"
         onClick={onToggleCollapse}

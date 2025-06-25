@@ -4,16 +4,16 @@ import { MessageBubble } from "./components/MessageBubble";
 import { ChatInput } from "./components/ChatInput";
 
 function App() {
-  const [collapsedToolCalls, setCollapsedToolCalls] = useState<Set<string>>(
+  const [expandedToolCalls, setExpandedToolCalls] = useState<Set<string>>(
     new Set(),
   );
   const [isUserScrolling, setIsUserScrolling] = useState(false);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const prevMessageCountRef = useRef(0);
 
   const { messages, input, handleInputChange, handleSubmit, status } = useChat({
     api: "/v1/api/chat",
-    maxSteps: 5,
   });
 
   // Collapse tool calls when text starts streaming after them
@@ -35,7 +35,7 @@ function App() {
       }
 
       if (hasTextAfterTools && toolCallIds.size > 0) {
-        setCollapsedToolCalls((prev) => new Set([...prev, ...toolCallIds]));
+        setExpandedToolCalls((prev) => new Set([...prev, ...toolCallIds]));
       }
     }
   }, [messages]);
@@ -59,25 +59,67 @@ function App() {
       if (scrollTimeoutRef.current) {
         clearTimeout(scrollTimeoutRef.current);
       }
-      // Reset user scrolling flag after 2 seconds of no scrolling
+      // Reset user scrolling flag after 1 second of no scrolling (reduced from 2s)
       scrollTimeoutRef.current = setTimeout(() => {
         setIsUserScrolling(false);
-      }, 2000);
+      }, 1000);
     } else {
+      // If user scrolls back to bottom, immediately allow auto-scroll
       setIsUserScrolling(false);
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
     }
   }, [isNearBottom]);
 
-  // Smooth auto-scroll to bottom when new messages arrive (only if user isn't scrolling)
+  // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     const container = messagesContainerRef.current;
-    if (container && !isUserScrolling && isNearBottom()) {
-      container.scrollTo({
-        top: container.scrollHeight,
-        behavior: "smooth",
+    if (!container) return;
+
+    const lastMessage = messages[messages.length - 1];
+
+    // Always scroll on new user messages, or if user is near bottom for AI messages
+    const shouldScroll =
+      messages.length > prevMessageCountRef.current &&
+      (!lastMessage ||
+        lastMessage.role === "user" ||
+        (!isUserScrolling && isNearBottom()));
+
+    if (shouldScroll) {
+      // Use requestAnimationFrame to ensure DOM is updated
+      requestAnimationFrame(() => {
+        container.scrollTo({
+          top: container.scrollHeight,
+          behavior: "smooth",
+        });
       });
     }
+
+    prevMessageCountRef.current = messages.length;
   }, [messages, isUserScrolling, isNearBottom]);
+
+  // Auto-scroll during streaming responses
+  useEffect(() => {
+    const container = messagesContainerRef.current;
+    if (!container || isUserScrolling) return;
+
+    // If AI is responding and user is near bottom, keep scrolling
+    if ((status === "streaming" || status === "submitted") && isNearBottom()) {
+      const scrollToBottom = () => {
+        container.scrollTo({
+          top: container.scrollHeight,
+          behavior: "smooth",
+        });
+      };
+
+      // Scroll immediately and set up interval for continuous scrolling during streaming
+      scrollToBottom();
+      const intervalId = setInterval(scrollToBottom, 100);
+
+      return () => clearInterval(intervalId);
+    }
+  }, [status, isUserScrolling, isNearBottom]);
 
   // Cleanup timeout on unmount
   useEffect(() => {
@@ -89,7 +131,7 @@ function App() {
   }, []);
 
   const handleToggleToolCall = (toolCallId: string) => {
-    setCollapsedToolCalls((prev) => {
+    setExpandedToolCalls((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(toolCallId)) {
         newSet.delete(toolCallId);
@@ -144,17 +186,19 @@ function App() {
               <MessageBubble
                 key={message.id}
                 message={message}
-                collapsedToolCalls={collapsedToolCalls}
+                expandedToolCalls={expandedToolCalls}
                 onToggleToolCall={handleToggleToolCall}
               />
             ))}
 
             {status === "submitted" && (
               <div className="flex justify-start">
-                <div className="max-w-[80%] px-4 py-3 rounded-2xl bg-surface text-light rounded-bl-sm shadow-md border border-border">
+                <div className="max-w-[80%] px-6 py-4 rounded-2xl bg-surface text-light rounded-bl-sm shadow-md border border-border">
                   <div className="flex items-center space-x-2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gold"></div>
-                    <span className="text-sm text-light-gray">Thinking...</span>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                    <span className="text-[0.875rem] text-light-gray tracking-[0.01em]">
+                      Thinking...
+                    </span>
                   </div>
                 </div>
               </div>
