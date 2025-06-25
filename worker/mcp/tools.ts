@@ -14,18 +14,18 @@ const query = z
   .optional()
   .transform((value) => {
     if (!value?.trim()) return value;
-    
+
     // If already has operators, quotes, or special chars, leave as-is
-    if (/\b(AND|OR|NOT)\b|[()*?"]/.test(value)) {
+    if (/\b(AND|OR|NOT)\b|[(){}*?"']/.test(value)) {
       return value;
     }
-    
+
     // Split on whitespace and join with AND for simple phrases
     const words = value.trim().split(/\s+/);
     if (words.length > 1) {
-      return words.join(' AND ');
+      return words.join(" AND ");
     }
-    
+
     return value;
   })
   .describe(
@@ -109,10 +109,11 @@ const locationArgs = z.object({
 const paginationArgs = z.object({
   page: z
     .number()
-    .min(0)
-    .default(0)
+    .min(1)
+    .default(1)
+    .transform((page) => page - 1)
     .describe(
-      "The specific page of results to retrieve in the paginated response. Starts at 0.",
+      "The specific page of results to retrieve in the paginated response. Starts at 1.",
     ),
   size: z
     .number()
