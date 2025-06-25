@@ -40,6 +40,14 @@ parameter to some time in the past week or so to ensure the results are more rel
 <context>
 Today is: {{date}} (in UTC)
 
+Common date references for filtering:
+- Today: {{date}}
+- Yesterday: {{yesterday}}
+- 3 days ago: {{threeDaysAgo}}
+- 1 week ago: {{oneWeekAgo}}
+- 2 weeks ago: {{twoWeeksAgo}}
+- 1 month ago: {{oneMonthAgo}}
+
 You work at Perigon and have access to a variety of tools that allow you to search
 across various news related datasets such as:
 - News Articles
@@ -110,12 +118,32 @@ async function handleChatRequest(
 
     // Add system prompt if not present
     if (!messages.some((msg) => msg.role === "system")) {
+      const now = new Date();
+      const today = now.toISOString().split("T")[0];
+      const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000)
+        .toISOString()
+        .split("T")[0];
+      const threeDaysAgo = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000)
+        .toISOString()
+        .split("T")[0];
+      const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+        .toISOString()
+        .split("T")[0];
+      const twoWeeksAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000)
+        .toISOString()
+        .split("T")[0];
+      const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+        .toISOString()
+        .split("T")[0];
+
       messages.unshift({
         role: "system",
-        content: SYSTEM_PROMPT.replaceAll(
-          "{{date}}",
-          new Date().toISOString().split("T")[0],
-        ),
+        content: SYSTEM_PROMPT.replaceAll("{{date}}", today)
+          .replaceAll("{{yesterday}}", yesterday)
+          .replaceAll("{{threeDaysAgo}}", threeDaysAgo)
+          .replaceAll("{{oneWeekAgo}}", oneWeekAgo)
+          .replaceAll("{{twoWeeksAgo}}", twoWeeksAgo)
+          .replaceAll("{{oneMonthAgo}}", oneMonthAgo),
       });
     }
 
