@@ -7,7 +7,12 @@ interface ChatInputProps {
   onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
 }
 
-export function ChatInput({ input, status, onInputChange, onSubmit }: ChatInputProps) {
+export function ChatInput({
+  input,
+  status,
+  onInputChange,
+  onSubmit,
+}: ChatInputProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -39,7 +44,7 @@ export function ChatInput({ input, status, onInputChange, onSubmit }: ChatInputP
           onChange={onInputChange}
           onKeyDown={handleKeyDown}
           placeholder="Type your message..."
-          className="flex-1 px-4 py-3 bg-transparent rounded-3xl text-base text-light outline-none resize-none min-h-[48px] max-h-32 overflow-y-auto focus:ring-2 focus:ring-gold/60 focus:shadow-lg focus:shadow-gold/20 transition-all duration-300 placeholder:text-text-secondary"
+          className="flex-1 px-4 py-3 bg-transparent rounded-3xl text-base text-light outline-none resize-none min-h-[48px] max-h-32 overflow-y-auto transition-all duration-300 placeholder:text-text-secondary"
           rows={1}
           onInput={handleInput}
         />

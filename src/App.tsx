@@ -10,6 +10,7 @@ function App() {
   const [isUserScrolling, setIsUserScrolling] = useState(false);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const prevMessageCountRef = useRef(0);
 
   const { messages, input, handleInputChange, handleSubmit, status } = useChat({
     api: "/v1/api/chat",
@@ -59,25 +60,68 @@ function App() {
       if (scrollTimeoutRef.current) {
         clearTimeout(scrollTimeoutRef.current);
       }
-      // Reset user scrolling flag after 2 seconds of no scrolling
+      // Reset user scrolling flag after 1 second of no scrolling (reduced from 2s)
       scrollTimeoutRef.current = setTimeout(() => {
         setIsUserScrolling(false);
-      }, 2000);
+      }, 1000);
     } else {
+      // If user scrolls back to bottom, immediately allow auto-scroll
       setIsUserScrolling(false);
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
     }
   }, [isNearBottom]);
 
-  // Smooth auto-scroll to bottom when new messages arrive (only if user isn't scrolling)
+  // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     const container = messagesContainerRef.current;
-    if (container && !isUserScrolling && isNearBottom()) {
-      container.scrollTo({
-        top: container.scrollHeight,
-        behavior: "smooth",
+    if (!container) return;
+
+    const lastMessage = messages[messages.length - 1];
+    
+    // Always scroll on new user messages, or if user is near bottom for AI messages
+    const shouldScroll = 
+      messages.length > prevMessageCountRef.current && (
+        !lastMessage || 
+        lastMessage.role === "user" || 
+        (!isUserScrolling && isNearBottom())
+      );
+
+    if (shouldScroll) {
+      // Use requestAnimationFrame to ensure DOM is updated
+      requestAnimationFrame(() => {
+        container.scrollTo({
+          top: container.scrollHeight,
+          behavior: "smooth",
+        });
       });
     }
+
+    prevMessageCountRef.current = messages.length;
   }, [messages, isUserScrolling, isNearBottom]);
+
+  // Auto-scroll during streaming responses
+  useEffect(() => {
+    const container = messagesContainerRef.current;
+    if (!container || isUserScrolling) return;
+
+    // If AI is responding and user is near bottom, keep scrolling
+    if ((status === "streaming" || status === "submitted") && isNearBottom()) {
+      const scrollToBottom = () => {
+        container.scrollTo({
+          top: container.scrollHeight,
+          behavior: "smooth",
+        });
+      };
+
+      // Scroll immediately and set up interval for continuous scrolling during streaming
+      scrollToBottom();
+      const intervalId = setInterval(scrollToBottom, 100);
+
+      return () => clearInterval(intervalId);
+    }
+  }, [status, isUserScrolling, isNearBottom]);
 
   // Cleanup timeout on unmount
   useEffect(() => {
