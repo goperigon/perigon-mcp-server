@@ -34,14 +34,14 @@ export function MessageBubble({
                       components={{
                         code: ({ children, ...props }) => (
                           <code
-                            className="bg-gray-800 text-green-400 px-2 py-1 rounded text-sm font-mono"
+                            className="bg-surface-elevated text-primary px-2 py-1 rounded text-xs font-mono"
                             {...props}
                           >
                             {children}
                           </code>
                         ),
                         pre: ({ children }) => (
-                          <pre className="bg-gray-800 p-4 rounded-lg overflow-x-auto my-3 border border-gray-700">
+                          <pre className="bg-surface-elevated p-4 rounded-lg overflow-x-auto my-3 border border-border">
                             {children}
                           </pre>
                         ),
@@ -62,43 +62,43 @@ export function MessageBubble({
                           <li className="mb-1">{children}</li>
                         ),
                         h1: ({ children }) => (
-                          <h1 className="text-2xl font-bold mb-4 text-white border-b border-gray-600 pb-2">
+                          <h1 className="text-[1.875rem] font-semibold mb-4 text-light border-b border-border pb-2 tracking-tight">
                             {children}
                           </h1>
                         ),
                         h2: ({ children }) => (
-                          <h2 className="text-xl font-bold mb-3 text-white">
+                          <h2 className="text-[1.45rem] font-semibold mb-3 text-light tracking-tight">
                             {children}
                           </h2>
                         ),
                         h3: ({ children }) => (
-                          <h3 className="text-lg font-semibold mb-2 text-white">
+                          <h3 className="text-lg font-semibold mb-2 text-light">
                             {children}
                           </h3>
                         ),
                         h4: ({ children }) => (
-                          <h4 className="text-base font-semibold mb-2 text-white">
+                          <h4 className="text-base font-semibold mb-2 text-light">
                             {children}
                           </h4>
                         ),
                         strong: ({ children }) => (
-                          <strong className="font-bold text-white">
+                          <strong className="font-bold text-light">
                             {children}
                           </strong>
                         ),
                         em: ({ children }) => (
-                          <em className="italic text-gray-300">{children}</em>
+                          <em className="italic text-light-gray">{children}</em>
                         ),
                         blockquote: ({ children }) => (
-                          <blockquote className="border-l-4 border-gold pl-4 italic mb-3 text-gray-300 bg-gray-800/30 py-2 rounded-r">
+                          <blockquote className="border-l-4 border-primary pl-4 italic mb-3 text-light-gray bg-surface-elevated/30 py-2 rounded-r">
                             {children}
                           </blockquote>
                         ),
-                        hr: () => <hr className="border-gray-600 my-4" />,
+                        hr: () => <hr className="border-border my-4" />,
                         a: ({ children, href }) => (
                           <a
                             href={href}
-                            className="text-gold hover:text-gold/80 underline"
+                            className="text-primary hover:text-primary/80 underline transition-colors duration-200"
                             target="_blank"
                             rel="noopener noreferrer"
                           >

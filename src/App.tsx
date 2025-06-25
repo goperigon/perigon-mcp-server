@@ -14,7 +14,6 @@ function App() {
 
   const { messages, input, handleInputChange, handleSubmit, status } = useChat({
     api: "/v1/api/chat",
-    maxSteps: 5,
   });
 
   // Collapse tool calls when text starts streaming after them
@@ -79,14 +78,13 @@ function App() {
     if (!container) return;
 
     const lastMessage = messages[messages.length - 1];
-    
+
     // Always scroll on new user messages, or if user is near bottom for AI messages
-    const shouldScroll = 
-      messages.length > prevMessageCountRef.current && (
-        !lastMessage || 
-        lastMessage.role === "user" || 
-        (!isUserScrolling && isNearBottom())
-      );
+    const shouldScroll =
+      messages.length > prevMessageCountRef.current &&
+      (!lastMessage ||
+        lastMessage.role === "user" ||
+        (!isUserScrolling && isNearBottom()));
 
     if (shouldScroll) {
       // Use requestAnimationFrame to ensure DOM is updated
@@ -195,10 +193,12 @@ function App() {
 
             {status === "submitted" && (
               <div className="flex justify-start">
-                <div className="max-w-[80%] px-4 py-3 rounded-2xl bg-surface text-light rounded-bl-sm shadow-md border border-border">
+                <div className="max-w-[80%] px-6 py-4 rounded-2xl bg-surface text-light rounded-bl-sm shadow-md border border-border">
                   <div className="flex items-center space-x-2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gold"></div>
-                    <span className="text-sm text-light-gray">Thinking...</span>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                    <span className="text-[0.875rem] text-light-gray tracking-[0.01em]">
+                      Thinking...
+                    </span>
                   </div>
                 </div>
               </div>
