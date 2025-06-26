@@ -2,7 +2,7 @@
 
 ## Build/Test Commands
 - `bun run dev` - Start development server
-- `bun run build` - Build for production  
+- `bun run build` - Build for production
 - `bun run deploy` - Deploy to Cloudflare Workers
 - `bun run mcp` - Run MCP inspector
 - `bun run gen` - Generate Wrangler types
