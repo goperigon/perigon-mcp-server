@@ -9,27 +9,28 @@ import {
 import { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 
-const query = z
-  .string()
-  .optional()
-  .transform((value) => {
-    if (!value?.trim()) return value;
+function createSearchField(contextDescription: string) {
+  return z
+    .string()
+    .optional()
+    .transform((value) => {
+      if (!value?.trim()) return value;
 
-    // If already has operators, quotes, or special chars, leave as-is
-    if (/\b(AND|OR|NOT)\b|[(){}*?"']/.test(value)) {
+      // If already has operators, quotes, or special chars, leave as-is
+      if (/\b(AND|OR|NOT)\b|[(){}*?"']/.test(value)) {
+        return value;
+      }
+
+      // Split on whitespace and join with AND for simple phrases
+      const words = value.trim().split(/\s+/);
+      if (words.length > 1) {
+        return words.join(" AND ");
+      }
+
       return value;
-    }
-
-    // Split on whitespace and join with AND for simple phrases
-    const words = value.trim().split(/\s+/);
-    if (words.length > 1) {
-      return words.join(" AND ");
-    }
-
-    return value;
-  })
-  .describe(
-    `Elasticsearch-style search query for filtering content. Supports advanced search syntax including:
+    })
+    .describe(
+      `Elasticsearch-style search query for filtering ${contextDescription}. Supports advanced search syntax including:
 
     • Boolean operators: AND, OR, NOT (case-sensitive)
     • Exact phrase matching: Use double quotes around phrases (e.g., "US Election")
@@ -45,6 +46,21 @@ const query = z
     • Complex queries: ("artificial intelligence" OR AI) AND (healthcare OR medical) NOT cryptocurrency
 
     Note: Simple phrases will be automatically joined with AND operators. Use quotes for exact phrase matching.`,
+    );
+}
+
+const categories = z
+  .array(z.string())
+  .optional()
+  .describe(
+    "Filter by the content categories (e.g., Politics, Tech, Sports, Business, Finance)",
+  );
+
+const topics = z
+  .array(z.string())
+  .optional()
+  .describe(
+    "Filter by specific topics such as Markets, Crime, Cryptocurrency, or College Sports. Topics are more granular than categories",
   );
 
 function parseTime(str: string) {
@@ -127,7 +143,6 @@ const paginationArgs = z.object({
 });
 
 const defaultArgs = z.object({
-  query,
   from: z
     .string()
     .transform(parseTime)
@@ -148,6 +163,7 @@ export const articleArgs = z.object({
   ...locationArgs.shape,
   ...paginationArgs.shape,
   ...defaultArgs.shape,
+  query: createSearchField("article content"),
   sortBy: z
     .enum([
       AllEndpointSortBy.Date,
@@ -258,6 +274,9 @@ export const searchStoriesArgs = z.object({
   ...locationArgs.shape,
   ...paginationArgs.shape,
   ...defaultArgs.shape,
+  query: createSearchField("story/headline content"),
+  categories,
+  topics,
   newsStoryIds: z
     .array(z.string())
     .optional()
@@ -295,6 +314,8 @@ export function searchNewsStories(perigon: V1Api): ToolCallback {
     sortBy,
     newsStoryIds,
     sources,
+    categories,
+    topics,
   }: z.infer<typeof searchStoriesArgs>): Promise<CallToolResult> => {
     return perigon
       .searchStories({
@@ -311,6 +332,8 @@ export function searchNewsStories(perigon: V1Api): ToolCallback {
         source: sources,
         showNumResults: false,
         showDuplicates: true,
+        category: categories,
+        topic: topics,
       })
       .then((result) => {
         if (result.numResults === 0) return noResults;
@@ -344,7 +367,15 @@ Sentiment: ${JSON.stringify(story.sentiment)}
 
 export const journalistArgs = z.object({
   ...paginationArgs.shape,
-  query,
+  query: createSearchField("journalist name and title"),
+  categories,
+  topics,
+  labels: z
+    .array(z.string())
+    .optional()
+    .describe(
+      "Filter journalists by the type of content they typically produce (e.g., Opinion, Paid-news, Non-news)",
+    ),
   journalistIds: z
     .array(z.string())
     .optional()
@@ -390,6 +421,9 @@ export function searchJournalists(perigon: V1Api): ToolCallback {
     maxMonthlyPosts,
     minMonthlyPosts,
     sources,
+    categories,
+    topics,
+    labels,
   }: z.infer<typeof journalistArgs>): Promise<CallToolResult> => {
     return perigon
       .searchJournalists({
@@ -401,6 +435,9 @@ export function searchJournalists(perigon: V1Api): ToolCallback {
         showNumResults: true,
         minMonthlyPosts,
         maxMonthlyPosts,
+        label: labels,
+        category: categories,
+        topic: topics,
       })
       .then((result) => {
         if (result.numResults === 0) return noResults;
@@ -440,7 +477,7 @@ export const sourceArgs = z.object({
     .describe(
       `Filter sources by specific publisher domains or subdomains. Supports wildcards (* and ?) for pattern matching (e.g., *cnn.com)`,
     ),
-  name: query,
+  name: createSearchField("source name or alternative names"),
   sortBy: z
     .enum([
       SortBy.Count,
@@ -533,7 +570,10 @@ Top Topics: ${source.topTopics?.join(", ")}
 
 export const peopleArgs = z.object({
   ...paginationArgs.shape,
-  name: query,
+  name: createSearchField("person's name"),
+  occupation: createSearchField(
+    "occupation names (e.g., politician, actor, CEO, athlete)",
+  ),
   wikidataIds: z
     .array(z.string())
     .optional()
@@ -547,6 +587,7 @@ export function searchPeople(perigon: V1Api): ToolCallback {
     page,
     size,
     name,
+    occupation,
     wikidataIds,
   }: z.infer<typeof peopleArgs>): Promise<CallToolResult> => {
     return perigon
@@ -555,6 +596,7 @@ export function searchPeople(perigon: V1Api): ToolCallback {
         page,
         size,
         wikidataId: wikidataIds,
+        occupationLabel: occupation,
       })
       .then((result) => {
         if (result.numResults === 0) return noResults;
@@ -588,7 +630,11 @@ Description: ${person.description}
 
 export const companyArgs = z.object({
   ...paginationArgs.shape,
-  query,
+  query: createSearchField(
+    "company name, alternative names, domains, and ticker symbol",
+  ),
+  industry: createSearchField("company industry"),
+  sector: createSearchField("company sector classification"),
   domains: z
     .array(z.string())
     .optional()
@@ -603,6 +649,8 @@ export function searchCompanies(perigon: V1Api): ToolCallback {
     size,
     query,
     domains,
+    industry,
+    sector,
   }: z.infer<typeof companyArgs>): Promise<CallToolResult> => {
     return perigon
       .searchCompanies({
@@ -610,6 +658,8 @@ export function searchCompanies(perigon: V1Api): ToolCallback {
         page,
         size,
         domain: domains,
+        industry,
+        sector,
       })
       .then((result) => {
         if (result.numResults === 0) return noResults;
