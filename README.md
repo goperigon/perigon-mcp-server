@@ -8,6 +8,10 @@ This is the official MCP server for the Perigon news API.
 
 ## Usage
 
+### Playground
+
+You can try out the Perigon MCP server in our [playground](https://mcp.perigon.io).
+
 ### Connecting
 
 You can connect to our remote MCP server using local or remote MCP clients.
