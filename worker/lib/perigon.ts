@@ -1,7 +1,6 @@
 import { Configuration, V1Api } from "@goperigon/perigon-ts";
 import { AuthIntrospectionResponse } from "../types/types";
 import { typedFetch } from "./typed-fetch";
-import { z } from "zod";
 
 const BASE_URL = "https://api.perigon.io/v1";
 
