@@ -1,17 +1,15 @@
-import {
-  ChatMessage,
-  HttpError,
-  AuthIntrospectionResponse,
-} from "./types/types";
+import { HttpError, AuthIntrospectionResponse } from "./types/types";
 import { createAnthropic } from "@ai-sdk/anthropic";
 import {
   streamText,
   NoSuchToolError,
   InvalidToolArgumentsError,
   ToolExecutionError,
+  CoreMessage,
 } from "ai";
-import { PerigonMCP } from "./mcp/mcp";
-import { createAISDKTools } from "./tools/ai-sdk-adapter";
+import { PerigonMCP, Props } from "./mcp/mcp";
+import { createAISDKTools } from "./mcp/ai-sdk-adapter";
+import { Perigon } from "./lib/perigon";
 
 const SYSTEM_PROMPT = `
 <identity>
@@ -113,7 +111,7 @@ async function handleChatRequest(
 ): Promise<Response> {
   try {
     const { messages = [] } = (await request.json()) as {
-      messages: ChatMessage[];
+      messages: CoreMessage[];
     };
 
     // Add system prompt if not present
@@ -210,20 +208,15 @@ async function handleMCPRequest(
     if (!apiKey) {
       return new Response("Unauthorized", { status: 401 });
     }
+    const perigon = new Perigon(apiKey);
 
-    const apiKeyDetails = await typedFetch<AuthIntrospectionResponse>(
-      "https://api.perigon.io/v1/auth/introspect",
-      {
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-        },
-      },
-    );
+    const apiKeyDetails = await perigon.introspection();
 
-    ctx.props = {
-      apiKey,
+    const props: Props = {
+      perigon,
       scopes: apiKeyDetails.scopes,
     };
+    ctx.props = props;
 
     if (url.pathname.includes("/sse")) {
       return PerigonMCP.serveSSE("/v1/sse").fetch(request, env, ctx);
@@ -255,22 +248,4 @@ async function handleMCPRequest(
       { status: error.statusCode },
     );
   }
-}
-
-export async function typedFetch<T>(
-  url: string,
-  options: RequestInit,
-): Promise<T> {
-  const response = await fetch(url, options);
-  if (!response.ok) {
-    const responseBody = await response.text();
-    console.error(
-      `Failed to fetch: status: ${response.status} response: ${responseBody}`,
-    );
-
-    throw new HttpError(response.status, responseBody);
-  }
-
-  const typedResp = (await response.json()) as T;
-  return typedResp;
 }

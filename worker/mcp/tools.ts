@@ -1,6 +1,5 @@
 import {
   AllEndpointSortBy,
-  V1Api,
   ResponseError,
   FetchError,
   RequiredError,
@@ -8,6 +7,7 @@ import {
 } from "@goperigon/perigon-ts";
 import { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
+import { Perigon } from "../lib/perigon";
 
 function createSearchField(contextDescription: string) {
   return z
@@ -200,7 +200,7 @@ export const articleArgs = z.object({
     ),
 });
 
-export function searchNewsArticles(perigon: V1Api): ToolCallback {
+export function searchNewsArticles(perigon: Perigon): ToolCallback {
   return async ({
     query,
     page,
@@ -301,7 +301,7 @@ export const searchStoriesArgs = z.object({
     ),
 });
 
-export function searchNewsStories(perigon: V1Api): ToolCallback {
+export function searchNewsStories(perigon: Perigon): ToolCallback {
   return async ({
     query,
     page,
@@ -412,7 +412,7 @@ export const journalistArgs = z.object({
     ),
 });
 
-export function searchJournalists(perigon: V1Api): ToolCallback {
+export function searchJournalists(perigon: Perigon): ToolCallback {
   return async ({
     query,
     page,
@@ -510,7 +510,7 @@ export const sourceArgs = z.object({
     .describe("Filter for sources with no more than this many monthly posts"),
 });
 
-export function searchSources(perigon: V1Api): ToolCallback {
+export function searchSources(perigon: Perigon): ToolCallback {
   return async ({
     page,
     size,
@@ -582,7 +582,7 @@ export const peopleArgs = z.object({
     ),
 });
 
-export function searchPeople(perigon: V1Api): ToolCallback {
+export function searchPeople(perigon: Perigon): ToolCallback {
   return async ({
     page,
     size,
@@ -643,7 +643,7 @@ export const companyArgs = z.object({
     ),
 });
 
-export function searchCompanies(perigon: V1Api): ToolCallback {
+export function searchCompanies(perigon: Perigon): ToolCallback {
   return async ({
     page,
     size,
@@ -691,48 +691,121 @@ Country: ${company.country}
   };
 }
 
-export const TOOL_DEFINITIONS = {
+export const topicArgs = z.object({
+  ...paginationArgs.shape,
+  name: z
+    .string()
+    .optional()
+    .describe(
+      "Search for topics by exact name or partial text match. Does not support wildcards." +
+        " Examples include Markets, Cryptocurrency, Climate Change, etc.",
+    ),
+  category: z
+    .string()
+    .optional()
+    .describe(
+      "Filter topics by broad article categories such as Politics, Tech, Sports, Business," +
+        " Finance, Entertainment, etc.",
+    ),
+});
+
+export function searchTopics(perigon: Perigon): ToolCallback {
+  return async ({
+    page,
+    size,
+    name,
+    category,
+  }: z.infer<typeof topicArgs>): Promise<CallToolResult> => {
+    return perigon
+      .searchTopics({
+        page,
+        size,
+        name,
+        category,
+      })
+      .then((result) => {
+        if (result.total === 0) return noResults;
+
+        const topics = result.data.map((topic) => {
+          return `<topic name="${topic.name}">
+Created At: ${topic.createdAt}
+Category: ${topic.labels?.category}
+Sub Category: ${topic.labels?.subcategory}
+</topic>`;
+        });
+
+        let totalPages = Math.ceil(result.total / size);
+        let output = `Got ${result.data.length} topics (page ${page + 1} of ${totalPages})`;
+        output += "\n<topics>\n";
+        output += topics.join("\n\n");
+        output += "\n</topics>";
+
+        return toolResult(output);
+      })
+      .catch(async (error) => {
+        console.error("Error searching companies:", error);
+        return toolResult(
+          `Error: Failed to search companies: ${createErrorMessage(error)}`,
+        );
+      });
+  };
+}
+
+interface ToolDefinition {
+  name: string;
+  description: string;
+  parameters: z.ZodObject<any>;
+  createHandler: (perigon: Perigon) => ToolCallback;
+}
+
+export const TOOL_DEFINITIONS: Record<string, ToolDefinition> = {
   search_news_articles: {
     name: "search_news_articles",
     description:
       "Search individual news articles with advanced filtering by keywords, location, time range, sources, and journalists. Returns full article content or summaries with metadata.",
     parameters: articleArgs,
-    createHandler: (perigon: V1Api) => searchNewsArticles(perigon),
+    createHandler: (perigon: Perigon) => searchNewsArticles(perigon),
   },
   read_news_stories: {
     name: "read_news_stories",
     description:
       "Search clustered news stories and headlines. Returns story summaries, sentiment analysis, and metadata for understanding major news events and trends across multiple sources.",
     parameters: searchStoriesArgs,
-    createHandler: (perigon: V1Api) => searchNewsStories(perigon),
+    createHandler: (perigon: Perigon) => searchNewsStories(perigon),
   },
   search_journalists: {
     name: "search_journalists",
     description:
       "Find journalists and reporters by name, publication, location, or coverage area. Returns journalist profiles with their top sources, locations, and monthly posting activity.",
     parameters: journalistArgs,
-    createHandler: (perigon: V1Api) => searchJournalists(perigon),
+    createHandler: (perigon: Perigon) => searchJournalists(perigon),
   },
   search_sources: {
     name: "search_sources",
     description:
       "Discover news publications and media outlets by name, domain, location, or audience size. Returns source details including monthly visits, top topics, and geographic focus.",
     parameters: sourceArgs,
-    createHandler: (perigon: V1Api) => searchSources(perigon),
+    createHandler: (perigon: Perigon) => searchSources(perigon),
   },
   search_people: {
     name: "search_people",
     description:
       "Search for public figures, politicians, celebrities, and newsworthy individuals. Returns biographical information including occupation, position, and detailed descriptions.",
     parameters: peopleArgs,
-    createHandler: (perigon: V1Api) => searchPeople(perigon),
+    createHandler: (perigon: Perigon) => searchPeople(perigon),
   },
   search_companies: {
     name: "search_companies",
     description:
       "Find corporations and businesses by name, domain, or industry. Returns company profiles with CEO information, employee count, industry classification, and business descriptions.",
     parameters: companyArgs,
-    createHandler: (perigon: V1Api) => searchCompanies(perigon),
+    createHandler: (perigon: Perigon) => searchCompanies(perigon),
+  },
+  search_topics: {
+    name: "search_topics",
+    description: "Search topics currently supported via Perigon API",
+    parameters: topicArgs,
+    createHandler: (perigon: Perigon) => searchTopics(perigon),
   },
 } as const;
 

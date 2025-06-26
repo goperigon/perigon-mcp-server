@@ -3,15 +3,6 @@
  */
 
 /**
- * Represents a chat message.
- */
-export interface ChatMessage {
-  role: "system" | "user" | "assistant";
-  content: string;
-  toolInvocations?: any[];
-}
-
-/**
  * Custom error class for typed fetch
  */
 export class HttpError extends Error {
