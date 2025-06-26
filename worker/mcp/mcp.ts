@@ -3,11 +3,12 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { Configuration, V1Api } from "@goperigon/perigon-ts";
 import { Scopes } from "../types/types";
 import { TOOL_DEFINITIONS, ToolName } from "./tools";
+import { Perigon } from "../lib/perigon";
 
 type Bindings = Env;
 
-type Props = {
-  apiKey: string;
+export type Props = {
+  perigon: Perigon;
   scopes: Scopes[];
 };
 
@@ -29,11 +30,7 @@ export class PerigonMCP extends McpAgent<Bindings, State, Props> {
   });
 
   async init() {
-    const perigon = new V1Api(
-      new Configuration({
-        apiKey: this.props.apiKey,
-      }),
-    );
+    const perigon = this.props.perigon;
 
     // Always include articles search
     const articlesDefinition = TOOL_DEFINITIONS.search_news_articles;

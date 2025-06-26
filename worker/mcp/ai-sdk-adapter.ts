@@ -1,8 +1,8 @@
 import { tool } from "ai";
-import { Configuration, V1Api } from "@goperigon/perigon-ts";
 import { z } from "zod";
 import { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
-import { TOOL_DEFINITIONS } from "../mcp/tools";
+import { TOOL_DEFINITIONS } from "./tools";
+import { Perigon } from "../lib/perigon";
 
 // Convert MCP CallToolResult to AI SDK tool result (string)
 function convertMCPResult(mcpResult: CallToolResult): string {
@@ -13,7 +13,7 @@ function convertMCPResult(mcpResult: CallToolResult): string {
 }
 
 export function createAISDKTools(apiKey: string) {
-  const perigon = new V1Api(new Configuration({ apiKey }));
+  const perigon = new Perigon(apiKey);
 
   const tools: Record<string, any> = {};
 

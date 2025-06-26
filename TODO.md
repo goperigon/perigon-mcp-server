@@ -1,4 +1,3 @@
-- [ ] Add Aggregate tools
 - [ ] Stats tools?
 - [ ] Topic search tool?
 - [ ] Cleanup / expand prompts
