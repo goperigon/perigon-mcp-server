@@ -110,6 +110,38 @@ async function handleChatRequest(
   env: Env,
 ): Promise<Response> {
   try {
+    if (env.ENVIRONMENT === "prod") {
+      const token = request.headers.get("cf-turnstile-response");
+      const ip = request.headers.get("CF-Connecting-IP");
+      // Validate the token by calling the
+      // "/siteverify" API endpoint.
+      const idempotencyKey = crypto.randomUUID();
+      const url = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
+      const verify = await fetch(url, {
+        body: JSON.stringify({
+          secret: env.TURNSTILE_SECRET_KEY,
+          response: token,
+          remoteip: ip,
+          idempotency_key: idempotencyKey,
+        }),
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      if (!((await verify.json()) as any).success) {
+        return Response.json(
+          {
+            error: "Bad Request",
+            details: "Missing or invalid turnstile token",
+          },
+          {
+            status: 400,
+          },
+        );
+      }
+    }
+
     const { messages = [] } = (await request.json()) as {
       messages: CoreMessage[];
     };
