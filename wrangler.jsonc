@@ -42,6 +42,7 @@
   },
   "vars": {
     "VITE_TURNSTILE_SITE_KEY": "0x4AAAAAABihR9-NN72ssFjf",
+    "VITE_ENVIRONMENT": "prod",
   },
   "upload_source_maps": true,
   "env": {
@@ -64,7 +65,7 @@
       },
       "vars": {
         "VITE_TURNSTILE_SITE_KEY": "0x4AAAAAABihR9-NN72ssFjf",
-        "ENVIRONMENT": "prod",
+        "VITE_ENVIRONMENT": "prod",
       },
     },
   },

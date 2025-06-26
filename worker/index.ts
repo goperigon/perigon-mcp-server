@@ -110,7 +110,7 @@ async function handleChatRequest(
   env: Env,
 ): Promise<Response> {
   try {
-    if (env.ENVIRONMENT === "prod") {
+    if (env.VITE_ENVIRONMENT === "prod") {
       const token = request.headers.get("cf-turnstile-response");
       const ip = request.headers.get("CF-Connecting-IP");
       // Validate the token by calling the
