@@ -64,6 +64,7 @@
       },
       "vars": {
         "VITE_TURNSTILE_SITE_KEY": "0x4AAAAAABihR9-NN72ssFjf",
+        "ENVIRONMENT": "prod",
       },
     },
   },
