@@ -8,12 +8,16 @@ function App() {
     new Set(),
   );
   const [isUserScrolling, setIsUserScrolling] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const prevMessageCountRef = useRef(0);
 
   const { messages, input, handleInputChange, handleSubmit, status } = useChat({
     api: "/v1/api/chat",
+    body: {
+      "cf-turnstile-response": turnstileToken,
+    },
   });
 
   // Collapse tool calls when text starts streaming after them
@@ -210,6 +214,9 @@ function App() {
             status={status}
             onInputChange={handleInputChange}
             onSubmit={handleSubmit}
+            turnstileToken={turnstileToken}
+            onTurnstileVerify={setTurnstileToken}
+            siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY}
           />
         </div>
       </main>

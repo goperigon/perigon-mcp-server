@@ -41,7 +41,7 @@
     "enabled": true,
   },
   "vars": {
-    "TURNSTILE_SITE_KEY": "0x4AAAAAABihR9-NN72ssFjf",
+    "VITE_TURNSTILE_SITE_KEY": "0x4AAAAAABihR9-NN72ssFjf",
   },
   "upload_source_maps": true,
   "env": {
@@ -63,7 +63,7 @@
         ],
       },
       "vars": {
-        "TURNSTILE_SITE_KEY": "0x4AAAAAABihR9-NN72ssFjf",
+        "VITE_TURNSTILE_SITE_KEY": "0x4AAAAAABihR9-NN72ssFjf",
       },
     },
   },
