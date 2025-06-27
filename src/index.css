@@ -1,104 +1,281 @@
 @import "tailwindcss";
 
 @theme {
-  /* Perigon Brand Colors */
-  --color-primary: #227C9D;
-  --color-primary-dark: #34B3E2;
-  
-  /* Light Theme Colors */
-  --color-background-light: #FBFBF9;
-  --color-text-light: #121212;
-  --color-muted-light: #44403C;
-  --color-card-border-light: #E4E4E4;
-  --color-surface-light: #FFFFFF;
-  
-  /* Enhanced Dark Gray Theme */
-  --color-dark: #1F1F1F;
-  --color-surface: #2D2D2D;
-  --color-surface-elevated: #3A3A3A;
-  --color-surface-glass: rgba(45, 45, 45, 0.9);
-  --color-light: #FFFFFF;
-  --color-light-gray: #C1C1C1;
-  --color-text-secondary: #71717A;
-  --color-border: rgba(255, 255, 255, 0.1);
-  --color-border-soft: rgba(255, 255, 255, 0.05);
-  --color-border-glow: rgba(246, 182, 39, 0.3);
-  
-  /* Gold Accent Colors */
-  --color-gold: #F6B627;
-  --color-gold-gradient: linear-gradient(135deg, #F6B627 0%, #FBBF24 100%);
-  --color-gold-muted: #D4941E;
-  --color-gold-soft: rgba(246, 182, 39, 0.15);
-  --color-accent: #F6B627;
-  --color-accent-soft: rgba(246, 182, 39, 0.15);
-  
-  /* Status Colors */
-  --color-success: #10B981;
-  --color-success-soft: rgba(16, 185, 129, 0.15);
-  --color-warning: #F59E0B;
-  --color-warning-soft: rgba(245, 158, 11, 0.15);
-  --color-error: #EF4444;
-  --color-error-soft: rgba(239, 68, 68, 0.15);
-  
-  /* Typography */
-  --font-family: "Px Grotesk", Inter, Roboto, sans-serif;
-  --font-size-h1: 1.875rem;
-  --font-size-h2: 1.45rem;
-  --font-size-body: 0.875rem;
-  --font-size-code: 0.75rem;
-  --font-weight-h1: 600;
-  --font-weight-h2: 600;
-  --font-weight-body: 400;
-  --letter-spacing-tight: -0.0025em;
-  --letter-spacing-normal: 0.01em;
-  
-  /* Layout */
-  --radius: 1rem;
-  --card-padding: 1.5rem;
-  --button-radius: 0.75rem;
-  --button-min-width: 200px;
-  --transition: all 0.2s ease;
+    /* Perigon Brand Colors */
+    --color-primary: #227c9d;
+    --color-primary-dark: #34b3e2;
+    --color-primary-gradient: linear-gradient(135deg, #227c9d 0%, #34b3e2 100%);
+    --color-primary-soft: rgba(34, 124, 157, 0.15);
+
+    /* Light Theme Colors */
+    --color-background-light: #fbfbf9;
+    --color-text-light: #121212;
+    --color-muted-light: #44403c;
+    --color-card-border-light: #e4e4e4;
+    --color-surface-light: #ffffff;
+
+    /* Enhanced Dark Gray Theme with Depth */
+    --color-dark: #1a1a1a;
+    --color-dark-elevated: #1f1f1f;
+    --color-surface: #2a2a2a;
+    --color-surface-elevated: #363636;
+    --color-surface-elevated-2: #424242;
+    --color-surface-glass: rgba(42, 42, 42, 0.85);
+    --color-surface-glass-light: rgba(54, 54, 54, 0.7);
+    --color-light: #ffffff;
+    --color-light-gray: #c1c1c1;
+    --color-text-secondary: #71717a;
+    --color-border: rgba(255, 255, 255, 0.12);
+    --color-border-soft: rgba(255, 255, 255, 0.06);
+    --color-border-glow: rgba(246, 182, 39, 0.4);
+    --color-border-primary: rgba(34, 124, 157, 0.3);
+
+    /* Enhanced Gold Accent Colors */
+    --color-gold: #f6b627;
+    --color-gold-bright: #ffd700;
+    --color-gold-gradient: linear-gradient(
+        135deg,
+        #f6b627 0%,
+        #ffd700 50%,
+        #fbbf24 100%
+    );
+    --color-gold-gradient-subtle: linear-gradient(
+        135deg,
+        rgba(246, 182, 39, 0.8) 0%,
+        rgba(255, 215, 0, 0.6) 100%
+    );
+    --color-gold-muted: #d4941e;
+    --color-gold-soft: rgba(246, 182, 39, 0.15);
+    --color-gold-glow: rgba(246, 182, 39, 0.25);
+    --color-accent: #f6b627;
+    --color-accent-soft: rgba(246, 182, 39, 0.15);
+
+    /* Neural/Cyber Colors */
+    --color-neural-cyan: #00d9ff;
+    --color-neural-purple: #8b5cf6;
+    --color-neural-pink: #ec4899;
+    --color-neural-gradient: linear-gradient(
+        135deg,
+        #00d9ff 0%,
+        #8b5cf6 50%,
+        #ec4899 100%
+    );
+
+    /* Status Colors */
+    --color-success: #10b981;
+    --color-success-soft: rgba(16, 185, 129, 0.15);
+    --color-warning: #f59e0b;
+    --color-warning-soft: rgba(245, 158, 11, 0.15);
+    --color-error: #ef4444;
+    --color-error-soft: rgba(239, 68, 68, 0.15);
+
+    /* Typography */
+    --font-family: "Px Grotesk", Inter, Roboto, sans-serif;
+    --font-size-h1: 1.875rem;
+    --font-size-h2: 1.45rem;
+    --font-size-body: 0.875rem;
+    --font-size-code: 0.75rem;
+    --font-weight-h1: 600;
+    --font-weight-h2: 600;
+    --font-weight-body: 400;
+    --letter-spacing-tight: -0.0025em;
+    --letter-spacing-normal: 0.01em;
+
+    /* Layout */
+    --radius: 1rem;
+    --card-padding: 1.5rem;
+    --button-radius: 0.75rem;
+    --button-min-width: 200px;
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-fast: all 0.15s ease-out;
+
+    /* Shadows */
+    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.15);
+    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.2);
+    --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.25);
+    --shadow-glow: 0 0 20px rgba(246, 182, 39, 0.3);
+    --shadow-primary: 0 8px 24px rgba(34, 124, 157, 0.2);
+
+    /* Tailwind Custom Properties */
+    --animate-shimmer: shimmer 1.5s infinite;
+    --animate-glow: glow 2s ease-in-out infinite alternate;
+    --animate-float: float 3s ease-in-out infinite;
+    --animate-pulse-glow: pulse-glow 2s ease-in-out infinite alternate;
+    --animate-gradient-shift: gradient-shift 3s ease infinite;
 }
 
-/* Custom animations */
+/* Enhanced Custom Animations */
 @keyframes shimmer {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
+    0% {
+        transform: translateX(-100%);
+        opacity: 0;
+    }
+    50% {
+        opacity: 1;
+    }
+    100% {
+        transform: translateX(100%);
+        opacity: 0;
+    }
 }
 
 @keyframes glow {
-  0%, 100% { box-shadow: 0 0 5px var(--color-gold-soft); }
-  50% { box-shadow: 0 0 20px var(--color-gold-soft), 0 0 30px var(--color-gold-soft); }
+    0%,
+    100% {
+        box-shadow:
+            0 0 10px var(--color-gold-glow),
+            0 0 20px var(--color-gold-soft);
+    }
+    50% {
+        box-shadow:
+            0 0 20px var(--color-gold-glow),
+            0 0 40px var(--color-gold-soft),
+            0 0 60px rgba(246, 182, 39, 0.1);
+    }
 }
 
 @keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-2px); }
+    0%,
+    100% {
+        transform: translateY(0px);
+    }
+    50% {
+        transform: translateY(-3px);
+    }
 }
 
-/* Enhanced Glass morphism utilities */
+@keyframes pulse-glow {
+    0%,
+    100% {
+        box-shadow: 0 0 5px var(--color-primary-soft);
+    }
+    50% {
+        box-shadow:
+            0 0 15px var(--color-primary-soft),
+            0 0 25px rgba(34, 124, 157, 0.2);
+    }
+}
+
+@keyframes gradient-shift {
+    0% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+@keyframes slide-up {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fade-in {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes scale-in {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* Enhanced Glass Morphism Utilities */
 .glass {
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  background: var(--color-surface-glass);
-  border: 1px solid var(--color-border);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(12px) saturate(180%);
+    -webkit-backdrop-filter: blur(12px) saturate(180%);
+    background: var(--color-surface-glass);
+    border: 1px solid var(--color-border);
+    box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 .glass-light {
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-  background: rgba(58, 58, 58, 0.6);
-  border: 1px solid var(--color-border-soft);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(8px) saturate(150%);
+    -webkit-backdrop-filter: blur(8px) saturate(150%);
+    background: var(--color-surface-glass-light);
+    border: 1px solid var(--color-border-soft);
+    box-shadow:
+        0 4px 16px rgba(0, 0, 0, 0.25),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
-/* Gold gradient utilities */
+/* Enhanced Gradient Utilities */
 .gradient-gold {
-  background: var(--color-gold-gradient);
+    background: var(--color-gold-gradient);
+    background-size: 200% 200%;
+    animation: var(--animate-gradient-shift);
 }
 
-/* Glow effects */
+.gradient-primary {
+    background: var(--color-primary-gradient);
+}
+
+/* Enhanced Glow Effects */
 .glow-gold {
-  box-shadow: 0 0 20px var(--color-gold-soft);
+    box-shadow: var(--shadow-glow);
+    animation: var(--animate-glow);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--color-surface);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--color-surface-elevated-2);
+    border-radius: 4px;
+    border: 1px solid var(--color-border-soft);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--color-gold-muted);
+}
+
+/* Selection Styling */
+::selection {
+    background: var(--color-gold-soft);
+    color: var(--color-light);
+}
+
+/* Enhanced Body Styling */
+body {
+    background: var(--color-dark);
+    background-image:
+        radial-gradient(
+            circle at 20% 80%,
+            rgba(34, 124, 157, 0.05) 0%,
+            transparent 50%
+        ),
+        radial-gradient(
+            circle at 80% 20%,
+            rgba(246, 182, 39, 0.03) 0%,
+            transparent 50%
+        );
 }

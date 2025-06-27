@@ -5,12 +5,15 @@ interface Tool {
   description: string;
 }
 
-interface ToolsSidebarProps {
+interface CollapsibleSidebarProps {
   isOpen: boolean;
   onToggle: () => void;
 }
 
-export function ToolsSidebar({ isOpen, onToggle }: ToolsSidebarProps) {
+export function CollapsibleSidebar({
+  isOpen,
+  onToggle,
+}: CollapsibleSidebarProps) {
   const [tools, setTools] = useState<Tool[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -24,7 +27,7 @@ export function ToolsSidebar({ isOpen, onToggle }: ToolsSidebarProps) {
         if (!response.ok) {
           throw new Error(`Failed to fetch tools: ${response.statusText}`);
         }
-        const data = await response.json() as { tools: Tool[] };
+        const data = (await response.json()) as { tools: Tool[] };
         setTools(data.tools || []);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to fetch tools");
@@ -40,40 +43,23 @@ export function ToolsSidebar({ isOpen, onToggle }: ToolsSidebarProps) {
 
   return (
     <>
-      {/* Toggle Button */}
-      <button
-        onClick={onToggle}
-        className="fixed top-1/2 left-4 z-50 p-2 bg-surface border border-border rounded-lg shadow-lg hover:bg-surface/80 transition-colors duration-200"
-        aria-label={isOpen ? "Close tools sidebar" : "Open tools sidebar"}
-      >
-        <svg
-          className={`w-5 h-5 text-light transition-transform duration-200 ${
-            isOpen ? "rotate-180" : ""
-          }`}
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M9 5l7 7-7 7"
-          />
-        </svg>
-      </button>
-
-      {/* Sidebar */}
+      {/* Sidebar - positioned below header */}
       <div
-        className={`fixed top-0 left-0 h-full bg-surface border-r border-border shadow-xl z-40 transition-transform duration-300 ease-in-out ${
+        className={`fixed left-0 bg-surface border-r border-border shadow-xl z-30 transition-transform duration-300 ease-in-out ${
           isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
-        style={{ width: "320px" }}
+        style={{
+          width: "320px",
+          top: "80px", // Start below the header
+          height: "calc(100vh - 80px)", // Take remaining height
+        }}
       >
         <div className="flex flex-col h-full">
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b border-border">
-            <h2 className="text-lg font-semibold text-light">Supported Tools</h2>
+            <h2 className="text-lg font-semibold text-light flex items-center gap-2">
+              Supported Tools
+            </h2>
             <button
               onClick={onToggle}
               className="p-1 hover:bg-dark/20 rounded transition-colors duration-200"
@@ -125,10 +111,10 @@ export function ToolsSidebar({ isOpen, onToggle }: ToolsSidebarProps) {
                   >
                     <div className="space-y-3">
                       <h3 className="font-semibold text-light group-hover:text-neural-cyan transition-colors duration-200 flex items-center gap-2">
-                        <span className="text-neural-cyan">⚡</span>
-                        {tool.name}
+                        <span className="text-neural-cyan text-sm">⚡</span>
+                        <span className="text-sm">{tool.name}</span>
                       </h3>
-                      <p className="text-sm text-light-gray leading-relaxed">
+                      <p className="text-xs text-light-gray leading-relaxed">
                         {tool.description}
                       </p>
                     </div>
@@ -140,10 +126,11 @@ export function ToolsSidebar({ isOpen, onToggle }: ToolsSidebarProps) {
         </div>
       </div>
 
-      {/* Overlay */}
+      {/* Overlay - only show when sidebar is open */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-30"
+          className="fixed inset-0 bg-black/30 backdrop-blur-sm z-20"
+          style={{ top: "80px" }} // Start below header
           onClick={onToggle}
           aria-hidden="true"
         />

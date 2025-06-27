@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { useChat } from "@ai-sdk/react";
 import { MessageBubble } from "./components/MessageBubble";
 import { ChatInput } from "./components/ChatInput";
-import { ToolsSidebar } from "./components/ToolsSidebar";
+import { CollapsibleSidebar } from "./components/CollapsibleSidebar";
 
 function App() {
   const [expandedToolCalls, setExpandedToolCalls] = useState<Set<string>>(
@@ -64,12 +64,32 @@ function App() {
 
   return (
     <div className="flex flex-col h-screen w-full bg-dark">
-      <ToolsSidebar 
+      <CollapsibleSidebar 
         isOpen={sidebarOpen} 
         onToggle={() => setSidebarOpen(!sidebarOpen)} 
       />
+      
       <header className="flex items-center justify-between px-8 py-4 glass sticky top-0 z-50 shadow-lg">
-        <div className="flex-1 flex items-center">
+        <div className="flex-1 flex items-center gap-4">
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="p-2 hover:bg-surface/80 rounded-lg transition-colors duration-200"
+            aria-label={sidebarOpen ? "Close tools sidebar" : "Open tools sidebar"}
+          >
+            <svg
+              className="w-6 h-6 text-light"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 6h16M4 12h16M4 18h16"
+              />
+            </svg>
+          </button>
           <a
             href="https://perigon.io"
             target="_blank"
@@ -98,13 +118,14 @@ function App() {
         </div>
       </header>
 
-      <main className="flex-1 flex justify-center overflow-hidden">
+      <main className={`flex-1 flex justify-center overflow-hidden transition-all duration-300 ${
+        sidebarOpen ? "ml-80" : "ml-0"
+      }`}>
         <div className="flex flex-col h-full w-full max-w-4xl px-8">
           <div
             className="flex-1 overflow-y-auto py-4 flex flex-col gap-4"
             id="messages-container"
             ref={messagesContainerRef}
-
           >
             {messages?.map((message) => (
               <MessageBubble

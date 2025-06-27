@@ -18,7 +18,7 @@ export function ChatInput({
   useEffect(() => {
     if (input === "" && textareaRef.current) {
       textareaRef.current.style.height = "auto";
-      textareaRef.current.style.height = "48px";
+      textareaRef.current.style.height = "56px";
     }
   }, [input]);
 
@@ -32,7 +32,15 @@ export function ChatInput({
   const handleInput = (e: FormEvent<HTMLTextAreaElement>) => {
     const target = e.target as HTMLTextAreaElement;
     target.style.height = "auto";
-    target.style.height = Math.min(target.scrollHeight, 128) + "px";
+    const newHeight = Math.min(target.scrollHeight, 128);
+    target.style.height = newHeight + "px";
+    
+    // Show scrollbar only when content exceeds max height
+    if (target.scrollHeight > 128) {
+      target.style.overflowY = "auto";
+    } else {
+      target.style.overflowY = "hidden";
+    }
   };
 
   return (
@@ -44,7 +52,7 @@ export function ChatInput({
           onChange={onInputChange}
           onKeyDown={handleKeyDown}
           placeholder="Type your message..."
-          className="flex-1 px-6 py-4 bg-transparent rounded-3xl text-[0.875rem] text-light outline-none resize-none min-h-[48px] max-h-32 overflow-y-auto transition-all duration-200 placeholder:text-text-secondary tracking-[0.01em]"
+          className="flex-1 px-6 py-4 bg-transparent rounded-3xl text-[0.875rem] text-light outline-none focus:outline-none focus-visible:outline-none focus:ring-0 focus:border-transparent resize-none min-h-[56px] max-h-32 overflow-y-hidden transition-all duration-200 placeholder:text-text-secondary tracking-[0.01em]"
           rows={1}
           onInput={handleInput}
         />
