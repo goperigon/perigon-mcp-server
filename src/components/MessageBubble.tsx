@@ -1,6 +1,4 @@
-import React from "react";
 import ReactMarkdown from "react-markdown";
-import { ToolInvocation } from "./ToolInvocation";
 
 interface MessageBubbleProps {
   message: any;
@@ -33,10 +31,7 @@ export function MessageBubble({
                     <ReactMarkdown
                       components={{
                         code: ({ children, ...props }) => (
-                          <code
-                            className="bg-surface-elevated text-primary px-2 py-1 rounded text-xs font-mono"
-                            {...props}
-                          >
+                          <code className="bg-surface-elevated text-primary px-2 py-1 rounded text-xs font-mono" {...props}>
                             {children}
                           </code>
                         ),
@@ -45,63 +40,8 @@ export function MessageBubble({
                             {children}
                           </pre>
                         ),
-                        p: ({ children }) => (
-                          <p className="mb-3 leading-relaxed">{children}</p>
-                        ),
-                        ul: ({ children }) => (
-                          <ul className="list-disc list-outside mb-3 space-y-1 ml-4">
-                            {children}
-                          </ul>
-                        ),
-                        ol: ({ children }) => (
-                          <ol className="list-decimal list-outside mb-3 space-y-1 ml-4">
-                            {children}
-                          </ol>
-                        ),
-                        li: ({ children }) => (
-                          <li className="mb-1">{children}</li>
-                        ),
-                        h1: ({ children }) => (
-                          <h1 className="text-[1.875rem] font-semibold mb-4 text-light border-b border-border pb-2 tracking-tight">
-                            {children}
-                          </h1>
-                        ),
-                        h2: ({ children }) => (
-                          <h2 className="text-[1.45rem] font-semibold mb-3 text-light tracking-tight">
-                            {children}
-                          </h2>
-                        ),
-                        h3: ({ children }) => (
-                          <h3 className="text-lg font-semibold mb-2 text-light">
-                            {children}
-                          </h3>
-                        ),
-                        h4: ({ children }) => (
-                          <h4 className="text-base font-semibold mb-2 text-light">
-                            {children}
-                          </h4>
-                        ),
-                        strong: ({ children }) => (
-                          <strong className="font-bold text-light">
-                            {children}
-                          </strong>
-                        ),
-                        em: ({ children }) => (
-                          <em className="italic text-light-gray">{children}</em>
-                        ),
-                        blockquote: ({ children }) => (
-                          <blockquote className="border-l-4 border-primary pl-4 italic mb-3 text-light-gray bg-surface-elevated/30 py-2 rounded-r">
-                            {children}
-                          </blockquote>
-                        ),
-                        hr: () => <hr className="border-border my-4" />,
                         a: ({ children, href }) => (
-                          <a
-                            href={href}
-                            className="text-primary hover:text-primary/80 underline transition-colors duration-200"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
+                          <a href={href} className="text-primary hover:text-primary/80 underline" target="_blank" rel="noopener noreferrer">
                             {children}
                           </a>
                         ),
@@ -114,14 +54,40 @@ export function MessageBubble({
               case "tool-invocation":
                 const toolCallId = `${message.id}-${index}-${part.toolInvocation.toolName}`;
                 const isCollapsed = !expandedToolCalls.has(toolCallId);
+                const { toolName, state, args } = part.toolInvocation;
 
                 return (
-                  <ToolInvocation
-                    key={index}
-                    toolInvocation={part.toolInvocation}
-                    isCollapsed={isCollapsed}
-                    onToggleCollapse={() => onToggleToolCall(toolCallId)}
-                  />
+                  <div key={index} className="bg-surface-elevated p-4 rounded-lg border-l-4 border-accent my-3 text-light shadow-md hover:shadow-lg transition-shadow duration-200 border">
+                    <div
+                      className="text-sm font-semibold text-accent mb-3 cursor-pointer hover:text-accent/80 flex items-center gap-2 transition-colors duration-200"
+                      onClick={() => onToggleToolCall(toolCallId)}
+                    >
+                      <span>{isCollapsed ? "▶" : "▼"}</span>
+                      🔧 {toolName} ({state})
+                    </div>
+                    {!isCollapsed && (
+                      <>
+                        {args && (
+                          <div className="text-xs text-light mb-3">
+                            <strong>Arguments:</strong>
+                            <pre className="mt-1 overflow-x-auto">
+                              {JSON.stringify(args, null, 2)}
+                            </pre>
+                          </div>
+                        )}
+                        {state === "result" && "result" in part.toolInvocation && (
+                          <div className="text-xs text-light">
+                            <strong>Result:</strong>
+                            <pre className="mt-1 overflow-x-auto">
+                              {typeof part.toolInvocation.result === "string"
+                                ? part.toolInvocation.result
+                                : JSON.stringify(part.toolInvocation.result, null, 2)}
+                            </pre>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
                 );
               default:
                 return null;

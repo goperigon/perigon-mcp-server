@@ -87,10 +87,6 @@ export default {
 
     const url = new URL(request.url);
 
-    if (url.pathname === "/v1/debug") {
-      return new Response(env.VITE_USE_TURNSTILE, { status: 200 });
-    }
-
     if (url.pathname === "/v1/api/chat") {
       if (request.method !== "POST") {
         return new Response("Method not allowed", { status: 405 });

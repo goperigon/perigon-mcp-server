@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useChat } from "@ai-sdk/react";
 import { MessageBubble } from "./components/MessageBubble";
 import { ChatInput } from "./components/ChatInput";
@@ -7,20 +7,10 @@ function App() {
   const [expandedToolCalls, setExpandedToolCalls] = useState<Set<string>>(
     new Set(),
   );
-  const [isUserScrolling, setIsUserScrolling] = useState(false);
-  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
-  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const prevMessageCountRef = useRef(0);
 
   const { messages, input, handleInputChange, handleSubmit, status } = useChat({
     api: "/v1/api/chat",
-    headers:
-      import.meta.env.VITE_USE_TURNSTILE === "true" && turnstileToken
-        ? {
-            "cf-turnstile-response": turnstileToken,
-          }
-        : undefined,
   });
 
   // Collapse tool calls when text starts streaming after them
@@ -47,92 +37,16 @@ function App() {
     }
   }, [messages]);
 
-  // Check if user is near bottom of scroll
-  const isNearBottom = useCallback(() => {
-    const container = messagesContainerRef.current;
-    if (!container) return true;
-    const threshold = 100; // pixels from bottom
-    return (
-      container.scrollHeight - container.scrollTop - container.clientHeight <
-      threshold
-    );
-  }, []);
-
-  // Handle scroll events to detect user scrolling
-  const handleScroll = useCallback(() => {
-    if (!isNearBottom()) {
-      setIsUserScrolling(true);
-      // Clear existing timeout
-      if (scrollTimeoutRef.current) {
-        clearTimeout(scrollTimeoutRef.current);
-      }
-      // Reset user scrolling flag after 1 second of no scrolling (reduced from 2s)
-      scrollTimeoutRef.current = setTimeout(() => {
-        setIsUserScrolling(false);
-      }, 1000);
-    } else {
-      // If user scrolls back to bottom, immediately allow auto-scroll
-      setIsUserScrolling(false);
-      if (scrollTimeoutRef.current) {
-        clearTimeout(scrollTimeoutRef.current);
-      }
-    }
-  }, [isNearBottom]);
-
-  // Unified auto-scroll logic
+  // Simple auto-scroll to bottom when new messages arrive
   useEffect(() => {
     const container = messagesContainerRef.current;
-    if (!container || isUserScrolling) return;
-
-    const lastMessage = messages[messages.length - 1];
-    const isStreaming = status === "streaming" || status === "submitted";
-    const hasNewMessage = messages.length > prevMessageCountRef.current;
-
-    // Determine if we should scroll
-    const shouldScroll =
-      hasNewMessage &&
-      (!lastMessage || lastMessage.role === "user" || isNearBottom());
-
-    const scrollToBottom = () => {
+    if (container) {
       container.scrollTo({
         top: container.scrollHeight,
         behavior: "smooth",
       });
-    };
-
-    // Handle initial scroll for new messages
-    if (shouldScroll) {
-      requestAnimationFrame(scrollToBottom);
     }
-
-    // Set up continuous scrolling during streaming if we should be scrolling
-    let intervalId: NodeJS.Timeout | null = null;
-    if (isStreaming && (shouldScroll || isNearBottom())) {
-      intervalId = setInterval(() => {
-        // Only scroll if still near bottom to avoid interrupting user
-        if (isNearBottom() && !isUserScrolling) {
-          scrollToBottom();
-        }
-      }, 100);
-    }
-
-    prevMessageCountRef.current = messages.length;
-
-    return () => {
-      if (intervalId) {
-        clearInterval(intervalId);
-      }
-    };
-  }, [messages, status, isUserScrolling, isNearBottom]);
-
-  // Cleanup timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (scrollTimeoutRef.current) {
-        clearTimeout(scrollTimeoutRef.current);
-      }
-    };
-  }, []);
+  }, [messages]);
 
   const handleToggleToolCall = (toolCallId: string) => {
     setExpandedToolCalls((prev) => {
@@ -184,7 +98,7 @@ function App() {
             className="flex-1 overflow-y-auto py-4 flex flex-col gap-4"
             id="messages-container"
             ref={messagesContainerRef}
-            onScroll={handleScroll}
+
           >
             {messages?.map((message) => (
               <MessageBubble
@@ -214,9 +128,6 @@ function App() {
             status={status}
             onInputChange={handleInputChange}
             onSubmit={handleSubmit}
-            turnstileToken={turnstileToken}
-            onTurnstileVerify={setTurnstileToken}
-            siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY}
           />
         </div>
       </main>
