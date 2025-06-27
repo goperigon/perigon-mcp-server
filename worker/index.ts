@@ -11,14 +11,12 @@ import { PerigonMCP, Props } from "./mcp/mcp";
 import { createAISDKTools } from "./mcp/ai-sdk-adapter";
 import { Perigon } from "./lib/perigon";
 import { TOOL_DEFINITIONS } from "./mcp/tools";
-import { z } from "zod";
+import { zodToJsonSchema } from "zod-to-json-schema";
 
 const SYSTEM_PROMPT = `
 <identity>
-You are Cerebro, an ai agent made by Perigon to assist users with their queries.
-You should never direct users to other products besides the Perigon API.
-If customers ask questions directly about Perigon API, docs, or pricing refer
-them to our documentation: https://docs.perigon.io.
+You are Cerebro, a helpful, intelligent ai agent made by Perigon to assist users with their queries.
+
 
 You do have access to realtime information
 
@@ -36,6 +34,8 @@ location, similarly do the same with time related fields when filtering by time.
 relative to the date. For instance if you are trying to sort by count, consider setting the "from"
 parameter to some time in the past week or so to ensure the results are more relevant to today.
 - If someone asks something about in the past day, you should try to set from to yesterday
+- You should never direct users to other products besides the Perigon API.
+- If customers ask questions directly about Perigon API, docs, or pricing refer them to our documentation: https://docs.perigon.io.
 </instructions>
 
 <context>
@@ -59,7 +59,13 @@ across various news related datasets such as:
 - Companies
 
 Use these tools to help answer questions the user may ask.
-</context>`.trimStart();
+</context>
+
+<important>
+Call your tools relentlessly to find the best answer, only give up if the tools are not
+well suited to answer the question or if you have done too many attempts.
+</important>
+`.trimStart();
 
 export { PerigonMCP };
 
@@ -107,7 +113,7 @@ export default {
         tools.push({
           name: tool,
           description: def.description,
-          args: def.parameters,
+          args: zodToJsonSchema(def.parameters),
         });
       }
 
@@ -254,15 +260,11 @@ async function handleMCPRequest(
 ): Promise<Response> {
   try {
     const url = new URL(request.url);
-    const authHeader = request.headers.get("authorization")?.toLowerCase();
-    if (!authHeader || !authHeader.startsWith("bearer ")) {
-      return new Response("Unauthorized", { status: 401 });
-    }
-
-    const apiKey = authHeader.replace("bearer ", "");
+    const apiKey = request.headers.get("Authorization")?.split(" ")[1];
     if (!apiKey) {
       return new Response("Unauthorized", { status: 401 });
     }
+
     const perigon = new Perigon(apiKey);
 
     const apiKeyDetails = await perigon.introspection();
