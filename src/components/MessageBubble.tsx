@@ -1,6 +1,4 @@
-import React from "react";
 import ReactMarkdown from "react-markdown";
-import { ToolInvocation } from "./ToolInvocation";
 
 interface MessageBubbleProps {
   message: any;
@@ -114,14 +112,48 @@ export function MessageBubble({
               case "tool-invocation":
                 const toolCallId = `${message.id}-${index}-${part.toolInvocation.toolName}`;
                 const isCollapsed = !expandedToolCalls.has(toolCallId);
+                const { toolName, state, args } = part.toolInvocation;
 
                 return (
-                  <ToolInvocation
+                  <div
                     key={index}
-                    toolInvocation={part.toolInvocation}
-                    isCollapsed={isCollapsed}
-                    onToggleCollapse={() => onToggleToolCall(toolCallId)}
-                  />
+                    className="bg-surface-elevated p-4 rounded-lg border-l-4 border-accent my-3 text-light shadow-md hover:shadow-lg transition-shadow duration-200 border"
+                  >
+                    <div
+                      className="text-sm font-semibold text-accent mb-3 cursor-pointer hover:text-accent/80 flex items-center gap-2 transition-colors duration-200"
+                      onClick={() => onToggleToolCall(toolCallId)}
+                    >
+                      <span>{isCollapsed ? "▶" : "▼"}</span>
+                      🔧 {toolName} ({state})
+                    </div>
+                    {!isCollapsed && (
+                      <>
+                        {args && (
+                          <div className="text-xs text-light mb-3">
+                            <strong>Arguments:</strong>
+                            <pre className="mt-1 overflow-x-auto">
+                              {JSON.stringify(args, null, 2)}
+                            </pre>
+                          </div>
+                        )}
+                        {state === "result" &&
+                          "result" in part.toolInvocation && (
+                            <div className="text-xs text-light">
+                              <strong>Result:</strong>
+                              <pre className="mt-1 overflow-x-auto">
+                                {typeof part.toolInvocation.result === "string"
+                                  ? part.toolInvocation.result
+                                  : JSON.stringify(
+                                      part.toolInvocation.result,
+                                      null,
+                                      2,
+                                    )}
+                              </pre>
+                            </div>
+                          )}
+                      </>
+                    )}
+                  </div>
                 );
               default:
                 return null;
