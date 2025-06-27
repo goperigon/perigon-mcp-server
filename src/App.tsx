@@ -118,44 +118,51 @@ function App() {
         </div>
       </header>
 
-      <main className={`flex-1 flex justify-center overflow-hidden transition-all duration-300 ${
+      <main className={`flex-1 flex flex-col overflow-hidden transition-all duration-300 ${
         sidebarOpen ? "ml-80" : "ml-0"
       }`}>
-        <div className="flex flex-col h-full w-full max-w-4xl px-8">
-          <div
-            className="flex-1 overflow-y-auto py-4 flex flex-col gap-4"
-            id="messages-container"
-            ref={messagesContainerRef}
-          >
-            {messages?.map((message) => (
-              <MessageBubble
-                key={message.id}
-                message={message}
-                expandedToolCalls={expandedToolCalls}
-                onToggleToolCall={handleToggleToolCall}
-              />
-            ))}
+        <div className="flex-1 overflow-y-auto flex justify-center" ref={messagesContainerRef}>
+          <div className="w-full max-w-4xl px-8">
+            <div
+              className="py-4 flex flex-col gap-4 pb-8"
+              id="messages-container"
+            >
+              {messages?.map((message) => (
+                <MessageBubble
+                  key={message.id}
+                  message={message}
+                  expandedToolCalls={expandedToolCalls}
+                  onToggleToolCall={handleToggleToolCall}
+                />
+              ))}
 
-            {status === "submitted" && (
-              <div className="flex justify-start">
-                <div className="max-w-[80%] px-6 py-4 rounded-2xl bg-surface text-light rounded-bl-sm shadow-md border border-border">
-                  <div className="flex items-center space-x-2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
-                    <span className="text-[0.875rem] text-light-gray tracking-[0.01em]">
-                      Thinking...
-                    </span>
+              {status === "submitted" && (
+                <div className="flex justify-start">
+                  <div className="max-w-[80%] px-6 py-4 rounded-2xl bg-surface text-light rounded-bl-sm shadow-md border border-border">
+                    <div className="flex items-center space-x-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                      <span className="text-[0.875rem] text-light-gray tracking-[0.01em]">
+                        Thinking...
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
-
-          <ChatInput
-            input={input}
-            status={status}
-            onInputChange={handleInputChange}
-            onSubmit={handleSubmit}
-          />
+        </div>
+        
+        <div className="flex-shrink-0 bg-dark border-t border-border/20">
+          <div className="flex justify-center">
+            <div className="w-full max-w-4xl px-8">
+              <ChatInput
+                input={input}
+                status={status}
+                onInputChange={handleInputChange}
+                onSubmit={handleSubmit}
+              />
+            </div>
+          </div>
         </div>
       </main>
     </div>
