@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useChat } from "@ai-sdk/react";
 import { MessageBubble } from "./components/MessageBubble";
 import { ChatInput } from "./components/ChatInput";
@@ -16,7 +16,7 @@ function App() {
   const { messages, input, handleInputChange, handleSubmit, status } = useChat({
     api: "/v1/api/chat",
     headers:
-      import.meta.env.VITE_USE_TURNSTILE && turnstileToken
+      import.meta.env.VITE_USE_TURNSTILE === "true" && turnstileToken
         ? {
             "cf-turnstile-response": turnstileToken,
           }
@@ -79,54 +79,51 @@ function App() {
     }
   }, [isNearBottom]);
 
-  // Auto-scroll to bottom when new messages arrive
-  useEffect(() => {
-    const container = messagesContainerRef.current;
-    if (!container) return;
-
-    const lastMessage = messages[messages.length - 1];
-
-    // Always scroll on new user messages, or if user is near bottom for AI messages
-    const shouldScroll =
-      messages.length > prevMessageCountRef.current &&
-      (!lastMessage ||
-        lastMessage.role === "user" ||
-        (!isUserScrolling && isNearBottom()));
-
-    if (shouldScroll) {
-      // Use requestAnimationFrame to ensure DOM is updated
-      requestAnimationFrame(() => {
-        container.scrollTo({
-          top: container.scrollHeight,
-          behavior: "smooth",
-        });
-      });
-    }
-
-    prevMessageCountRef.current = messages.length;
-  }, [messages, isUserScrolling, isNearBottom]);
-
-  // Auto-scroll during streaming responses
+  // Unified auto-scroll logic
   useEffect(() => {
     const container = messagesContainerRef.current;
     if (!container || isUserScrolling) return;
 
-    // If AI is responding and user is near bottom, keep scrolling
-    if ((status === "streaming" || status === "submitted") && isNearBottom()) {
-      const scrollToBottom = () => {
-        container.scrollTo({
-          top: container.scrollHeight,
-          behavior: "smooth",
-        });
-      };
+    const lastMessage = messages[messages.length - 1];
+    const isStreaming = status === "streaming" || status === "submitted";
+    const hasNewMessage = messages.length > prevMessageCountRef.current;
 
-      // Scroll immediately and set up interval for continuous scrolling during streaming
-      scrollToBottom();
-      const intervalId = setInterval(scrollToBottom, 100);
+    // Determine if we should scroll
+    const shouldScroll =
+      hasNewMessage &&
+      (!lastMessage || lastMessage.role === "user" || isNearBottom());
 
-      return () => clearInterval(intervalId);
+    const scrollToBottom = () => {
+      container.scrollTo({
+        top: container.scrollHeight,
+        behavior: "smooth",
+      });
+    };
+
+    // Handle initial scroll for new messages
+    if (shouldScroll) {
+      requestAnimationFrame(scrollToBottom);
     }
-  }, [status, isUserScrolling, isNearBottom]);
+
+    // Set up continuous scrolling during streaming if we should be scrolling
+    let intervalId: NodeJS.Timeout | null = null;
+    if (isStreaming && (shouldScroll || isNearBottom())) {
+      intervalId = setInterval(() => {
+        // Only scroll if still near bottom to avoid interrupting user
+        if (isNearBottom() && !isUserScrolling) {
+          scrollToBottom();
+        }
+      }, 100);
+    }
+
+    prevMessageCountRef.current = messages.length;
+
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
+  }, [messages, status, isUserScrolling, isNearBottom]);
 
   // Cleanup timeout on unmount
   useEffect(() => {

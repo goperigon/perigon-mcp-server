@@ -1,7 +1,7 @@
 import React, { useRef, useEffect } from "react";
 import { TurnstileWidget, TurnstileWidgetRef } from "./TurnstileWidget";
 
-const USE_TURNSTILE = import.meta.env.VITE_USE_TURNSTILE;
+const USE_TURNSTILE = import.meta.env.VITE_USE_TURNSTILE === "true";
 
 interface ChatInputProps {
   input: string;
