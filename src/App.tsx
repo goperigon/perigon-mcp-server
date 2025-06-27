@@ -69,7 +69,7 @@ function App() {
         onToggle={() => setSidebarOpen(!sidebarOpen)} 
       />
       
-      <header className="flex items-center justify-between px-8 py-4 glass sticky top-0 z-50 shadow-lg">
+      <header className="flex items-center justify-between px-8 py-4 bg-dark/95 border-b border-border/20 sticky top-0 z-50">
         <div className="flex-1 flex items-center gap-4">
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
