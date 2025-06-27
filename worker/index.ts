@@ -11,7 +11,7 @@ import { PerigonMCP, Props } from "./mcp/mcp";
 import { createAISDKTools } from "./mcp/ai-sdk-adapter";
 import { Perigon } from "./lib/perigon";
 import { TOOL_DEFINITIONS } from "./mcp/tools";
-import { z } from "zod";
+import { zodToJsonSchema } from "zod-to-json-schema";
 
 const SYSTEM_PROMPT = `
 <identity>
@@ -107,7 +107,7 @@ export default {
         tools.push({
           name: tool,
           description: def.description,
-          args: def.parameters,
+          args: zodToJsonSchema(def.parameters),
         });
       }
 
@@ -254,15 +254,11 @@ async function handleMCPRequest(
 ): Promise<Response> {
   try {
     const url = new URL(request.url);
-    const authHeader = request.headers.get("authorization")?.toLowerCase();
-    if (!authHeader || !authHeader.startsWith("bearer ")) {
-      return new Response("Unauthorized", { status: 401 });
-    }
-
-    const apiKey = authHeader.replace("bearer ", "");
+    const apiKey = request.headers.get("Authorization")?.split(" ")[1];
     if (!apiKey) {
       return new Response("Unauthorized", { status: 401 });
     }
+
     const perigon = new Perigon(apiKey);
 
     const apiKeyDetails = await perigon.introspection();
