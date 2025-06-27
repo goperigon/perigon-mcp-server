@@ -3,7 +3,6 @@ import { useState, useEffect } from "react";
 interface Tool {
   name: string;
   description: string;
-  args: Record<string, any>;
 }
 
 interface ToolsSidebarProps {
@@ -74,7 +73,7 @@ export function ToolsSidebar({ isOpen, onToggle }: ToolsSidebarProps) {
         <div className="flex flex-col h-full">
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b border-border">
-            <h2 className="text-lg font-semibold text-light">Available Tools</h2>
+            <h2 className="text-lg font-semibold text-light">Supported Tools</h2>
             <button
               onClick={onToggle}
               className="p-1 hover:bg-dark/20 rounded transition-colors duration-200"
@@ -122,33 +121,16 @@ export function ToolsSidebar({ isOpen, onToggle }: ToolsSidebarProps) {
                 {tools.map((tool, index) => (
                   <div
                     key={index}
-                    className="p-3 bg-dark/20 border border-border rounded-lg hover:bg-dark/30 transition-colors duration-200"
+                    className="group p-4 bg-surface/50 border border-light-gray/30 rounded-lg hover:border-primary/40 hover:bg-surface/80 hover:shadow-md hover:shadow-primary/5 transition-all duration-200"
                   >
-                    <h3 className="font-medium text-light mb-1">{tool.name}</h3>
-                    <p className="text-sm text-light-gray mb-2">
-                      {tool.description}
-                    </p>
-                    {Object.keys(tool.args).length > 0 && (
-                      <details className="mt-2">
-                        <summary className="text-xs text-primary cursor-pointer hover:text-primary/80">
-                          Parameters ({Object.keys(tool.args).length})
-                        </summary>
-                        <div className="mt-2 pl-2 border-l-2 border-border">
-                          {Object.entries(tool.args).map(([key, value]) => (
-                            <div key={key} className="mb-1">
-                              <code className="text-xs bg-dark/40 px-1 py-0.5 rounded text-light">
-                                {key}
-                              </code>
-                              {typeof value === "object" && value?.type && (
-                                <span className="text-xs text-light-gray ml-1">
-                                  ({value.type})
-                                </span>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      </details>
-                    )}
+                    <div className="space-y-2">
+                      <h3 className="font-semibold text-light group-hover:text-primary transition-colors duration-200">
+                        {tool.name}
+                      </h3>
+                      <p className="text-sm text-light-gray leading-relaxed">
+                        {tool.description}
+                      </p>
+                    </div>
                   </div>
                 ))}
               </div>
