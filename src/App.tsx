@@ -3,8 +3,6 @@ import { useChat } from "@ai-sdk/react";
 import { MessageBubble } from "./components/MessageBubble";
 import { ChatInput } from "./components/ChatInput";
 
-const IS_PRODUCTION = import.meta.env.VITE_ENVIRONMENT === "prod";
-
 function App() {
   const [expandedToolCalls, setExpandedToolCalls] = useState<Set<string>>(
     new Set(),
@@ -18,7 +16,7 @@ function App() {
   const { messages, input, handleInputChange, handleSubmit, status } = useChat({
     api: "/v1/api/chat",
     headers:
-      IS_PRODUCTION && turnstileToken
+      import.meta.env.VITE_USE_TURNSTILE && turnstileToken
         ? {
             "cf-turnstile-response": turnstileToken,
           }
@@ -222,7 +220,6 @@ function App() {
             turnstileToken={turnstileToken}
             onTurnstileVerify={setTurnstileToken}
             siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY}
-            isProduction={IS_PRODUCTION}
           />
         </div>
       </main>
