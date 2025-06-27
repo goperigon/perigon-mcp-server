@@ -9,6 +9,18 @@ import { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 import { Perigon } from "../lib/perigon";
 
+// Constants
+const DEFAULT_COUNTRIES = ["us"];
+const DEFAULT_PAGE_SIZE = 10;
+
+// Schema composition utilities
+const createBaseSearchArgs = () =>
+  z.object({
+    ...locationArgs.shape,
+    ...paginationArgs.shape,
+    ...defaultArgs.shape,
+  });
+
 function createSearchField(contextDescription: string) {
   return z
     .string()
@@ -76,6 +88,16 @@ function toolResult(text: string): CallToolResult {
 
 const noResults = toolResult("No results found");
 
+function createPaginationHeader(
+  total: number,
+  page: number,
+  size: number,
+  itemType: string,
+): string {
+  const totalPages = Math.ceil(total / size);
+  return `Got ${total} ${itemType} (page ${page + 1} of ${totalPages})`;
+}
+
 async function createErrorMessage(error: any) {
   let msg: string | undefined;
   if (error instanceof ResponseError) {
@@ -98,7 +120,7 @@ const locationArgs = z.object({
       if (!countries) return undefined;
       return countries.map((country) => country.toLowerCase());
     })
-    .default(["us"])
+    .default(DEFAULT_COUNTRIES)
     .describe(
       `This field filters the returned results based on the country associated with the event or news.
       Only results tagged with one of these countries will be included.
@@ -136,7 +158,7 @@ const paginationArgs = z.object({
     .number()
     .min(1)
     .max(1000)
-    .default(10)
+    .default(DEFAULT_PAGE_SIZE)
     .describe(
       "The number of results to return per page in the paginated response.",
     ),
@@ -159,10 +181,7 @@ const defaultArgs = z.object({
     ),
 });
 
-export const articleArgs = z.object({
-  ...locationArgs.shape,
-  ...paginationArgs.shape,
-  ...defaultArgs.shape,
+export const articleArgs = createBaseSearchArgs().extend({
   query: createSearchField("article content"),
   sortBy: z
     .enum([
@@ -254,8 +273,7 @@ Journalist Ids: ${journalistIds}
 </article>`;
         });
 
-        let totalPages = Math.ceil(result.numResults / size);
-        let output = `Got ${result.numResults} articles (page ${page + 1} of ${totalPages})`;
+        let output = createPaginationHeader(result.numResults, page, size, "articles");
         output += "\n<articles>\n";
         output += articles.join("\n\n");
         output += "\n</articles>";
@@ -265,16 +283,13 @@ Journalist Ids: ${journalistIds}
       .catch(async (error) => {
         console.error("Error searching articles:", error);
         return toolResult(
-          `Error: Failed to search articles: ${createErrorMessage(error)}`,
+          `Error: Failed to search topics: ${await createErrorMessage(error)}`,
         );
       });
   };
 }
 
-export const searchStoriesArgs = z.object({
-  ...locationArgs.shape,
-  ...paginationArgs.shape,
-  ...defaultArgs.shape,
+export const searchStoriesArgs = createBaseSearchArgs().extend({
   query: createSearchField("story/headline content"),
   categories,
   topics,
@@ -348,8 +363,7 @@ Sentiment: ${JSON.stringify(story.sentiment)}
 </news_story>`;
         });
 
-        let totalPages = Math.ceil(result.numResults / size);
-        let output = `Got ${result.numResults} stories (page ${page + 1} of ${totalPages})`;
+        let output = createPaginationHeader(result.numResults, page, size, "stories");
 
         output += "\n<stories>\n";
         output += stories.join("\n\n");
@@ -360,7 +374,7 @@ Sentiment: ${JSON.stringify(story.sentiment)}
       .catch(async (error) => {
         console.error("Error searching news stories:", error);
         return toolResult(
-          `Error: Failed to search news stories: ${createErrorMessage(error)}`,
+          `Error: Failed to search news stories: ${await createErrorMessage(error)}`,
         );
       });
   };
@@ -403,7 +417,7 @@ export const journalistArgs = z.object({
   countries: z
     .array(z.string())
     .optional()
-    .default(["us"])
+    .default(DEFAULT_COUNTRIES)
     .transform((countries) => {
       if (!countries) return undefined;
       return countries.map((country) => country.toLowerCase());
@@ -452,8 +466,7 @@ Locations: ${journalist?.locations?.map((location) => `Country: ${location.count
 </journalist>`;
         });
 
-        let totalPages = Math.ceil(result.numResults / size);
-        let output = `Got ${result.numResults} journalists (page ${page + 1} of ${totalPages})`;
+        let output = createPaginationHeader(result.numResults, page, size, "journalists");
         output += "\n<journalists>\n";
         output += journalists.join("\n\n");
         output += "\n</journalists>";
@@ -463,7 +476,7 @@ Locations: ${journalist?.locations?.map((location) => `Country: ${location.count
       .catch(async (error) => {
         console.error("Error searching journalists:", error);
         return toolResult(
-          `Error: Failed to search journalists: ${createErrorMessage(error)}`,
+          `Error: Failed to search journalists: ${await createErrorMessage(error)}`,
         );
       });
   };
@@ -552,8 +565,7 @@ Top Topics: ${source.topTopics?.join(", ")}
 </source>`;
         });
 
-        let totalPages = Math.ceil(result.numResults / size);
-        let output = `Got ${result.numResults} sources (page ${page + 1} of ${totalPages})`;
+        let output = createPaginationHeader(result.numResults, page, size, "sources");
         output += "\n<sources>\n";
         output += sources.join("\n\n");
         output += "\n</sources>";
@@ -563,7 +575,7 @@ Top Topics: ${source.topTopics?.join(", ")}
       .catch(async (error) => {
         console.error("Error searching sources:", error);
         return toolResult(
-          `Error: Failed to search sources: ${createErrorMessage(error)}`,
+          `Error: Failed to search sources: ${await createErrorMessage(error)}`,
         );
       });
   };
@@ -612,8 +624,7 @@ Description: ${person.description}
 </person>`;
         });
 
-        let totalPages = Math.ceil(result.numResults / size);
-        let output = `Got ${result.numResults} people (page ${page + 1} of ${totalPages})`;
+        let output = createPaginationHeader(result.numResults, page, size, "people");
         output += "\n<people>\n";
         output += people.join("\n\n");
         output += "\n</people>";
@@ -623,7 +634,7 @@ Description: ${person.description}
       .catch(async (error) => {
         console.error("Error searching people:", error);
         return toolResult(
-          `Error: Failed to search people: ${createErrorMessage(error)}`,
+          `Error: Failed to search people: ${await createErrorMessage(error)}`,
         );
       });
   };
@@ -675,8 +686,7 @@ Country: ${company.country}
 </company>`;
         });
 
-        let totalPages = Math.ceil(result.numResults / size);
-        let output = `Got ${result.numResults} companies (page ${page + 1} of ${totalPages})`;
+        let output = createPaginationHeader(result.numResults, page, size, "companies");
         output += "\n<companies>\n";
         output += companies.join("\n\n");
         output += "\n</companies>";
@@ -735,8 +745,7 @@ Sub Category: ${topic.labels?.subcategory}
 </topic>`;
         });
 
-        let totalPages = Math.ceil(result.total / size);
-        let output = `Got ${result.data.length} topics (page ${page + 1} of ${totalPages})`;
+        let output = createPaginationHeader(result.total, page, size, "topics");
         output += "\n<topics>\n";
         output += topics.join("\n\n");
         output += "\n</topics>";
