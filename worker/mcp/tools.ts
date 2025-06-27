@@ -766,8 +766,8 @@ export const TOOL_DEFINITIONS: Record<string, ToolDefinition> = {
     parameters: articleArgs,
     createHandler: (perigon: Perigon) => searchNewsArticles(perigon),
   },
-  read_news_stories: {
-    name: "read_news_stories",
+  search_news_stories: {
+    name: "search_news_stories",
     description:
       "Search clustered news stories and headlines. Returns story summaries, sentiment analysis, and metadata for understanding major news events and trends across multiple sources.",
     parameters: searchStoriesArgs,

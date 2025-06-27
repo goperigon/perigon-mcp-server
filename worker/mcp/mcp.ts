@@ -20,6 +20,7 @@ const SCOPE_TO_TOOLS: Partial<Record<Scopes, ToolName>> = {
   [Scopes.SOURCES]: "search_sources",
   [Scopes.PEOPLE]: "search_people",
   [Scopes.COMPANIES]: "search_companies",
+  [Scopes.TOPICS]: "search_topics",
 };
 
 export class PerigonMCP extends McpAgent<Bindings, State, Props> {
