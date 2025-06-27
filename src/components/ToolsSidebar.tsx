@@ -117,14 +117,15 @@ export function ToolsSidebar({ isOpen, onToggle }: ToolsSidebarProps) {
             )}
 
             {!loading && !error && tools.length > 0 && (
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {tools.map((tool, index) => (
                   <div
                     key={index}
-                    className="group p-4 bg-surface/50 border border-light-gray/30 rounded-lg hover:border-primary/40 hover:bg-surface/80 hover:shadow-md hover:shadow-primary/5 transition-all duration-200"
+                    className="group p-4 glass-light border border-border-soft rounded-xl hover:border-neural-purple/50 hover:shadow-lg hover:scale-[1.02] transition-all duration-300"
                   >
-                    <div className="space-y-2">
-                      <h3 className="font-semibold text-light group-hover:text-primary transition-colors duration-200">
+                    <div className="space-y-3">
+                      <h3 className="font-semibold text-light group-hover:text-neural-cyan transition-colors duration-200 flex items-center gap-2">
+                        <span className="text-neural-cyan">⚡</span>
                         {tool.name}
                       </h3>
                       <p className="text-sm text-light-gray leading-relaxed">
@@ -142,7 +143,7 @@ export function ToolsSidebar({ isOpen, onToggle }: ToolsSidebarProps) {
       {/* Overlay */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/20 z-30"
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-30"
           onClick={onToggle}
           aria-hidden="true"
         />

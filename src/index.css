@@ -12,22 +12,33 @@
   --color-card-border-light: #E4E4E4;
   --color-surface-light: #FFFFFF;
   
-  /* Dark Theme Colors (existing) */
+  /* Enhanced Dark Gray Theme */
   --color-dark: #1F1F1F;
   --color-surface: #2D2D2D;
-  --color-surface-elevated: #3a3a3a;
+  --color-surface-elevated: #3A3A3A;
+  --color-surface-glass: rgba(45, 45, 45, 0.9);
   --color-light: #FFFFFF;
   --color-light-gray: #C1C1C1;
-  --color-text-secondary: #71717a;
-  --color-border: #2D2D2D;
-  --color-border-soft: #3f3f46;
+  --color-text-secondary: #71717A;
+  --color-border: rgba(255, 255, 255, 0.1);
+  --color-border-soft: rgba(255, 255, 255, 0.05);
+  --color-border-glow: rgba(246, 182, 39, 0.3);
   
-  /* Accent Colors */
-  --color-gold: #f6b627;
-  --color-gold-muted: #d4941e;
-  --color-gold-soft: #f6b62720;
-  --color-accent: #f6b627;
-  --color-accent-soft: #f6b62720;
+  /* Gold Accent Colors */
+  --color-gold: #F6B627;
+  --color-gold-gradient: linear-gradient(135deg, #F6B627 0%, #FBBF24 100%);
+  --color-gold-muted: #D4941E;
+  --color-gold-soft: rgba(246, 182, 39, 0.15);
+  --color-accent: #F6B627;
+  --color-accent-soft: rgba(246, 182, 39, 0.15);
+  
+  /* Status Colors */
+  --color-success: #10B981;
+  --color-success-soft: rgba(16, 185, 129, 0.15);
+  --color-warning: #F59E0B;
+  --color-warning-soft: rgba(245, 158, 11, 0.15);
+  --color-error: #EF4444;
+  --color-error-soft: rgba(239, 68, 68, 0.15);
   
   /* Typography */
   --font-family: "Px Grotesk", Inter, Roboto, sans-serif;
@@ -65,17 +76,29 @@
   50% { transform: translateY(-2px); }
 }
 
-/* Glass morphism utility */
+/* Enhanced Glass morphism utilities */
 .glass {
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  background: rgba(45, 45, 45, 0.9);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--color-surface-glass);
+  border: 1px solid var(--color-border);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
 .glass-light {
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
   background: rgba(58, 58, 58, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--color-border-soft);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+/* Gold gradient utilities */
+.gradient-gold {
+  background: var(--color-gold-gradient);
+}
+
+/* Glow effects */
+.glow-gold {
+  box-shadow: 0 0 20px var(--color-gold-soft);
 }

@@ -16,10 +16,10 @@ export function MessageBubble({
       className={`flex w-full ${message.role === "user" ? "justify-end" : "justify-start"}`}
     >
       <div
-        className={`${message.role === "user" ? "max-w-[50%]" : "max-w-[65%]"} px-4 py-3 rounded-2xl break-words transition-shadow duration-200 ${
+        className={`${message.role === "user" ? "max-w-[50%]" : "max-w-[65%]"} px-6 py-4 rounded-2xl break-words transition-all duration-300 ${
           message.role === "user"
-            ? "bg-gold text-dark rounded-br-sm shadow-md hover:shadow-lg"
-            : "bg-surface text-light rounded-bl-sm shadow-md hover:shadow-lg border border-border"
+            ? "gradient-gold text-dark rounded-br-sm shadow-lg hover:shadow-xl hover:scale-[1.02]"
+            : "bg-surface text-light rounded-bl-sm shadow-lg hover:shadow-xl hover:scale-[1.01] border border-border"
         }`}
       >
         <div className="leading-relaxed">
@@ -32,7 +32,7 @@ export function MessageBubble({
                       components={{
                         code: ({ children, ...props }) => (
                           <code
-                            className="bg-surface-elevated text-primary px-2 py-1 rounded text-xs font-mono"
+                            className="bg-surface-elevated text-gold px-2 py-1 rounded text-xs font-mono"
                             {...props}
                           >
                             {children}
@@ -65,7 +65,7 @@ export function MessageBubble({
                           </h1>
                         ),
                         h2: ({ children }) => (
-                          <h2 className="text-[1.45rem] font-semibold mb-3 text-light tracking-tight">
+                          <h2 className="text-[1.45rem] font-semibold mb-3 text-light-gray tracking-tight">
                             {children}
                           </h2>
                         ),
@@ -88,7 +88,7 @@ export function MessageBubble({
                           <em className="italic text-light-gray">{children}</em>
                         ),
                         blockquote: ({ children }) => (
-                          <blockquote className="border-l-4 border-primary pl-4 italic mb-3 text-light-gray bg-surface-elevated/30 py-2 rounded-r">
+                          <blockquote className="border-l-4 border-gold pl-4 italic mb-3 text-light-gray bg-surface-elevated/30 py-2 rounded-r">
                             {children}
                           </blockquote>
                         ),
@@ -117,10 +117,10 @@ export function MessageBubble({
                 return (
                   <div
                     key={index}
-                    className="bg-surface-elevated p-4 rounded-lg border-l-4 border-accent my-3 text-light shadow-md hover:shadow-lg transition-shadow duration-200 border"
+                    className="bg-surface-elevated p-4 rounded-lg border-l-4 border-gold my-3 text-light shadow-md hover:shadow-lg transition-shadow duration-200 border"
                   >
                     <div
-                      className="text-sm font-semibold text-accent mb-3 cursor-pointer hover:text-accent/80 flex items-center gap-2 transition-colors duration-200"
+                      className="text-sm font-semibold text-gold mb-3 cursor-pointer hover:text-gold/80 flex items-center gap-2 transition-colors duration-200"
                       onClick={() => onToggleToolCall(toolCallId)}
                     >
                       <span>{isCollapsed ? "▶" : "▼"}</span>
