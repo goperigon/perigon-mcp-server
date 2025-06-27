@@ -217,6 +217,7 @@ export function searchNewsArticles(perigon: Perigon): ToolCallback {
     sources,
     summarize,
   }: z.infer<typeof articleArgs>): Promise<CallToolResult> => {
+    console.log("searching articles with page:", page);
     return perigon
       .searchArticles({
         q: query,

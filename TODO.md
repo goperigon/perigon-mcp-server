@@ -1,3 +1,4 @@
 - [ ] Stats tools?
 - [ ] Cleanup / expand prompts
 - [ ] Cleanup vibe coded frontend
+- [ ] Protection against abuse

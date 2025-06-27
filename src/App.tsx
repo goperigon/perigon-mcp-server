@@ -40,15 +40,15 @@ function App() {
   }, [messages]);
 
   // Simple auto-scroll to bottom when new messages arrive
-  useEffect(() => {
-    const container = messagesContainerRef.current;
-    if (container) {
-      container.scrollTo({
-        top: container.scrollHeight,
-        behavior: "smooth",
-      });
-    }
-  }, [messages]);
+  // useEffect(() => {
+  //   const container = messagesContainerRef.current;
+  //   if (container) {
+  //     container.scrollTo({
+  //       top: container.scrollHeight,
+  //       behavior: "smooth",
+  //     });
+  //   }
+  // }, [messages]);
 
   const handleToggleToolCall = (toolCallId: string) => {
     setExpandedToolCalls((prev) => {
@@ -64,17 +64,19 @@ function App() {
 
   return (
     <div className="flex flex-col h-screen w-full bg-dark">
-      <CollapsibleSidebar 
-        isOpen={sidebarOpen} 
-        onToggle={() => setSidebarOpen(!sidebarOpen)} 
+      <CollapsibleSidebar
+        isOpen={sidebarOpen}
+        onToggle={() => setSidebarOpen(!sidebarOpen)}
       />
-      
+
       <header className="flex items-center justify-between px-8 py-4 bg-dark/95 border-b border-border/20 sticky top-0 z-50">
         <div className="flex-1 flex items-center gap-4">
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
             className="p-2 hover:bg-surface/80 rounded-lg transition-colors duration-200"
-            aria-label={sidebarOpen ? "Close tools sidebar" : "Open tools sidebar"}
+            aria-label={
+              sidebarOpen ? "Close tools sidebar" : "Open tools sidebar"
+            }
           >
             <svg
               className="w-6 h-6 text-light"
@@ -118,10 +120,15 @@ function App() {
         </div>
       </header>
 
-      <main className={`flex-1 flex flex-col overflow-hidden transition-all duration-300 ${
-        sidebarOpen ? "ml-80" : "ml-0"
-      }`}>
-        <div className="flex-1 overflow-y-auto flex justify-center" ref={messagesContainerRef}>
+      <main
+        className={`flex-1 flex flex-col overflow-hidden transition-all duration-300 ${
+          sidebarOpen ? "ml-80" : "ml-0"
+        }`}
+      >
+        <div
+          className="flex-1 overflow-y-auto flex justify-center"
+          ref={messagesContainerRef}
+        >
           <div className="w-full max-w-4xl px-8">
             <div
               className="py-4 flex flex-col gap-4 pb-8"
@@ -151,7 +158,7 @@ function App() {
             </div>
           </div>
         </div>
-        
+
         <div className="flex-shrink-0 bg-dark border-t border-border/20">
           <div className="flex justify-center">
             <div className="w-full max-w-4xl px-8">
