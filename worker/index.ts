@@ -210,7 +210,7 @@ async function handleChatRequest(
       model: anthropic("claude-4-sonnet-20250514"),
       tools,
       messages,
-      maxSteps: 5,
+      maxSteps: 10,
     });
 
     return result.toDataStreamResponse({
