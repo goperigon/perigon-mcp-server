@@ -1,4 +1,2 @@
 - [ ] Stats tools?
 - [ ] Cleanup / expand prompts
-- [ ] More examples
-- [ ] Streaming race condition

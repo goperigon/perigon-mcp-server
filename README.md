@@ -45,19 +45,25 @@ have your apiKey**.
 When prompting your agent we recommend providing the current date (or a tool to get it) unless the agent already has access to such information, this is because some models like Claude will otherwise think the current date is their knowledge cutoff and they will retrieve outdated information frequently.
 
 **News Articles & Stories:**
-- Give me the top headlines in the United States today.
-- What is happening in Ireland today?
-- Give me top stories this past week in North American countries.
-- Search for articles about "artificial intelligence" from the last week.
+- Give me the top 5 political headlines in the United States from today.
+- What business stories are trending in New York today?
+- Show me the latest tech news from California this week.
+- Find political news from swing states in the last 3 days.
+- Show me cryptocurrency-related stories from the past week.
 
 **Journalists & Sources:**
-- Search for news sources based in California.
-- Who are the top journalists covering climate change?
+- Find local news sources in Texas.
+- Who are the top business journalists at major publications?
+- Find journalists covering renewable energy, then show me their recent articles.
+- Which journalists write the most about climate policy?
+- Show me articles from major financial publications today.
 
 **People & Companies:**
-- Search for information about Elon Musk.
-- Find companies in the tech industry.
-- Look up people associated with renewable energy.
+- Find recent news about pharmaceutical company CEOs.
+- Search for Tesla as a company, then find recent news stories about them.
+- Show me companies in the electric vehicle industry.
+- Search for politicians mentioned in healthcare stories.
+- What are tech companies saying about AI regulation?
 
 
 ## Supported tools

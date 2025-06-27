@@ -2,11 +2,13 @@ import { useEffect, useState, useRef } from "react";
 import { useChat } from "@ai-sdk/react";
 import { MessageBubble } from "./components/MessageBubble";
 import { ChatInput } from "./components/ChatInput";
+import { ToolsSidebar } from "./components/ToolsSidebar";
 
 function App() {
   const [expandedToolCalls, setExpandedToolCalls] = useState<Set<string>>(
     new Set(),
   );
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   const { messages, input, handleInputChange, handleSubmit, status } = useChat({
@@ -62,6 +64,10 @@ function App() {
 
   return (
     <div className="flex flex-col h-screen w-full bg-dark">
+      <ToolsSidebar 
+        isOpen={sidebarOpen} 
+        onToggle={() => setSidebarOpen(!sidebarOpen)} 
+      />
       <header className="flex items-center justify-between px-8 py-4 glass sticky top-0 z-50 shadow-lg">
         <div className="flex-1 flex items-center">
           <a

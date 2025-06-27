@@ -1,4 +1,4 @@
-import { HttpError, AuthIntrospectionResponse } from "./types/types";
+import { HttpError } from "./types/types";
 import { createAnthropic } from "@ai-sdk/anthropic";
 import {
   streamText,
@@ -10,6 +10,8 @@ import {
 import { PerigonMCP, Props } from "./mcp/mcp";
 import { createAISDKTools } from "./mcp/ai-sdk-adapter";
 import { Perigon } from "./lib/perigon";
+import { TOOL_DEFINITIONS } from "./mcp/tools";
+import { z } from "zod";
 
 const SYSTEM_PROMPT = `
 <identity>
@@ -33,6 +35,7 @@ location, similarly do the same with time related fields when filtering by time.
 - When doing a search for stories, articles, etc, try to be mindful of the sorting you are doing
 relative to the date. For instance if you are trying to sort by count, consider setting the "from"
 parameter to some time in the past week or so to ensure the results are more relevant to today.
+- If someone asks something about in the past day, you should try to set from to yesterday
 </instructions>
 
 <context>
@@ -92,6 +95,26 @@ export default {
         return new Response("Method not allowed", { status: 405 });
       }
       return handleChatRequest(request, env);
+    }
+
+    if (url.pathname === "/v1/api/tools") {
+      if (request.method !== "GET") {
+        return new Response("Method not allowed", { status: 405 });
+      }
+
+      const tools = [];
+      for (const [tool, def] of Object.entries(TOOL_DEFINITIONS)) {
+        tools.push({
+          name: tool,
+          description: def.description,
+          args: def.parameters,
+        });
+      }
+
+      return new Response(JSON.stringify({ tools }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      });
     }
 
     if (url.pathname.includes("/v1/sse") || url.pathname === "/v1/mcp") {
