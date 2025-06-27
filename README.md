@@ -65,11 +65,12 @@ When prompting your agent we recommend providing the current date (or a tool to 
 | Tool | Description |
 |------|-------------|
 | `search_news_articles` | Search across news articles with various filters including location, time range, sources, and more |
-| `read_news_stories` | Search across news stories / headlines to get ideas about big picture events |
+| `search_news_stories` | Search across news stories / headlines to get ideas about big picture events |
 | `search_journalists` | Search across journalists with various filters including location, time range, sources, and more |
 | `search_sources` | Search across news sources with various filters including location, time range, and more |
 | `search_people` | Search across people with various filters |
 | `search_companies` | Search across companies with various filters |
+| `search_topics` | Search topics in perigon database |
 
 ## Issues / Contributing
 
