@@ -87,6 +87,10 @@ export default {
 
     const url = new URL(request.url);
 
+    if (url.pathname === "/v1/debug") {
+      return new Response(env.VITE_USE_TURNSTILE, { status: 200 });
+    }
+
     if (url.pathname === "/v1/api/chat") {
       if (request.method !== "POST") {
         return new Response("Method not allowed", { status: 405 });
@@ -110,7 +114,7 @@ async function handleChatRequest(
   env: Env,
 ): Promise<Response> {
   try {
-    if (env.VITE_ENVIRONMENT === "prod") {
+    if (env.VITE_USE_TURNSTILE === "prod") {
       const token = request.headers.get("cf-turnstile-response");
       const ip = request.headers.get("CF-Connecting-IP");
       // Validate the token by calling the
@@ -245,7 +249,7 @@ async function handleMCPRequest(
     const apiKeyDetails = await perigon.introspection();
 
     const props: Props = {
-      perigon,
+      apiKey,
       scopes: apiKeyDetails.scopes,
     };
     ctx.props = props;

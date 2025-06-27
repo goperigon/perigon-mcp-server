@@ -1,6 +1,8 @@
 import React, { useRef, useEffect } from "react";
 import { TurnstileWidget, TurnstileWidgetRef } from "./TurnstileWidget";
 
+const USE_TURNSTILE = import.meta.env.VITE_USE_TURNSTILE;
+
 interface ChatInputProps {
   input: string;
   status: string;
@@ -9,7 +11,6 @@ interface ChatInputProps {
   turnstileToken: string | null;
   onTurnstileVerify: (token: string) => void;
   siteKey: string;
-  isProduction: boolean;
 }
 
 export function ChatInput({
@@ -20,7 +21,6 @@ export function ChatInput({
   turnstileToken,
   onTurnstileVerify,
   siteKey,
-  isProduction,
 }: ChatInputProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const turnstileRef = useRef<TurnstileWidgetRef>(null);
@@ -47,11 +47,11 @@ export function ChatInput({
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (isProduction && !turnstileToken) {
+    if (USE_TURNSTILE && !turnstileToken) {
       return;
     }
     onSubmit(e);
-    if (isProduction) {
+    if (USE_TURNSTILE) {
       turnstileRef.current?.reset();
     }
   };
@@ -59,7 +59,7 @@ export function ChatInput({
   return (
     <form onSubmit={handleSubmit} className="py-4 pb-8 bg-transparent">
       <div className="flex flex-col gap-4">
-        {isProduction && (
+        {USE_TURNSTILE && (
           <div className="flex justify-center">
             <TurnstileWidget
               ref={turnstileRef}
@@ -82,7 +82,11 @@ export function ChatInput({
           />
           <button
             type="submit"
-            disabled={status === "submitted" || status === "streaming" || (isProduction && !turnstileToken)}
+            disabled={
+              status === "submitted" ||
+              status === "streaming" ||
+              (USE_TURNSTILE && !turnstileToken)
+            }
             className="min-w-[120px] px-6 py-3 bg-primary text-light border-none rounded-xl text-[0.875rem] font-medium cursor-pointer hover:bg-primary/90 hover:shadow-md disabled:bg-primary/30 disabled:text-light/50 disabled:cursor-not-allowed transition-all duration-200"
           >
             Send
