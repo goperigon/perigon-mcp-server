@@ -46,7 +46,7 @@
   },
   "vars": {
     "VITE_TURNSTILE_SITE_KEY": "0x4AAAAAABihR9-NN72ssFjf",
-    "VITE_USE_TURNSTILE": false,
+    "VITE_USE_TURNSTILE": true,
   },
   "unsafe": {
     "bindings": [
@@ -54,10 +54,10 @@
         "name": "MCP_RATE_LIMITER",
         "type": "ratelimit",
         "namespace_id": "1001",
-        // 20 requests per minute
+        // 50 requests every 10 seconds
         "simple": {
-          "limit": 20,
-          "period": 60,
+          "limit": 50,
+          "period": 10,
         },
       },
       {
