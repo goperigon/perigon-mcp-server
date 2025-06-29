@@ -267,13 +267,18 @@ export function searchNewsArticles(perigon: Perigon): ToolCallback {
           return `<article id="${article.articleId}" title="${article.title}">
 Content: ${summarize ? article.summary : article.content}
 Pub Date: ${article.pubDate} (utc)
-Source: ${article.source}
+Source: ${article.source?.domain}
 Story Id: ${article.clusterId}
 Journalist Ids: ${journalistIds}
 </article>`;
         });
 
-        let output = createPaginationHeader(result.numResults, page, size, "articles");
+        let output = createPaginationHeader(
+          result.numResults,
+          page,
+          size,
+          "articles",
+        );
         output += "\n<articles>\n";
         output += articles.join("\n\n");
         output += "\n</articles>";
@@ -363,7 +368,12 @@ Sentiment: ${JSON.stringify(story.sentiment)}
 </news_story>`;
         });
 
-        let output = createPaginationHeader(result.numResults, page, size, "stories");
+        let output = createPaginationHeader(
+          result.numResults,
+          page,
+          size,
+          "stories",
+        );
 
         output += "\n<stories>\n";
         output += stories.join("\n\n");
@@ -461,12 +471,17 @@ export function searchJournalists(perigon: Perigon): ToolCallback {
           // TODO: add more journalist result options
           return `<journalist id="${journalist.id}" name="${journalist.name}">
 Headline: ${journalist.headline}
-Sources: ${journalist?.topSources?.join(", ")}
+Sources: ${journalist?.topSources?.map((source) => `\tSource: ${source.name}, Articles they wrote for Source: ${source.count}`).join("\n")}
 Locations: ${journalist?.locations?.map((location) => `Country: ${location.country}, City: ${location.city}`).join(", ")}
 </journalist>`;
         });
 
-        let output = createPaginationHeader(result.numResults, page, size, "journalists");
+        let output = createPaginationHeader(
+          result.numResults,
+          page,
+          size,
+          "journalists",
+        );
         output += "\n<journalists>\n";
         output += journalists.join("\n\n");
         output += "\n</journalists>";
@@ -561,11 +576,16 @@ export function searchSources(perigon: Perigon): ToolCallback {
           return `<source name="${source.name}">
 Domain: ${source.domain}
 Monthly Visits: ${source.monthlyVisits}
-Top Topics: ${source.topTopics?.join(", ")}
+Top Topics: ${source.topTopics?.map((topic) => topic.name).join(", ")}
 </source>`;
         });
 
-        let output = createPaginationHeader(result.numResults, page, size, "sources");
+        let output = createPaginationHeader(
+          result.numResults,
+          page,
+          size,
+          "sources",
+        );
         output += "\n<sources>\n";
         output += sources.join("\n\n");
         output += "\n</sources>";
@@ -624,7 +644,12 @@ Description: ${person.description}
 </person>`;
         });
 
-        let output = createPaginationHeader(result.numResults, page, size, "people");
+        let output = createPaginationHeader(
+          result.numResults,
+          page,
+          size,
+          "people",
+        );
         output += "\n<people>\n";
         output += people.join("\n\n");
         output += "\n</people>";
@@ -686,7 +711,12 @@ Country: ${company.country}
 </company>`;
         });
 
-        let output = createPaginationHeader(result.numResults, page, size, "companies");
+        let output = createPaginationHeader(
+          result.numResults,
+          page,
+          size,
+          "companies",
+        );
         output += "\n<companies>\n";
         output += companies.join("\n\n");
         output += "\n</companies>";

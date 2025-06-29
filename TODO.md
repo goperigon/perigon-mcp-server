@@ -3,3 +3,4 @@
 - [ ] Better background animation
 - [ ] Fix presentation of data to llm in some cases (sources)
 - [ ] Make the playground use actual mcp instead of the tool proxy
+- [ ] better mobile view
