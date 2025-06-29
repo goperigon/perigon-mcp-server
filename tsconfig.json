@@ -36,7 +36,11 @@
 
     /* Skip type checking all .d.ts files. */
     "skipLibCheck": true,
-    "types": ["./worker-configuration.d.ts", "node", "vite/client"]
+    "types": ["./worker-configuration.d.ts", "node", "vite/client"],
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
   },
   "exclude": ["test"],
   "include": ["worker-configuration.d.ts", "worker/**/*.ts", "src/**/*"]

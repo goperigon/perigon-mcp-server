@@ -8,7 +8,7 @@ import {
   CoreMessage,
 } from "ai";
 import { PerigonMCP, Props } from "./mcp/mcp";
-import { createAISDKTools } from "./mcp/ai-sdk-adapter";
+import { convertMCPResult, createAISDKTools } from "./mcp/ai-sdk-adapter";
 import { Perigon } from "./lib/perigon";
 import { TOOL_DEFINITIONS } from "./mcp/tools";
 import { zodToJsonSchema } from "zod-to-json-schema";
@@ -16,9 +16,8 @@ import { zodToJsonSchema } from "zod-to-json-schema";
 const SYSTEM_PROMPT = `
 <identity>
 You are Cerebro, a helpful, intelligent ai agent made by Perigon to assist users with their queries.
-
-
-You do have access to realtime information
+You have access to realtime information
+You should always respond to the user, never leave off on a tool call, summarize the results after calling all your tools.
 
 Follow instructions outlined in the <instructions> section.
 Consider the <context> section when making decisions.
@@ -97,17 +96,30 @@ export default {
     const url = new URL(request.url);
 
     if (url.pathname === "/v1/api/chat") {
-      if (request.method !== "POST") {
-        return new Response("Method not allowed", { status: 405 });
-      }
       return handleChatRequest(request, env);
     }
 
     if (url.pathname === "/v1/api/tools") {
-      if (request.method !== "GET") {
-        return new Response("Method not allowed", { status: 405 });
-      }
+      return handleToolRequest(request, env);
+    }
 
+    if (url.pathname.includes("/v1/sse") || url.pathname === "/v1/mcp") {
+      return handleMCPRequest(request, env, ctx);
+    }
+
+    return new Response("Not found", { status: 404 });
+  },
+} satisfies ExportedHandler<Env>;
+
+/**
+ * Handles tool API requests
+ */
+async function handleToolRequest(
+  request: Request,
+  env: Env,
+): Promise<Response> {
+  switch (request.method) {
+    case "GET":
       const tools = [];
       for (const [tool, def] of Object.entries(TOOL_DEFINITIONS)) {
         tools.push({
@@ -121,15 +133,52 @@ export default {
         status: 200,
         headers: { "content-type": "application/json" },
       });
-    }
+    case "POST":
+      const body = (await request.json()) as { tool: string; args: any };
+      const tool = body.tool;
+      const args = body.args;
 
-    if (url.pathname.includes("/v1/sse") || url.pathname === "/v1/mcp") {
-      return handleMCPRequest(request, env, ctx);
-    }
+      if (!tool || !args) {
+        return new Response("Invalid request", { status: 400 });
+      }
 
-    return new Response("Not found", { status: 404 });
-  },
-} satisfies ExportedHandler<Env>;
+      const toolDef = TOOL_DEFINITIONS[tool];
+      if (!toolDef) {
+        return new Response("Tool not found", { status: 404 });
+      }
+
+      // Validate and transform args using the tool's Zod schema
+      let validatedArgs;
+      try {
+        validatedArgs = toolDef.parameters.parse(args);
+      } catch (error) {
+        console.error("Validation error for tool", tool, ":", error);
+        return new Response(
+          JSON.stringify({
+            error: "Invalid arguments",
+            details: error instanceof Error ? error.message : String(error),
+          }),
+          {
+            status: 400,
+            headers: { "content-type": "application/json" },
+          },
+        );
+      }
+
+      const result = await toolDef.createHandler(
+        new Perigon(env.PERIGON_API_KEY),
+      )(validatedArgs);
+      return new Response(
+        JSON.stringify({ result: convertMCPResult(result) }),
+        {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        },
+      );
+    default:
+      return new Response("Method not allowed", { status: 405 });
+  }
+}
 
 /**
  * Handles chat API requests
@@ -138,6 +187,9 @@ async function handleChatRequest(
   request: Request,
   env: Env,
 ): Promise<Response> {
+  if (request.method !== "POST") {
+    return new Response("Method not allowed", { status: 405 });
+  }
   try {
     // if (env.VITE_USE_TURNSTILE) {
     //   const token = request.headers.get("cf-turnstile-response");

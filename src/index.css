@@ -1,281 +1,144 @@
 @import "tailwindcss";
 
 @theme {
-    /* Perigon Brand Colors */
-    --color-primary: #227c9d;
-    --color-primary-dark: #34b3e2;
-    --color-primary-gradient: linear-gradient(135deg, #227c9d 0%, #34b3e2 100%);
-    --color-primary-soft: rgba(34, 124, 157, 0.15);
-
-    /* Light Theme Colors */
-    --color-background-light: #fbfbf9;
-    --color-text-light: #121212;
-    --color-muted-light: #44403c;
-    --color-card-border-light: #e4e4e4;
-    --color-surface-light: #ffffff;
-
-    /* Enhanced Dark Gray Theme with Depth */
-    --color-dark: #1a1a1a;
-    --color-dark-elevated: #1f1f1f;
-    --color-surface: #2a2a2a;
-    --color-surface-elevated: #363636;
-    --color-surface-elevated-2: #424242;
-    --color-surface-glass: rgba(42, 42, 42, 0.85);
-    --color-surface-glass-light: rgba(54, 54, 54, 0.7);
-    --color-light: #ffffff;
-    --color-light-gray: #c1c1c1;
-    --color-text-secondary: #71717a;
-    --color-border: rgba(255, 255, 255, 0.12);
-    --color-border-soft: rgba(255, 255, 255, 0.06);
-    --color-border-glow: rgba(246, 182, 39, 0.4);
-    --color-border-primary: rgba(34, 124, 157, 0.3);
-
-    /* Enhanced Gold Accent Colors */
-    --color-gold: #f6b627;
-    --color-gold-bright: #ffd700;
-    --color-gold-gradient: linear-gradient(
-        135deg,
-        #f6b627 0%,
-        #ffd700 50%,
-        #fbbf24 100%
-    );
-    --color-gold-gradient-subtle: linear-gradient(
-        135deg,
-        rgba(246, 182, 39, 0.8) 0%,
-        rgba(255, 215, 0, 0.6) 100%
-    );
-    --color-gold-muted: #d4941e;
-    --color-gold-soft: rgba(246, 182, 39, 0.15);
-    --color-gold-glow: rgba(246, 182, 39, 0.25);
-    --color-accent: #f6b627;
-    --color-accent-soft: rgba(246, 182, 39, 0.15);
-
-    /* Neural/Cyber Colors */
-    --color-neural-cyan: #00d9ff;
-    --color-neural-purple: #8b5cf6;
-    --color-neural-pink: #ec4899;
-    --color-neural-gradient: linear-gradient(
-        135deg,
-        #00d9ff 0%,
-        #8b5cf6 50%,
-        #ec4899 100%
-    );
-
-    /* Status Colors */
-    --color-success: #10b981;
-    --color-success-soft: rgba(16, 185, 129, 0.15);
-    --color-warning: #f59e0b;
-    --color-warning-soft: rgba(245, 158, 11, 0.15);
-    --color-error: #ef4444;
-    --color-error-soft: rgba(239, 68, 68, 0.15);
-
-    /* Typography */
-    --font-family: "Px Grotesk", Inter, Roboto, sans-serif;
-    --font-size-h1: 1.875rem;
-    --font-size-h2: 1.45rem;
-    --font-size-body: 0.875rem;
-    --font-size-code: 0.75rem;
-    --font-weight-h1: 600;
-    --font-weight-h2: 600;
-    --font-weight-body: 400;
-    --letter-spacing-tight: -0.0025em;
-    --letter-spacing-normal: 0.01em;
-
-    /* Layout */
-    --radius: 1rem;
-    --card-padding: 1.5rem;
-    --button-radius: 0.75rem;
-    --button-min-width: 200px;
-    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    --transition-fast: all 0.15s ease-out;
-
-    /* Shadows */
-    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
-    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.15);
-    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.2);
-    --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.25);
-    --shadow-glow: 0 0 20px rgba(246, 182, 39, 0.3);
-    --shadow-primary: 0 8px 24px rgba(34, 124, 157, 0.2);
-
-    /* Tailwind Custom Properties */
-    --animate-shimmer: shimmer 1.5s infinite;
-    --animate-glow: glow 2s ease-in-out infinite alternate;
-    --animate-float: float 3s ease-in-out infinite;
-    --animate-pulse-glow: pulse-glow 2s ease-in-out infinite alternate;
-    --animate-gradient-shift: gradient-shift 3s ease infinite;
+    --color-destructive: hsl(0 90% 55%);
+    --color-destructive-foreground: hsl(210 40% 98%);
 }
 
-/* Enhanced Custom Animations */
-@keyframes shimmer {
-    0% {
-        transform: translateX(-100%);
-        opacity: 0;
+@theme dark {
+    --color-destructive: hsl(0 85% 45%);
+    --color-destructive-foreground: hsl(0 0% 98%);
+}
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer base {
+    :root {
+        --background: 60 9% 88%;
+        --foreground: 222.2 84% 4.9%;
+        --card: 0 0% 100%;
+        --card-foreground: 222.2 84% 4.9%;
+        --popover: 0 0% 100%;
+        --popover-foreground: 222.2 84% 4.9%;
+        --primary: 222.2 47.4% 11.2%;
+        --primary-foreground: 210 40% 98%;
+        --secondary: 210 20% 94%;
+        --secondary-foreground: 222.2 84% 4.9%;
+        --muted: 210 20% 94%;
+        --muted-foreground: 215.4 16.3% 46.9%;
+        --accent: 210 20% 94%;
+        --accent-foreground: 222.2 84% 4.9%;
+        --destructive: 0 90% 55%;
+        --destructive-foreground: 210 40% 98%;
+        --border: 0 0% 80%;
+        --input: 214.3 31.8% 91.4%;
+        --ring: 222.2 84% 4.9%;
+        --chart-1: 12 76% 61%;
+        --chart-2: 173 58% 39%;
+        --chart-3: 197 37% 24%;
+        --chart-4: 43 74% 66%;
+        --chart-5: 27 87% 67%;
+        --radius: 0.5rem;
+        --star-color: 120 113 108;
+
+        /* Custom Perigon Colors */
+        --pg-gold: 249, 192, 53;
+        --pg-white: 255, 255, 255;
+
+        /* Perigon Gray Scale */
+        --pg-gray-50: 250, 250, 249;
+        --pg-gray-100: 245, 245, 244;
+        --pg-gray-200: 231, 229, 228;
+        --pg-gray-300: 214, 211, 209;
+        --pg-gray-400: 168, 162, 158;
+        --pg-gray-500: 120, 113, 108;
+        --pg-gray-600: 87, 83, 78;
+        --pg-gray-700: 68, 64, 60;
+        --pg-gray-800: 41, 37, 36;
+        --pg-gray-900: 28, 25, 23;
+        --pg-gray-950: 12, 10, 9;
     }
-    50% {
-        opacity: 1;
-    }
-    100% {
-        transform: translateX(100%);
-        opacity: 0;
+
+    .dark {
+        --background: 0 0% 12%;
+        --foreground: 0 0% 98%;
+        --card: 0 0% 18%;
+        --card-foreground: 0 0% 98%;
+        --popover: 0 0% 18%;
+        --popover-foreground: 0 0% 98%;
+        --primary: 210 40% 98%;
+        --primary-foreground: 0 0% 12%;
+        --secondary: 0 0% 24%;
+        --secondary-foreground: 0 0% 98%;
+        --muted: 0 0% 24%;
+        --muted-foreground: 0 0% 65%;
+        --accent: 0 0% 24%;
+        --accent-foreground: 0 0% 98%;
+        --destructive: 0 85% 45%;
+        --destructive-foreground: 0 0% 98%;
+        --border: 0 0% 30%;
+        --input: 0 0% 30%;
+        --ring: 212.7 26.8% 83.9%;
+        --chart-1: 220 70% 50%;
+        --chart-2: 160 60% 45%;
+        --chart-3: 30 80% 55%;
+        --chart-4: 280 65% 60%;
+        --chart-5: 340 75% 55%;
+        --star-color: 255 255 255;
+
+        /* Custom Perigon Colors (adjusted for dark mode) */
+        --pg-gold: 249, 192, 53;
+        --pg-white: 255, 255, 255;
+
+        /* Perigon Gray Scale (adjusted for lighter dark mode) */
+        --pg-gray-50: 45, 45, 45;
+        --pg-gray-100: 55, 55, 55;
+        --pg-gray-200: 65, 65, 65;
+        --pg-gray-300: 85, 85, 85;
+        --pg-gray-400: 105, 105, 105;
+        --pg-gray-500: 130, 130, 130;
+        --pg-gray-600: 168, 162, 158;
+        --pg-gray-700: 214, 211, 209;
+        --pg-gray-800: 231, 229, 228;
+        --pg-gray-900: 245, 245, 244;
+        --pg-gray-950: 250, 250, 249;
     }
 }
 
-@keyframes glow {
-    0%,
-    100% {
-        box-shadow:
-            0 0 10px var(--color-gold-glow),
-            0 0 20px var(--color-gold-soft);
+@layer base {
+    * {
+        border-color: hsl(var(--border));
     }
-    50% {
-        box-shadow:
-            0 0 20px var(--color-gold-glow),
-            0 0 40px var(--color-gold-soft),
-            0 0 60px rgba(246, 182, 39, 0.1);
+    body {
+        background-color: hsl(var(--background));
+        color: hsl(var(--foreground));
+        transition:
+            background-color 0.1s ease,
+            color 0.1s ease;
     }
 }
 
-@keyframes float {
-    0%,
-    100% {
-        transform: translateY(0px);
+@layer utilities {
+    .animate-spin-slow {
+        animation: spin 2s linear infinite;
     }
-    50% {
-        transform: translateY(-3px);
-    }
-}
 
-@keyframes pulse-glow {
-    0%,
-    100% {
-        box-shadow: 0 0 5px var(--color-primary-soft);
-    }
-    50% {
-        box-shadow:
-            0 0 15px var(--color-primary-soft),
-            0 0 25px rgba(34, 124, 157, 0.2);
+    @keyframes spin {
+        from {
+            transform: rotate(0deg);
+        }
+        to {
+            transform: rotate(360deg);
+        }
     }
 }
 
-@keyframes gradient-shift {
-    0% {
-        background-position: 0% 50%;
-    }
-    50% {
-        background-position: 100% 50%;
-    }
-    100% {
-        background-position: 0% 50%;
-    }
+/* Fix for placeholder text not updating properly during theme switches */
+textarea::placeholder {
+    transition: color 0s !important;
+    color: hsl(var(--foreground) / 0.6) !important;
 }
 
-@keyframes slide-up {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-@keyframes fade-in {
-    from {
-        opacity: 0;
-    }
-    to {
-        opacity: 1;
-    }
-}
-
-@keyframes scale-in {
-    from {
-        opacity: 0;
-        transform: scale(0.95);
-    }
-    to {
-        opacity: 1;
-        transform: scale(1);
-    }
-}
-
-/* Enhanced Glass Morphism Utilities */
-.glass {
-    backdrop-filter: blur(12px) saturate(180%);
-    -webkit-backdrop-filter: blur(12px) saturate(180%);
-    background: var(--color-surface-glass);
-    border: 1px solid var(--color-border);
-    box-shadow:
-        0 8px 32px rgba(0, 0, 0, 0.4),
-        inset 0 1px 0 rgba(255, 255, 255, 0.1);
-}
-
-.glass-light {
-    backdrop-filter: blur(8px) saturate(150%);
-    -webkit-backdrop-filter: blur(8px) saturate(150%);
-    background: var(--color-surface-glass-light);
-    border: 1px solid var(--color-border-soft);
-    box-shadow:
-        0 4px 16px rgba(0, 0, 0, 0.25),
-        inset 0 1px 0 rgba(255, 255, 255, 0.08);
-}
-
-/* Enhanced Gradient Utilities */
-.gradient-gold {
-    background: var(--color-gold-gradient);
-    background-size: 200% 200%;
-    animation: var(--animate-gradient-shift);
-}
-
-.gradient-primary {
-    background: var(--color-primary-gradient);
-}
-
-/* Enhanced Glow Effects */
-.glow-gold {
-    box-shadow: var(--shadow-glow);
-    animation: var(--animate-glow);
-}
-
-/* Custom Scrollbar */
-::-webkit-scrollbar {
-    width: 8px;
-}
-
-::-webkit-scrollbar-track {
-    background: var(--color-surface);
-    border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb {
-    background: var(--color-surface-elevated-2);
-    border-radius: 4px;
-    border: 1px solid var(--color-border-soft);
-}
-
-::-webkit-scrollbar-thumb:hover {
-    background: var(--color-gold-muted);
-}
-
-/* Selection Styling */
-::selection {
-    background: var(--color-gold-soft);
-    color: var(--color-light);
-}
-
-/* Enhanced Body Styling */
-body {
-    background: var(--color-dark);
-    background-image:
-        radial-gradient(
-            circle at 20% 80%,
-            rgba(34, 124, 157, 0.05) 0%,
-            transparent 50%
-        ),
-        radial-gradient(
-            circle at 80% 20%,
-            rgba(246, 182, 39, 0.03) 0%,
-            transparent 50%
-        );
+.dark textarea::placeholder {
+    color: hsl(var(--foreground) / 0.6) !important;
 }

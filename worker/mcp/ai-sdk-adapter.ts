@@ -5,7 +5,7 @@ import { TOOL_DEFINITIONS } from "./tools";
 import { Perigon } from "../lib/perigon";
 
 // Convert MCP CallToolResult to AI SDK tool result (string)
-function convertMCPResult(mcpResult: CallToolResult): string {
+export function convertMCPResult(mcpResult: CallToolResult): string {
   if (mcpResult.content?.[0]?.type === "text") {
     return mcpResult.content[0].text;
   }
