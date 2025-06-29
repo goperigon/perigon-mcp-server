@@ -318,7 +318,7 @@ export default function App() {
                       value={selectedTool || ""}
                       onValueChange={(value) => {
                         setSelectedTool(value);
-                        const tool = tools.find(t => t.name === value);
+                        const tool = tools.find((t) => t.name === value);
                         if (tool) {
                           setToolParams(getDefaultParams(tool.args.properties));
                           setRawInputValues({});
@@ -329,14 +329,22 @@ export default function App() {
                       <SelectTrigger className="h-12 text-sm font-mono w-full">
                         <SelectValue placeholder="Choose a tool to inspect..." />
                       </SelectTrigger>
-                      <SelectContent 
-                        className="bg-card border-border shadow-lg" 
+                      <SelectContent
+                        className="border-border shadow-lg rounded-lg overflow-hidden [&>*]:py-1 [&>*]:pl-1 [&>*]:pr-3"
+                        style={{
+                          backgroundColor: "rgb(var(--pg-gray-200))",
+                          width: "var(--radix-select-trigger-width)",
+                          minWidth: "var(--radix-select-trigger-width)",
+                        }}
                         position="popper"
                         sideOffset={4}
-                        style={{ width: 'var(--radix-select-trigger-width)', minWidth: 'var(--radix-select-trigger-width)' }}
                       >
                         {tools.map((tool, index) => (
-                          <SelectItem key={tool.name} value={tool.name} className="text-sm font-mono">
+                          <SelectItem
+                            key={tool.name}
+                            value={tool.name}
+                            className="text-sm font-mono py-3 pl-4 pr-10 mx-1 my-0.5 rounded-md hover:bg-white/60 dark:hover:bg-gray-700/60 focus:bg-accent/30 transition-colors border border-border/30"
+                          >
                             <div className="flex items-center space-x-2">
                               <span className="text-muted-foreground">
                                 [{(index + 1).toString().padStart(2, "0")}]
@@ -347,7 +355,8 @@ export default function App() {
                         ))}
                       </SelectContent>
                     </Select>
-                  </div>                )}
+                  </div>
+                )}
               </div>
 
               {/* Tools List - Desktop */}
@@ -406,7 +415,7 @@ export default function App() {
                         className={`cursor-pointer transition-all border-2 font-mono ${
                           selectedTool === tool.name
                             ? "border-accent bg-accent/10 shadow-lg"
-                            : "border-border hover:border-muted-foreground bg-card/80"
+                            : "border-border hover:border-muted-foreground bg-card"
                         }`}
                         onClick={() => {
                           setSelectedTool(tool.name);
@@ -513,7 +522,7 @@ export default function App() {
                     <CardContent className="flex items-center justify-center h-full bg-card">
                       <div className="text-center text-muted-foreground text-sm font-mono">
                         <div className="text-4xl mb-4">○</div>
-                        <p>SELECT A TOOL TO CONFIGURE</p>
+                        <p>SELECT A TOOL TO EXAMINE</p>
                         <div className="text-xs mt-2 text-muted-foreground/60">
                           Click on a tool
                         </div>

@@ -1,5 +1,3 @@
 - [ ] Cleanup vibe coded frontend
 - [ ] Protection against abuse
 - [ ] Better background animation
-- [ ] Make the playground use actual mcp instead of the tool proxy
-- [ ] better mobile view
