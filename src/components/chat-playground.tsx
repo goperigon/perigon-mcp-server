@@ -210,7 +210,7 @@ What would you like to explore today?`,
             <Button
               type="submit"
               disabled={status !== "ready" || !input.trim()}
-              className="font-mono px-6 pt-6"
+              className="font-mono px-6 pt-8"
               variant="ghost"
             >
               <Send className="w-4 h-4 mr-2" />

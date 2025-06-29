@@ -139,12 +139,18 @@ export default function App() {
     if (param.enum) {
       return (
         <Select value={value || ""} onValueChange={updateValue}>
-          <SelectTrigger className="h-8 text-xs">
+          <SelectTrigger className="h-10 sm:h-8 text-sm sm:text-xs">
+            {" "}
             <SelectValue placeholder={`Select ${paramName}`} />
           </SelectTrigger>
           <SelectContent>
             {param.enum.map((option) => (
-              <SelectItem key={option} value={option} className="text-xs">
+              <SelectItem
+                key={option}
+                value={option}
+                className="text-sm sm:text-xs"
+              >
+                {" "}
                 {option}
               </SelectItem>
             ))}
@@ -161,7 +167,8 @@ export default function App() {
             checked={value || false}
             onCheckedChange={updateValue}
           />
-          <label htmlFor={paramName} className="text-xs">
+          <label htmlFor={paramName} className="text-sm sm:text-xs">
+            {" "}
             {param.default !== undefined ? `(default: ${param.default})` : ""}
           </label>
         </div>
@@ -186,7 +193,7 @@ export default function App() {
               .filter(Boolean);
             updateValue(arrayValue.length > 0 ? arrayValue : undefined);
           }}
-          className="h-16 text-xs font-mono resize-none"
+          className="h-20 sm:h-16 text-sm sm:text-xs font-mono resize-none"
         />
       );
     }
@@ -211,7 +218,7 @@ export default function App() {
         }}
         min={param.minimum}
         max={param.maximum}
-        className="h-8 text-xs font-mono"
+        className="h-10 sm:h-8 text-sm sm:text-xs font-mono"
       />
     );
   };
@@ -222,39 +229,42 @@ export default function App() {
       {/* Clean Header */}
       <header className="relative z-10 border-b border-border bg-card flex-shrink-0">
         <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-12">
+          <div className="flex items-center justify-between h-14 sm:h-12">
             <div className="flex items-center">
-              <h1 className="text-lg font-bold text-foreground font-mono flex items-center space-x-2">
-                <img src="/favicon.ico" alt="Perigon" className="w-6 h-6" />
-                <span>Perigon MCP Playground</span>
+              <h1 className="text-sm sm:text-lg font-bold text-foreground font-mono flex items-center space-x-2">
+                <img
+                  src="/favicon.ico"
+                  alt="Perigon"
+                  className="w-5 h-5 sm:w-6 sm:h-6"
+                />
+                <span className="hidden sm:inline">Perigon MCP Playground</span>
               </h1>
             </div>
-
             <div className="flex items-center space-x-3">
               <nav className="flex space-x-1">
                 <Button
                   variant="ghost"
                   onClick={() => setActiveTab("inspector")}
                   className={cn(
-                    "flex items-center space-x-2 h-8 px-3 text-sm font-mono cursor-pointer hover:border-2",
+                    "flex items-center space-x-1 sm:space-x-2 h-10 sm:h-8 px-2 sm:px-3 text-xs sm:text-sm font-mono cursor-pointer hover:border-2",
                     activeTab === "inspector" && "border",
                   )}
                 >
-                  <Settings className="w-3 h-3" />
+                  <Settings className="w-4 h-4 sm:w-3 sm:h-3" />
                   <span>INSPECTOR</span>
                 </Button>
                 <Button
                   variant="ghost"
                   onClick={() => setActiveTab("chat")}
                   className={cn(
-                    "flex items-center space-x-2 h-8 px-3 text-sm font-mono cursor-pointer hover:border-2",
+                    "flex items-center space-x-1 sm:space-x-2 h-10 sm:h-8 px-2 sm:px-3 text-xs sm:text-sm font-mono cursor-pointer hover:border-2",
                     activeTab === "chat" && "border",
                   )}
                 >
-                  <MessageSquare className="w-3 h-3" />
+                  <MessageSquare className="w-4 h-4 sm:w-3 sm:h-3" />
                   <span>CHAT</span>
                 </Button>
-              </nav>
+              </nav>{" "}
               <ThemeToggle />
             </div>
           </div>
@@ -265,9 +275,83 @@ export default function App() {
       <main className="relative z-10 flex-1 overflow-hidden">
         {activeTab === "inspector" ? (
           <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-4 h-full bg-background">
-            <div className="grid grid-cols-12 gap-4 h-full">
-              {/* Tools List */}
-              <div className="col-span-4 flex flex-col overflow-y-auto">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 h-full">
+              {/* Tools List - Mobile Dropdown */}
+              <div className="lg:hidden mb-4">
+                <div className="font-mono text-sm border border-border p-3 bg-muted rounded-lg mb-2">
+                  <div className="font-bold text-foreground">SELECT TOOL</div>
+                  <div className="text-xs text-muted-foreground">
+                    {loading
+                      ? "Loading..."
+                      : error
+                        ? "Error loading tools"
+                        : `${tools.length} available tools`}
+                  </div>
+                </div>
+                {loading ? (
+                  <div className="text-center text-muted-foreground text-sm font-mono p-4">
+                    <div className="text-2xl mb-2">⟳</div>
+                    <p>LOADING TOOLS...</p>
+                  </div>
+                ) : error ? (
+                  <div className="text-center text-destructive text-sm font-mono p-4">
+                    <div className="text-2xl mb-2">⚠</div>
+                    <p className="font-bold mb-2">ERROR LOADING TOOLS</p>
+                    <p className="text-xs">{error}</p>
+                    <Button
+                      onClick={() => window.location.reload()}
+                      variant="outline"
+                      size="sm"
+                      className="mt-3 text-xs"
+                    >
+                      RETRY
+                    </Button>
+                  </div>
+                ) : tools.length === 0 ? (
+                  <div className="text-center text-muted-foreground text-sm font-mono p-4">
+                    <div className="text-2xl mb-2">○</div>
+                    <p>NO TOOLS AVAILABLE</p>
+                  </div>
+                ) : (
+                  <div className="w-full">
+                    <Select
+                      value={selectedTool || ""}
+                      onValueChange={(value) => {
+                        setSelectedTool(value);
+                        const tool = tools.find(t => t.name === value);
+                        if (tool) {
+                          setToolParams(getDefaultParams(tool.args.properties));
+                          setRawInputValues({});
+                          setExecutionResult(null);
+                        }
+                      }}
+                    >
+                      <SelectTrigger className="h-12 text-sm font-mono w-full">
+                        <SelectValue placeholder="Choose a tool to inspect..." />
+                      </SelectTrigger>
+                      <SelectContent 
+                        className="bg-card border-border shadow-lg" 
+                        position="popper"
+                        sideOffset={4}
+                        style={{ width: 'var(--radix-select-trigger-width)', minWidth: 'var(--radix-select-trigger-width)' }}
+                      >
+                        {tools.map((tool, index) => (
+                          <SelectItem key={tool.name} value={tool.name} className="text-sm font-mono">
+                            <div className="flex items-center space-x-2">
+                              <span className="text-muted-foreground">
+                                [{(index + 1).toString().padStart(2, "0")}]
+                              </span>
+                              <span>{tool.name}</span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>                )}
+              </div>
+
+              {/* Tools List - Desktop */}
+              <div className="hidden lg:flex lg:col-span-4 flex-col overflow-y-auto">
                 <div className="font-mono text-sm border border-border p-3 bg-muted rounded-lg mb-2 flex-shrink-0">
                   <div className="font-bold text-foreground">MCP TOOLS</div>
                   <div className="text-xs text-muted-foreground">
@@ -331,14 +415,14 @@ export default function App() {
                           setExecutionResult(null);
                         }}
                       >
-                        <CardContent className="p-1.5">
+                        <CardContent className="p-3 sm:p-1.5">
                           <div className="flex items-start justify-between">
                             <div className="flex items-start space-x-3 flex-1 min-w-0">
                               <span className="text-xs text-muted-foreground font-mono pb-1 pl-1">
                                 [{(index + 1).toString().padStart(2, "0")}]
                               </span>
                               <div className="flex-1 min-w-0">
-                                <h3 className="font-mono text-sm font-bold text-foreground">
+                                <h3 className="font-mono text-sm sm:text-sm font-bold text-foreground">
                                   {tool.name}
                                 </h3>
                                 <p className="text-xs text-muted-foreground hidden sm:block">
@@ -346,11 +430,11 @@ export default function App() {
                                 </p>
                               </div>
                             </div>
-                            <div className="text-sm font-mono text-muted-foreground flex-shrink-0 mb-2 mr-2">
+                            <div className="text-lg sm:text-sm font-mono text-muted-foreground flex-shrink-0 mb-2 mr-2">
                               {selectedTool === tool.name ? "●" : "○"}
                             </div>
                           </div>
-                        </CardContent>
+                        </CardContent>{" "}
                       </Card>
                     ))
                   )}
@@ -358,7 +442,7 @@ export default function App() {
               </div>
 
               {/* Tool Configuration */}
-              <div className="col-span-4 overflow-y-auto">
+              <div className="lg:col-span-4 overflow-y-auto">
                 {selectedToolData ? (
                   <Card className="border-2 border-accent h-full flex flex-col bg-card shadow-lg">
                     <CardHeader className="pb-4 flex-shrink-0 bg-muted space-y-3">
@@ -369,13 +453,13 @@ export default function App() {
                         <Button
                           onClick={handleExecuteTool}
                           disabled={isExecuting}
-                          className="font-mono text-xs h-4 px-2 !bg-accent !text-accent-foreground hover:!bg-accent/90 !border-accent"
+                          className="hidden sm:flex font-mono text-xs h-8 sm:h-4 px-3 sm:px-2 !bg-accent !text-accent-foreground hover:!bg-accent/90 !border-accent"
                           size="sm"
                           variant="ghost"
                         >
-                          <Play className="w-3 h-3 mr-1" />
+                          <Play className="w-4 h-4 sm:w-3 sm:h-3 mr-1" />
                           {isExecuting ? "EXECUTING..." : "EXECUTE"}
-                        </Button>
+                        </Button>{" "}
                       </div>
                       <div className="space-y-2">
                         <CardTitle className="font-mono text-lg font-bold">
@@ -394,7 +478,7 @@ export default function App() {
                         ([paramName, param]) => (
                           <div key={paramName} className="space-y-1">
                             <div className="flex items-center justify-between">
-                              <label className="block text-xs font-medium text-foreground font-mono">
+                              <label className="block text-xs font-bold text-foreground font-mono">
                                 • {paramName}
                                 {param.default !== undefined && (
                                   <span className="text-muted-foreground font-normal ml-1">
@@ -440,7 +524,7 @@ export default function App() {
               </div>
 
               {/* Execution Result */}
-              <div className="col-span-4 overflow-y-auto">
+              <div className="hidden lg:block lg:col-span-4 overflow-y-auto">
                 <Card className="border-2 border-border h-full flex flex-col bg-card">
                   {" "}
                   <CardHeader className="pb-3 flex-shrink-0 bg-muted">
