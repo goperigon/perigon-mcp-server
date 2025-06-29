@@ -281,7 +281,7 @@ Journalist Ids: ${journalistIds}
         return toolResult(output);
       })
       .catch(async (error) => {
-        console.error("Error searching articles:", error);
+        console.error("Error searching topics:", error);
         return toolResult(
           `Error: Failed to search topics: ${await createErrorMessage(error)}`,
         );

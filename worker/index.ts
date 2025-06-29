@@ -8,10 +8,13 @@ import {
   CoreMessage,
 } from "ai";
 import { PerigonMCP, Props } from "./mcp/mcp";
+// import { PerigonMCP } from "./mcp/temp";
 import { convertMCPResult, createAISDKTools } from "./mcp/ai-sdk-adapter";
 import { Perigon } from "./lib/perigon";
 import { TOOL_DEFINITIONS } from "./mcp/tools";
 import { zodToJsonSchema } from "zod-to-json-schema";
+
+export { PerigonMCP };
 
 const SYSTEM_PROMPT = `
 <identity>
@@ -66,8 +69,6 @@ well suited to answer the question or if you have done too many attempts.
 </important>
 `.trimStart();
 
-export { PerigonMCP };
-
 export default {
   /**
    * Main request handler for the Worker
@@ -103,11 +104,52 @@ export default {
       return handleToolRequest(request, env);
     }
 
-    if (url.pathname.includes("/v1/sse") || url.pathname === "/v1/mcp") {
-      return handleMCPRequest(request, env, ctx);
-    }
+    try {
+      const apiKey = request.headers.get("Authorization")?.split(" ")[1];
+      if (!apiKey) {
+        return new Response("Unauthorized", { status: 401 });
+      }
 
-    return new Response("Not found", { status: 404 });
+      const perigon = new Perigon(apiKey);
+
+      const apiKeyDetails = await perigon.introspection();
+
+      const props: Props = {
+        apiKey,
+        scopes: apiKeyDetails.scopes,
+      };
+      ctx.props = props;
+
+      if (url.pathname === "/v1/sse" || url.pathname === "/v1/sse/message") {
+        return PerigonMCP.serveSSE("/v1/sse").fetch(request, env, ctx);
+      }
+
+      if (url.pathname === "/v1/mcp") {
+        return PerigonMCP.serve("/v1/mcp").fetch(request, env, ctx);
+      }
+
+      return new Response("Not found", { status: 404 });
+    } catch (error) {
+      if (!(error instanceof HttpError)) {
+        return Response.json(
+          {
+            error: "Failed to process MCP request",
+            details:
+              "Error: " +
+              (error instanceof Error ? error.message : String(error)),
+          },
+          { status: 500 },
+        );
+      }
+
+      return Response.json(
+        {
+          error: "Failed to process MCP request",
+          details: error.responseBody,
+        },
+        { status: error.statusCode },
+      );
+    }
   },
 } satisfies ExportedHandler<Env>;
 
@@ -298,63 +340,6 @@ async function handleChatRequest(
         status: 500,
         headers: { "content-type": "application/json" },
       },
-    );
-  }
-}
-
-/**
- * Handles MCP requests
- */
-async function handleMCPRequest(
-  request: Request,
-  env: Env,
-  ctx: ExecutionContext,
-): Promise<Response> {
-  try {
-    const url = new URL(request.url);
-    const apiKey = request.headers.get("Authorization")?.split(" ")[1];
-    if (!apiKey) {
-      return new Response("Unauthorized", { status: 401 });
-    }
-
-    const perigon = new Perigon(apiKey);
-
-    const apiKeyDetails = await perigon.introspection();
-
-    const props: Props = {
-      apiKey,
-      scopes: apiKeyDetails.scopes,
-    };
-    ctx.props = props;
-
-    if (url.pathname.includes("/sse")) {
-      return PerigonMCP.serveSSE("/sse").fetch(request, env, ctx);
-    }
-
-    if (url.pathname.includes("/mcp")) {
-      return PerigonMCP.serve("/mcp").fetch(request, env, ctx);
-    }
-
-    return new Response("Not found", { status: 404 });
-  } catch (error) {
-    if (!(error instanceof HttpError)) {
-      return Response.json(
-        {
-          error: "Failed to process MCP request",
-          details:
-            "Error: " +
-            (error instanceof Error ? error.message : String(error)),
-        },
-        { status: 500 },
-      );
-    }
-
-    return Response.json(
-      {
-        error: "Failed to process MCP request",
-        details: error.responseBody,
-      },
-      { status: error.statusCode },
     );
   }
 }
