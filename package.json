@@ -10,6 +10,9 @@
     "type": "git",
     "url": "git+https://github.com/goperigon/perigon-mcp-server.git"
   },
+  "engines": {
+    "bun": "1.2.16"
+  },
   "license": "Apache-2.0",
   "author": "Perigon (https://www.perigon.io)",
   "type": "module",
