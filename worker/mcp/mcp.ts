@@ -23,6 +23,7 @@ export class PerigonMCP extends McpAgent<Env, unknown, Props> {
   server = new McpServer({
     name: "Perigon News API",
     version: "1.0.0",
+    instructions: "",
   });
 
   async init() {
