@@ -1,3 +1,4 @@
 - [ ] Cleanup vibe coded frontend
 - [ ] Protection against abuse
 - [ ] Better background animation
+- [ ] Add instructions
