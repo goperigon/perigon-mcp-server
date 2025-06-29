@@ -328,11 +328,11 @@ async function handleMCPRequest(
     ctx.props = props;
 
     if (url.pathname.includes("/sse")) {
-      return PerigonMCP.serveSSE("/v1/sse").fetch(request, env, ctx);
+      return PerigonMCP.serveSSE("/sse").fetch(request, env, ctx);
     }
 
     if (url.pathname.includes("/mcp")) {
-      return PerigonMCP.serve("/v1/mcp").fetch(request, env, ctx);
+      return PerigonMCP.serve("/mcp").fetch(request, env, ctx);
     }
 
     return new Response("Not found", { status: 404 });
