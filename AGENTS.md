@@ -1,5 +1,8 @@
 # Agent Guidelines for Perigon MCP Server
 
+## Important
+DO NOT run the dev server unless explicitly told to
+
 ## Build/Test Commands
 - `bun run dev` - Start development server
 - `bun run build` - Build for production
