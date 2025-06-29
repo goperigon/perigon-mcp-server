@@ -10,11 +10,11 @@ import {
   CoreMessage,
 } from "ai";
 import { PerigonMCP, Props } from "./mcp/mcp";
-// import { PerigonMCP } from "./mcp/temp";
 import { convertMCPResult, createAISDKTools } from "./mcp/ai-sdk-adapter";
 import { Perigon } from "./lib/perigon";
 import { TOOL_DEFINITIONS } from "./mcp/tools";
 import { zodToJsonSchema } from "zod-to-json-schema";
+import { hashKey } from "./lib/hash";
 
 export { PerigonMCP };
 
@@ -111,6 +111,22 @@ export default {
       if (!apiKey) {
         return new Response("Unauthorized", { status: 401 });
       }
+      // Rate limiting is only available in production (Cloudflare Workers)
+      // see: https://github.com/cloudflare/workers-sdk/issues/8661
+      if (env.MCP_RATE_LIMITER) {
+        const key = await hashKey(apiKey);
+        const { success } = await env.MCP_RATE_LIMITER.limit({ key });
+        if (!success) {
+          return Response.json(
+            {
+              error: "Rate limit exceeded",
+              details:
+                "You have exceeded allowed number of mcp related requests",
+            },
+            { status: 429 },
+          );
+        }
+      }
 
       const perigon = new Perigon(apiKey);
 
@@ -132,6 +148,7 @@ export default {
 
       return new Response("Not found", { status: 404 });
     } catch (error) {
+      console.error("Failed to process MCP request:", error);
       if (!(error instanceof HttpError)) {
         return Response.json(
           {
