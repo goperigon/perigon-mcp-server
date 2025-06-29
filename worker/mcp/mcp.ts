@@ -4,18 +4,14 @@ import { Scopes } from "../types/types";
 import { TOOL_DEFINITIONS, ToolName } from "./tools";
 import { Perigon } from "../lib/perigon";
 
-type Bindings = Env;
-
 export type Props = {
   apiKey: string;
   scopes: Scopes[];
 };
 
-type State = null;
-
 // Map scopes to tool names
 const SCOPE_TO_TOOLS: Partial<Record<Scopes, ToolName>> = {
-  [Scopes.CLUSTERS]: "read_news_stories",
+  [Scopes.CLUSTERS]: "search_news_stories",
   [Scopes.JOURNALISTS]: "search_journalists",
   [Scopes.SOURCES]: "search_sources",
   [Scopes.PEOPLE]: "search_people",
@@ -23,7 +19,7 @@ const SCOPE_TO_TOOLS: Partial<Record<Scopes, ToolName>> = {
   [Scopes.TOPICS]: "search_topics",
 };
 
-export class PerigonMCP extends McpAgent<Bindings, State, Props> {
+export class PerigonMCP extends McpAgent<Env, unknown, Props> {
   server = new McpServer({
     name: "Perigon News API",
     version: "1.0.0",

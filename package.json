@@ -25,26 +25,26 @@
     "gen": "bunx wrangler types"
   },
   "devDependencies": {
-    "@cloudflare/vitest-pool-workers": "^0.8.32",
+    "@cloudflare/vitest-pool-workers": "^0.8.47",
     "@tailwindcss/postcss": "^4.1.11",
-    "@types/node": "^24.0.3",
+    "@types/node": "^24.0.7",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
-    "tailwindcss": "^4.1.10",
+    "tailwindcss": "^4.1.11",
     "typescript": "5.8.3",
     "vite": "^6.3.5",
     "vitest": "~3.1.4",
-    "wrangler": "^4.20.5"
+    "wrangler": "^4.22.0"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^1.2.12",
     "@ai-sdk/react": "^1.2.12",
-    "@cloudflare/vite-plugin": "^1.7.4",
+    "@cloudflare/vite-plugin": "^1.7.5",
     "@goperigon/perigon-ts": "^1.0.5",
     "@marsidev/react-turnstile": "^1.1.0",
     "@modelcontextprotocol/sdk": "^1.13.1",
-    "@vitejs/plugin-react": "^4.6.0",
     "agents": "^0.0.97",
+    "@vitejs/plugin-react": "^4.6.0",
     "ai": "^4.3.16",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
