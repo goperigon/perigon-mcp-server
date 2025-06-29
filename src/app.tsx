@@ -341,7 +341,7 @@ export default function App() {
                                 <h3 className="font-mono text-sm font-bold text-foreground">
                                   {tool.name}
                                 </h3>
-                                <p className="text-xs text-muted-foreground">
+                                <p className="text-xs text-muted-foreground hidden sm:block">
                                   {tool.description}
                                 </p>
                               </div>
@@ -381,7 +381,7 @@ export default function App() {
                         <CardTitle className="font-mono text-lg font-bold">
                           {selectedToolData.name}
                         </CardTitle>
-                        <p className="text-sm text-muted-foreground leading-relaxed">
+                        <p className="text-sm text-muted-foreground leading-relaxed hidden sm:block">
                           {selectedToolData.description}
                         </p>
                       </div>

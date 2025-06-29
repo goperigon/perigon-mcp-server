@@ -194,7 +194,7 @@ What would you like to explore today?`,
       {/* Fixed input area at bottom */}
       <div className="flex-shrink-0 border-t border-border bg-card/95 backdrop-blur-sm p-6">
         <div className="max-w-4xl mx-auto">
-          <div className="font-mono text-xs text-muted-foreground mb-4">
+          <div className="font-mono text-xs text-muted-foreground mb-4 hidden sm:block">
             INPUT CONSOLE • Press Enter to send, Shift+Enter for new line
           </div>
           <form onSubmit={handleSubmit} className="flex space-x-3">
@@ -210,7 +210,8 @@ What would you like to explore today?`,
             <Button
               type="submit"
               disabled={status !== "ready" || !input.trim()}
-              className="font-mono px-6"
+              className="font-mono px-6 pt-6"
+              variant="ghost"
             >
               <Send className="w-4 h-4 mr-2" />
               SEND
