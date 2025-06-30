@@ -124,7 +124,7 @@ What would you like to explore today?`,
                         return (
                           <Card
                             key={`${message.id}-text-${index}`}
-                            className="inline-block mb-3 bg-card/95 backdrop-blur-sm shadow-sm py-0 border-muted/30"
+                            className="inline-block mb-3 bg-card/95 backdrop-blur-sm shadow-sm py-0 border border-border/30"
                           >
                             {" "}
                             <CardContent className="py-1.5 px-3">
@@ -151,7 +151,7 @@ What would you like to explore today?`,
                   }) ||
                     // Fallback for messages with only content (backward compatibility)
                     (message.content && (
-                      <Card className="inline-block mb-3 bg-card/95 backdrop-blur-sm shadow-sm py-0 border-muted/30">
+                      <Card className="inline-block mb-3 bg-card/95 backdrop-blur-sm shadow-sm py-0 border border-border/30">
                         {" "}
                         <CardContent className="py-1.5 px-3">
                           <div className="text-sm leading-relaxed prose prose-sm max-w-none dark:prose-invert [&>*:last-child]:mb-0">
@@ -170,7 +170,9 @@ What would you like to explore today?`,
               <div className="w-10 h-10 rounded-full bg-muted text-muted-foreground flex items-center justify-center font-mono text-sm">
                 <Bot className="w-5 h-5" />
               </div>
-               <Card className="bg-card/95 backdrop-blur-sm shadow-sm py-0 border-muted/30">                <CardContent className="py-1.5 px-3">
+              <Card className="bg-card/95 backdrop-blur-sm shadow-sm py-0 border border-border/30">
+                {" "}
+                <CardContent className="py-1.5 px-3">
                   <div className="flex items-center space-x-3 text-sm font-mono">
                     <span>Thinking...</span>
                     <div className="flex space-x-1">
@@ -193,7 +195,7 @@ What would you like to explore today?`,
       </div>
 
       {/* Fixed input area at bottom */}
-      <div className="flex-shrink-0 border-t border-border bg-card/95 backdrop-blur-sm p-6">
+      <div className="flex-shrink-0 border-t border-border backdrop-blur-sm p-6">
         <div className="max-w-4xl mx-auto">
           <div className="font-mono text-xs text-muted-foreground mb-4 hidden sm:block">
             INPUT CONSOLE • Press Enter to send, Shift+Enter for new line
@@ -211,7 +213,7 @@ What would you like to explore today?`,
             <Button
               type="submit"
               disabled={status !== "ready" || !input.trim()}
-              className="font-mono px-6 pt-8"
+              className="font-mono px-6 pt-7"
               variant="ghost"
             >
               <Send className="w-4 h-4 mr-2" />
