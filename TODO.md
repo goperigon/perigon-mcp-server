@@ -1,3 +1,2 @@
-- [ ] Cleanup vibe coded frontend
+- [ ] Light mode needs to match perigon branding
 - [ ] Protection against abuse
-- [ ] Better background animation

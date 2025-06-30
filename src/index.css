@@ -1,42 +1,42 @@
 @import "tailwindcss";
 
 @theme {
-    /* Base colors - Light mode defaults */
-    --color-background: hsl(60 9% 92%);
-    --color-foreground: hsl(0 0% 28%);
+    /* Base colors - clean background, dark text */
+    --color-background: #f6f6f4;
+    --color-foreground: #121212;
 
-    /* Card colors - #F6F6F4 */
-    --color-card: hsl(60 9% 92%);
-    --color-card-foreground: hsl(0 0% 28%);
+    /* Card colors - elevated with subtle contrast */
+    --color-card: #cecece;
+    --color-card-foreground: #121212;
 
     /* Popover colors - using card color */
-    --color-popover: hsl(60 9% 92%);
-    --color-popover-foreground: hsl(0 0% 28%);
+    --color-popover: #cecece;
+    --color-popover-foreground: #121212;
 
     /* Primary colors */
-    --color-primary: hsl(0 0% 28%);
-    --color-primary-foreground: hsl(60 9% 98%);
+    --color-primary: #595959;
+    --color-primary-foreground: #f6f6f4;
 
-    /* Secondary colors - #ECECEA selected items */
-    --color-secondary: hsl(60 9% 92%);
-    --color-secondary-foreground: hsl(0 0% 28%);
+    /* Secondary colors - lighter for better separation */
+    --color-secondary: #9ca3af;
+    --color-secondary-foreground: #121212;
 
-    /* Muted colors - using card color for consistency */
-    --color-muted: hsl(60 9% 92%);
-    --color-muted-foreground: hsl(0 0% 45%);
+    /* Muted colors - subtle background, readable text */
+    --color-muted: #9ca3af;
+    --color-muted-foreground: #121212;
 
-    /* Accent colors - selected items #ECECEA */
-    --color-accent: hsl(60 9% 92%);
-    --color-accent-foreground: hsl(0 0% 28%);
+    /* Accent colors - much brighter and more interesting */
+    --color-accent: #cecece;
+    --color-accent-foreground: #121212;
 
     /* Destructive colors */
     --color-destructive: hsl(0 90% 55%);
-    --color-destructive-foreground: hsl(60 9% 98%);
+    --color-destructive-foreground: #f6f6f4;
 
-    /* Border and input - #F5F5F4 darker card/border color */
-    --color-border: hsl(0 0% 75%);
-    --color-input: hsl(60 9% 95%);
-    --color-ring: hsl(0 0% 28%);
+    /* Border and input - visible but not harsh */
+    --color-border: #9ca3af;
+    --color-input: #cecece;
+    --color-ring: #595959;
 
     /* Chart colors */
     --color-chart-1: hsl(12 76% 61%);
@@ -49,18 +49,18 @@
     --color-pg-gold: hsl(45 95% 59%);
     --color-pg-white: hsl(0 0% 100%);
 
-    /* Perigon gray scale - light mode */
-    --color-pg-gray-50: hsl(60 9% 98%);
-    --color-pg-gray-100: hsl(60 9% 92%);
-    --color-pg-gray-200: hsl(60 9% 95%);
-    --color-pg-gray-300: hsl(60 9% 92%);
-    --color-pg-gray-400: hsl(60 9% 84%);
-    --color-pg-gray-500: hsl(60 9% 66%);
-    --color-pg-gray-600: hsl(0 0% 45%);
-    --color-pg-gray-700: hsl(0 0% 32%);
-    --color-pg-gray-800: hsl(0 0% 28%);
-    --color-pg-gray-900: hsl(0 0% 15%);
-    --color-pg-gray-950: hsl(0 0% 4%);
+    /* Perigon gray scale - more dynamic hierarchy */
+    --color-pg-gray-50: #f6f6f4;
+    --color-pg-gray-100: #cecece;
+    --color-pg-gray-200: #9ca3af;
+    --color-pg-gray-300: #828282;
+    --color-pg-gray-400: #595959;
+    --color-pg-gray-500: #595959;
+    --color-pg-gray-600: #121212;
+    --color-pg-gray-700: #121212;
+    --color-pg-gray-800: #121212;
+    --color-pg-gray-900: #121212;
+    --color-pg-gray-950: #121212;
 
     /* Other variables */
     --radius: 0.5rem;
@@ -133,55 +133,55 @@
 
 /* Light theme - explicit */
 :root:not(.dark) {
-    /* Base colors - #FBFBF9 background, #494949/#444443 text */
-    --color-background: hsl(60 9% 98%);
-    --color-foreground: hsl(0 0% 28%);
+    /* Base colors - clean background, dark text */
+    --color-background: #f6f6f4;
+    --color-foreground: #121212;
 
-    /* Card colors - #F6F6F4 */
-    --color-card: hsl(60 9% 92%);
-    --color-card-foreground: hsl(0 0% 28%);
+    /* Card colors - elevated with subtle contrast */
+    --color-card: #cecece;
+    --color-card-foreground: #121212;
 
     /* Popover colors - using card color */
-    --color-popover: hsl(60 9% 92%);
-    --color-popover-foreground: hsl(0 0% 28%);
+    --color-popover: #cecece;
+    --color-popover-foreground: #121212;
 
     /* Primary colors */
-    --color-primary: hsl(0 0% 28%);
-    --color-primary-foreground: hsl(60 9% 98%);
+    --color-primary: #595959;
+    --color-primary-foreground: #f6f6f4;
 
-    /* Secondary colors - #ECECEA selected items */
-    --color-secondary: hsl(60 9% 92%);
-    --color-secondary-foreground: hsl(0 0% 28%);
+    /* Secondary colors - lighter for better separation */
+    --color-secondary: #9ca3af;
+    --color-secondary-foreground: #121212;
 
-    /* Muted colors - using card color for consistency */
-    --color-muted: hsl(60 9% 92%);
-    --color-muted-foreground: hsl(0 0% 45%);
+    /* Muted colors - subtle background, readable text */
+    --color-muted: #9ca3af;
+    --color-muted-foreground: #121212;
 
-    /* Accent colors - selected items #ECECEA */
-    --color-accent: hsl(60 9% 92%);
-    --color-accent-foreground: hsl(0 0% 28%);
+    /* Accent colors - much brighter and more interesting */
+    --color-accent: #cecece;
+    --color-accent-foreground: #121212;
 
     /* Destructive colors */
     --color-destructive: hsl(0 90% 55%);
-    --color-destructive-foreground: hsl(60 9% 98%);
+    --color-destructive-foreground: #f6f6f4;
 
-    /* Border and input - #F5F5F4 darker card/border color */
-    --color-border: hsl(0 0% 75%);
-    --color-input: hsl(60 9% 95%);
-    --color-ring: hsl(0 0% 28%);
+    /* Border and input - visible but not harsh */
+    --color-border: #9ca3af;
+    --color-input: #cecece;
+    --color-ring: #595959;
 
-    /* Perigon gray scale - light mode */
-    --color-pg-gray-50: hsl(60 9% 98%);
-    --color-pg-gray-100: hsl(60 9% 92%);
-    --color-pg-gray-200: hsl(60 9% 95%);
-    --color-pg-gray-300: hsl(60 9% 92%);
-    --color-pg-gray-400: hsl(60 9% 84%);
-    --color-pg-gray-500: hsl(60 9% 66%);
-    --color-pg-gray-600: hsl(0 0% 45%);
-    --color-pg-gray-700: hsl(0 0% 32%);
-    --color-pg-gray-800: hsl(0 0% 28%);
-    --color-pg-gray-900: hsl(0 0% 15%);
-    --color-pg-gray-950: hsl(0 0% 4%);
+    /* Perigon gray scale - more dynamic hierarchy */
+    --color-pg-gray-50: #f6f6f4;
+    --color-pg-gray-100: #cecece;
+    --color-pg-gray-200: #9ca3af;
+    --color-pg-gray-300: #828282;
+    --color-pg-gray-400: #595959;
+    --color-pg-gray-500: #595959;
+    --color-pg-gray-600: #121212;
+    --color-pg-gray-700: #121212;
+    --color-pg-gray-800: #121212;
+    --color-pg-gray-900: #121212;
+    --color-pg-gray-950: #121212;
 }
 
 /* Dark theme */

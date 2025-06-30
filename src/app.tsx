@@ -246,8 +246,9 @@ export default function App() {
                   variant="ghost"
                   onClick={() => setActiveTab("inspector")}
                   className={cn(
-                     "flex items-center space-x-1 sm:space-x-2 h-10 sm:h-8 px-2 sm:px-3 text-xs sm:text-sm font-mono cursor-pointer border-2 border-transparent hover:border-border/50",
-                     activeTab === "inspector" && "border-border",                  )}
+                    "flex items-center space-x-1 sm:space-x-2 h-10 sm:h-8 px-2 sm:px-3 text-xs sm:text-sm font-mono cursor-pointer border-2 border-transparent hover:border-border/50",
+                    activeTab === "inspector" && "border-border",
+                  )}
                 >
                   <Settings className="w-4 h-4 sm:w-3 sm:h-3" />
                   <span>INSPECTOR</span>
@@ -256,8 +257,9 @@ export default function App() {
                   variant="ghost"
                   onClick={() => setActiveTab("chat")}
                   className={cn(
-                     "flex items-center space-x-1 sm:space-x-2 h-10 sm:h-8 px-2 sm:px-3 text-xs sm:text-sm font-mono cursor-pointer border-2 border-transparent hover:border-border/50",
-                     activeTab === "chat" && "border-border",                  )}
+                    "flex items-center space-x-1 sm:space-x-2 h-10 sm:h-8 px-2 sm:px-3 text-xs sm:text-sm font-mono cursor-pointer border-2 border-transparent hover:border-border/50",
+                    activeTab === "chat" && "border-border",
+                  )}
                 >
                   <MessageSquare className="w-4 h-4 sm:w-3 sm:h-3" />
                   <span>CHAT</span>
@@ -275,17 +277,21 @@ export default function App() {
           <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-4 h-full bg-background">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 h-full">
               {/* Tools List - Mobile Dropdown */}
-              <div className="lg:hidden mb-4">
-                <div className="font-mono text-sm border border-border p-3 bg-muted rounded-lg mb-2">
-                  <div className="font-bold text-foreground">SELECT TOOL</div>
-                  <div className="text-xs text-muted-foreground">
-                    {loading
-                      ? "Loading..."
-                      : error
-                        ? "Error loading tools"
-                        : `${tools.length} available tools`}
-                  </div>
-                </div>
+              <div className="lg:hidden">
+                <Card className="border-2 border-border bg-card mb-2">
+                  <CardContent className="p-3 text-center">
+                    <div className="font-mono text-sm font-bold text-foreground">
+                      SELECT TOOL
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {loading
+                        ? "Loading..."
+                        : error
+                          ? "Error loading tools"
+                          : `${tools.length} available tools`}
+                    </div>
+                  </CardContent>
+                </Card>
                 {loading ? (
                   <div className="text-center text-muted-foreground text-sm font-mono p-4">
                     <div className="text-2xl mb-2">⟳</div>
@@ -324,9 +330,9 @@ export default function App() {
                         }
                       }}
                     >
-                      <SelectTrigger className="h-12 text-sm font-mono w-full">
+                      <SelectTrigger className="h-12 text-sm font-mono w-full text-foreground">
                         <SelectValue placeholder="Choose a tool to inspect..." />
-                      </SelectTrigger>
+                      </SelectTrigger>{" "}
                       <SelectContent
                         className="border-border shadow-lg rounded-lg overflow-hidden bg-popover [&>*]:py-1 [&>*]:pl-1 [&>*]:pr-3"
                         style={{
@@ -358,16 +364,20 @@ export default function App() {
 
               {/* Tools List - Desktop */}
               <div className="hidden lg:flex lg:col-span-4 flex-col overflow-y-auto">
-                <div className="font-mono text-sm border border-border p-3 bg-muted rounded-lg mb-2 flex-shrink-0">
-                  <div className="font-bold text-foreground">MCP TOOLS</div>
-                  <div className="text-xs text-muted-foreground">
-                    {loading
-                      ? "Loading..."
-                      : error
-                        ? "Error loading tools"
-                        : `${tools.length} available tools`}
-                  </div>
-                </div>
+                <Card className="border-2 border-border bg-card mb-2 flex-shrink-0">
+                  <CardContent className="py-0 text-center">
+                    <div className="font-mono text-sm font-bold text-foreground">
+                      AVAILABLE TOOLS
+                    </div>
+                    <div className="text-xs text-muted-foreground pt-1">
+                      {loading
+                        ? "Loading..."
+                        : error
+                          ? "Error loading tools"
+                          : `There are currently ${tools.length} supported tools`}
+                    </div>
+                  </CardContent>
+                </Card>
                 <div className="flex-1 space-y-2 overflow-y-auto">
                   {loading ? (
                     <Card className="border-2 border-border bg-card h-full">
@@ -529,7 +539,7 @@ export default function App() {
               <div className="hidden lg:block lg:col-span-4 overflow-y-auto">
                 <Card className="border-2 border-border h-full flex flex-col bg-card">
                   {" "}
-                  <CardHeader className="pb-3 flex-shrink-0 bg-muted">
+                  <CardHeader className="pb-3 flex-shrink-0">
                     <CardTitle className="text-sm font-mono text-foreground">
                       EXECUTION RESULT
                       <div className="text-xs text-muted-foreground font-normal">
