@@ -370,7 +370,7 @@ export default function App() {
                 <div className="flex-1 min-h-0 overflow-y-auto">
                   {selectedToolData ? (
                     <Card className="border-2 border-accent h-full flex flex-col bg-card shadow-lg">
-                      <CardHeader className="pb-4 flex-shrink-0 bg-muted space-y-3">
+                      <CardHeader className="pb-4 flex-shrink-0 bg-card space-y-3">
                         <div className="flex items-center justify-between">
                           <div className="font-mono text-xs text-muted-foreground">
                             SELECTED TOOL
@@ -534,8 +534,8 @@ export default function App() {
               <div className="hidden lg:block lg:col-span-4 overflow-y-auto">
                 {selectedToolData ? (
                   <Card className="border-2 border-accent h-full flex flex-col bg-card shadow-lg">
-                    <CardHeader className="pb-4 flex-shrink-0 bg-muted space-y-3">
-                      <div className="flex items-center justify-between">
+                     <CardHeader className="pb-4 flex-shrink-0 bg-card space-y-3">
+                       <div className="flex items-center justify-between">
                         <div className="font-mono text-xs text-muted-foreground">
                           SELECTED TOOL
                         </div>

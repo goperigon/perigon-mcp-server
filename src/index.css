@@ -22,7 +22,7 @@
     --color-secondary-foreground: #121212;
 
     /* Muted colors - subtle background, readable text */
-    --color-muted: #f6f6f4;
+    --color-muted: #e4e4e4;
     --color-muted-foreground: #505050;
 
     /* Accent colors - slightly elevated from muted */
@@ -154,7 +154,7 @@
     --color-secondary-foreground: #121212;
 
     /* Muted colors - subtle background, readable text */
-    --color-muted: #f6f6f4;
+    --color-muted: #e4e4e4;
     --color-muted-foreground: #505050;
 
     /* Accent colors - slightly elevated from muted */
