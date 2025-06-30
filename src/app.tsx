@@ -247,8 +247,8 @@ export default function App() {
                   variant="ghost"
                   onClick={() => setActiveTab("inspector")}
                   className={cn(
-                    "flex items-center space-x-1 sm:space-x-2 h-10 sm:h-8 px-2 sm:px-3 text-xs sm:text-sm font-mono cursor-pointer hover:border-2 hover:border-border",
-                    activeTab === "inspector" && "border border-border",
+                    "flex items-center space-x-1 sm:space-x-2 h-10 sm:h-8 px-2 sm:px-3 text-xs sm:text-sm font-mono cursor-pointer border-2 border-transparent hover:border-border",
+                    activeTab === "inspector" && "border-border",
                   )}
                 >
                   <Settings className="w-4 h-4 sm:w-3 sm:h-3" />
@@ -258,8 +258,8 @@ export default function App() {
                   variant="ghost"
                   onClick={() => setActiveTab("chat")}
                   className={cn(
-                    "flex items-center space-x-1 sm:space-x-2 h-10 sm:h-8 px-2 sm:px-3 text-xs sm:text-sm font-mono cursor-pointer hover:border-2 hover:border-border",
-                    activeTab === "chat" && "border border-border",
+                    "flex items-center space-x-1 sm:space-x-2 h-10 sm:h-8 px-2 sm:px-3 text-xs sm:text-sm font-mono cursor-pointer border-2 border-transparent hover:border-border",
+                    activeTab === "chat" && "border-border",
                   )}
                 >
                   <MessageSquare className="w-4 h-4 sm:w-3 sm:h-3" />

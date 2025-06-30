@@ -206,7 +206,7 @@ What would you like to explore today?`,
               onChange={handleInputChange}
               onKeyDown={handleKeyPress}
               placeholder="Enter your query here..."
-              className="flex-1 font-mono text-sm resize-none min-h-[60px] max-h-[120px] focus-visible:ring-0"
+              className="flex-1 font-mono text-sm resize-none min-h-[60px] max-h-[120px] focus-visible:ring-0 text-foreground"
               disabled={status !== "ready"}
             />
             <Button
