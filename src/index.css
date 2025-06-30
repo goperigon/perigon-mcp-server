@@ -1,65 +1,65 @@
 @import "tailwindcss";
 
 @theme {
-    /* Base colors - clean background, dark text */
-    --color-background: #f6f6f4;
+    /* Base colors - using Perigon neutral scale */
+    --color-background: #fbfbf9;
     --color-foreground: #121212;
 
     /* Card colors - elevated with subtle contrast */
-    --color-card: #cecece;
+    --color-card: #ffffff;
     --color-card-foreground: #121212;
 
     /* Popover colors - using card color */
-    --color-popover: #cecece;
+    --color-popover: #ffffff;
     --color-popover-foreground: #121212;
 
-    /* Primary colors */
-    --color-primary: #595959;
-    --color-primary-foreground: #f6f6f4;
+    /* Primary colors - Perigon sapphire brand */
+    --color-primary: #227c9d;
+    --color-primary-foreground: #ffffff;
 
-    /* Secondary colors - lighter for better separation */
-    --color-secondary: #9ca3af;
+    /* Secondary colors - lighter neutral for better separation */
+    --color-secondary: #f6f6f4;
     --color-secondary-foreground: #121212;
 
     /* Muted colors - subtle background, readable text */
-    --color-muted: #9ca3af;
-    --color-muted-foreground: #121212;
+    --color-muted: #f6f6f4;
+    --color-muted-foreground: #505050;
 
-    /* Accent colors - much brighter and more interesting */
-    --color-accent: #cecece;
+    /* Accent colors - slightly elevated from muted */
+    --color-accent: #e4e4e4;
     --color-accent-foreground: #121212;
 
-    /* Destructive colors */
-    --color-destructive: hsl(0 90% 55%);
-    --color-destructive-foreground: #f6f6f4;
+    /* Destructive colors - Perigon red */
+    --color-destructive: #ed2c09;
+    --color-destructive-foreground: #ffffff;
 
     /* Border and input - visible but not harsh */
-    --color-border: #9ca3af;
-    --color-input: #cecece;
-    --color-ring: #595959;
+    --color-border: #e4e4e4;
+    --color-input: #ffffff;
+    --color-ring: #227c9d;
 
-    /* Chart colors */
-    --color-chart-1: hsl(12 76% 61%);
-    --color-chart-2: hsl(173 58% 39%);
-    --color-chart-3: hsl(197 37% 24%);
-    --color-chart-4: hsl(43 74% 66%);
-    --color-chart-5: hsl(27 87% 67%);
+    /* Chart colors - using Perigon brand palette */
+    --color-chart-1: #227c9d;
+    --color-chart-2: #f9c035;
+    --color-chart-3: #2fb850;
+    --color-chart-4: #ff4c2c;
+    --color-chart-5: #7f60f2;
 
     /* Perigon custom colors */
-    --color-pg-gold: hsl(45 95% 59%);
-    --color-pg-white: hsl(0 0% 100%);
+    --color-pg-gold: #f9c035;
+    --color-pg-white: #ffffff;
 
-    /* Perigon gray scale - more dynamic hierarchy */
-    --color-pg-gray-50: #f6f6f4;
-    --color-pg-gray-100: #cecece;
-    --color-pg-gray-200: #9ca3af;
-    --color-pg-gray-300: #828282;
-    --color-pg-gray-400: #595959;
-    --color-pg-gray-500: #595959;
-    --color-pg-gray-600: #121212;
-    --color-pg-gray-700: #121212;
-    --color-pg-gray-800: #121212;
-    --color-pg-gray-900: #121212;
+    /* Perigon gray scale - proper neutral hierarchy */
+    --color-pg-gray-50: #fbfbf9;
+    --color-pg-gray-100: #f6f6f4;
+    --color-pg-gray-200: #e4e4e4;
+    --color-pg-gray-300: #9d9d9d;
+    --color-pg-gray-400: #828282;
+    --color-pg-gray-500: #505050;
+    --color-pg-gray-600: #454545;
+    --color-pg-gray-700: #303030;
+    --color-pg-gray-800: #2d2d2d;
+    --color-pg-gray-900: #1f1f1f;
     --color-pg-gray-950: #121212;
 
     /* Other variables */
@@ -133,54 +133,54 @@
 
 /* Light theme - explicit */
 :root:not(.dark) {
-    /* Base colors - clean background, dark text */
-    --color-background: #f6f6f4;
+    /* Base colors - using Perigon neutral scale */
+    --color-background: #fbfbf9;
     --color-foreground: #121212;
 
     /* Card colors - elevated with subtle contrast */
-    --color-card: #cecece;
+    --color-card: #ffffff;
     --color-card-foreground: #121212;
 
     /* Popover colors - using card color */
-    --color-popover: #cecece;
+    --color-popover: #ffffff;
     --color-popover-foreground: #121212;
 
-    /* Primary colors */
-    --color-primary: #595959;
-    --color-primary-foreground: #f6f6f4;
+    /* Primary colors - Perigon sapphire brand */
+    --color-primary: #227c9d;
+    --color-primary-foreground: #ffffff;
 
-    /* Secondary colors - lighter for better separation */
-    --color-secondary: #9ca3af;
+    /* Secondary colors - lighter neutral for better separation */
+    --color-secondary: #f6f6f4;
     --color-secondary-foreground: #121212;
 
     /* Muted colors - subtle background, readable text */
-    --color-muted: #9ca3af;
-    --color-muted-foreground: #121212;
+    --color-muted: #f6f6f4;
+    --color-muted-foreground: #505050;
 
-    /* Accent colors - much brighter and more interesting */
-    --color-accent: #cecece;
+    /* Accent colors - slightly elevated from muted */
+    --color-accent: #e4e4e4;
     --color-accent-foreground: #121212;
 
-    /* Destructive colors */
-    --color-destructive: hsl(0 90% 55%);
-    --color-destructive-foreground: #f6f6f4;
+    /* Destructive colors - Perigon red */
+    --color-destructive: #ed2c09;
+    --color-destructive-foreground: #ffffff;
 
     /* Border and input - visible but not harsh */
-    --color-border: #9ca3af;
-    --color-input: #cecece;
-    --color-ring: #595959;
+    --color-border: #e4e4e4;
+    --color-input: #ffffff;
+    --color-ring: #227c9d;
 
-    /* Perigon gray scale - more dynamic hierarchy */
-    --color-pg-gray-50: #f6f6f4;
-    --color-pg-gray-100: #cecece;
-    --color-pg-gray-200: #9ca3af;
-    --color-pg-gray-300: #828282;
-    --color-pg-gray-400: #595959;
-    --color-pg-gray-500: #595959;
-    --color-pg-gray-600: #121212;
-    --color-pg-gray-700: #121212;
-    --color-pg-gray-800: #121212;
-    --color-pg-gray-900: #121212;
+    /* Perigon gray scale - proper neutral hierarchy */
+    --color-pg-gray-50: #fbfbf9;
+    --color-pg-gray-100: #f6f6f4;
+    --color-pg-gray-200: #e4e4e4;
+    --color-pg-gray-300: #9d9d9d;
+    --color-pg-gray-400: #828282;
+    --color-pg-gray-500: #505050;
+    --color-pg-gray-600: #454545;
+    --color-pg-gray-700: #303030;
+    --color-pg-gray-800: #2d2d2d;
+    --color-pg-gray-900: #1f1f1f;
     --color-pg-gray-950: #121212;
 }
 
