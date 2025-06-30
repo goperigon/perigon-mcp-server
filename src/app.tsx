@@ -226,7 +226,6 @@ export default function App() {
 
   return (
     <div className="h-screen bg-background overflow-hidden flex flex-col">
-      <PixelBackground />
       {/* Clean Header */}
       <header className="relative z-10 border-b border-border bg-card flex-shrink-0">
         <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">

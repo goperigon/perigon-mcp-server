@@ -9,8 +9,6 @@ export function ThemeToggle() {
     setTheme(theme === "light" ? "dark" : "light");
   };
 
-  // return null;
-  /* Maybe later we add a cooler light mode */
   return (
     <Button
       variant="ghost"
