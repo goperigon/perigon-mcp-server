@@ -124,8 +124,9 @@ What would you like to explore today?`,
                         return (
                           <Card
                             key={`${message.id}-text-${index}`}
-                            className="inline-block mb-3 bg-card/95 backdrop-blur-sm shadow-sm py-0"
+                            className="inline-block mb-3 bg-card/95 backdrop-blur-sm shadow-sm py-0 border-muted/30"
                           >
+                            {" "}
                             <CardContent className="py-1.5 px-3">
                               <div className="text-sm leading-relaxed prose prose-sm max-w-none dark:prose-invert [&>*:last-child]:mb-0">
                                 <MessageText text={part.text} />
@@ -150,7 +151,8 @@ What would you like to explore today?`,
                   }) ||
                     // Fallback for messages with only content (backward compatibility)
                     (message.content && (
-                      <Card className="inline-block mb-3 bg-card/95 backdrop-blur-sm shadow-sm py-0">
+                      <Card className="inline-block mb-3 bg-card/95 backdrop-blur-sm shadow-sm py-0 border-muted/30">
+                        {" "}
                         <CardContent className="py-1.5 px-3">
                           <div className="text-sm leading-relaxed prose prose-sm max-w-none dark:prose-invert [&>*:last-child]:mb-0">
                             <MessageText text={message.content} />
@@ -168,7 +170,7 @@ What would you like to explore today?`,
               <div className="w-10 h-10 rounded-full bg-muted text-muted-foreground flex items-center justify-center font-mono text-sm">
                 <Bot className="w-5 h-5" />
               </div>
-              <Card className="bg-card/95 backdrop-blur-sm shadow-sm py-0">
+              <Card className="bg-card/95 backdrop-blur-sm shadow-sm py-0 border">
                 <CardContent className="py-1.5 px-3">
                   <div className="flex items-center space-x-3 text-sm font-mono">
                     <span>Thinking...</span>
@@ -204,7 +206,7 @@ What would you like to explore today?`,
               onChange={handleInputChange}
               onKeyDown={handleKeyPress}
               placeholder="Enter your query here..."
-              className="flex-1 font-mono text-sm resize-none min-h-[60px] max-h-[120px] placeholder:text-foreground/60 focus-visible:ring-0"
+              className="flex-1 font-mono text-sm resize-none min-h-[60px] max-h-[120px] focus-visible:ring-0"
               disabled={status !== "ready"}
             />
             <Button

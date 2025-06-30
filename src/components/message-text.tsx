@@ -17,7 +17,9 @@ export function MessageText({ text }: { text: string }) {
             {children}
           </pre>
         ),
-        p: ({ children }) => <p className="mb-3 leading-relaxed font-mono">{children}</p>,
+        p: ({ children }) => (
+          <p className="mb-3 leading-relaxed font-mono">{children}</p>
+        ),
         ul: ({ children }) => (
           <ul className="list-disc list-outside mb-3 space-y-1 ml-4 font-mono">
             {children}
@@ -40,7 +42,9 @@ export function MessageText({ text }: { text: string }) {
           </h2>
         ),
         h3: ({ children }) => (
-          <h3 className="text-lg font-semibold mb-2 text-foreground font-mono">{children}</h3>
+          <h3 className="text-lg font-semibold mb-2 text-foreground font-mono">
+            {children}
+          </h3>
         ),
         h4: ({ children }) => (
           <h4 className="text-base font-semibold mb-2 text-foreground font-mono">
@@ -48,7 +52,9 @@ export function MessageText({ text }: { text: string }) {
           </h4>
         ),
         strong: ({ children }) => (
-          <strong className="font-bold text-foreground font-mono">{children}</strong>
+          <strong className="font-bold text-foreground font-mono">
+            {children}
+          </strong>
         ),
         em: ({ children }) => (
           <em className="italic text-muted-foreground font-mono">{children}</em>

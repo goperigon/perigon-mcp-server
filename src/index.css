@@ -1,122 +1,135 @@
 @import "tailwindcss";
 
 @theme {
+    /* Base colors */
+    --color-background: hsl(60 9% 88%);
+    --color-foreground: hsl(222.2 84% 4.9%);
+
+    /* Card colors - keep consistent */
+    --color-card: hsl(0 0% 98%);
+    --color-card-foreground: hsl(222.2 84% 4.9%);
+
+    /* Popover colors */
+    --color-popover: hsl(0 0% 96%);
+    --color-popover-foreground: hsl(222.2 84% 4.9%);
+
+    /* Primary colors */
+    --color-primary: hsl(222.2 47.4% 11.2%);
+    --color-primary-foreground: hsl(210 40% 98%);
+
+    /* Secondary colors */
+    --color-secondary: hsl(210 20% 94%);
+    --color-secondary-foreground: hsl(222.2 84% 4.9%);
+
+    /* Muted colors - make same as card for consistency */
+    --color-muted: hsl(0 0% 98%);
+    --color-muted-foreground: hsl(215.4 16.3% 46.9%);
+
+    /* Accent colors */
+    --color-accent: hsl(210 20% 94%);
+    --color-accent-foreground: hsl(222.2 84% 4.9%);
+
+    /* Destructive colors */
     --color-destructive: hsl(0 90% 55%);
     --color-destructive-foreground: hsl(210 40% 98%);
+
+    /* Border and input - much dimmer */
+    --color-border: hsl(0 0% 70%);
+    --color-input: hsl(214.3 31.8% 91.4%);
+    --color-ring: hsl(222.2 84% 4.9%);
+
+    /* Chart colors */
+    --color-chart-1: hsl(12 76% 61%);
+    --color-chart-2: hsl(173 58% 39%);
+    --color-chart-3: hsl(197 37% 24%);
+    --color-chart-4: hsl(43 74% 66%);
+    --color-chart-5: hsl(27 87% 67%);
+
+    /* Perigon custom colors */
+    --color-pg-gold: hsl(45 95% 59%);
+    --color-pg-white: hsl(0 0% 100%);
+
+    /* Perigon gray scale */
+    --color-pg-gray-50: hsl(60 9% 98%);
+    --color-pg-gray-100: hsl(60 9% 96%);
+    --color-pg-gray-200: hsl(60 9% 90%);
+    --color-pg-gray-300: hsl(60 9% 84%);
+    --color-pg-gray-400: hsl(60 9% 66%);
+    --color-pg-gray-500: hsl(60 9% 45%);
+    --color-pg-gray-600: hsl(60 9% 32%);
+    --color-pg-gray-700: hsl(60 9% 25%);
+    --color-pg-gray-800: hsl(60 9% 15%);
+    --color-pg-gray-900: hsl(60 9% 11%);
+    --color-pg-gray-950: hsl(60 9% 4%);
+
+    /* Other variables */
+    --radius: 0.5rem;
 }
 
 @theme dark {
+    /* Base colors */
+    --color-background: hsl(0 0% 12%);
+    --color-foreground: hsl(0 0% 98%);
+
+    /* Card colors - keep consistent */
+    --color-card: hsl(0 0% 18%);
+    --color-card-foreground: hsl(0 0% 98%);
+
+    /* Popover colors */
+    --color-popover: hsl(0 0% 22%);
+    --color-popover-foreground: hsl(0 0% 98%);
+
+    /* Primary colors */
+    --color-primary: hsl(210 40% 98%);
+    --color-primary-foreground: hsl(0 0% 12%);
+
+    /* Secondary colors */
+    --color-secondary: hsl(0 0% 24%);
+    --color-secondary-foreground: hsl(0 0% 98%);
+
+    /* Muted colors - make same as card for consistency */
+    --color-muted: hsl(0 0% 18%);
+    --color-muted-foreground: hsl(0 0% 65%);
+
+    /* Accent colors */
+    --color-accent: hsl(0 0% 24%);
+    --color-accent-foreground: hsl(0 0% 98%);
+
+    /* Destructive colors */
     --color-destructive: hsl(0 85% 45%);
     --color-destructive-foreground: hsl(0 0% 98%);
+
+    /* Border and input - much dimmer */
+    --color-border: hsl(0 0% 35%);
+    --color-input: hsl(0 0% 30%);
+    --color-ring: hsl(212.7 26.8% 83.9%);
+
+    /* Chart colors */
+    --color-chart-1: hsl(220 70% 50%);
+    --color-chart-2: hsl(160 60% 45%);
+    --color-chart-3: hsl(30 80% 55%);
+    --color-chart-4: hsl(280 65% 60%);
+    --color-chart-5: hsl(340 75% 55%);
+
+    /* Perigon custom colors */
+    --color-pg-gold: hsl(45 95% 59%);
+    --color-pg-white: hsl(0 0% 100%);
+
+    /* Perigon gray scale (adjusted for dark mode) */
+    --color-pg-gray-50: hsl(0 0% 18%);
+    --color-pg-gray-100: hsl(0 0% 22%);
+    --color-pg-gray-200: hsl(0 0% 25%);
+    --color-pg-gray-300: hsl(0 0% 33%);
+    --color-pg-gray-400: hsl(0 0% 41%);
+    --color-pg-gray-500: hsl(0 0% 51%);
+    --color-pg-gray-600: hsl(60 9% 66%);
+    --color-pg-gray-700: hsl(60 9% 84%);
+    --color-pg-gray-800: hsl(60 9% 90%);
+    --color-pg-gray-900: hsl(60 9% 96%);
+    --color-pg-gray-950: hsl(60 9% 98%);
 }
 
 @custom-variant dark (&:where(.dark, .dark *));
-
-@layer base {
-    :root {
-        --background: 60 9% 88%;
-        --foreground: 222.2 84% 4.9%;
-        --card: 0 0% 100%;
-        --card-foreground: 222.2 84% 4.9%;
-        --popover: 0 0% 96%;
-        --popover-foreground: 222.2 84% 4.9%;
-        --primary: 222.2 47.4% 11.2%;
-        --primary-foreground: 210 40% 98%;
-        --secondary: 210 20% 94%;
-        --secondary-foreground: 222.2 84% 4.9%;
-        --muted: 210 20% 94%;
-        --muted-foreground: 215.4 16.3% 46.9%;
-        --accent: 210 20% 94%;
-        --accent-foreground: 222.2 84% 4.9%;
-        --destructive: 0 90% 55%;
-        --destructive-foreground: 210 40% 98%;
-        --border: 0 0% 80%;
-        --input: 214.3 31.8% 91.4%;
-        --ring: 222.2 84% 4.9%;
-        --chart-1: 12 76% 61%;
-        --chart-2: 173 58% 39%;
-        --chart-3: 197 37% 24%;
-        --chart-4: 43 74% 66%;
-        --chart-5: 27 87% 67%;
-        --radius: 0.5rem;
-        --star-color: 120 113 108;
-
-        /* Custom Perigon Colors */
-        --pg-gold: 249, 192, 53;
-        --pg-white: 255, 255, 255;
-
-        /* Perigon Gray Scale */
-        --pg-gray-50: 250, 250, 249;
-        --pg-gray-100: 245, 245, 244;
-        --pg-gray-200: 231, 229, 228;
-        --pg-gray-300: 214, 211, 209;
-        --pg-gray-400: 168, 162, 158;
-        --pg-gray-500: 120, 113, 108;
-        --pg-gray-600: 87, 83, 78;
-        --pg-gray-700: 68, 64, 60;
-        --pg-gray-800: 41, 37, 36;
-        --pg-gray-900: 28, 25, 23;
-        --pg-gray-950: 12, 10, 9;
-    }
-
-    .dark {
-        --background: 0 0% 12%;
-        --foreground: 0 0% 92%;
-        --card: 0 0% 18%;
-        --card-foreground: 0 0% 98%;
-        --popover: 0 0% 22%;
-        --popover-foreground: 0 0% 98%;
-        --primary: 210 40% 98%;
-        --primary-foreground: 0 0% 12%;
-        --secondary: 0 0% 24%;
-        --secondary-foreground: 0 0% 98%;
-        --muted: 0 0% 24%;
-        --muted-foreground: 0 0% 65%;
-        --accent: 0 0% 24%;
-        --accent-foreground: 0 0% 98%;
-        --destructive: 0 85% 45%;
-        --destructive-foreground: 0 0% 98%;
-        --border: 0 0% 30%;
-        --input: 0 0% 30%;
-        --ring: 212.7 26.8% 83.9%;
-        --chart-1: 220 70% 50%;
-        --chart-2: 160 60% 45%;
-        --chart-3: 30 80% 55%;
-        --chart-4: 280 65% 60%;
-        --chart-5: 340 75% 55%;
-        --star-color: 255 255 255;
-
-        /* Custom Perigon Colors (adjusted for dark mode) */
-        --pg-gold: 249, 192, 53;
-        --pg-white: 255, 255, 255;
-
-        /* Perigon Gray Scale (adjusted for lighter dark mode) */
-        --pg-gray-50: 45, 45, 45;
-        --pg-gray-100: 55, 55, 55;
-        --pg-gray-200: 65, 65, 65;
-        --pg-gray-300: 85, 85, 85;
-        --pg-gray-400: 105, 105, 105;
-        --pg-gray-500: 130, 130, 130;
-        --pg-gray-600: 168, 162, 158;
-        --pg-gray-700: 214, 211, 209;
-        --pg-gray-800: 231, 229, 228;
-        --pg-gray-900: 245, 245, 244;
-        --pg-gray-950: 250, 250, 249;
-    }
-}
-
-@layer base {
-    * {
-        border-color: hsl(var(--border));
-    }
-    body {
-        background-color: hsl(var(--background));
-        color: hsl(var(--foreground));
-        transition:
-            background-color 0.1s ease,
-            color 0.1s ease;
-    }
-}
 
 @layer utilities {
     .animate-spin-slow {
@@ -131,14 +144,4 @@
             transform: rotate(360deg);
         }
     }
-}
-
-/* Fix for placeholder text not updating properly during theme switches */
-textarea::placeholder {
-    transition: color 0s !important;
-    color: hsl(var(--foreground) / 0.6) !important;
-}
-
-.dark textarea::placeholder {
-    color: hsl(var(--foreground) / 0.6) !important;
 }

@@ -9,22 +9,22 @@ export function ThemeToggle() {
     setTheme(theme === "light" ? "dark" : "light");
   };
 
-  return null;
+  // return null;
   /* Maybe later we add a cooler light mode */
-  // return (
-  //   <Button
-  //     variant="ghost"
-  //     size="sm"
-  //     onClick={toggleTheme}
-  //     className="size-8 hover:border-2 cursor-pointer"
-  //     title={`Current theme: ${theme}. Click to toggle.`}
-  //   >
-  //     {theme === "light" ? (
-  //       <Sun className="size-4" />
-  //     ) : (
-  //       <Moon className="size-4" />
-  //     )}
-  //     <span className="sr-only">Toggle theme</span>
-  //   </Button>
-  // );
+  return (
+    <Button
+      variant="ghost"
+      size="sm"
+      onClick={toggleTheme}
+      className="size-8 hover:border-2 cursor-pointer"
+      title={`Current theme: ${theme}. Click to toggle.`}
+    >
+      {theme === "light" ? (
+        <Sun className="size-4" />
+      ) : (
+        <Moon className="size-4" />
+      )}
+      <span className="sr-only">Toggle theme</span>
+    </Button>
+  );
 }
