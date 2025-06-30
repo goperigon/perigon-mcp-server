@@ -2,15 +2,15 @@
 
 @theme {
     /* Base colors - Light mode defaults */
-    --color-background: hsl(60 9% 98%);
+    --color-background: hsl(60 9% 92%);
     --color-foreground: hsl(0 0% 28%);
 
     /* Card colors - #F6F6F4 */
-    --color-card: hsl(60 9% 96%);
+    --color-card: hsl(60 9% 92%);
     --color-card-foreground: hsl(0 0% 28%);
 
     /* Popover colors - using card color */
-    --color-popover: hsl(60 9% 96%);
+    --color-popover: hsl(60 9% 92%);
     --color-popover-foreground: hsl(0 0% 28%);
 
     /* Primary colors */
@@ -22,7 +22,7 @@
     --color-secondary-foreground: hsl(0 0% 28%);
 
     /* Muted colors - using card color for consistency */
-    --color-muted: hsl(60 9% 96%);
+    --color-muted: hsl(60 9% 92%);
     --color-muted-foreground: hsl(0 0% 45%);
 
     /* Accent colors - selected items #ECECEA */
@@ -34,7 +34,7 @@
     --color-destructive-foreground: hsl(60 9% 98%);
 
     /* Border and input - #F5F5F4 darker card/border color */
-    --color-border: hsl(60 9% 95%);
+    --color-border: hsl(0 0% 75%);
     --color-input: hsl(60 9% 95%);
     --color-ring: hsl(0 0% 28%);
 
@@ -51,7 +51,7 @@
 
     /* Perigon gray scale - light mode */
     --color-pg-gray-50: hsl(60 9% 98%);
-    --color-pg-gray-100: hsl(60 9% 96%);
+    --color-pg-gray-100: hsl(60 9% 92%);
     --color-pg-gray-200: hsl(60 9% 95%);
     --color-pg-gray-300: hsl(60 9% 92%);
     --color-pg-gray-400: hsl(60 9% 84%);
@@ -125,7 +125,7 @@
     --color-pg-gray-600: hsl(60 9% 66%);
     --color-pg-gray-700: hsl(60 9% 84%);
     --color-pg-gray-800: hsl(60 9% 90%);
-    --color-pg-gray-900: hsl(60 9% 96%);
+    --color-pg-gray-900: hsl(60 9% 92%);
     --color-pg-gray-950: hsl(60 9% 98%);
 }
 
@@ -138,11 +138,11 @@
     --color-foreground: hsl(0 0% 28%);
 
     /* Card colors - #F6F6F4 */
-    --color-card: hsl(60 9% 96%);
+    --color-card: hsl(60 9% 92%);
     --color-card-foreground: hsl(0 0% 28%);
 
     /* Popover colors - using card color */
-    --color-popover: hsl(60 9% 96%);
+    --color-popover: hsl(60 9% 92%);
     --color-popover-foreground: hsl(0 0% 28%);
 
     /* Primary colors */
@@ -154,7 +154,7 @@
     --color-secondary-foreground: hsl(0 0% 28%);
 
     /* Muted colors - using card color for consistency */
-    --color-muted: hsl(60 9% 96%);
+    --color-muted: hsl(60 9% 92%);
     --color-muted-foreground: hsl(0 0% 45%);
 
     /* Accent colors - selected items #ECECEA */
@@ -166,13 +166,13 @@
     --color-destructive-foreground: hsl(60 9% 98%);
 
     /* Border and input - #F5F5F4 darker card/border color */
-    --color-border: hsl(60 9% 95%);
+    --color-border: hsl(0 0% 75%);
     --color-input: hsl(60 9% 95%);
     --color-ring: hsl(0 0% 28%);
 
     /* Perigon gray scale - light mode */
     --color-pg-gray-50: hsl(60 9% 98%);
-    --color-pg-gray-100: hsl(60 9% 96%);
+    --color-pg-gray-100: hsl(60 9% 92%);
     --color-pg-gray-200: hsl(60 9% 95%);
     --color-pg-gray-300: hsl(60 9% 92%);
     --color-pg-gray-400: hsl(60 9% 84%);
@@ -244,7 +244,7 @@
     --color-pg-gray-600: hsl(60 9% 66%);
     --color-pg-gray-700: hsl(60 9% 84%);
     --color-pg-gray-800: hsl(60 9% 90%);
-    --color-pg-gray-900: hsl(60 9% 96%);
+    --color-pg-gray-900: hsl(60 9% 92%);
     --color-pg-gray-950: hsl(60 9% 98%);
 }
 
