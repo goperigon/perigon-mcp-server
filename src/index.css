@@ -6,11 +6,11 @@
     --color-foreground: #121212;
 
     /* Card colors - elevated with subtle contrast */
-    --color-card: #f6f6f4;
+    --color-card: #ffffff;
     --color-card-foreground: #121212;
 
     /* Popover colors - using card color */
-    --color-popover: #f6f6f4;
+    --color-popover: #ffffff;
     --color-popover-foreground: #121212;
 
     /* Primary colors - Perigon sapphire brand */
@@ -35,7 +35,7 @@
 
     /* Border and input - visible but not harsh */
     --color-border: #e4e4e4;
-    --color-input: #f6f6f4;
+    --color-input: #ffffff;
     --color-ring: #227c9d;
 
     /* Chart colors - using Perigon brand palette */
@@ -138,11 +138,11 @@
     --color-foreground: #121212;
 
     /* Card colors - elevated with subtle contrast */
-    --color-card: #f6f6f4;
+    --color-card: #ffffff;
     --color-card-foreground: #121212;
 
     /* Popover colors - using card color */
-    --color-popover: #f6f6f4;
+    --color-popover: #ffffff;
     --color-popover-foreground: #121212;
 
     /* Primary colors - Perigon sapphire brand */
@@ -167,7 +167,7 @@
 
     /* Border and input - visible but not harsh */
     --color-border: #e4e4e4;
-    --color-input: #f6f6f4;
+    --color-input: #ffffff;
     --color-ring: #227c9d;
 
     /* Perigon gray scale - proper neutral hierarchy */
