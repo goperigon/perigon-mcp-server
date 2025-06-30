@@ -2,6 +2,7 @@
 
 ## Important
 DO NOT run the dev server unless explicitly told to
+DO NOT needlessly build the app for no reason
 
 ## Build/Test Commands
 - `bun run dev` - Start development server

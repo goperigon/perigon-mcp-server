@@ -246,9 +246,8 @@ export default function App() {
                   variant="ghost"
                   onClick={() => setActiveTab("inspector")}
                   className={cn(
-                    "flex items-center space-x-1 sm:space-x-2 h-10 sm:h-8 px-2 sm:px-3 text-xs sm:text-sm font-mono cursor-pointer border-2 border-transparent hover:border-border",
-                    activeTab === "inspector" && "border-border",
-                  )}
+                     "flex items-center space-x-1 sm:space-x-2 h-10 sm:h-8 px-2 sm:px-3 text-xs sm:text-sm font-mono cursor-pointer border-2 border-transparent hover:border-border/50",
+                     activeTab === "inspector" && "border-border",                  )}
                 >
                   <Settings className="w-4 h-4 sm:w-3 sm:h-3" />
                   <span>INSPECTOR</span>
@@ -257,9 +256,8 @@ export default function App() {
                   variant="ghost"
                   onClick={() => setActiveTab("chat")}
                   className={cn(
-                    "flex items-center space-x-1 sm:space-x-2 h-10 sm:h-8 px-2 sm:px-3 text-xs sm:text-sm font-mono cursor-pointer border-2 border-transparent hover:border-border",
-                    activeTab === "chat" && "border-border",
-                  )}
+                     "flex items-center space-x-1 sm:space-x-2 h-10 sm:h-8 px-2 sm:px-3 text-xs sm:text-sm font-mono cursor-pointer border-2 border-transparent hover:border-border/50",
+                     activeTab === "chat" && "border-border",                  )}
                 >
                   <MessageSquare className="w-4 h-4 sm:w-3 sm:h-3" />
                   <span>CHAT</span>
@@ -411,11 +409,7 @@ export default function App() {
                     tools.map((tool, index) => (
                       <Card
                         key={tool.name}
-                        className={`cursor-pointer transition-all border-2 font-mono ${
-                          selectedTool === tool.name
-                            ? "border-accent bg-accent/10 shadow-lg"
-                            : "border-border hover:border-muted-foreground bg-card"
-                        }`}
+                        className="cursor-pointer transition-all border-2 font-mono border-border hover:border-muted-foreground bg-card"
                         onClick={() => {
                           setSelectedTool(tool.name);
                           setToolParams(getDefaultParams(tool.args.properties));
