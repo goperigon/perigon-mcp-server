@@ -170,8 +170,7 @@ What would you like to explore today?`,
               <div className="w-10 h-10 rounded-full bg-muted text-muted-foreground flex items-center justify-center font-mono text-sm">
                 <Bot className="w-5 h-5" />
               </div>
-              <Card className="bg-card/95 backdrop-blur-sm shadow-sm py-0 border">
-                <CardContent className="py-1.5 px-3">
+               <Card className="bg-card/95 backdrop-blur-sm shadow-sm py-0 border-muted/30">                <CardContent className="py-1.5 px-3">
                   <div className="flex items-center space-x-3 text-sm font-mono">
                     <span>Thinking...</span>
                     <div className="flex space-x-1">
