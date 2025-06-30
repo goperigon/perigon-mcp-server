@@ -27,9 +27,9 @@ export default function ChatPlayground() {
         {
           id: "1",
           role: "assistant",
-          content: `Hello! I'm your Perigon MCP assistant. I can help you search for news, analyze trends, and gather information using various tools.
+          content: `Hi! I'm Cerebro, your AI assistant powered by Perigon. I can help you search news, research journalists and companies, and find information about public figures and media sources.
 
-What would you like to explore today?`,
+What would you like to explore?`,
         },
       ],
     });
@@ -280,7 +280,9 @@ function ToolCallVisualization({ toolCall }: { toolCall: any }) {
                 <Card className="bg-card/50 border-border/30">
                   <CardContent className="py-2 px-3">
                     <pre className="overflow-auto max-h-64 text-foreground whitespace-pre-wrap break-words">
-                      {typeof result === 'string' ? result : JSON.stringify(result, null, 2)}
+                      {typeof result === "string"
+                        ? result
+                        : JSON.stringify(result, null, 2)}
                     </pre>
                   </CardContent>
                 </Card>

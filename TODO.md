@@ -1,2 +1,4 @@
 - [ ] Light mode needs to match perigon branding
 - [ ] Protection against abuse
+- [ ] Add mcp instruction set
+- [ ] date defaults?
