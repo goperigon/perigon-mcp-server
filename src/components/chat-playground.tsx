@@ -101,13 +101,7 @@ What would you like to explore today?`,
                     : ""
                 }`}
               >
-                <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center font-mono text-sm ${
-                    message.role === "user"
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted text-muted-foreground"
-                  }`}
-                >
+                <div className="w-10 h-10 flex items-center justify-center text-muted-foreground">
                   {message.role === "user" ? (
                     <User className="w-5 h-5" />
                   ) : (
@@ -167,7 +161,7 @@ What would you like to explore today?`,
 
           {status === "submitted" && (
             <div className="flex items-start space-x-4">
-              <div className="w-10 h-10 rounded-full bg-muted text-muted-foreground flex items-center justify-center font-mono text-sm">
+              <div className="w-10 h-10 flex items-center justify-center text-muted-foreground">
                 <Bot className="w-5 h-5" />
               </div>
               <Card className="bg-card/95 backdrop-blur-sm shadow-sm py-0 border border-border/30">
