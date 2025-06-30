@@ -50,7 +50,6 @@ export default function PixelBackground() {
 
     // Get star colors from CSS custom properties using Perigon palette
     const getStarColors = () => {
-      const style = getComputedStyle(document.documentElement);
       const isDark = document.documentElement.classList.contains("dark");
       
       if (isDark) {
@@ -73,7 +72,7 @@ export default function PixelBackground() {
     // Initialize static stars with clusters for Galaga-style pixelated feel
     const initializeStars = () => {
       stars.length = 0;
-      const starCount = Math.floor((canvas.width * canvas.height) / 1500); // Much more stars for visibility
+      const starCount = Math.floor((canvas.width * canvas.height) / 800); // Much more stars
 
       for (let i = 0; i < starCount; i++) {
         const layer = Math.random() < 0.6 ? 1 : Math.random() < 0.85 ? 2 : 3;
@@ -85,22 +84,22 @@ export default function PixelBackground() {
         switch (layer) {
           case 1: // Background layer - tiny pixels
             chars = starChars.layer1;
-            baseSize = 8 + Math.random() * 2; // Bigger so they're visible
+            baseSize = 2 + Math.random() * 1; // Tiny tiny pixels
             baseOpacity = 0.4 + Math.random() * 0.3;
             break;
           case 2: // Middle layer - small pixels
             chars = starChars.layer2;
-            baseSize = 10 + Math.random() * 2; // More visible
+            baseSize = 3 + Math.random() * 1; // Still tiny
             baseOpacity = 0.6 + Math.random() * 0.3;
             break;
-          case 3: // Foreground layer - still small but visible
+          case 3: // Foreground layer - slightly larger but still tiny
             chars = starChars.layer3;
-            baseSize = 12 + Math.random() * 3; // Clearly visible
+            baseSize = 4 + Math.random() * 1; // Tiny but visible
             baseOpacity = 0.8 + Math.random() * 0.2;
             break;
           default:
             chars = starChars.layer1;
-            baseSize = 8;
+            baseSize = 2;
             baseOpacity = 0.4;
         }
 
@@ -186,7 +185,7 @@ export default function PixelBackground() {
                 const clusterTwinkle = Math.sin(time * (star.twinkleSpeed * 1.5) + clusterStar.phase) * 0.7;
                 const clusterOpacity = Math.max(0.1, (star.baseOpacity * 0.8) + clusterTwinkle);
                 
-                ctx.font = `${star.size * 0.5}px monospace`; // Even tinier cluster stars
+                ctx.font = `${Math.max(1, star.size * 0.5)}px monospace`; // Even tinier cluster stars
                 ctx.fillStyle = starColor
                   .replace("rgb", "rgba")
                   .replace(")", `, ${clusterOpacity})`);

@@ -15,8 +15,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Play, MessageSquare, Settings } from "lucide-react";
 import PixelBackground from "./components/pixel-background";
 import ChatPlayground from "@/components/chat-playground";
-import { ThemeToggle } from "@/components/theme-toggle";
+
 import { cn } from "./lib/utils";
+import { ThemeToggle } from "./components/theme-toggle";
 
 // TODO: proper json schema
 interface ToolParameter {
@@ -264,7 +265,7 @@ export default function App() {
                   <MessageSquare className="w-4 h-4 sm:w-3 sm:h-3" />
                   <span>CHAT</span>
                 </Button>
-              </nav>{" "}
+              </nav>
               <ThemeToggle />
             </div>
           </div>
@@ -330,9 +331,8 @@ export default function App() {
                         <SelectValue placeholder="Choose a tool to inspect..." />
                       </SelectTrigger>
                       <SelectContent
-                        className="border-border shadow-lg rounded-lg overflow-hidden [&>*]:py-1 [&>*]:pl-1 [&>*]:pr-3"
+                        className="border-border shadow-lg rounded-lg overflow-hidden bg-popover [&>*]:py-1 [&>*]:pl-1 [&>*]:pr-3"
                         style={{
-                          backgroundColor: "rgb(var(--pg-gray-200))",
                           width: "var(--radix-select-trigger-width)",
                           minWidth: "var(--radix-select-trigger-width)",
                         }}
@@ -343,7 +343,7 @@ export default function App() {
                           <SelectItem
                             key={tool.name}
                             value={tool.name}
-                            className="text-sm font-mono py-3 pl-4 pr-10 mx-1 my-0.5 rounded-md hover:bg-white/60 dark:hover:bg-gray-700/60 focus:bg-accent/30 transition-colors border border-border/30"
+                            className="text-sm font-mono py-3 pl-4 pr-10 mx-1 my-0.5 rounded-md bg-card hover:bg-muted focus:bg-accent transition-colors border border-border/30"
                           >
                             <div className="flex items-center space-x-2">
                               <span className="text-muted-foreground">
