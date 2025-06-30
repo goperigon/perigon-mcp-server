@@ -235,37 +235,37 @@ function ToolCallVisualization({ toolCall }: { toolCall: any }) {
       <CollapsibleTrigger asChild>
         <Button
           variant="outline"
-          className="w-full justify-between font-mono text-xs p-3 h-auto bg-muted hover:bg-muted/80"
+          className="w-full justify-between font-mono text-xs p-3 h-auto bg-muted/50 hover:bg-muted/70 border-border/50"
         >
           <div className="flex items-center space-x-2">
-            <Tool className="w-4 h-4" />
-            <span>TOOL CALL: {toolName}</span>
+            <Tool className="w-4 h-4 text-muted-foreground" />
+            <span className="text-foreground">TOOL CALL: {toolName}</span>
             <span className="text-muted-foreground">
               ({Object.keys(args).length} params)
             </span>
             {state && (
-              <Badge variant="outline" className="text-xs">
+              <Badge variant="outline" className="text-xs border-border/50">
                 {state.toUpperCase()}
               </Badge>
             )}
           </div>
           {isOpen ? (
-            <ChevronDown className="w-4 h-4" />
+            <ChevronDown className="w-4 h-4 text-muted-foreground" />
           ) : (
-            <ChevronRight className="w-4 h-4" />
+            <ChevronRight className="w-4 h-4 text-muted-foreground" />
           )}
         </Button>
       </CollapsibleTrigger>
       <CollapsibleContent>
-        <Card className="bg-muted border-l border-r border-b border-border rounded-t-none rounded-b-lg">
+        <Card className="bg-muted/30 border-l border-r border-b border-border/30 rounded-t-none rounded-b-lg">
           <CardContent className="py-3 px-4 font-mono text-xs space-y-3">
             <div>
               <div className="font-semibold text-foreground mb-2">
                 PARAMETERS:
               </div>
-              <Card className="bg-card">
+              <Card className="bg-card/50 border-border/30">
                 <CardContent className="py-2 px-3">
-                  <pre className="overflow-x-auto">
+                  <pre className="overflow-auto max-h-48 text-foreground whitespace-pre break-words">
                     {JSON.stringify(args, null, 2)}
                   </pre>
                 </CardContent>
@@ -277,10 +277,10 @@ function ToolCallVisualization({ toolCall }: { toolCall: any }) {
                 <div className="font-semibold text-foreground mb-2">
                   RESULT:
                 </div>
-                <Card className="bg-card">
+                <Card className="bg-card/50 border-border/30">
                   <CardContent className="py-2 px-3">
-                    <pre className="overflow-x-auto">
-                      {JSON.stringify(result, null, 2)}
+                    <pre className="overflow-auto max-h-64 text-foreground whitespace-pre-wrap break-words">
+                      {typeof result === 'string' ? result : JSON.stringify(result, null, 2)}
                     </pre>
                   </CardContent>
                 </Card>
