@@ -35,21 +35,58 @@ What would you like to explore?`,
     });
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const autoScrollDisabledRef = useRef(false);
+  const isAutoScrollingRef = useRef(false);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
-    if (scrollAreaRef.current) {
+    if (scrollAreaRef.current && !autoScrollDisabledRef.current) {
       // Use setTimeout to ensure DOM is updated before scrolling
       setTimeout(() => {
-        if (scrollAreaRef.current) {
+        if (scrollAreaRef.current && !autoScrollDisabledRef.current) {
+          isAutoScrollingRef.current = true;
           scrollAreaRef.current.scrollTo({
             top: scrollAreaRef.current.scrollHeight,
             behavior: "smooth",
           });
+          // Clear auto-scrolling flag after smooth scroll completes
+          setTimeout(() => {
+            isAutoScrollingRef.current = false;
+          }, 500);
         }
       }, 0);
     }
   }, [messages, status]);
+
+  // Reset auto-scroll disabled flag when new stream starts
+  useEffect(() => {
+    if (status === "submitted") {
+      autoScrollDisabledRef.current = false;
+    }
+  }, [status]);
+
+  // Add scroll event listener to detect user scrolling during auto-scroll
+  useEffect(() => {
+    const scrollElement = scrollAreaRef.current;
+    if (!scrollElement) return;
+
+    const handleScroll = () => {
+      // Only disable auto-scroll if we're currently auto-scrolling and user manually scrolled
+      if (isAutoScrollingRef.current) {
+        const { scrollTop, scrollHeight, clientHeight } = scrollElement;
+        const isAtBottom = scrollTop + clientHeight >= scrollHeight - 10; // 10px tolerance
+        
+        // If user scrolled away from bottom during auto-scroll, disable it
+        if (!isAtBottom) {
+          autoScrollDisabledRef.current = true;
+          isAutoScrollingRef.current = false;
+        }
+      }
+    };
+
+    scrollElement.addEventListener("scroll", handleScroll, { passive: true });
+    return () => scrollElement.removeEventListener("scroll", handleScroll);
+  }, []);
 
   // Auto-resize textarea
   useEffect(() => {
