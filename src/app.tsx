@@ -275,11 +275,11 @@ export default function App() {
       <main className="relative z-10 flex-1 overflow-hidden">
         {activeTab === "inspector" ? (
           <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-4 h-full bg-background">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 h-full">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-2 lg:gap-4 h-full">
               {/* Tools List - Mobile Dropdown */}
-              <div className="lg:hidden">
-                <Card className="border-2 border-border bg-card mb-2">
-                  <CardContent className="p-3 text-center">
+              <div className="lg:hidden flex flex-col h-full min-h-0">
+                <Card className="border-2 border-border bg-card mb-2 flex-shrink-0">
+                  <CardContent className="text-center">
                     <div className="font-mono text-sm font-bold text-foreground">
                       SELECT TOOL
                     </div>
@@ -292,74 +292,151 @@ export default function App() {
                     </div>
                   </CardContent>
                 </Card>
-                {loading ? (
-                  <div className="text-center text-muted-foreground text-sm font-mono p-4">
-                    <div className="text-2xl mb-2">⟳</div>
-                    <p>LOADING TOOLS...</p>
-                  </div>
-                ) : error ? (
-                  <div className="text-center text-destructive text-sm font-mono p-4">
-                    <div className="text-2xl mb-2">⚠</div>
-                    <p className="font-bold mb-2">ERROR LOADING TOOLS</p>
-                    <p className="text-xs">{error}</p>
-                    <Button
-                      onClick={() => window.location.reload()}
-                      variant="outline"
-                      size="sm"
-                      className="mt-3 text-xs"
-                    >
-                      RETRY
-                    </Button>
-                  </div>
-                ) : tools.length === 0 ? (
-                  <div className="text-center text-muted-foreground text-sm font-mono p-4">
-                    <div className="text-2xl mb-2">○</div>
-                    <p>NO TOOLS AVAILABLE</p>
-                  </div>
-                ) : (
-                  <div className="w-full">
-                    <Select
-                      value={selectedTool || ""}
-                      onValueChange={(value) => {
-                        setSelectedTool(value);
-                        const tool = tools.find((t) => t.name === value);
-                        if (tool) {
-                          setToolParams(getDefaultParams(tool.args.properties));
-                          setRawInputValues({});
-                          setExecutionResult(null);
-                        }
-                      }}
-                    >
-                      <SelectTrigger className="h-12 text-sm font-mono w-full text-foreground">
-                        <SelectValue placeholder="Choose a tool to inspect..." />
-                      </SelectTrigger>{" "}
-                      <SelectContent
-                        className="border-border shadow-lg rounded-lg overflow-hidden bg-popover [&>*]:py-1 [&>*]:pl-1 [&>*]:pr-3"
-                        style={{
-                          width: "var(--radix-select-trigger-width)",
-                          minWidth: "var(--radix-select-trigger-width)",
-                        }}
-                        position="popper"
-                        sideOffset={4}
+
+                <div className="flex-shrink-0 mb-2">
+                  {loading ? (
+                    <div className="text-center text-muted-foreground text-sm font-mono p-4">
+                      <div className="text-2xl mb-2">⟳</div>
+                      <p>LOADING TOOLS...</p>
+                    </div>
+                  ) : error ? (
+                    <div className="text-center text-destructive text-sm font-mono p-4">
+                      <div className="text-2xl mb-2">⚠</div>
+                      <p className="font-bold mb-2">ERROR LOADING TOOLS</p>
+                      <p className="text-xs">{error}</p>
+                      <Button
+                        onClick={() => window.location.reload()}
+                        variant="outline"
+                        size="sm"
+                        className="mt-3 text-xs"
                       >
-                        {tools.map((tool, index) => (
-                          <SelectItem
-                            key={tool.name}
-                            value={tool.name}
-                            className="text-sm font-mono py-3 pl-4 pr-10 mx-1 my-0.5 rounded-md bg-card hover:bg-muted focus:bg-accent transition-colors border border-border/30"
-                          >
-                            <div className="flex items-center space-x-2">
-                              <span className="text-muted-foreground">
-                                [{(index + 1).toString().padStart(2, "0")}]
-                              </span>
-                              <span>{tool.name}</span>
+                        RETRY
+                      </Button>
+                    </div>
+                  ) : tools.length === 0 ? (
+                    <div className="text-center text-muted-foreground text-sm font-mono p-4">
+                      <div className="text-2xl mb-2">○</div>
+                      <p>NO TOOLS AVAILABLE</p>
+                    </div>
+                  ) : (
+                    <div className="w-full">
+                      <Select
+                        value={selectedTool || ""}
+                        onValueChange={(value) => {
+                          setSelectedTool(value);
+                          const tool = tools.find((t) => t.name === value);
+                          if (tool) {
+                            setToolParams(
+                              getDefaultParams(tool.args.properties),
+                            );
+                            setRawInputValues({});
+                            setExecutionResult(null);
+                          }
+                        }}
+                      >
+                        <SelectTrigger className="h-12 text-sm font-mono w-full text-foreground">
+                          <SelectValue placeholder="Choose a tool to inspect..." />
+                        </SelectTrigger>
+                        <SelectContent
+                          className="border-border shadow-lg rounded-lg overflow-hidden bg-popover [&>*]:py-1 [&>*]:pl-1 [&>*]:pr-3"
+                          style={{
+                            width: "var(--radix-select-trigger-width)",
+                            minWidth: "var(--radix-select-trigger-width)",
+                          }}
+                          position="popper"
+                          sideOffset={4}
+                        >
+                          {tools.map((tool, index) => (
+                            <SelectItem
+                              key={tool.name}
+                              value={tool.name}
+                              className="text-sm font-mono py-3 pl-4 pr-10 mx-1 my-0.5 rounded-md bg-card hover:bg-muted focus:bg-accent transition-colors border border-border/30"
+                            >
+                              <div className="flex items-center space-x-2">
+                                <span className="text-muted-foreground">
+                                  [{(index + 1).toString().padStart(2, "0")}]
+                                </span>
+                                <span>{tool.name}</span>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                </div>
+
+                {/* Tool Configuration - Mobile */}
+                <div className="flex-1 min-h-0 overflow-y-auto">
+                  {selectedToolData ? (
+                    <Card className="border-2 border-accent h-full flex flex-col bg-card shadow-lg">
+                      <CardHeader className="pb-4 flex-shrink-0 bg-muted space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div className="font-mono text-xs text-muted-foreground">
+                            SELECTED TOOL
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <CardTitle className="font-mono text-lg font-bold">
+                            {selectedToolData.name}
+                          </CardTitle>
+                          <p className="text-sm text-muted-foreground leading-relaxed">
+                            {selectedToolData.description}
+                          </p>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="flex-1 min-h-0 overflow-y-auto space-y-3">
+                        <div className="font-mono text-xs text-muted-foreground border-b border-border pb-2">
+                          PARAMETERS
+                        </div>
+                        {Object.entries(selectedToolData.args.properties).map(
+                          ([paramName, param]) => (
+                            <div key={paramName} className="space-y-1">
+                              <div className="flex items-center justify-between">
+                                <label className="block text-xs font-bold text-foreground font-mono">
+                                  • {paramName}
+                                  {param.default !== undefined && (
+                                    <span className="text-muted-foreground font-normal ml-1">
+                                      (default: {JSON.stringify(param.default)})
+                                    </span>
+                                  )}
+                                </label>
+                                <Badge
+                                  variant="outline"
+                                  className="text-xs px-1 py-0 font-mono"
+                                >
+                                  {param.type}
+                                </Badge>
+                              </div>
+                              {renderParameterInput(
+                                paramName,
+                                param,
+                                toolParams[paramName],
+                              )}
+                              {param.description && (
+                                <p className="text-xs text-muted-foreground leading-tight pl-4 border-l-2 border-border">
+                                  {param.description}
+                                </p>
+                              )}
                             </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
+                          ),
+                        )}
+                      </CardContent>
+                    </Card>
+                  ) : (
+                    <Card className="border-2 border-border h-full bg-card">
+                      <CardContent className="flex items-center justify-center h-full bg-card">
+                        <div className="text-center text-muted-foreground text-sm font-mono">
+                          <div className="text-4xl mb-4">○</div>
+                          <p>SELECT A TOOL TO EXAMINE</p>
+                          <div className="text-xs mt-2 text-muted-foreground/60">
+                            Click on a tool
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
               </div>
 
               {/* Tools List - Desktop */}
@@ -453,8 +530,8 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Tool Configuration */}
-              <div className="lg:col-span-4 overflow-y-auto">
+              {/* Tool Configuration - Desktop */}
+              <div className="hidden lg:block lg:col-span-4 overflow-y-auto">
                 {selectedToolData ? (
                   <Card className="border-2 border-accent h-full flex flex-col bg-card shadow-lg">
                     <CardHeader className="pb-4 flex-shrink-0 bg-muted space-y-3">
