@@ -2,6 +2,8 @@ import { HttpError } from "./types/types";
 import { createAnthropic } from "@ai-sdk/anthropic";
 import {
   streamText,
+  generateObject,
+  generateText,
   NoSuchToolError,
   InvalidToolArgumentsError,
   ToolExecutionError,
@@ -311,6 +313,173 @@ async function handleChatRequest(
       tools,
       messages,
       maxSteps: 10,
+      experimental_repairToolCall: async ({
+        toolCall,
+        tools,
+        error,
+        messages,
+        system,
+        parameterSchema,
+      }) => {
+        console.log(`Attempting to repair tool call: ${toolCall.toolName}`, {
+          error: error.message,
+          args: toolCall.args,
+        });
+
+        // For invalid arguments, use structured generation to fix them
+        if (InvalidToolArgumentsError.isInstance(error)) {
+          try {
+            const tool = tools[toolCall.toolName as keyof typeof tools];
+            if (!tool) {
+              console.error(
+                `Tool ${toolCall.toolName} not found in tools object`,
+              );
+              return null;
+            }
+
+            const { object: repairedArgs } = await generateObject({
+              model: anthropic("claude-4-sonnet-20250514"),
+              schema: tool.parameters,
+              prompt: [
+                `The AI model tried to call the tool "${toolCall.toolName}" with invalid arguments:`,
+                JSON.stringify(toolCall.args),
+                `The tool accepts the following schema:`,
+                JSON.stringify(parameterSchema(toolCall)),
+                `Please fix the arguments to match the schema exactly. Focus on:`,
+                `- Correct data types (string, number, boolean, array, object)`,
+                `- Required fields that may be missing`,
+                `- Proper formatting and structure`,
+                `- Valid enum values if applicable`,
+              ].join("\n"),
+            });
+
+            console.log(
+              `Successfully repaired arguments for ${toolCall.toolName}:`,
+              repairedArgs,
+            );
+            return { ...toolCall, args: JSON.stringify(repairedArgs) };
+          } catch (repairError) {
+            console.error(
+              `Failed to repair tool call ${toolCall.toolName}:`,
+              repairError,
+            );
+            return null;
+          }
+        }
+
+        // For unknown tools, don't attempt repair
+        if (NoSuchToolError.isInstance(error)) {
+          console.log(`Tool ${toolCall.toolName} not found, cannot repair`);
+          return null;
+        }
+
+        // For execution errors, retry with conversation context
+        if (ToolExecutionError.isInstance(error)) {
+          try {
+            console.log(
+              `Attempting to retry tool call ${toolCall.toolName} with context`,
+            );
+
+            const retryResult = await generateText({
+              model: anthropic("claude-4-sonnet-20250514"),
+              system:
+                system ||
+                SYSTEM_PROMPT.replaceAll(
+                  "{{date}}",
+                  new Date().toISOString().split("T")[0],
+                )
+                  .replaceAll(
+                    "{{yesterday}}",
+                    new Date(Date.now() - 24 * 60 * 60 * 1000)
+                      .toISOString()
+                      .split("T")[0],
+                  )
+                  .replaceAll(
+                    "{{threeDaysAgo}}",
+                    new Date(Date.now() - 3 * 24 * 60 * 60 * 1000)
+                      .toISOString()
+                      .split("T")[0],
+                  )
+                  .replaceAll(
+                    "{{oneWeekAgo}}",
+                    new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+                      .toISOString()
+                      .split("T")[0],
+                  )
+                  .replaceAll(
+                    "{{twoWeeksAgo}}",
+                    new Date(Date.now() - 14 * 24 * 60 * 60 * 1000)
+                      .toISOString()
+                      .split("T")[0],
+                  )
+                  .replaceAll(
+                    "{{oneMonthAgo}}",
+                    new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+                      .toISOString()
+                      .split("T")[0],
+                  ),
+              messages: [
+                ...messages,
+                {
+                  role: "assistant",
+                  content: [
+                    {
+                      type: "tool-call",
+                      toolCallId: toolCall.toolCallId,
+                      toolName: toolCall.toolName,
+                      args: toolCall.args,
+                    },
+                  ],
+                },
+                {
+                  role: "tool",
+                  content: [
+                    {
+                      type: "tool-result",
+                      toolCallId: toolCall.toolCallId,
+                      toolName: toolCall.toolName,
+                      result: `Error: ${String(error)}. Please try again with corrected parameters or a different approach.`,
+                    },
+                  ],
+                },
+              ],
+              tools,
+            });
+
+            const newToolCall = retryResult.toolCalls.find(
+              (newCall) => newCall.toolName === toolCall.toolName,
+            );
+
+            if (newToolCall) {
+              console.log(
+                `Successfully generated new tool call for ${toolCall.toolName}`,
+              );
+              return {
+                toolCallType: "function" as const,
+                toolCallId: toolCall.toolCallId,
+                toolName: toolCall.toolName,
+                args: JSON.stringify(newToolCall.args),
+              };
+            } else {
+              console.log(
+                `No new tool call generated for ${toolCall.toolName}`,
+              );
+              return null;
+            }
+          } catch (retryError) {
+            console.error(
+              `Failed to retry tool call ${toolCall.toolName}:`,
+              retryError,
+            );
+            return null;
+          }
+        }
+
+        console.log(
+          `Unknown error type for tool call ${toolCall.toolName}, cannot repair`,
+        );
+        return null;
+      },
     });
 
     return result.toDataStreamResponse({
