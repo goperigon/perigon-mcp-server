@@ -484,6 +484,10 @@ async function handleChatRequest(
 
     return result.toDataStreamResponse({
       sendReasoning: false,
+      headers: {
+        "Transfer-Encoding": "chunked",
+        Connection: "keep-alive",
+      },
       getErrorMessage: (error) => {
         // Errs is a tuple of error user will see and error backend will log
         const errs = NoSuchToolError.isInstance(error)
