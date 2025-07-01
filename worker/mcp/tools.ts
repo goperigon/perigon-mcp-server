@@ -468,7 +468,8 @@ export function searchJournalists(perigon: Perigon): ToolCallback {
           // TODO: add more journalist result options
           return `<journalist id="${journalist.id}" name="${journalist.name}">
 Headline: ${journalist.headline}
-Sources: ${journalist?.topSources?.map((source) => `\tSource: ${source.name}, Articles they wrote for Source: ${source.count}`).join("\n")}
+Sources:
+  ${journalist?.topSources?.map((source) => `\t- Source: ${source.name}, Articles they wrote for Source: ${source.count}`).join("\n")}
 Locations: ${journalist?.locations?.map((location) => `Country: ${location.country}, City: ${location.city}`).join(", ")}
 </journalist>`;
         });
