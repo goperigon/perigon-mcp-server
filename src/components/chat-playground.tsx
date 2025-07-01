@@ -75,7 +75,7 @@ What would you like to explore?`,
       if (isAutoScrollingRef.current) {
         const { scrollTop, scrollHeight, clientHeight } = scrollElement;
         const isAtBottom = scrollTop + clientHeight >= scrollHeight - 10; // 10px tolerance
-        
+
         // If user scrolled away from bottom during auto-scroll, disable it
         if (!isAtBottom) {
           autoScrollDisabledRef.current = true;
@@ -202,7 +202,6 @@ What would you like to explore?`,
                 <Bot className="w-5 h-5" />
               </div>
               <Card className="bg-card/95 backdrop-blur-sm shadow-sm py-0 border border-border/30">
-                {" "}
                 <CardContent className="py-1.5 px-3">
                   <div className="flex items-center space-x-3 text-sm font-mono">
                     <span>Thinking...</span>

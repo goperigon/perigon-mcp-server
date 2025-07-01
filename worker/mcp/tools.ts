@@ -95,7 +95,7 @@ function createPaginationHeader(
   itemType: string,
 ): string {
   const totalPages = Math.ceil(total / size);
-  return `Got ${total} ${itemType} (page ${page + 1} of ${totalPages})`;
+  return `Got ${total} ${itemType} (page ${page} of ${totalPages - 1})`;
 }
 
 async function createErrorMessage(error: any) {
@@ -147,12 +147,10 @@ const locationArgs = z.object({
 const paginationArgs = z.object({
   page: z
     .number()
-    .min(1)
-    .default(1)
-    // It is easier to tell the llm to start at 1 than 0
-    .transform((page) => page - 1)
+    .min(0)
+    .default(0)
     .describe(
-      "The specific page of results to retrieve in the paginated response. Starts at 1.",
+      "The specific page of results to retrieve in the paginated response. Starts at 0. (pagination uses 0 based indexing)",
     ),
   size: z
     .number()

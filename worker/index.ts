@@ -316,16 +316,29 @@ async function handleChatRequest(
     return result.toDataStreamResponse({
       sendReasoning: false,
       getErrorMessage: (error) => {
-        console.error("Error while processing chat response:", error);
-        if (NoSuchToolError.isInstance(error)) {
-          return "The model tried to call a unknown tool.";
-        } else if (InvalidToolArgumentsError.isInstance(error)) {
-          return "The model called a tool with invalid arguments.";
-        } else if (ToolExecutionError.isInstance(error)) {
-          return "An error occurred during tool execution.";
-        } else {
-          return "An unknown error occurred.";
-        }
+        // Errs is a tuple of error user will see and error backend will log
+        const errs = NoSuchToolError.isInstance(error)
+          ? ([
+              "Model tried to call an unknown tool",
+              `Model tried to call unknown tool: ${error.toolName} - ${error.message}`,
+            ] as const)
+          : InvalidToolArgumentsError.isInstance(error)
+            ? ([
+                "Model called a tool with invalid arguments",
+                `Model called tool: ${error.toolName} with invalid args: ${error.toolArgs} - ${error.message}`,
+              ] as const)
+            : ToolExecutionError.isInstance(error)
+              ? ([
+                  "An error occurred during tool execution",
+                  `Tool execution failed: ${error.toolName} with args: ${error.toolArgs} - ${error.message}`,
+                ] as const)
+              : ([
+                  "An unknown error occurred",
+                  `Unknown error: ${error}`,
+                ] as const);
+
+        console.error("Error while processing chat response:", errs[1]);
+        return errs[0];
       },
     });
   } catch (error) {
