@@ -312,7 +312,7 @@ async function handleChatRequest(
       model: anthropic("claude-4-sonnet-20250514"),
       tools,
       messages,
-      maxSteps: 10,
+      maxSteps: 20,
       experimental_repairToolCall: async ({
         toolCall,
         tools,
