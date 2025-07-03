@@ -16,6 +16,8 @@ import {
   ChevronDown,
   ChevronRight,
   PenToolIcon as Tool,
+  Copy,
+  Check,
 } from "lucide-react";
 import { MessageText } from "./message-text";
 
@@ -37,6 +39,7 @@ What would you like to explore?`,
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const autoScrollDisabledRef = useRef(false);
   const isAutoScrollingRef = useRef(false);
+  const [copiedMessageId, setCopiedMessageId] = React.useState<string | null>(null);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -113,6 +116,16 @@ What would you like to explore?`,
     }
   };
 
+  const copyMessageContent = async (messageId: string, content: string) => {
+    try {
+      await navigator.clipboard.writeText(content);
+      setCopiedMessageId(messageId);
+      setTimeout(() => setCopiedMessageId(null), 2000);
+    } catch (err) {
+      console.error("Failed to copy text: ", err);
+    }
+  };
+
   return (
     <div className="fixed inset-0 top-12 flex flex-col bg-background">
       {/* Error display */}
@@ -153,17 +166,27 @@ What would you like to explore?`,
                     switch (part.type) {
                       case "text":
                         return (
-                          <Card
-                            key={`${message.id}-text-${index}`}
-                            className="inline-block mb-3 bg-card/95 backdrop-blur-sm shadow-sm py-0 border border-border/30"
-                          >
-                            {" "}
-                            <CardContent className="py-1.5 px-3">
-                              <div className="text-sm leading-relaxed prose prose-sm max-w-none dark:prose-invert [&>*:last-child]:mb-0">
-                                <MessageText text={part.text} />
-                              </div>
-                            </CardContent>
-                          </Card>
+                          <div key={`${message.id}-text-${index}`} className="relative group mb-3 pr-8">
+                            <Card className="inline-block bg-card/95 backdrop-blur-sm shadow-sm py-0 border border-border/30">
+                              <CardContent className="py-1.5 px-3">
+                                <div className="text-sm leading-relaxed prose prose-sm max-w-none dark:prose-invert [&>*:last-child]:mb-0">
+                                  <MessageText text={part.text} />
+                                </div>
+                              </CardContent>
+                            </Card>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200 h-6 w-6 p-0 hover:bg-muted/20"
+                              onClick={() => copyMessageContent(`${message.id}-${index}`, part.text)}
+                            >
+                              {copiedMessageId === `${message.id}-${index}` ? (
+                                <Check className="h-3 w-3 text-success" />
+                              ) : (
+                                <Copy className="h-3 w-3" />
+                              )}
+                            </Button>
+                          </div>
                         );
                       case "tool-invocation":
                         return (
@@ -182,14 +205,27 @@ What would you like to explore?`,
                   }) ||
                     // Fallback for messages with only content (backward compatibility)
                     (message.content && (
-                      <Card className="inline-block mb-3 bg-card/95 backdrop-blur-sm shadow-sm py-0 border border-border/30">
-                        {" "}
-                        <CardContent className="py-1.5 px-3">
-                          <div className="text-sm leading-relaxed prose prose-sm max-w-none dark:prose-invert [&>*:last-child]:mb-0">
-                            <MessageText text={message.content} />
-                          </div>
-                        </CardContent>
-                      </Card>
+                      <div className="relative group mb-3 pr-8">
+                        <Card className="inline-block bg-card/95 backdrop-blur-sm shadow-sm py-0 border border-border/30">
+                          <CardContent className="py-1.5 px-3">
+                            <div className="text-sm leading-relaxed prose prose-sm max-w-none dark:prose-invert [&>*:last-child]:mb-0">
+                              <MessageText text={message.content} />
+                            </div>
+                          </CardContent>
+                        </Card>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200 h-6 w-6 p-0 hover:bg-muted/20"
+                          onClick={() => copyMessageContent(message.id, message.content)}
+                        >
+                          {copiedMessageId === message.id ? (
+                            <Check className="h-3 w-3 text-success" />
+                          ) : (
+                            <Copy className="h-3 w-3" />
+                          )}
+                        </Button>
+                      </div>
                     ))}
                 </div>
               </div>

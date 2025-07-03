@@ -62,6 +62,10 @@
     --color-pg-gray-900: #1f1f1f;
     --color-pg-gray-950: #121212;
 
+    /* Success colors - green for positive actions */
+    --color-success: #2fb850;
+    --color-success-foreground: #ffffff;
+
     /* Other variables */
     --radius: 0.5rem;
 }
