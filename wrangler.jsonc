@@ -49,6 +49,34 @@
     "VITE_USE_TURNSTILE": false,
   },
   "env": {
+    "preview": {
+      "name": "perigon-mcp-server-preview",
+      "account_id": "8de3c02e1e299ec1561c53e44fb76ad7",
+      "workers_dev": true,
+      "preview_urls": false,
+      "observability": {
+        "enabled": false,
+      },
+      "upload_source_maps": true,
+      "durable_objects": {
+        "bindings": [
+          {
+            "class_name": "PerigonMCP",
+            "name": "MCP_OBJECT",
+          },
+        ],
+      },
+      "assets": {
+        "directory": "./dist/",
+        "not_found_handling": "single-page-application",
+        "binding": "ASSETS",
+        "run_worker_first": ["/v1/*"],
+      },
+      "vars": {
+        "VITE_TURNSTILE_SITE_KEY": "0x4AAAAAABihR9-NN72ssFjf",
+        "VITE_USE_TURNSTILE": false,
+      },
+    },
     "production": {
       "name": "perigon-mcp-server",
       "account_id": "8de3c02e1e299ec1561c53e44fb76ad7",
