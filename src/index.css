@@ -1,40 +1,40 @@
 @import "tailwindcss";
 
 @theme {
-    /* Base colors - using Perigon neutral scale */
-    --color-background: #fbfbf9;
+    /* Base colors - bright Perigon light mode */
+    --color-background: #ffffff;
     --color-foreground: #121212;
 
-    /* Card colors - elevated with subtle contrast */
-    --color-card: #ffffff;
+    /* Card colors - elevated with clear contrast */
+    --color-card: #f8f9fa;
     --color-card-foreground: #121212;
 
     /* Popover colors - using card color */
-    --color-popover: #ffffff;
+    --color-popover: #f8f9fa;
     --color-popover-foreground: #121212;
 
     /* Primary colors - Perigon sapphire brand */
     --color-primary: #227c9d;
     --color-primary-foreground: #ffffff;
 
-    /* Secondary colors - lighter neutral for better separation */
-    --color-secondary: #f6f6f4;
+    /* Secondary colors - light blue tint */
+    --color-secondary: #f0f8ff;
     --color-secondary-foreground: #121212;
 
-    /* Muted colors - subtle background, readable text */
-    --color-muted: #e4e4e4;
-    --color-muted-foreground: #505050;
+    /* Muted colors - light gray background */
+    --color-muted: #f1f3f4;
+    --color-muted-foreground: #6b7280;
 
     /* Accent colors - slightly elevated from muted */
-    --color-accent: #e4e4e4;
+    --color-accent: #f1f3f4;
     --color-accent-foreground: #121212;
 
     /* Destructive colors - Perigon red */
     --color-destructive: #ed2c09;
     --color-destructive-foreground: #ffffff;
 
-    /* Border and input - visible but not harsh */
-    --color-border: #e4e4e4;
+    /* Border and input - visible borders */
+    --color-border: #d1d5db;
     --color-input: #ffffff;
     --color-ring: #227c9d;
 
@@ -70,7 +70,8 @@
     --radius: 0.5rem;
 }
 
-@theme dark {
+/* Dark mode overrides using @variant directive */
+.dark {
     /* Base colors - optimized for dark mode */
     --color-background: #1f1f1f;
     --color-foreground: #e4e4e4;
