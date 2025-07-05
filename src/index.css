@@ -1,41 +1,41 @@
 @import "tailwindcss";
 
 @theme {
-    /* Base colors - bright Perigon light mode */
-    --color-background: #ffffff;
+    /* Base colors - official Perigon light mode */
+    --color-background: #fbfbf9;
     --color-foreground: #121212;
 
-    /* Card colors - elevated with clear contrast */
-    --color-card: #f8f9fa;
+    /* Card colors - Perigon card background with white base */
+    --color-card: #ffffff;
     --color-card-foreground: #121212;
 
     /* Popover colors - using card color */
-    --color-popover: #f8f9fa;
+    --color-popover: #ffffff;
     --color-popover-foreground: #121212;
 
     /* Primary colors - Perigon sapphire brand */
     --color-primary: #227c9d;
     --color-primary-foreground: #ffffff;
 
-    /* Secondary colors - light blue tint */
-    --color-secondary: #f0f8ff;
-    --color-secondary-foreground: #121212;
+    /* Secondary colors - Perigon secondary button style */
+    --color-secondary: rgba(157, 157, 157, 0.12);
+    --color-secondary-foreground: #2d2d2d;
 
-    /* Muted colors - light gray background */
-    --color-muted: #f1f3f4;
-    --color-muted-foreground: #6b7280;
+    /* Muted colors - Perigon muted background and text */
+    --color-muted: rgba(157, 157, 157, 0.06);
+    --color-muted-foreground: #44403c;
 
     /* Accent colors - slightly elevated from muted */
-    --color-accent: #f1f3f4;
+    --color-accent: rgba(157, 157, 157, 0.06);
     --color-accent-foreground: #121212;
 
     /* Destructive colors - Perigon red */
     --color-destructive: #ed2c09;
     --color-destructive-foreground: #ffffff;
 
-    /* Border and input - visible borders */
+    /* Border and input - Perigon border colors with stronger contrast */
     --color-border: #d1d5db;
-    --color-input: #ffffff;
+    --color-input: #f6f6f4;
     --color-ring: #227c9d;
 
     /* Chart colors - using Perigon brand palette */
@@ -66,8 +66,8 @@
     --color-success: #2fb850;
     --color-success-foreground: #ffffff;
 
-    /* Other variables */
-    --radius: 0.5rem;
+    /* Other variables - Perigon radius */
+    --radius: 1rem;
 }
 
 /* Dark mode overrides using @variant directive */
