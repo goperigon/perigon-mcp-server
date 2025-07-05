@@ -1,11 +1,11 @@
 @import "tailwindcss";
 
 @theme {
-    /* Base colors - using Perigon neutral scale */
-    --color-background: #fbfbf9;
+    /* Base colors - official Perigon light mode */
+    --color-background: #f6f6f4;
     --color-foreground: #121212;
 
-    /* Card colors - elevated with subtle contrast */
+    /* Card colors - Perigon card background with white base */
     --color-card: #ffffff;
     --color-card-foreground: #121212;
 
@@ -17,25 +17,25 @@
     --color-primary: #227c9d;
     --color-primary-foreground: #ffffff;
 
-    /* Secondary colors - lighter neutral for better separation */
-    --color-secondary: #f6f6f4;
-    --color-secondary-foreground: #121212;
+    /* Secondary colors - Perigon secondary button style */
+    --color-secondary: rgba(157, 157, 157, 0.12);
+    --color-secondary-foreground: #2d2d2d;
 
-    /* Muted colors - subtle background, readable text */
-    --color-muted: #e4e4e4;
-    --color-muted-foreground: #505050;
+    /* Muted colors - Perigon muted background and text */
+    --color-muted: rgba(157, 157, 157, 0.06);
+    --color-muted-foreground: #44403c;
 
     /* Accent colors - slightly elevated from muted */
-    --color-accent: #e4e4e4;
+    --color-accent: rgba(157, 157, 157, 0.06);
     --color-accent-foreground: #121212;
 
     /* Destructive colors - Perigon red */
     --color-destructive: #ed2c09;
     --color-destructive-foreground: #ffffff;
 
-    /* Border and input - visible but not harsh */
-    --color-border: #e4e4e4;
-    --color-input: #ffffff;
+    /* Border and input - Perigon border colors with stronger contrast */
+    --color-border: #d1d5db;
+    --color-input: #f6f6f4;
     --color-ring: #227c9d;
 
     /* Chart colors - using Perigon brand palette */
@@ -66,193 +66,80 @@
     --color-success: #2fb850;
     --color-success-foreground: #ffffff;
 
-    /* Other variables */
-    --radius: 0.5rem;
+    /* Other variables - Perigon radius */
+    --radius: 1rem;
 }
 
-@theme dark {
-    /* Base colors */
-    --color-background: hsl(0 0% 12%);
-    --color-foreground: hsl(0 0% 85%);
+/* Dark mode overrides using @variant directive */
+.dark {
+    /* Base colors - optimized for dark mode */
+    --color-background: #1f1f1f;
+    --color-foreground: #e4e4e4;
 
-    /* Card colors - keep consistent */
-    --color-card: hsl(0 0% 18%);
-    --color-card-foreground: hsl(0 0% 98%);
+    /* Card colors - elevated surface */
+    --color-card: #2d2d2d;
+    --color-card-foreground: #fbfbf9;
 
-    /* Popover colors */
-    --color-popover: hsl(0 0% 22%);
-    --color-popover-foreground: hsl(0 0% 98%);
+    /* Popover colors - slightly elevated from card */
+    --color-popover: #303030;
+    --color-popover-foreground: #fbfbf9;
 
-    /* Primary colors */
-    --color-primary: hsl(210 40% 98%);
-    --color-primary-foreground: hsl(0 0% 12%);
+    /* Primary colors - inverted for dark mode */
+    --color-primary: #fbfbf9;
+    --color-primary-foreground: #121212;
 
-    /* Secondary colors */
-    --color-secondary: hsl(0 0% 24%);
-    --color-secondary-foreground: hsl(0 0% 98%);
+    /* Secondary colors - darker surface */
+    --color-secondary: #454545;
+    --color-secondary-foreground: #fbfbf9;
 
-    /* Muted colors - make same as card for consistency */
-    --color-muted: hsl(0 0% 18%);
-    --color-muted-foreground: hsl(0 0% 65%);
+    /* Muted colors - consistent with card */
+    --color-muted: #2d2d2d;
+    --color-muted-foreground: #9d9d9d;
 
-    /* Accent colors */
-    --color-accent: hsl(0 0% 24%);
-    --color-accent-foreground: hsl(0 0% 98%);
+    /* Accent colors - slightly elevated */
+    --color-accent: #454545;
+    --color-accent-foreground: #fbfbf9;
 
-    /* Destructive colors */
-    --color-destructive: hsl(0 85% 45%);
-    --color-destructive-foreground: hsl(0 0% 98%);
-
-    /* Border and input - much dimmer */
-    --color-border: hsl(0 0% 35%);
-    --color-input: hsl(0 0% 30%);
-    --color-ring: hsl(212.7 26.8% 83.9%);
-
-    /* Chart colors */
-    --color-chart-1: hsl(220 70% 50%);
-    --color-chart-2: hsl(160 60% 45%);
-    --color-chart-3: hsl(30 80% 55%);
-    --color-chart-4: hsl(280 65% 60%);
-    --color-chart-5: hsl(340 75% 55%);
-
-    /* Perigon custom colors */
-    --color-pg-gold: hsl(45 95% 59%);
-    --color-pg-white: hsl(0 0% 100%);
-
-    /* Perigon gray scale (adjusted for dark mode) */
-    --color-pg-gray-50: hsl(0 0% 18%);
-    --color-pg-gray-100: hsl(0 0% 22%);
-    --color-pg-gray-200: hsl(0 0% 25%);
-    --color-pg-gray-300: hsl(0 0% 33%);
-    --color-pg-gray-400: hsl(0 0% 41%);
-    --color-pg-gray-500: hsl(0 0% 51%);
-    --color-pg-gray-600: hsl(60 9% 66%);
-    --color-pg-gray-700: hsl(60 9% 84%);
-    --color-pg-gray-800: hsl(60 9% 90%);
-    --color-pg-gray-900: hsl(60 9% 92%);
-    --color-pg-gray-950: hsl(60 9% 98%);
-}
-
-@variant dark (.dark &);
-
-/* Light theme - explicit */
-:root:not(.dark) {
-    /* Base colors - using Perigon neutral scale */
-    --color-background: #fbfbf9;
-    --color-foreground: #121212;
-
-    /* Card colors - elevated with subtle contrast */
-    --color-card: #ffffff;
-    --color-card-foreground: #121212;
-
-    /* Popover colors - using card color */
-    --color-popover: #ffffff;
-    --color-popover-foreground: #121212;
-
-    /* Primary colors - Perigon sapphire brand */
-    --color-primary: #227c9d;
-    --color-primary-foreground: #ffffff;
-
-    /* Secondary colors - lighter neutral for better separation */
-    --color-secondary: #f6f6f4;
-    --color-secondary-foreground: #121212;
-
-    /* Muted colors - subtle background, readable text */
-    --color-muted: #e4e4e4;
-    --color-muted-foreground: #505050;
-
-    /* Accent colors - slightly elevated from muted */
-    --color-accent: #e4e4e4;
-    --color-accent-foreground: #121212;
-
-    /* Destructive colors - Perigon red */
+    /* Destructive colors - maintain brand consistency */
     --color-destructive: #ed2c09;
-    --color-destructive-foreground: #ffffff;
+    --color-destructive-foreground: #fbfbf9;
 
-    /* Border and input - visible but not harsh */
-    --color-border: #e4e4e4;
-    --color-input: #ffffff;
+    /* Border and input - subtle but visible */
+    --color-border: #505050;
+    --color-input: #454545;
     --color-ring: #227c9d;
 
-    /* Perigon gray scale - proper neutral hierarchy */
-    --color-pg-gray-50: #fbfbf9;
-    --color-pg-gray-100: #f6f6f4;
-    --color-pg-gray-200: #e4e4e4;
-    --color-pg-gray-300: #9d9d9d;
+    /* Chart colors - adjusted for dark mode visibility */
+    --color-chart-1: #4a9eff;
+    --color-chart-2: #f9c035;
+    --color-chart-3: #2fb850;
+    --color-chart-4: #ff6b47;
+    --color-chart-5: #9d7bff;
+
+    /* Perigon custom colors - maintained for consistency */
+    --color-pg-gold: #f9c035;
+    --color-pg-white: #ffffff;
+
+    /* Perigon gray scale - inverted for dark mode */
+    --color-pg-gray-50: #2d2d2d;
+    --color-pg-gray-100: #303030;
+    --color-pg-gray-200: #454545;
+    --color-pg-gray-300: #505050;
     --color-pg-gray-400: #828282;
-    --color-pg-gray-500: #505050;
-    --color-pg-gray-600: #454545;
-    --color-pg-gray-700: #303030;
-    --color-pg-gray-800: #2d2d2d;
-    --color-pg-gray-900: #1f1f1f;
-    --color-pg-gray-950: #121212;
+    --color-pg-gray-500: #9d9d9d;
+    --color-pg-gray-600: #e4e4e4;
+    --color-pg-gray-700: #f6f6f4;
+    --color-pg-gray-800: #f6f6f4;
+    --color-pg-gray-900: #fbfbf9;
+    --color-pg-gray-950: #fbfbf9;
+
+    /* Success colors - maintained for consistency */
+    --color-success: #2fb850;
+    --color-success-foreground: #ffffff;
 }
 
-/* Dark theme */
-:root.dark {
-    /* Base colors */
-    --color-background: hsl(0 0% 12%);
-    --color-foreground: hsl(0 0% 85%);
-
-    /* Card colors - keep consistent */
-    --color-card: hsl(0 0% 18%);
-    --color-card-foreground: hsl(0 0% 98%);
-
-    /* Popover colors */
-    --color-popover: hsl(0 0% 22%);
-    --color-popover-foreground: hsl(0 0% 98%);
-
-    /* Primary colors */
-    --color-primary: hsl(210 40% 98%);
-    --color-primary-foreground: hsl(0 0% 12%);
-
-    /* Secondary colors */
-    --color-secondary: hsl(0 0% 24%);
-    --color-secondary-foreground: hsl(0 0% 98%);
-
-    /* Muted colors - make same as card for consistency */
-    --color-muted: hsl(0 0% 18%);
-    --color-muted-foreground: hsl(0 0% 65%);
-
-    /* Accent colors */
-    --color-accent: hsl(0 0% 24%);
-    --color-accent-foreground: hsl(0 0% 98%);
-
-    /* Destructive colors */
-    --color-destructive: hsl(0 85% 45%);
-    --color-destructive-foreground: hsl(0 0% 98%);
-
-    /* Border and input - much dimmer */
-    --color-border: hsl(0 0% 35%);
-    --color-input: hsl(0 0% 30%);
-    --color-ring: hsl(212.7 26.8% 83.9%);
-
-    /* Chart colors */
-    --color-chart-1: hsl(220 70% 50%);
-    --color-chart-2: hsl(160 60% 45%);
-    --color-chart-3: hsl(30 80% 55%);
-    --color-chart-4: hsl(280 65% 60%);
-    --color-chart-5: hsl(340 75% 55%);
-
-    /* Perigon custom colors */
-    --color-pg-gold: hsl(45 95% 59%);
-    --color-pg-white: hsl(0 0% 100%);
-
-    /* Perigon gray scale (adjusted for dark mode) */
-    --color-pg-gray-50: hsl(0 0% 18%);
-    --color-pg-gray-100: hsl(0 0% 22%);
-    --color-pg-gray-200: hsl(0 0% 25%);
-    --color-pg-gray-300: hsl(0 0% 33%);
-    --color-pg-gray-400: hsl(0 0% 41%);
-    --color-pg-gray-500: hsl(0 0% 51%);
-    --color-pg-gray-600: hsl(60 9% 66%);
-    --color-pg-gray-700: hsl(60 9% 84%);
-    --color-pg-gray-800: hsl(60 9% 90%);
-    --color-pg-gray-900: hsl(60 9% 92%);
-    --color-pg-gray-950: hsl(60 9% 98%);
-}
-
-
+/* Custom variant for manual dark mode toggle */
+@custom-variant dark (&:where(.dark, .dark *));
 
 @layer utilities {
     .animate-spin-slow {
