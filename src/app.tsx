@@ -1,20 +1,12 @@
-import React from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
-import Layout from "@/components/Layout";
-import InspectorPage from "@/pages/InspectorPage";
-import ChatPage from "@/pages/ChatPage";
+import { AuthenticationProvider } from "./contexts/AuthenticationContext";
+import AuthenticatedApp from "./components/AuthenticatedApp";
 
 export default function App() {
   return (
-    <Router>
-      <Layout>
-        <Routes>
-          <Route path="/" element={<InspectorPage />} />
-          <Route path="/inspector" element={<Navigate to="/" replace />} />
-          <Route path="/chat" element={<ChatPage />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </Layout>
-    </Router>
+    <div className="h-screen bg-background overflow-hidden">
+      <AuthenticationProvider>
+        <AuthenticatedApp />
+      </AuthenticationProvider>
+    </div>
   );
 }
