@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Play } from "lucide-react";
+import { useAuth } from "@/lib/auth-context";
 
 // TODO: proper json schema
 interface ToolParameter {
@@ -37,6 +38,7 @@ interface MCPTool {
 }
 
 export default function InspectorPage() {
+  const { secret, invalidate } = useAuth();
   const [selectedTool, setSelectedTool] = useState<string | null>(null);
   const [toolParams, setToolParams] = useState<Record<string, any>>({});
   const [rawInputValues, setRawInputValues] = useState<Record<string, string>>(
@@ -94,6 +96,7 @@ export default function InspectorPage() {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            Authorization: `Bearer ${secret}`,
           },
           body: JSON.stringify({
             tool: selectedTool,
@@ -101,6 +104,10 @@ export default function InspectorPage() {
           }),
         });
         if (!response.ok) {
+          if (response.status === 401) {
+            invalidate();
+            return;
+          }
           throw new Error(`Failed to execute tool: ${response.statusText}`);
         }
         const data = (await response.json()) as { result: string };
@@ -271,9 +278,7 @@ export default function InspectorPage() {
                     setSelectedTool(value);
                     const tool = tools.find((t) => t.name === value);
                     if (tool) {
-                      setToolParams(
-                        getDefaultParams(tool.args.properties),
-                      );
+                      setToolParams(getDefaultParams(tool.args.properties));
                       setRawInputValues({});
                       setExecutionResult(null);
                     }
@@ -479,8 +484,8 @@ export default function InspectorPage() {
         <div className="hidden lg:block lg:col-span-4 overflow-y-auto">
           {selectedToolData ? (
             <Card className="border-2 border-accent h-full flex flex-col bg-card shadow-lg">
-               <CardHeader className="pb-4 flex-shrink-0 bg-card space-y-3">
-                 <div className="flex items-center justify-between">
+              <CardHeader className="pb-4 flex-shrink-0 bg-card space-y-3">
+                <div className="flex items-center justify-between">
                   <div className="font-mono text-xs text-muted-foreground">
                     SELECTED TOOL
                   </div>

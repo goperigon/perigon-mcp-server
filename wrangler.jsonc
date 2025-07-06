@@ -54,9 +54,9 @@
         "name": "MCP_RATE_LIMITER",
         "type": "ratelimit",
         "namespace_id": "1001",
-        // 20 requests every 10 seconds
+        // 1000 requests every 10 seconds
         "simple": {
-          "limit": 20,
+          "limit": 1000,
           "period": 10,
         },
       },
@@ -94,6 +94,20 @@
       },
       "vars": {
         "VITE_USE_TURNSTILE": true,
+      },
+      "unsafe": {
+        "bindings": [
+          {
+            "name": "MCP_RATE_LIMITER",
+            "type": "ratelimit",
+            "namespace_id": "1001",
+            // 1000 requests every 10 seconds
+            "simple": {
+              "limit": 1000,
+              "period": 10,
+            },
+          },
+        ],
       },
     },
   },

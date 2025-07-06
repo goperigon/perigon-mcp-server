@@ -1,45 +1,67 @@
-import React, { useState } from 'react';
-import { Turnstile } from '@marsidev/react-turnstile';
+import { useState } from "react";
+import { Turnstile } from "@marsidev/react-turnstile";
+import { useAuth } from "../lib/auth-context";
+import { authenticateWithTurnstile } from "../lib/auth-service";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "./ui/card";
 
-interface TurnstileAuthProps {
-  onAuthenticated: (token: string) => void;
-}
+export default function TurnstileAuth() {
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const { login } = useAuth();
 
-export default function TurnstileAuth({ onAuthenticated }: TurnstileAuthProps) {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const handleSuccess = async (token: string) => {
+    setIsLoading(true);
+    setError(null);
 
-  const handleSuccess = (token: string) => {
-    console.log('Turnstile token:', token);
-    setIsAuthenticated(true);
-    onAuthenticated(token);
+    try {
+      const secret = await authenticateWithTurnstile(token);
+      login(secret);
+    } catch (err) {
+      setError("Authentication failed. Please try again.");
+      console.error("Auth error:", err);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  if (isAuthenticated) {
-    return null;
-  }
-
   return (
-    <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
-      <div className="bg-card border border-border rounded-lg p-6 shadow-lg max-w-md w-full mx-4">
-        <div className="text-center space-y-4">
-          <h2 className="text-lg font-bold font-mono text-foreground">
+    <div className="fixed inset-0 bg-background backdrop-blur-sm z-50 flex items-center justify-center">
+      <Card className="max-w-md w-full mx-4">
+        <CardHeader className="text-center">
+          <CardTitle className="font-mono text-foreground">
             AUTHENTICATION REQUIRED
-          </h2>
-          <p className="text-sm text-muted-foreground">
+          </CardTitle>
+          <CardDescription className="text-muted-foreground">
             Please complete the verification to continue
-          </p>
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="text-center space-y-4">
+          {error && <p className="text-sm text-destructive">{error}</p>}
           <div className="flex justify-center">
-            <Turnstile
-              siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY}
-              onSuccess={handleSuccess}
-              options={{
-                theme: 'auto',
-                size: 'normal'
-              }}
-            />
+            {isLoading ? (
+              <div className="text-sm text-muted-foreground">
+                Authenticating...
+              </div>
+            ) : (
+              <Turnstile
+                siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY}
+                onSuccess={handleSuccess}
+                className="bg-popover"
+                options={{
+                  theme: "auto",
+                  size: "normal",
+                }}
+              />
+            )}
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
