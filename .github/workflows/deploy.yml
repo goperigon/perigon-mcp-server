@@ -25,6 +25,8 @@ jobs:
         run: bun run build
         env:
           CLOUDFLARE_ENV: production
+          VITE_TURNSTILE_SITE_KEY: "0x4AAAAAABihR9-NN72ssFjf"
+          VITE_USE_TURNSTILE: "true"
 
       - name: Deploy
         run: bun run deploy
