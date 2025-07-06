@@ -13,27 +13,16 @@ import TurnstileAuth from "@/components/turnstile-auth";
 function AppContent() {
   const { isAuthenticated } = useAuth();
 
-  if (!isAuthenticated) {
-    return (
-      <>
-        <Routes>
-          <Route path="/" element={<InspectorPage />} />
-          <Route path="/inspector" element={<Navigate to="/" replace />} />
-          <Route path="/chat" element={<ChatPage />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-        {!isAuthenticated && <TurnstileAuth />}
-      </>
-    );
-  }
-
   return (
-    <Routes>
-      <Route path="/" element={<InspectorPage />} />
-      <Route path="/inspector" element={<Navigate to="/" replace />} />
-      <Route path="/chat" element={<ChatPage />} />
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+    <>
+      <Routes>
+        <Route path="/" element={<InspectorPage />} />
+        <Route path="/inspector" element={<Navigate to="/" replace />} />
+        <Route path="/chat" element={<ChatPage />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+      {!isAuthenticated && <TurnstileAuth />}
+    </>
   );
 }
 
