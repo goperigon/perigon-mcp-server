@@ -10,6 +10,7 @@ import {
   CoreMessage,
 } from "ai";
 import { PerigonMCP, Props } from "./mcp/mcp";
+// import { PerigonMCP } from "./mcp/temp";
 import { convertMCPResult, createAISDKTools } from "./mcp/ai-sdk-adapter";
 import { Perigon } from "./lib/perigon";
 import { TOOL_DEFINITIONS } from "./mcp/tools";
@@ -92,7 +93,10 @@ export default {
         : "ANTHROPIC_API_KEY not configured";
 
       console.error(`${missingKey} is not set`);
-      return handleError(error, 500);
+      return new Response(JSON.stringify({ error }), {
+        status: 500,
+        headers: { "content-type": "application/json" },
+      });
     }
 
     const url = new URL(request.url);
@@ -243,7 +247,7 @@ async function handleToolRequest(
         );
       }
     default:
-      return handleError("Method not allowed", 405);
+      return new Response("Method not allowed", { status: 405 });
   }
 }
 
@@ -255,7 +259,7 @@ async function handleChatRequest(
   env: Env,
 ): Promise<Response> {
   if (request.method !== "POST") {
-    return handleError("Method not allowed", 405);
+    return new Response("Method not allowed", { status: 405 });
   }
   try {
     const key = await authenticate(request, env);

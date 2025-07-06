@@ -92,7 +92,14 @@
           },
         ],
       },
+      "assets": {
+        "directory": "./dist/",
+        "not_found_handling": "single-page-application",
+        "binding": "ASSETS",
+        "run_worker_first": ["/v1/*"],
+      },
       "vars": {
+        "VITE_TURNSTILE_SITE_KEY": "0x4AAAAAABihR9-NN72ssFjf",
         "VITE_USE_TURNSTILE": true,
       },
       "unsafe": {
