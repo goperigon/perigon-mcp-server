@@ -10,11 +10,12 @@ import {
   CoreMessage,
 } from "ai";
 import { PerigonMCP, Props } from "./mcp/mcp";
-// import { PerigonMCP } from "./mcp/temp";
 import { convertMCPResult, createAISDKTools } from "./mcp/ai-sdk-adapter";
 import { Perigon } from "./lib/perigon";
 import { TOOL_DEFINITIONS } from "./mcp/tools";
 import { zodToJsonSchema } from "zod-to-json-schema";
+import { hashKey } from "./lib/hash";
+import { handleError } from "./lib/handle-error";
 
 export { PerigonMCP };
 
@@ -90,10 +91,7 @@ export default {
         : "ANTHROPIC_API_KEY not configured";
 
       console.error(`${missingKey} is not set`);
-      return new Response(JSON.stringify({ error }), {
-        status: 500,
-        headers: { "content-type": "application/json" },
-      });
+      return handleError(error, 500);
     }
 
     const url = new URL(request.url);
@@ -109,7 +107,18 @@ export default {
     try {
       const apiKey = request.headers.get("Authorization")?.split(" ")[1];
       if (!apiKey) {
-        return new Response("Unauthorized", { status: 401 });
+        return handleError("Unauthorized", 401);
+      }
+      // Rate limiting is only available in production (Cloudflare Workers)
+      // see: https://github.com/cloudflare/workers-sdk/issues/8661
+      const key = await hashKey(apiKey);
+      const { success } = await env.MCP_RATE_LIMITER.limit({ key });
+      if (!success) {
+        return handleError(
+          "Rate limit exceeded",
+          429,
+          "You have exceeded allowed number of mcp related requests",
+        );
       }
 
       const perigon = new Perigon(apiKey);
@@ -132,24 +141,19 @@ export default {
 
       return new Response("Not found", { status: 404 });
     } catch (error) {
+      console.error("Failed to process MCP request:", error);
       if (!(error instanceof HttpError)) {
-        return Response.json(
-          {
-            error: "Failed to process MCP request",
-            details:
-              "Error: " +
-              (error instanceof Error ? error.message : String(error)),
-          },
-          { status: 500 },
+        return handleError(
+          "Failed to process MCP request",
+          500,
+          "Error: " + (error instanceof Error ? error.message : String(error)),
         );
       }
 
-      return Response.json(
-        {
-          error: "Failed to process MCP request",
-          details: error.responseBody,
-        },
-        { status: error.statusCode },
+      return handleError(
+        "Failed to process MCP request",
+        error.statusCode,
+        error.responseBody,
       );
     }
   },
@@ -197,15 +201,10 @@ async function handleToolRequest(
         validatedArgs = toolDef.parameters.parse(args);
       } catch (error) {
         console.error("Validation error for tool", tool, ":", error);
-        return new Response(
-          JSON.stringify({
-            error: "Invalid arguments",
-            details: error instanceof Error ? error.message : String(error),
-          }),
-          {
-            status: 400,
-            headers: { "content-type": "application/json" },
-          },
+        return handleError(
+          "Invalid Arguments",
+          400,
+          error instanceof Error ? error.message : String(error),
         );
       }
 
@@ -220,7 +219,7 @@ async function handleToolRequest(
         },
       );
     default:
-      return new Response("Method not allowed", { status: 405 });
+      return handleError("Method not allowed", 405);
   }
 }
 
@@ -232,41 +231,9 @@ async function handleChatRequest(
   env: Env,
 ): Promise<Response> {
   if (request.method !== "POST") {
-    return new Response("Method not allowed", { status: 405 });
+    return handleError("Method not allowed", 405);
   }
   try {
-    // if (env.VITE_USE_TURNSTILE) {
-    //   const token = request.headers.get("cf-turnstile-response");
-    //   const ip = request.headers.get("CF-Connecting-IP");
-    //   // Validate the token by calling the
-    //   // "/siteverify" API endpoint.
-    //   const idempotencyKey = crypto.randomUUID();
-    //   const url = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
-    //   const verify = await fetch(url, {
-    //     body: JSON.stringify({
-    //       secret: env.TURNSTILE_SECRET_KEY,
-    //       response: token,
-    //       remoteip: ip,
-    //       idempotency_key: idempotencyKey,
-    //     }),
-    //     method: "POST",
-    //     headers: {
-    //       "Content-Type": "application/json",
-    //     },
-    //   });
-    //   if (!((await verify.json()) as any).success) {
-    //     return Response.json(
-    //       {
-    //         error: "Bad Request",
-    //         details: "Missing or invalid turnstile token",
-    //       },
-    //       {
-    //         status: 400,
-    //       },
-    //     );
-    //   }
-    // }
-
     const { messages = [] } = (await request.json()) as {
       messages: CoreMessage[];
     };
@@ -516,16 +483,10 @@ async function handleChatRequest(
     });
   } catch (error) {
     console.error("Error processing chat request:", error);
-
-    return new Response(
-      JSON.stringify({
-        error: "Failed to process request",
-        details: error instanceof Error ? error.message : String(error),
-      }),
-      {
-        status: 500,
-        headers: { "content-type": "application/json" },
-      },
+    return handleError(
+      "Failed to process request",
+      500,
+      error instanceof Error ? error.message : String(error),
     );
   }
 }

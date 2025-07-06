@@ -48,6 +48,26 @@
     "VITE_TURNSTILE_SITE_KEY": "0x4AAAAAABihR9-NN72ssFjf",
     "VITE_USE_TURNSTILE": false,
   },
+  "unsafe": {
+    "bindings": [
+      {
+        "name": "MCP_RATE_LIMITER",
+        "type": "ratelimit",
+        "namespace_id": "1001",
+        // 20 requests every 10 seconds
+        "simple": {
+          "limit": 20,
+          "period": 10,
+        },
+      },
+    ],
+  },
+  "kv_namespaces": [
+    {
+      "binding": "AUTH_KV",
+      "id": "5a6572b47a1c4f92800ea9a66c7b6c6f",
+    },
+  ],
   "env": {
     "production": {
       "name": "perigon-mcp-server",
@@ -72,14 +92,7 @@
           },
         ],
       },
-      "assets": {
-        "directory": "./dist/",
-        "not_found_handling": "single-page-application",
-        "binding": "ASSETS",
-        "run_worker_first": ["/v1/*"],
-      },
       "vars": {
-        "VITE_TURNSTILE_SITE_KEY": "0x4AAAAAABihR9-NN72ssFjf",
         "VITE_USE_TURNSTILE": true,
       },
     },

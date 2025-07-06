@@ -46,3 +46,19 @@ export enum Scopes {
   CLUSTERS = "CLUSTERS",
   KEYWORDS = "KEYWORDS",
 }
+
+/**
+ * Turnstile verification response
+ */
+export interface TurnstileVerificationResponse {
+  success: boolean;
+  challenge_ts: string;
+  hostname: string;
+}
+
+/**
+ * Auth Store
+ */
+export interface AuthStore {
+  count: number;
+}
