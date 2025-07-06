@@ -11,7 +11,8 @@ interface LayoutProps {
 
 export default function Layout({ children }: LayoutProps) {
   const location = useLocation();
-  const isInspector = location.pathname === "/" || location.pathname === "/inspector";
+  const isInspector =
+    location.pathname === "/" || location.pathname === "/inspector";
   const isChat = location.pathname === "/chat";
 
   return (
@@ -66,9 +67,7 @@ export default function Layout({ children }: LayoutProps) {
       </header>
 
       {/* Main Content */}
-      <main className="relative z-10 flex-1 overflow-hidden">
-        {children}
-      </main>
+      <main className="relative z-10 flex-1 overflow-hidden">{children}</main>
     </div>
   );
 }

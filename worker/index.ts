@@ -1,4 +1,4 @@
-import { HttpError } from "./types/types";
+import { HttpError, TurnstileVerificationResponse } from "./types/types";
 import { createAnthropic } from "@ai-sdk/anthropic";
 import {
   streamText,
@@ -15,6 +15,9 @@ import { convertMCPResult, createAISDKTools } from "./mcp/ai-sdk-adapter";
 import { Perigon } from "./lib/perigon";
 import { TOOL_DEFINITIONS } from "./mcp/tools";
 import { zodToJsonSchema } from "zod-to-json-schema";
+import { hashKey } from "./lib/hash";
+import { handleError } from "./lib/handle-error";
+import { authenticate } from "./lib/auth";
 
 export { PerigonMCP };
 
@@ -98,6 +101,10 @@ export default {
 
     const url = new URL(request.url);
 
+    if (url.pathname === "/v1/auth") {
+      return handleAuthRequest(request, env);
+    }
+
     if (url.pathname === "/v1/api/chat") {
       return handleChatRequest(request, env);
     }
@@ -106,57 +113,65 @@ export default {
       return handleToolRequest(request, env);
     }
 
-    try {
-      const apiKey = request.headers.get("Authorization")?.split(" ")[1];
-      if (!apiKey) {
-        return new Response("Unauthorized", { status: 401 });
-      }
-
-      const perigon = new Perigon(apiKey);
-
-      const apiKeyDetails = await perigon.introspection();
-
-      const props: Props = {
-        apiKey,
-        scopes: apiKeyDetails.scopes,
-      };
-      ctx.props = props;
-
-      if (url.pathname === "/v1/sse" || url.pathname === "/v1/sse/message") {
-        return PerigonMCP.serveSSE("/v1/sse").fetch(request, env, ctx);
-      }
-
-      if (url.pathname === "/v1/mcp") {
-        return PerigonMCP.serve("/v1/mcp").fetch(request, env, ctx);
-      }
-
-      return new Response("Not found", { status: 404 });
-    } catch (error) {
-      if (!(error instanceof HttpError)) {
-        return Response.json(
-          {
-            error: "Failed to process MCP request",
-            details:
-              "Error: " +
-              (error instanceof Error ? error.message : String(error)),
-          },
-          { status: 500 },
-        );
-      }
-
-      return Response.json(
-        {
-          error: "Failed to process MCP request",
-          details: error.responseBody,
-        },
-        { status: error.statusCode },
-      );
+    if (
+      url.pathname === "/v1/sse" ||
+      url.pathname === "/v1/sse/message" ||
+      url.pathname === "/v1/mcp"
+    ) {
+      return handleMCPRequest(request, env, ctx);
     }
+
+    return new Response("Not found", { status: 404 });
   },
 } satisfies ExportedHandler<Env>;
 
 /**
- * Handles tool API requests
+ * AUTH
+ */
+async function handleAuthRequest(
+  request: Request,
+  env: Env,
+): Promise<Response> {
+  if (request.method !== "POST") {
+    return handleError("Method not allowed", 405);
+  }
+  const token = request.headers.get("cf-turnstile-response");
+  const ip = request.headers.get("CF-Connecting-IP");
+  // Validate the token by calling the
+  // "/siteverify" API endpoint.
+  const idempotencyKey = crypto.randomUUID();
+  const url = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
+  const verify = await fetch(url, {
+    body: JSON.stringify({
+      secret: env.TURNSTILE_SECRET_KEY,
+      response: token,
+      remoteip: ip,
+      idempotency_key: idempotencyKey,
+    }),
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+  if (!((await verify.json()) as TurnstileVerificationResponse).success) {
+    return handleError(
+      "Bad Request",
+      400,
+      "Missing or invalid turnstile token",
+    );
+  }
+  const secret = crypto.randomUUID(); // mint a secret key for FE to use
+  await env.AUTH_KV.put(secret, "valid", {
+    expirationTtl: 60 * 30, // 30 minutes
+  });
+
+  return Response.json({
+    secret,
+  });
+}
+
+/**
+ * TOOLs
  */
 async function handleToolRequest(
   request: Request,
@@ -178,54 +193,66 @@ async function handleToolRequest(
         headers: { "content-type": "application/json" },
       });
     case "POST":
-      const body = (await request.json()) as { tool: string; args: any };
-      const tool = body.tool;
-      const args = body.args;
-
-      if (!tool || !args) {
-        return new Response("Invalid request", { status: 400 });
-      }
-
-      const toolDef = TOOL_DEFINITIONS[tool];
-      if (!toolDef) {
-        return new Response("Tool not found", { status: 404 });
-      }
-
-      // Validate and transform args using the tool's Zod schema
-      let validatedArgs;
       try {
-        validatedArgs = toolDef.parameters.parse(args);
-      } catch (error) {
-        console.error("Validation error for tool", tool, ":", error);
+        const key = await authenticate(request, env);
+        const body = (await request.json()) as { tool: string; args: any };
+        const tool = body.tool;
+        const args = body.args;
+
+        if (!tool || !args) {
+          return new Response("Invalid request", { status: 400 });
+        }
+
+        const toolDef = TOOL_DEFINITIONS[tool];
+        if (!toolDef) {
+          return new Response("Tool not found", { status: 404 });
+        }
+
+        // Validate and transform args using the tool's Zod schema
+        let validatedArgs;
+        try {
+          validatedArgs = toolDef.parameters.parse(args);
+        } catch (error) {
+          console.error("Validation error for tool", tool, ":", error);
+          return handleError(
+            "Invalid Arguments",
+            400,
+            error instanceof Error ? error.message : String(error),
+          );
+        }
+
+        const result = await toolDef.createHandler(
+          new Perigon(env.PERIGON_API_KEY),
+        )(validatedArgs);
         return new Response(
-          JSON.stringify({
-            error: "Invalid arguments",
-            details: error instanceof Error ? error.message : String(error),
-          }),
+          JSON.stringify({ result: convertMCPResult(result) }),
           {
-            status: 400,
+            status: 200,
             headers: { "content-type": "application/json" },
           },
         );
+      } catch (error) {
+        if (error instanceof HttpError) {
+          return handleError(
+            error.responseBody,
+            error.statusCode,
+            error.message,
+          );
+        }
+        console.error("Error executing tool:", error);
+        return handleError(
+          "Failed to execute tool",
+          500,
+          error instanceof Error ? error.message : String(error),
+        );
       }
-
-      const result = await toolDef.createHandler(
-        new Perigon(env.PERIGON_API_KEY),
-      )(validatedArgs);
-      return new Response(
-        JSON.stringify({ result: convertMCPResult(result) }),
-        {
-          status: 200,
-          headers: { "content-type": "application/json" },
-        },
-      );
     default:
       return new Response("Method not allowed", { status: 405 });
   }
 }
 
 /**
- * Handles chat API requests
+ * CHAT
  */
 async function handleChatRequest(
   request: Request,
@@ -235,38 +262,7 @@ async function handleChatRequest(
     return new Response("Method not allowed", { status: 405 });
   }
   try {
-    // if (env.VITE_USE_TURNSTILE) {
-    //   const token = request.headers.get("cf-turnstile-response");
-    //   const ip = request.headers.get("CF-Connecting-IP");
-    //   // Validate the token by calling the
-    //   // "/siteverify" API endpoint.
-    //   const idempotencyKey = crypto.randomUUID();
-    //   const url = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
-    //   const verify = await fetch(url, {
-    //     body: JSON.stringify({
-    //       secret: env.TURNSTILE_SECRET_KEY,
-    //       response: token,
-    //       remoteip: ip,
-    //       idempotency_key: idempotencyKey,
-    //     }),
-    //     method: "POST",
-    //     headers: {
-    //       "Content-Type": "application/json",
-    //     },
-    //   });
-    //   if (!((await verify.json()) as any).success) {
-    //     return Response.json(
-    //       {
-    //         error: "Bad Request",
-    //         details: "Missing or invalid turnstile token",
-    //       },
-    //       {
-    //         status: 400,
-    //       },
-    //     );
-    //   }
-    // }
-
+    const key = await authenticate(request, env);
     const { messages = [] } = (await request.json()) as {
       messages: CoreMessage[];
     };
@@ -516,16 +512,76 @@ async function handleChatRequest(
     });
   } catch (error) {
     console.error("Error processing chat request:", error);
+    if (error instanceof HttpError) {
+      return handleError(error.responseBody, error.statusCode, error.message);
+    }
+    return handleError(
+      "Failed to process request",
+      500,
+      error instanceof Error ? error.message : String(error),
+    );
+  }
+}
 
-    return new Response(
-      JSON.stringify({
-        error: "Failed to process request",
-        details: error instanceof Error ? error.message : String(error),
-      }),
-      {
-        status: 500,
-        headers: { "content-type": "application/json" },
-      },
+/**
+ * MCP
+ */
+async function handleMCPRequest(
+  request: Request,
+  env: Env,
+  ctx: ExecutionContext,
+) {
+  try {
+    const url = new URL(request.url);
+    const apiKey = request.headers.get("Authorization")?.split(" ")[1];
+    if (!apiKey) {
+      return handleError("Unauthorized", 401);
+    }
+    // Rate limiting is only available in production (Cloudflare Workers)
+    // see: https://github.com/cloudflare/workers-sdk/issues/8661
+    const key = await hashKey(apiKey);
+    const { success } = await env.MCP_RATE_LIMITER.limit({ key });
+    if (!success) {
+      return handleError(
+        "Rate limit exceeded",
+        429,
+        "You have exceeded allowed number of mcp related requests for this period",
+      );
+    }
+
+    const perigon = new Perigon(apiKey);
+
+    const apiKeyDetails = await perigon.introspection();
+
+    const props: Props = {
+      apiKey,
+      scopes: apiKeyDetails.scopes,
+    };
+    ctx.props = props;
+
+    if (url.pathname === "/v1/sse" || url.pathname === "/v1/sse/message") {
+      return PerigonMCP.serveSSE("/v1/sse").fetch(request, env, ctx);
+    }
+
+    if (url.pathname === "/v1/mcp") {
+      return PerigonMCP.serve("/v1/mcp").fetch(request, env, ctx);
+    }
+
+    return new Response("Not found", { status: 404 });
+  } catch (error) {
+    console.error("Failed to process MCP request:", error);
+    if (!(error instanceof HttpError)) {
+      return handleError(
+        "Failed to process MCP request",
+        500,
+        "Error: " + (error instanceof Error ? error.message : String(error)),
+      );
+    }
+
+    return handleError(
+      "Failed to process MCP request",
+      error.statusCode,
+      error.responseBody,
     );
   }
 }

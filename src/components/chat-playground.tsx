@@ -18,28 +18,129 @@ import {
   PenToolIcon as Tool,
   Copy,
   Check,
+  Trash2,
 } from "lucide-react";
 import { MessageText } from "./message-text";
+import { useAuth } from "@/lib/auth-context";
 
-export default function ChatPlayground() {
-  const { messages, input, handleInputChange, handleSubmit, status, error } =
-    useChat({
-      api: "/v1/api/chat",
-      initialMessages: [
-        {
-          id: "1",
-          role: "assistant",
-          content: `Hi! I'm Cerebro, your AI assistant powered by Perigon. I can help you search news, research journalists and companies, and find information about public figures and media sources.
+const STORAGE_KEY = "chat-messages";
+
+const getDefaultMessage = () => ({
+  id: "1",
+  role: "assistant" as const,
+  content: `Hi! I'm Cerebro, your AI assistant powered by Perigon. I can help you search news, research journalists and companies, and find information about public figures and media sources.
 
 What would you like to explore?`,
-        },
-      ],
-    });
+});
+
+const loadMessagesFromStorage = () => {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (!stored) return [getDefaultMessage()];
+
+    const parsed = JSON.parse(stored);
+    if (!Array.isArray(parsed) || parsed.length === 0) {
+      localStorage.removeItem(STORAGE_KEY);
+      return [getDefaultMessage()];
+    }
+
+    // Validate message structure
+    const isValidMessage = (msg: any) =>
+      msg &&
+      typeof msg.id === "string" &&
+      typeof msg.role === "string" &&
+      (typeof msg.content === "string" || Array.isArray(msg.parts));
+
+    if (!parsed.every(isValidMessage)) {
+      localStorage.removeItem(STORAGE_KEY);
+      return [getDefaultMessage()];
+    }
+
+    return parsed;
+  } catch (error) {
+    console.warn(
+      "Failed to load messages from localStorage, clearing storage:",
+      error,
+    );
+    localStorage.removeItem(STORAGE_KEY);
+    return [getDefaultMessage()];
+  }
+};
+
+const saveMessagesToStorage = (messages: any[]) => {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
+  } catch (error) {
+    console.warn("Failed to save messages to localStorage:", error);
+  }
+};
+
+export default function ChatPlayground() {
+  const { secret, invalidate, isAuthenticated } = useAuth();
+  const [initialMessages] = React.useState(() => loadMessagesFromStorage());
+  const [showError, setShowError] = React.useState(false);
+  const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
+  console.log(JSON.stringify(initialMessages));
+  const {
+    messages,
+    input,
+    handleInputChange,
+    handleSubmit,
+    status,
+    error,
+    setMessages,
+    reload,
+  } = useChat({
+    key: secret || "no-auth", // Force reinit when secret changes
+    api: "/v1/api/chat",
+    initialMessages,
+    headers: {
+      Authorization: `Bearer ${secret}`,
+    },
+    onResponse: async (response) => {
+      if (response.status === 401) {
+        await invalidate();
+      }
+    },
+  });
+
+  useEffect(() => {
+    if (
+      isAuthenticated &&
+      initialMessages[initialMessages.length - 1]?.role !== "assistant"
+    ) {
+      reload();
+    }
+  }, [isAuthenticated]);
+
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const autoScrollDisabledRef = useRef(false);
   const isAutoScrollingRef = useRef(false);
-  const [copiedMessageId, setCopiedMessageId] = React.useState<string | null>(null);
+  const [copiedMessageId, setCopiedMessageId] = React.useState<string | null>(
+    null,
+  );
+
+  useEffect(() => {
+    if (error && !error.message.includes("401")) {
+      setErrorMessage(error.message);
+      setShowError(true);
+
+      const timer = setTimeout(() => {
+        setShowError(false);
+        setErrorMessage(null);
+      }, 3000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [error]);
+
+  // Save messages to localStorage whenever messages change
+  useEffect(() => {
+    if (messages.length > 0) {
+      saveMessagesToStorage(messages);
+    }
+  }, [messages]);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -126,15 +227,29 @@ What would you like to explore?`,
     }
   };
 
+  const clearConversation = () => {
+    const defaultMessage = getDefaultMessage();
+    setMessages([defaultMessage]);
+    localStorage.removeItem(STORAGE_KEY);
+  };
+
   return (
     <div className="fixed inset-0 top-12 flex flex-col bg-background">
-      {/* Error display */}
-      {error && (
-        <Card className="mx-6 mt-4 border-destructive/20 bg-destructive/10">
-          <CardContent className="py-3 px-4">
+      {/* Error display - Toast style */}
+      {showError && errorMessage && (
+        <Card className="mx-6 mt-4 border-destructive/20 bg-destructive/10 animate-in slide-in-from-top-2">
+          <CardContent className="py-3 px-4 flex justify-between items-center">
             <div className="font-mono text-sm text-destructive">
-              <strong>Error:</strong> {error.message}
+              <strong>Error:</strong> {errorMessage}
             </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowError(false)}
+              className="h-6 w-6 p-0"
+            >
+              ×
+            </Button>
           </CardContent>
         </Card>
       )}
@@ -166,7 +281,10 @@ What would you like to explore?`,
                     switch (part.type) {
                       case "text":
                         return (
-                          <div key={`${message.id}-text-${index}`} className="relative group mb-3 pr-8">
+                          <div
+                            key={`${message.id}-text-${index}`}
+                            className="relative group mb-3 pr-8"
+                          >
                             <Card className="inline-block bg-card/95 backdrop-blur-sm shadow-sm py-0 border border-border/30">
                               <CardContent className="py-1.5 px-3">
                                 <div className="text-sm leading-relaxed prose prose-sm max-w-none dark:prose-invert [&>*:last-child]:mb-0">
@@ -178,7 +296,12 @@ What would you like to explore?`,
                               variant="ghost"
                               size="sm"
                               className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200 h-6 w-6 p-0 hover:bg-muted/20"
-                              onClick={() => copyMessageContent(`${message.id}-${index}`, part.text)}
+                              onClick={() =>
+                                copyMessageContent(
+                                  `${message.id}-${index}`,
+                                  part.text,
+                                )
+                              }
                             >
                               {copiedMessageId === `${message.id}-${index}` ? (
                                 <Check className="h-3 w-3 text-success" />
@@ -217,7 +340,9 @@ What would you like to explore?`,
                           variant="ghost"
                           size="sm"
                           className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200 h-6 w-6 p-0 hover:bg-muted/20"
-                          onClick={() => copyMessageContent(message.id, message.content)}
+                          onClick={() =>
+                            copyMessageContent(message.id, message.content)
+                          }
                         >
                           {copiedMessageId === message.id ? (
                             <Check className="h-3 w-3 text-success" />
@@ -274,16 +399,25 @@ What would you like to explore?`,
               onKeyDown={handleKeyPress}
               placeholder="Enter your query here..."
               className="flex-1 font-mono text-sm resize-none min-h-[60px] max-h-[120px] focus-visible:ring-0 text-foreground"
-              disabled={status !== "ready"}
             />
             <Button
               type="submit"
               disabled={status !== "ready" || !input.trim()}
-              className="font-mono px-6 pt-7"
-              variant="ghost"
+              className="font-mono mt-3"
+              variant="outline"
             >
-              <Send className="w-4 h-4 mr-2" />
+              <Send className="size-4" />
               SEND
+            </Button>
+            <Button
+              type="button"
+              onClick={clearConversation}
+              className="font-mono mt-3"
+              variant="ghost"
+              title="Clear conversation"
+            >
+              <Trash2 className="size-4" />
+              CLEAR
             </Button>
           </form>
         </div>

@@ -1,20 +1,39 @@
-import React from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
-import Layout from "@/components/Layout";
-import InspectorPage from "@/pages/InspectorPage";
-import ChatPage from "@/pages/ChatPage";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
+import Layout from "@/components/layout";
+import InspectorPage from "@/pages/inspector-page";
+import ChatPage from "@/pages/chat-page";
+import { AuthProvider, useAuth } from "@/lib/auth-context";
+import TurnstileAuth from "@/components/turnstile-auth";
+
+function AppContent() {
+  const { isAuthenticated } = useAuth();
+
+  return (
+    <>
+      <Routes>
+        <Route path="/" element={<InspectorPage />} />
+        <Route path="/inspector" element={<Navigate to="/" replace />} />
+        <Route path="/chat" element={<ChatPage />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+      {!isAuthenticated && <TurnstileAuth />}
+    </>
+  );
+}
 
 export default function App() {
   return (
-    <Router>
-      <Layout>
-        <Routes>
-          <Route path="/" element={<InspectorPage />} />
-          <Route path="/inspector" element={<Navigate to="/" replace />} />
-          <Route path="/chat" element={<ChatPage />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </Layout>
-    </Router>
+    <AuthProvider>
+      <Router>
+        <Layout>
+          <AppContent />
+        </Layout>
+      </Router>
+    </AuthProvider>
   );
 }
