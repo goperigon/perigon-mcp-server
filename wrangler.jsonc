@@ -46,7 +46,7 @@
   },
   "vars": {
     "VITE_TURNSTILE_SITE_KEY": "0x4AAAAAABihR9-NN72ssFjf",
-    "VITE_USE_TURNSTILE": true,
+    "VITE_USE_TURNSTILE": false,
   },
   "unsafe": {
     "bindings": [
@@ -54,20 +54,10 @@
         "name": "MCP_RATE_LIMITER",
         "type": "ratelimit",
         "namespace_id": "1001",
-        // 50 requests every 10 seconds
+        // 20 requests every 10 seconds
         "simple": {
-          "limit": 50,
+          "limit": 20,
           "period": 10,
-        },
-      },
-      {
-        "name": "CHAT_RATE_LIMITER",
-        "type": "ratelimit",
-        "namespace_id": "1002",
-        // 15 messages per day
-        "simple": {
-          "limit": 15,
-          "period": 86400,
         },
       },
     ],

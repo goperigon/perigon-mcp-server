@@ -111,16 +111,14 @@ export default {
       }
       // Rate limiting is only available in production (Cloudflare Workers)
       // see: https://github.com/cloudflare/workers-sdk/issues/8661
-      if (env.MCP_RATE_LIMITER) {
-        const key = await hashKey(apiKey);
-        const { success } = await env.MCP_RATE_LIMITER.limit({ key });
-        if (!success) {
-          return handleError(
-            "Rate limit exceeded",
-            429,
-            "You have exceeded allowed number of mcp related requests",
-          );
-        }
+      const key = await hashKey(apiKey);
+      const { success } = await env.MCP_RATE_LIMITER.limit({ key });
+      if (!success) {
+        return handleError(
+          "Rate limit exceeded",
+          429,
+          "You have exceeded allowed number of mcp related requests",
+        );
       }
 
       const perigon = new Perigon(apiKey);
