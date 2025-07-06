@@ -84,6 +84,12 @@
       "upload_source_maps": true,
       "workers_dev": false,
       "preview_urls": false,
+      "kv_namespaces": [
+        {
+          "binding": "AUTH_KV",
+          "id": "5a6572b47a1c4f92800ea9a66c7b6c6f",
+        },
+      ],
       "durable_objects": {
         "bindings": [
           {
