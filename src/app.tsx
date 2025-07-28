@@ -8,7 +8,7 @@ import Layout from "@/components/layout";
 import InspectorPage from "@/pages/inspector-page";
 import ChatPage from "@/pages/chat-page";
 import { AuthProvider, useAuth } from "@/lib/auth-context";
-import TurnstileAuth from "@/components/turnstile-auth";
+// import TurnstileAuth from "@/components/turnstile-auth";
 
 function AppContent() {
   const { isAuthenticated } = useAuth();
@@ -21,7 +21,7 @@ function AppContent() {
         <Route path="/chat" element={<ChatPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-      {!isAuthenticated && <TurnstileAuth />}
+      {/* {!isAuthenticated && <TurnstileAuth />} */}
     </>
   );
 }
