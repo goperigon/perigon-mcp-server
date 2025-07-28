@@ -83,7 +83,7 @@
       },
       "upload_source_maps": true,
       "workers_dev": false,
-      "preview_urls": false,
+      "preview_urls": true,
       "kv_namespaces": [
         {
           "binding": "AUTH_KV",

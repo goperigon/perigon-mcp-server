@@ -81,7 +81,7 @@ export default {
   async fetch(
     request: Request,
     env: Env,
-    ctx: ExecutionContext,
+    ctx: ExecutionContext
   ): Promise<Response> {
     if (!env.PERIGON_API_KEY || !env.ANTHROPIC_API_KEY) {
       const missingPerigon = !env.PERIGON_API_KEY;
@@ -130,7 +130,7 @@ export default {
  */
 async function handleAuthRequest(
   request: Request,
-  env: Env,
+  env: Env
 ): Promise<Response> {
   if (request.method !== "POST") {
     return handleError("Method not allowed", 405);
@@ -157,7 +157,7 @@ async function handleAuthRequest(
     return handleError(
       "Bad Request",
       400,
-      "Missing or invalid turnstile token",
+      "Missing or invalid turnstile token"
     );
   }
   const secret = crypto.randomUUID(); // mint a secret key for FE to use
@@ -175,7 +175,7 @@ async function handleAuthRequest(
  */
 async function handleToolRequest(
   request: Request,
-  env: Env,
+  env: Env
 ): Promise<Response> {
   switch (request.method) {
     case "GET":
@@ -217,33 +217,33 @@ async function handleToolRequest(
           return handleError(
             "Invalid Arguments",
             400,
-            error instanceof Error ? error.message : String(error),
+            error instanceof Error ? error.message : String(error)
           );
         }
 
         const result = await toolDef.createHandler(
-          new Perigon(env.PERIGON_API_KEY),
+          new Perigon(env.PERIGON_API_KEY)
         )(validatedArgs);
         return new Response(
           JSON.stringify({ result: convertMCPResult(result) }),
           {
             status: 200,
             headers: { "content-type": "application/json" },
-          },
+          }
         );
       } catch (error) {
         if (error instanceof HttpError) {
           return handleError(
             error.responseBody,
             error.statusCode,
-            error.message,
+            error.message
           );
         }
         console.error("Error executing tool:", error);
         return handleError(
           "Failed to execute tool",
           500,
-          error instanceof Error ? error.message : String(error),
+          error instanceof Error ? error.message : String(error)
         );
       }
     default:
@@ -256,7 +256,7 @@ async function handleToolRequest(
  */
 async function handleChatRequest(
   request: Request,
-  env: Env,
+  env: Env
 ): Promise<Response> {
   if (request.method !== "POST") {
     return new Response("Method not allowed", { status: 405 });
@@ -328,7 +328,7 @@ async function handleChatRequest(
             const tool = tools[toolCall.toolName as keyof typeof tools];
             if (!tool) {
               console.error(
-                `Tool ${toolCall.toolName} not found in tools object`,
+                `Tool ${toolCall.toolName} not found in tools object`
               );
               return null;
             }
@@ -351,13 +351,13 @@ async function handleChatRequest(
 
             console.log(
               `Successfully repaired arguments for ${toolCall.toolName}:`,
-              repairedArgs,
+              repairedArgs
             );
             return { ...toolCall, args: JSON.stringify(repairedArgs) };
           } catch (repairError) {
             console.error(
               `Failed to repair tool call ${toolCall.toolName}:`,
-              repairError,
+              repairError
             );
             return null;
           }
@@ -373,7 +373,7 @@ async function handleChatRequest(
         if (ToolExecutionError.isInstance(error)) {
           try {
             console.log(
-              `Attempting to retry tool call ${toolCall.toolName} with context`,
+              `Attempting to retry tool call ${toolCall.toolName} with context`
             );
 
             const retryResult = await generateText({
@@ -382,37 +382,37 @@ async function handleChatRequest(
                 system ||
                 SYSTEM_PROMPT.replaceAll(
                   "{{date}}",
-                  new Date().toISOString().split("T")[0],
+                  new Date().toISOString().split("T")[0]
                 )
                   .replaceAll(
                     "{{yesterday}}",
                     new Date(Date.now() - 24 * 60 * 60 * 1000)
                       .toISOString()
-                      .split("T")[0],
+                      .split("T")[0]
                   )
                   .replaceAll(
                     "{{threeDaysAgo}}",
                     new Date(Date.now() - 3 * 24 * 60 * 60 * 1000)
                       .toISOString()
-                      .split("T")[0],
+                      .split("T")[0]
                   )
                   .replaceAll(
                     "{{oneWeekAgo}}",
                     new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
                       .toISOString()
-                      .split("T")[0],
+                      .split("T")[0]
                   )
                   .replaceAll(
                     "{{twoWeeksAgo}}",
                     new Date(Date.now() - 14 * 24 * 60 * 60 * 1000)
                       .toISOString()
-                      .split("T")[0],
+                      .split("T")[0]
                   )
                   .replaceAll(
                     "{{oneMonthAgo}}",
                     new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
                       .toISOString()
-                      .split("T")[0],
+                      .split("T")[0]
                   ),
               messages: [
                 ...messages,
@@ -434,7 +434,9 @@ async function handleChatRequest(
                       type: "tool-result",
                       toolCallId: toolCall.toolCallId,
                       toolName: toolCall.toolName,
-                      result: `Error: ${String(error)}. Please try again with corrected parameters or a different approach.`,
+                      result: `Error: ${String(
+                        error
+                      )}. Please try again with corrected parameters or a different approach.`,
                     },
                   ],
                 },
@@ -443,12 +445,12 @@ async function handleChatRequest(
             });
 
             const newToolCall = retryResult.toolCalls.find(
-              (newCall) => newCall.toolName === toolCall.toolName,
+              (newCall) => newCall.toolName === toolCall.toolName
             );
 
             if (newToolCall) {
               console.log(
-                `Successfully generated new tool call for ${toolCall.toolName}`,
+                `Successfully generated new tool call for ${toolCall.toolName}`
               );
               return {
                 toolCallType: "function" as const,
@@ -458,21 +460,21 @@ async function handleChatRequest(
               };
             } else {
               console.log(
-                `No new tool call generated for ${toolCall.toolName}`,
+                `No new tool call generated for ${toolCall.toolName}`
               );
               return null;
             }
           } catch (retryError) {
             console.error(
               `Failed to retry tool call ${toolCall.toolName}:`,
-              retryError,
+              retryError
             );
             return null;
           }
         }
 
         console.log(
-          `Unknown error type for tool call ${toolCall.toolName}, cannot repair`,
+          `Unknown error type for tool call ${toolCall.toolName}, cannot repair`
         );
         return null;
       },
@@ -492,19 +494,16 @@ async function handleChatRequest(
               `Model tried to call unknown tool: ${error.toolName} - ${error.message}`,
             ] as const)
           : InvalidToolArgumentsError.isInstance(error)
-            ? ([
-                "Model called a tool with invalid arguments",
-                `Model called tool: ${error.toolName} with invalid args: ${error.toolArgs} - ${error.message}`,
-              ] as const)
-            : ToolExecutionError.isInstance(error)
-              ? ([
-                  "An error occurred during tool execution",
-                  `Tool execution failed: ${error.toolName} with args: ${error.toolArgs} - ${error.message}`,
-                ] as const)
-              : ([
-                  "An unknown error occurred",
-                  `Unknown error: ${error}`,
-                ] as const);
+          ? ([
+              "Model called a tool with invalid arguments",
+              `Model called tool: ${error.toolName} with invalid args: ${error.toolArgs} - ${error.message}`,
+            ] as const)
+          : ToolExecutionError.isInstance(error)
+          ? ([
+              "An error occurred during tool execution",
+              `Tool execution failed: ${error.toolName} with args: ${error.toolArgs} - ${error.message}`,
+            ] as const)
+          : (["An unknown error occurred", `Unknown error: ${error}`] as const);
 
         console.error("Error while processing chat response:", errs[1]);
         return errs[0];
@@ -518,7 +517,7 @@ async function handleChatRequest(
     return handleError(
       "Failed to process request",
       500,
-      error instanceof Error ? error.message : String(error),
+      error instanceof Error ? error.message : String(error)
     );
   }
 }
@@ -529,7 +528,7 @@ async function handleChatRequest(
 async function handleMCPRequest(
   request: Request,
   env: Env,
-  ctx: ExecutionContext,
+  ctx: ExecutionContext
 ) {
   try {
     const url = new URL(request.url);
@@ -545,7 +544,7 @@ async function handleMCPRequest(
       return handleError(
         "Rate limit exceeded",
         429,
-        "You have exceeded allowed number of mcp related requests for this period",
+        "You have exceeded allowed number of mcp related requests for this period"
       );
     }
 
@@ -574,14 +573,14 @@ async function handleMCPRequest(
       return handleError(
         "Failed to process MCP request",
         500,
-        "Error: " + (error instanceof Error ? error.message : String(error)),
+        "Error: " + (error instanceof Error ? error.message : String(error))
       );
     }
 
     return handleError(
       "Failed to process MCP request",
       error.statusCode,
-      error.responseBody,
+      error.responseBody
     );
   }
 }
