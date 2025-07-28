@@ -4,7 +4,7 @@
  */
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "perigon-mcp-server-dev",
+  "name": "perigon-mcp-server",
   "main": "worker/index.ts",
   "compatibility_date": "2025-04-01",
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
