@@ -8,7 +8,7 @@ This is the official MCP server for the Perigon news API.
 
 ## Documentation
 
-For more information on how to use and connect the MCP, visit the [MCP docs.](https://dev.perigon.io/docs/mcp#claude-desktop-1)
+For more information on how to use and connect the MCP, visit the [MCP docs.](https://dev.perigon.io/docs/mcp)
 
 ## Usage
 
@@ -30,13 +30,7 @@ You can connect to our remote MCP server using local or remote MCP clients.
 
 #### Quick Setup Examples
 
-**For Claude Code (CLI):**
-```bash
-claude mcp add --transport sse perigon_news_api https://mcp.perigon.io/v1/sse \
-  --header "Authorization: Bearer YOUR_PERIGON_API_KEY"
-```
-
-**For other MCP clients (SSE with mcp-remote):**
+**For MCP clients (SSE with mcp-remote):**
 ```json
 {
   "mcpServers": {
@@ -57,12 +51,13 @@ claude mcp add --transport sse perigon_news_api https://mcp.perigon.io/v1/sse \
 }
 ```
 
-**For clients supporting HTTP (Streamable):**
+**For MCP clients (With SSE support):**
 ```json
 {
   "mcpServers": {
     "perigon_news_api": {
-      "url": "https://mcp.perigon.io/v1/mcp",
+      "url": "https://mcp.perigon.io/v1/sse",
+      "type": "sse",
       "headers": {
         "Authorization": "Bearer YOUR_PERIGON_API_KEY"
       }
@@ -71,7 +66,28 @@ claude mcp add --transport sse perigon_news_api https://mcp.perigon.io/v1/sse \
 }
 ```
 
-📖 **For detailed setup instructions for different clients, see our [comprehensive MCP documentation](./MCP_DOCUMENTATION.md).**
+**For clients supporting HTTP (Streamable):**
+```json
+{
+  "mcpServers": {
+    "perigon_news_api": {
+      "url": "https://mcp.perigon.io/v1/mcp",
+      "type": "http",
+      "headers": {
+        "Authorization": "Bearer YOUR_PERIGON_API_KEY"
+      }
+    }
+  }
+}
+```
+
+**For Claude Code (CLI):**
+```bash
+claude mcp add --transport sse perigon_news_api https://mcp.perigon.io/v1/sse \
+  --header "Authorization: Bearer YOUR_PERIGON_API_KEY"
+```
+
+📖 **For detailed setup instructions for different clients, see our [comprehensive MCP documentation](https://dev.perigon.io/docs/mcp).**
 
 ### Prompt Examples
 
