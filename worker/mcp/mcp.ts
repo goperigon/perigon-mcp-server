@@ -18,7 +18,7 @@ const SCOPE_TO_TOOLS: Partial<Record<Scopes, ToolName>> = {
   [Scopes.COMPANIES]: "search_companies",
   [Scopes.TOPICS]: "search_topics",
   [Scopes.WIKIPEDIA]: "search_wikipedia",
-  // [Scopes.VECTOR_SEARCH_WIKIPEDIA]: "vector_search_wikipedia",
+  [Scopes.VECTOR_SEARCH_WIKIPEDIA]: "search_vector_wikipedia",
 };
 
 export class PerigonMCP extends McpAgent<Env, unknown, Props> {
