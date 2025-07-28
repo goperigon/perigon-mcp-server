@@ -17,6 +17,8 @@ const SCOPE_TO_TOOLS: Partial<Record<Scopes, ToolName>> = {
   [Scopes.PEOPLE]: "search_people",
   [Scopes.COMPANIES]: "search_companies",
   [Scopes.TOPICS]: "search_topics",
+  [Scopes.WIKIPEDIA]: "search_wikipedia",
+  // [Scopes.VECTOR_SEARCH_WIKIPEDIA]: "vector_search_wikipedia",
 };
 
 export class PerigonMCP extends McpAgent<Env, unknown, Props> {
@@ -34,7 +36,7 @@ export class PerigonMCP extends McpAgent<Env, unknown, Props> {
       articlesDefinition.name,
       articlesDefinition.description,
       articlesDefinition.parameters.shape,
-      articlesDefinition.createHandler(perigon),
+      articlesDefinition.createHandler(perigon)
     );
 
     // Add tools based on scopes
@@ -46,7 +48,7 @@ export class PerigonMCP extends McpAgent<Env, unknown, Props> {
           definition.name,
           definition.description,
           definition.parameters.shape,
-          definition.createHandler(perigon),
+          definition.createHandler(perigon)
         );
       }
     }

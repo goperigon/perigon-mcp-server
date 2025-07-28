@@ -37,7 +37,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setSecret(newSecret);
     setIsAuthenticated(true);
     localStorage.setItem("auth-secret", newSecret);
-    
+
     // If there's a pending reauth, resolve it
     if (reauthResolveRef.current) {
       reauthResolveRef.current();
@@ -49,7 +49,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setSecret(null);
     setIsAuthenticated(false);
     localStorage.removeItem("auth-secret");
-    
+
     // Return a promise that resolves when re-authentication completes
     return new Promise((resolve) => {
       reauthResolveRef.current = resolve;
