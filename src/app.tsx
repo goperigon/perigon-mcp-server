@@ -21,7 +21,7 @@ function AppContent() {
         <Route path="/chat" element={<ChatPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-      {/* {!isAuthenticated && <TurnstileAuth />} */}
+      {!isAuthenticated && <TurnstileAuth />}
     </>
   );
 }
