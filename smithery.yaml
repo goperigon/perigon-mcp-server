@@ -1,0 +1,28 @@
+runtime: "container"
+
+startCommand:
+  type: "http"
+  configSchema:
+    type: "object"
+    required: ["apiKey"]
+    properties:
+      apiKey:
+        type: "string"
+        title: "Perigon API Key"
+        description: "Your Perigon API key for accessing news data. Get one at https://perigon.io"
+        minLength: 10
+      rateLimitBypass:
+        type: "boolean"
+        title: "Bypass Rate Limiting"
+        description: "Enable to bypass rate limiting in the containerized environment"
+        default: true
+  exampleConfig:
+    apiKey: "YOUR_PERIGON_API_KEY_HERE"
+    rateLimitBypass: true
+
+build:
+  dockerfile: "Dockerfile"
+  dockerBuildPath: "."
+
+env:
+  NODE_ENV: "production" 

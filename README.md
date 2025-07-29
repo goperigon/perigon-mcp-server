@@ -89,6 +89,20 @@ claude mcp add --transport sse perigon_news_api https://mcp.perigon.io/v1/sse \
 
 📖 **For detailed setup instructions for different clients, see our [comprehensive MCP documentation](https://dev.perigon.io/docs/mcp).**
 
+### Smithery Deployment
+
+This MCP server can be easily deployed to [Smithery](https://smithery.ai) using the included Docker configuration. The repository includes:
+
+- `Dockerfile` - Container build configuration
+- `smithery.yaml` - Smithery deployment configuration 
+- `server.js` - HTTP server wrapper for the MCP
+
+**Configuration Options:**
+- `apiKey` (required): Your Perigon API key
+- `rateLimitBypass` (optional): Bypass rate limiting in containerized environment (default: true)
+
+The MCP endpoint will be available at `/mcp` and automatically handles Smithery's query parameter configuration format.
+
 ### Prompt Examples
 
 When prompting your agent we recommend providing the current date (or a tool to get it) unless the agent already has access to such information, this is because some models like Claude will otherwise think the current date is their knowledge cutoff and they will retrieve outdated information frequently.
