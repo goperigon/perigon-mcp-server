@@ -24,7 +24,7 @@ const server = Bun.serve({
         method: request.method,
         headers: {
           ...Object.fromEntries(request.headers.entries()),
-          Authorization: `Bearer ${apiKey}`,
+          Authorization: apiKey,
         },
         body: request.body,
       });
