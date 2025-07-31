@@ -1,9 +1,13 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Settings, MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "./theme-toggle";
+import ApiKeysStatus from "./api-keys-status";
+import ApiKeysModal from "./api-keys-modal";
+import WelcomeModal from "./welcome-modal";
+import { useApiKeys } from "@/lib/api-keys-context";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -14,6 +18,18 @@ export default function Layout({ children }: LayoutProps) {
   const isInspector =
     location.pathname === "/" || location.pathname === "/inspector";
   const isChat = location.pathname === "/chat";
+  const [isApiKeysModalOpen, setIsApiKeysModalOpen] = useState(false);
+  const [isWelcomeModalOpen, setIsWelcomeModalOpen] = useState(false);
+  const { hasValidKeys } = useApiKeys();
+
+  // Show welcome modal on first visit if no API keys are configured
+  React.useEffect(() => {
+    const hasSeenWelcome = localStorage.getItem("perigon-seen-welcome");
+    if (!hasSeenWelcome && !hasValidKeys()) {
+      setIsWelcomeModalOpen(true);
+      localStorage.setItem("perigon-seen-welcome", "true");
+    }
+  }, [hasValidKeys]);
 
   return (
     <div className="h-screen bg-background overflow-hidden flex flex-col">
@@ -32,6 +48,7 @@ export default function Layout({ children }: LayoutProps) {
               </h1>
             </div>
             <div className="flex items-center space-x-3">
+              <ApiKeysStatus onOpenSettings={() => setIsApiKeysModalOpen(true)} />
               <nav className="flex space-x-1">
                 <Button
                   variant="ghost"
@@ -68,6 +85,19 @@ export default function Layout({ children }: LayoutProps) {
 
       {/* Main Content */}
       <main className="relative z-10 flex-1 overflow-hidden">{children}</main>
+      
+      {/* API Keys Modal */}
+      <ApiKeysModal 
+        isOpen={isApiKeysModalOpen} 
+        onClose={() => setIsApiKeysModalOpen(false)} 
+      />
+      
+      {/* Welcome Modal */}
+      <WelcomeModal
+        isOpen={isWelcomeModalOpen}
+        onClose={() => setIsWelcomeModalOpen(false)}
+        onOpenApiKeys={() => setIsApiKeysModalOpen(true)}
+      />
     </div>
   );
 }
