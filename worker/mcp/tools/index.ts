@@ -5,6 +5,8 @@
  * information from the Perigon API through the Model Context Protocol (MCP).
  * 
  * Available Tools:
+ * 
+ * Search Tools:
  * - News Articles: Search individual news articles with advanced filtering
  * - News Stories: Search clustered news stories and headlines
  * - Journalists: Find journalists and reporters by various criteria
@@ -14,6 +16,12 @@
  * - Topics: Search available topics in the Perigon taxonomy
  * - Wikipedia: Search Wikipedia pages with advanced filtering
  * - Wikipedia Vector: Semantic search of Wikipedia using vector embeddings
+ * 
+ * Use-Case Tools (Simplified workflows for common tasks):
+ * - Company News: Get recent news about a specific company
+ * - Person News: Get recent news about a specific person
+ * - Top Headlines: Get current top headlines and breaking news
+ * - Location News: Get news by geographic location (city, state, country)
  * 
  * Each tool is designed to be:
  * - Well-documented with comprehensive JSDoc comments
@@ -33,6 +41,12 @@ export { topicsTool } from "./search/topics";
 export { wikipediaTool } from "./search/wikipedia";
 export { wikipediaVectorTool } from "./search/wikipedia-vector";
 
+// Export use-case tools
+export { companyNewsTool } from "./use-cases/company-news";
+export { personNewsTool } from "./use-cases/person-news";
+export { topHeadlinesTool } from "./use-cases/top-headlines";
+export { locationNewsTool } from "./use-cases/location-news";
+
 // Export individual tool functions for direct use
 export { searchNewsArticles } from "./search/news-articles";
 export { searchNewsStories } from "./search/news-stories";
@@ -44,6 +58,12 @@ export { searchTopics } from "./search/topics";
 export { searchWikipedia } from "./search/wikipedia";
 export { searchVectorWikipedia } from "./search/wikipedia-vector";
 
+// Export use-case tool functions
+export { getCompanyNews } from "./use-cases/company-news";
+export { getPersonNews } from "./use-cases/person-news";
+export { getTopHeadlines } from "./use-cases/top-headlines";
+export { getLocationNews } from "./use-cases/location-news";
+
 // Export argument schemas for external use
 export { newsArticlesArgs } from "./search/news-articles";
 export { newsStoriesArgs } from "./search/news-stories";
@@ -54,6 +74,12 @@ export { companiesArgs } from "./search/companies";
 export { topicsArgs } from "./search/topics";
 export { wikipediaArgs } from "./search/wikipedia";
 export { wikipediaVectorArgs } from "./search/wikipedia-vector";
+
+// Export use-case argument schemas
+export { companyNewsArgs } from "./use-cases/company-news";
+export { personNewsArgs } from "./use-cases/person-news";
+export { topHeadlinesArgs } from "./use-cases/top-headlines";
+export { locationNewsArgs } from "./use-cases/location-news";
 
 // Export shared types and utilities
 export type { ToolCallback, ToolDefinition } from "./types";
@@ -84,6 +110,10 @@ import { companiesTool } from "./search/companies";
 import { topicsTool } from "./search/topics";
 import { wikipediaTool } from "./search/wikipedia";
 import { wikipediaVectorTool } from "./search/wikipedia-vector";
+import { companyNewsTool } from "./use-cases/company-news";
+import { personNewsTool } from "./use-cases/person-news";
+import { topHeadlinesTool } from "./use-cases/top-headlines";
+import { locationNewsTool } from "./use-cases/location-news";
 import { ToolDefinition } from "./types";
 
 /**
@@ -94,6 +124,7 @@ import { ToolDefinition } from "./types";
  * all necessary metadata for MCP registration.
  */
 export const TOOL_DEFINITIONS: Record<string, ToolDefinition> = {
+  // Search tools
   search_news_articles: newsArticlesTool,
   search_news_stories: newsStoriesTool,
   search_journalists: journalistsTool,
@@ -103,6 +134,12 @@ export const TOOL_DEFINITIONS: Record<string, ToolDefinition> = {
   search_topics: topicsTool,
   search_wikipedia: wikipediaTool,
   search_vector_wikipedia: wikipediaVectorTool,
+  
+  // Use-case tools
+  get_company_news: companyNewsTool,
+  get_person_news: personNewsTool,
+  get_top_headlines: topHeadlinesTool,
+  get_location_news: locationNewsTool,
 } as const;
 
 /**
