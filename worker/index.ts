@@ -88,20 +88,10 @@ export default {
     env: Env,
     ctx: ExecutionContext,
   ): Promise<Response> {
-    if (!env.PERIGON_API_KEY || !env.ANTHROPIC_API_KEY) {
-      const missingPerigon = !env.PERIGON_API_KEY;
-      const missingKey = missingPerigon
-        ? "PERIGON_API_KEY"
-        : "ANTHROPIC_API_KEY";
-      const error = missingPerigon
-        ? "PERIGON_API_KEY not configured"
-        : "ANTHROPIC_API_KEY not configured";
-
-      console.error(`${missingKey} is not set`);
-      return new Response(JSON.stringify({ error }), {
-        status: 500,
-        headers: { "content-type": "application/json" },
-      });
+    // API keys are now optional - can be provided by users via headers
+    // Only log warnings if both env vars are missing
+    if (!env.PERIGON_API_KEY && !env.ANTHROPIC_API_KEY) {
+      console.warn("No default API keys configured - users must provide their own keys");
     }
 
     const url = new URL(request.url);
@@ -213,6 +203,27 @@ async function handleToolRequest(
           return new Response("Tool not found", { status: 404 });
         }
 
+        // Get Perigon API key from headers (user-provided only - no fallback)
+        const userPerigonKey = request.headers.get("X-Perigon-API-Key");
+
+        // Require user-provided API key - no fallback allowed
+        if (!userPerigonKey) {
+          return handleError(
+            "User Perigon API key required. Please configure your own API key in the application settings to use this service.",
+            401,
+            "User Perigon API key required"
+          );
+        }
+
+        // Basic validation - just check if key is not empty
+        if (userPerigonKey.trim().length === 0) {
+          return handleError(
+            "Invalid Perigon API key. Please provide a valid API key.",
+            400,
+            "Invalid Perigon API key"
+          );
+        }
+
         // Validate and transform args using the tool's Zod schema
         let validatedArgs;
         try {
@@ -227,7 +238,7 @@ async function handleToolRequest(
         }
 
         const result = await toolDef.createHandler(
-          new Perigon(env.PERIGON_API_KEY),
+          new Perigon(userPerigonKey),
         )(validatedArgs);
         return new Response(
           JSON.stringify({ result: convertMCPResult(result) }),
@@ -272,6 +283,45 @@ async function handleChatRequest(
       messages: CoreMessage[];
     };
 
+    // Get API keys from headers (user-provided only - no fallback to env)
+    const userAnthropicKey = request.headers.get("X-Anthropic-API-Key");
+    const userPerigonKey = request.headers.get("X-Perigon-API-Key");
+    
+    // Only use user-provided keys - no fallback to environment variables
+    const anthropicApiKey = userAnthropicKey;
+    const perigonApiKey = userPerigonKey;
+
+    // Require user-provided API keys - no fallback allowed
+    if (!userAnthropicKey || !userPerigonKey) {
+      const missingKeys = [];
+      if (!userAnthropicKey) missingKeys.push("Anthropic API key");
+      if (!userPerigonKey) missingKeys.push("Perigon API key");
+      
+      return handleError(
+        `User API keys required: ${missingKeys.join(", ")}. Please configure your own API keys in the application settings to use this service.`,
+        401,
+        "User API keys required"
+      );
+    }
+
+    // Validate API key formats
+    if (!userAnthropicKey.startsWith("sk-ant-")) {
+      return handleError(
+        "Invalid Anthropic API key format. Keys should start with 'sk-ant-'",
+        400,
+        "Invalid Anthropic API key format"
+      );
+    }
+
+    // Basic validation - just check if key is not empty
+    if (userPerigonKey.trim().length === 0) {
+      return handleError(
+        "Invalid Perigon API key. Please provide a valid API key.",
+        400,
+        "Invalid Perigon API key"
+      );
+    }
+
     // Add system prompt if not present
     if (!messages.some((msg) => msg.role === "system")) {
       const now = new Date();
@@ -304,10 +354,10 @@ async function handleChatRequest(
     }
 
     const anthropic = createAnthropic({
-      apiKey: env.ANTHROPIC_API_KEY,
+      apiKey: userAnthropicKey,
     });
 
-    const tools = createAISDKTools(env.PERIGON_API_KEY);
+    const tools = createAISDKTools(userPerigonKey);
 
     const result = streamText({
       model: anthropic("claude-4-sonnet-20250514"),
