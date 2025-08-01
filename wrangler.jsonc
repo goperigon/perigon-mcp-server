@@ -42,7 +42,7 @@
     "run_worker_first": ["/v1/*"],
   },
   "observability": {
-    "enabled": false,
+    "enabled": true,
   },
   "vars": {
     "VITE_TURNSTILE_SITE_KEY": "0x4AAAAAABihR9-NN72ssFjf",
