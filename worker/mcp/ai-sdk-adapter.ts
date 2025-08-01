@@ -18,11 +18,12 @@ export function createAISDKTools(apiKey: string) {
   const tools: Record<string, any> = {};
 
   for (const [toolName, definition] of Object.entries(TOOL_DEFINITIONS)) {
+    console.log("toolName", toolName);
     tools[toolName] = tool({
       description: definition.description,
       parameters: definition.parameters,
       execute: async (
-        params: z.infer<typeof definition.parameters>,
+        params: z.infer<typeof definition.parameters>
       ): Promise<string> => {
         const mcpTool = definition.createHandler(perigon);
         const result: CallToolResult = await mcpTool(params);

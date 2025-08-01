@@ -86,22 +86,16 @@ export default {
   async fetch(
     request: Request,
     env: Env,
-    ctx: ExecutionContext,
+    ctx: ExecutionContext
   ): Promise<Response> {
-    if (!env.PERIGON_API_KEY || !env.ANTHROPIC_API_KEY) {
-      const missingPerigon = !env.PERIGON_API_KEY;
-      const missingKey = missingPerigon
-        ? "PERIGON_API_KEY"
-        : "ANTHROPIC_API_KEY";
-      const error = missingPerigon
-        ? "PERIGON_API_KEY not configured"
-        : "ANTHROPIC_API_KEY not configured";
+    console.log("request", request);
 
-      console.error(`${missingKey} is not set`);
-      return new Response(JSON.stringify({ error }), {
-        status: 500,
-        headers: { "content-type": "application/json" },
-      });
+    // API keys are now optional - can be provided by users via headers
+    // Only log warnings if both env vars are missing
+    if (!env.PERIGON_API_KEY && !env.ANTHROPIC_API_KEY) {
+      console.warn(
+        "No default API keys configured - users must provide their own keys"
+      );
     }
 
     const url = new URL(request.url);
@@ -117,6 +111,8 @@ export default {
     if (url.pathname === "/v1/api/tools") {
       return handleToolRequest(request, env);
     }
+
+    console.log("url.pathname", url.pathname);
 
     if (
       url.pathname === "/v1/sse" ||
@@ -135,7 +131,7 @@ export default {
  */
 async function handleAuthRequest(
   request: Request,
-  env: Env,
+  env: Env
 ): Promise<Response> {
   if (request.method !== "POST") {
     return handleError("Method not allowed", 405);
@@ -162,7 +158,7 @@ async function handleAuthRequest(
     return handleError(
       "Bad Request",
       400,
-      "Missing or invalid turnstile token",
+      "Missing or invalid turnstile token"
     );
   }
   const secret = crypto.randomUUID(); // mint a secret key for FE to use
@@ -180,7 +176,7 @@ async function handleAuthRequest(
  */
 async function handleToolRequest(
   request: Request,
-  env: Env,
+  env: Env
 ): Promise<Response> {
   switch (request.method) {
     case "GET":
@@ -213,6 +209,27 @@ async function handleToolRequest(
           return new Response("Tool not found", { status: 404 });
         }
 
+        // Get Perigon API key from headers (user-provided only - no fallback)
+        const userPerigonKey = request.headers.get("X-Perigon-API-Key");
+
+        // Require user-provided API key - no fallback allowed
+        if (!userPerigonKey) {
+          return handleError(
+            "User Perigon API key required. Please configure your own API key in the application settings to use this service.",
+            401,
+            "User Perigon API key required"
+          );
+        }
+
+        // Basic validation - just check if key is not empty
+        if (userPerigonKey.trim().length === 0) {
+          return handleError(
+            "Invalid Perigon API key. Please provide a valid API key.",
+            400,
+            "Invalid Perigon API key"
+          );
+        }
+
         // Validate and transform args using the tool's Zod schema
         let validatedArgs;
         try {
@@ -222,33 +239,33 @@ async function handleToolRequest(
           return handleError(
             "Invalid Arguments",
             400,
-            error instanceof Error ? error.message : String(error),
+            error instanceof Error ? error.message : String(error)
           );
         }
 
-        const result = await toolDef.createHandler(
-          new Perigon(env.PERIGON_API_KEY),
-        )(validatedArgs);
+        const result = await toolDef.createHandler(new Perigon(userPerigonKey))(
+          validatedArgs
+        );
         return new Response(
           JSON.stringify({ result: convertMCPResult(result) }),
           {
             status: 200,
             headers: { "content-type": "application/json" },
-          },
+          }
         );
       } catch (error) {
         if (error instanceof HttpError) {
           return handleError(
             error.responseBody,
             error.statusCode,
-            error.message,
+            error.message
           );
         }
         console.error("Error executing tool:", error);
         return handleError(
           "Failed to execute tool",
           500,
-          error instanceof Error ? error.message : String(error),
+          error instanceof Error ? error.message : String(error)
         );
       }
     default:
@@ -261,7 +278,7 @@ async function handleToolRequest(
  */
 async function handleChatRequest(
   request: Request,
-  env: Env,
+  env: Env
 ): Promise<Response> {
   if (request.method !== "POST") {
     return new Response("Method not allowed", { status: 405 });
@@ -271,6 +288,47 @@ async function handleChatRequest(
     const { messages = [] } = (await request.json()) as {
       messages: CoreMessage[];
     };
+
+    // Get API keys from headers (user-provided only - no fallback to env)
+    const userAnthropicKey = request.headers.get("X-Anthropic-API-Key");
+    const userPerigonKey = request.headers.get("X-Perigon-API-Key");
+
+    // Only use user-provided keys - no fallback to environment variables
+    const anthropicApiKey = userAnthropicKey;
+    const perigonApiKey = userPerigonKey;
+
+    // Require user-provided API keys - no fallback allowed
+    if (!userAnthropicKey || !userPerigonKey) {
+      const missingKeys = [];
+      if (!userAnthropicKey) missingKeys.push("Anthropic API key");
+      if (!userPerigonKey) missingKeys.push("Perigon API key");
+
+      return handleError(
+        `User API keys required: ${missingKeys.join(
+          ", "
+        )}. Please configure your own API keys in the application settings to use this service.`,
+        401,
+        "User API keys required"
+      );
+    }
+
+    // Validate API key formats
+    if (!userAnthropicKey.startsWith("sk-ant-")) {
+      return handleError(
+        "Invalid Anthropic API key format. Keys should start with 'sk-ant-'",
+        400,
+        "Invalid Anthropic API key format"
+      );
+    }
+
+    // Basic validation - just check if key is not empty
+    if (userPerigonKey.trim().length === 0) {
+      return handleError(
+        "Invalid Perigon API key. Please provide a valid API key.",
+        400,
+        "Invalid Perigon API key"
+      );
+    }
 
     // Add system prompt if not present
     if (!messages.some((msg) => msg.role === "system")) {
@@ -304,10 +362,10 @@ async function handleChatRequest(
     }
 
     const anthropic = createAnthropic({
-      apiKey: env.ANTHROPIC_API_KEY,
+      apiKey: userAnthropicKey,
     });
 
-    const tools = createAISDKTools(env.PERIGON_API_KEY);
+    const tools = createAISDKTools(userPerigonKey);
 
     const result = streamText({
       model: anthropic("claude-4-sonnet-20250514"),
@@ -333,7 +391,7 @@ async function handleChatRequest(
             const tool = tools[toolCall.toolName as keyof typeof tools];
             if (!tool) {
               console.error(
-                `Tool ${toolCall.toolName} not found in tools object`,
+                `Tool ${toolCall.toolName} not found in tools object`
               );
               return null;
             }
@@ -356,13 +414,13 @@ async function handleChatRequest(
 
             console.log(
               `Successfully repaired arguments for ${toolCall.toolName}:`,
-              repairedArgs,
+              repairedArgs
             );
             return { ...toolCall, args: JSON.stringify(repairedArgs) };
           } catch (repairError) {
             console.error(
               `Failed to repair tool call ${toolCall.toolName}:`,
-              repairError,
+              repairError
             );
             return null;
           }
@@ -378,7 +436,7 @@ async function handleChatRequest(
         if (ToolExecutionError.isInstance(error)) {
           try {
             console.log(
-              `Attempting to retry tool call ${toolCall.toolName} with context`,
+              `Attempting to retry tool call ${toolCall.toolName} with context`
             );
 
             const retryResult = await generateText({
@@ -387,37 +445,37 @@ async function handleChatRequest(
                 system ||
                 SYSTEM_PROMPT.replaceAll(
                   "{{date}}",
-                  new Date().toISOString().split("T")[0],
+                  new Date().toISOString().split("T")[0]
                 )
                   .replaceAll(
                     "{{yesterday}}",
                     new Date(Date.now() - 24 * 60 * 60 * 1000)
                       .toISOString()
-                      .split("T")[0],
+                      .split("T")[0]
                   )
                   .replaceAll(
                     "{{threeDaysAgo}}",
                     new Date(Date.now() - 3 * 24 * 60 * 60 * 1000)
                       .toISOString()
-                      .split("T")[0],
+                      .split("T")[0]
                   )
                   .replaceAll(
                     "{{oneWeekAgo}}",
                     new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
                       .toISOString()
-                      .split("T")[0],
+                      .split("T")[0]
                   )
                   .replaceAll(
                     "{{twoWeeksAgo}}",
                     new Date(Date.now() - 14 * 24 * 60 * 60 * 1000)
                       .toISOString()
-                      .split("T")[0],
+                      .split("T")[0]
                   )
                   .replaceAll(
                     "{{oneMonthAgo}}",
                     new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
                       .toISOString()
-                      .split("T")[0],
+                      .split("T")[0]
                   ),
               messages: [
                 ...messages,
@@ -440,7 +498,7 @@ async function handleChatRequest(
                       toolCallId: toolCall.toolCallId,
                       toolName: toolCall.toolName,
                       result: `Error: ${String(
-                        error,
+                        error
                       )}. Please try again with corrected parameters or a different approach.`,
                     },
                   ],
@@ -450,12 +508,12 @@ async function handleChatRequest(
             });
 
             const newToolCall = retryResult.toolCalls.find(
-              (newCall) => newCall.toolName === toolCall.toolName,
+              (newCall) => newCall.toolName === toolCall.toolName
             );
 
             if (newToolCall) {
               console.log(
-                `Successfully generated new tool call for ${toolCall.toolName}`,
+                `Successfully generated new tool call for ${toolCall.toolName}`
               );
               return {
                 toolCallType: "function" as const,
@@ -465,21 +523,21 @@ async function handleChatRequest(
               };
             } else {
               console.log(
-                `No new tool call generated for ${toolCall.toolName}`,
+                `No new tool call generated for ${toolCall.toolName}`
               );
               return null;
             }
           } catch (retryError) {
             console.error(
               `Failed to retry tool call ${toolCall.toolName}:`,
-              retryError,
+              retryError
             );
             return null;
           }
         }
 
         console.log(
-          `Unknown error type for tool call ${toolCall.toolName}, cannot repair`,
+          `Unknown error type for tool call ${toolCall.toolName}, cannot repair`
         );
         return null;
       },
@@ -499,19 +557,16 @@ async function handleChatRequest(
               `Model tried to call unknown tool: ${error.toolName} - ${error.message}`,
             ] as const)
           : InvalidToolArgumentsError.isInstance(error)
-            ? ([
-                "Model called a tool with invalid arguments",
-                `Model called tool: ${error.toolName} with invalid args: ${error.toolArgs} - ${error.message}`,
-              ] as const)
-            : ToolExecutionError.isInstance(error)
-              ? ([
-                  "An error occurred during tool execution",
-                  `Tool execution failed: ${error.toolName} with args: ${error.toolArgs} - ${error.message}`,
-                ] as const)
-              : ([
-                  "An unknown error occurred",
-                  `Unknown error: ${error}`,
-                ] as const);
+          ? ([
+              "Model called a tool with invalid arguments",
+              `Model called tool: ${error.toolName} with invalid args: ${error.toolArgs} - ${error.message}`,
+            ] as const)
+          : ToolExecutionError.isInstance(error)
+          ? ([
+              "An error occurred during tool execution",
+              `Tool execution failed: ${error.toolName} with args: ${error.toolArgs} - ${error.message}`,
+            ] as const)
+          : (["An unknown error occurred", `Unknown error: ${error}`] as const);
 
         console.error("Error while processing chat response:", errs[1]);
         return errs[0];
@@ -525,7 +580,7 @@ async function handleChatRequest(
     return handleError(
       "Failed to process request",
       500,
-      error instanceof Error ? error.message : String(error),
+      error instanceof Error ? error.message : String(error)
     );
   }
 }
@@ -536,7 +591,7 @@ async function handleChatRequest(
 async function handleMCPRequest(
   request: Request,
   env: Env,
-  ctx: ExecutionContext,
+  ctx: ExecutionContext
 ) {
   try {
     const url = new URL(request.url);
@@ -552,13 +607,15 @@ async function handleMCPRequest(
       return handleError(
         "Rate limit exceeded",
         429,
-        "You have exceeded allowed number of mcp related requests for this period",
+        "You have exceeded allowed number of mcp related requests for this period"
       );
     }
 
     const perigon = new Perigon(apiKey);
 
     const apiKeyDetails = await perigon.introspection();
+
+    console.log("apiKeyDetails", apiKeyDetails);
 
     const props: Props = {
       apiKey,
@@ -581,14 +638,14 @@ async function handleMCPRequest(
       return handleError(
         "Failed to process MCP request",
         500,
-        "Error: " + (error instanceof Error ? error.message : String(error)),
+        "Error: " + (error instanceof Error ? error.message : String(error))
       );
     }
 
     return handleError(
       "Failed to process MCP request",
       error.statusCode,
-      error.responseBody,
+      error.responseBody
     );
   }
 }

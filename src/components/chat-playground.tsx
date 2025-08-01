@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { MessageText } from "./message-text";
 import { useAuth } from "@/lib/auth-context";
+import { useApiKeys } from "@/lib/api-keys-context";
 
 const STORAGE_KEY = "chat-messages";
 
@@ -77,6 +78,7 @@ const saveMessagesToStorage = (messages: any[]) => {
 
 export default function ChatPlayground() {
   const { secret, invalidate, isAuthenticated } = useAuth();
+  const { apiKeys, hasValidKeys } = useApiKeys();
   const [initialMessages] = React.useState(() => loadMessagesFromStorage());
   const [showError, setShowError] = React.useState(false);
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
@@ -91,14 +93,28 @@ export default function ChatPlayground() {
     setMessages,
     reload,
   } = useChat({
-    key: secret || "no-auth", // Force reinit when secret changes
+    key: `${secret || "no-auth"}-${apiKeys.anthropic}-${apiKeys.perigon}`, // Force reinit when keys change
     api: "/v1/api/chat",
     initialMessages,
     headers: {
       Authorization: `Bearer ${secret}`,
+      "X-Anthropic-API-Key": apiKeys.anthropic,
+      "X-Perigon-API-Key": apiKeys.perigon,
     },
     onResponse: async (response) => {
       if (response.status === 401) {
+        // Check if it's an API key error vs auth error
+        const responseClone = response.clone();
+        try {
+          const text = await responseClone.text();
+          if (text.includes("API key")) {
+            setErrorMessage("API keys required. Please configure your Perigon and Anthropic API keys.");
+            setShowError(true);
+            return;
+          }
+        } catch (e) {
+          // Ignore parsing errors
+        }
         await invalidate();
       }
     },
@@ -235,6 +251,17 @@ export default function ChatPlayground() {
 
   return (
     <div className="fixed inset-0 top-12 flex flex-col bg-background">
+      {/* API Keys Warning */}
+      {!hasValidKeys() && (
+        <Card className="mx-6 mt-4 border-yellow-500/20 bg-yellow-500/10 animate-in slide-in-from-top-2">
+          <CardContent className="py-3 px-4">
+            <div className="font-mono text-sm text-yellow-700 dark:text-yellow-300">
+              <strong>API Keys Required:</strong> Please configure your Perigon and Anthropic API keys in the header to use the chat functionality.
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Error display - Toast style */}
       {showError && errorMessage && (
         <Card className="mx-6 mt-4 border-destructive/20 bg-destructive/10 animate-in slide-in-from-top-2">
@@ -402,7 +429,7 @@ export default function ChatPlayground() {
             />
             <Button
               type="submit"
-              disabled={status !== "ready" || !input.trim()}
+              disabled={status !== "ready" || !input.trim() || !hasValidKeys()}
               className="font-mono mt-3"
               variant="outline"
             >

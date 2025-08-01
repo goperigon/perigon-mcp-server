@@ -7,12 +7,11 @@ import {
 import Layout from "@/components/layout";
 import InspectorPage from "@/pages/inspector-page";
 import ChatPage from "@/pages/chat-page";
-import { AuthProvider, useAuth } from "@/lib/auth-context";
+import { AuthProvider } from "@/lib/auth-context";
+import { ApiKeysProvider } from "@/lib/api-keys-context";
 // import TurnstileAuth from "@/components/turnstile-auth";
 
 function AppContent() {
-  const { isAuthenticated } = useAuth();
-
   return (
     <>
       <Routes>
@@ -29,11 +28,13 @@ function AppContent() {
 export default function App() {
   return (
     <AuthProvider>
-      <Router>
-        <Layout>
-          <AppContent />
-        </Layout>
-      </Router>
+      <ApiKeysProvider>
+        <Router>
+          <Layout>
+            <AppContent />
+          </Layout>
+        </Router>
+      </ApiKeysProvider>
     </AuthProvider>
   );
 }
