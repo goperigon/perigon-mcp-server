@@ -14,7 +14,6 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Play } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
-import { useApiKeys } from "@/lib/api-keys-context";
 
 // TODO: proper json schema
 interface ToolParameter {
@@ -40,7 +39,6 @@ interface MCPTool {
 
 export default function InspectorPage() {
   const { secret, invalidate } = useAuth();
-  const { apiKeys, isPerigonKeyValid } = useApiKeys();
   const [selectedTool, setSelectedTool] = useState<string | null>(null);
   const [toolParams, setToolParams] = useState<Record<string, any>>({});
   const [rawInputValues, setRawInputValues] = useState<Record<string, string>>(
@@ -99,7 +97,6 @@ export default function InspectorPage() {
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${secret}`,
-            "X-Perigon-API-Key": apiKeys.perigon,
           },
           body: JSON.stringify({
             tool: selectedTool,
@@ -230,17 +227,6 @@ export default function InspectorPage() {
 
   return (
     <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-4 h-full bg-background">
-      {/* API Key Warning */}
-      {!isPerigonKeyValid && (
-        <Card className="mb-4 border-yellow-500/20 bg-yellow-500/10">
-          <CardContent className="py-3 px-4">
-            <div className="font-mono text-sm text-yellow-700 dark:text-yellow-300">
-              <strong>Perigon API Key Required:</strong> Please configure your Perigon API key in the header to use the inspector tools.
-            </div>
-          </CardContent>
-        </Card>
-      )}
-      
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-2 lg:gap-4 h-full">
         {/* Tools List - Mobile Dropdown */}
         <div className="lg:hidden flex flex-col h-full min-h-0">
@@ -505,7 +491,7 @@ export default function InspectorPage() {
                   </div>
                   <Button
                     onClick={handleExecuteTool}
-                    disabled={isExecuting || !isPerigonKeyValid}
+                    disabled={isExecuting}
                     className="hidden sm:flex font-mono text-xs h-8 sm:h-4 px-3 sm:px-2"
                     size="sm"
                     variant="ghost"
