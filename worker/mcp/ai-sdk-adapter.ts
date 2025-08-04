@@ -18,7 +18,6 @@ export function createAISDKTools(apiKey: string) {
   const tools: Record<string, any> = {};
 
   for (const [toolName, definition] of Object.entries(TOOL_DEFINITIONS)) {
-    console.log("toolName", toolName);
     tools[toolName] = tool({
       description: definition.description,
       parameters: definition.parameters,
