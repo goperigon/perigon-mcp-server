@@ -6,12 +6,21 @@ import {
   ReactNode,
   useRef,
 } from "react";
+import { PerigonAuthService } from "./perigon-auth-service";
+
+interface User {
+  id: string;
+  email: string;
+}
 
 interface AuthContextType {
   isAuthenticated: boolean;
+  isPerigonAuthenticated: boolean;
+  user: User | null;
   secret: string | null;
   login: (secret: string) => void;
   invalidate: () => Promise<void>;
+  checkPerigonAuth: (request: Request) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -23,15 +32,43 @@ interface AuthProviderProps {
 export function AuthProvider({ children }: AuthProviderProps) {
   const [secret, setSecret] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isPerigonAuthenticated, setIsPerigonAuthenticated] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
   const reauthResolveRef = useRef<(() => void) | null>(null);
+  const perigonAuthService = new PerigonAuthService();
 
   useEffect(() => {
+    const request = new Request("https://api.perigon.io/v1/user", {
+      credentials: "include",
+    });
+
     const storedSecret = localStorage.getItem("auth-secret");
     if (storedSecret) {
       setSecret(storedSecret);
       setIsAuthenticated(true);
     }
+
+    checkPerigonAuth(request);
   }, []);
+
+  const checkPerigonAuth = async (request: Request) => {
+    try {
+      const validatedUser = await perigonAuthService.validatePerigonUser(
+        request
+      );
+      if (validatedUser) {
+        setIsPerigonAuthenticated(true);
+        setUser(validatedUser);
+      } else {
+        setIsPerigonAuthenticated(false);
+        setUser(null);
+      }
+    } catch (error) {
+      console.error("Error checking Perigon authentication:", error);
+      setIsPerigonAuthenticated(false);
+      setUser(null);
+    }
+  };
 
   const login = (newSecret: string) => {
     setSecret(newSecret);
@@ -58,7 +95,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   return (
     <AuthContext.Provider
-      value={{ isAuthenticated, secret, login, invalidate }}
+      value={{
+        isAuthenticated,
+        isPerigonAuthenticated,
+        user,
+        secret,
+        login,
+        invalidate,
+        checkPerigonAuth,
+      }}
     >
       {children}
     </AuthContext.Provider>

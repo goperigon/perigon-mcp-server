@@ -7,7 +7,9 @@ import { ThemeToggle } from "./theme-toggle";
 import ApiKeysStatus from "./api-keys-status";
 import ApiKeysModal from "./api-keys-modal";
 import WelcomeModal from "./welcome-modal";
+import ApiKeySelector from "./api-key-selector";
 import { useApiKeys } from "@/lib/api-keys-context";
+import { useAuth } from "@/lib/auth-context";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -21,6 +23,7 @@ export default function Layout({ children }: LayoutProps) {
   const [isApiKeysModalOpen, setIsApiKeysModalOpen] = useState(false);
   const [isWelcomeModalOpen, setIsWelcomeModalOpen] = useState(false);
   const { hasValidKeys } = useApiKeys();
+  const { isPerigonAuthenticated } = useAuth();
 
   // Show welcome modal on first visit if no API keys are configured
   React.useEffect(() => {
@@ -49,6 +52,7 @@ export default function Layout({ children }: LayoutProps) {
             </div>
             <div className="flex items-center space-x-3">
               <ApiKeysStatus onOpenSettings={() => setIsApiKeysModalOpen(true)} />
+              <ApiKeySelector onOpenSettings={() => setIsApiKeysModalOpen(true)} />
               <nav className="flex space-x-1">
                 <Button
                   variant="ghost"

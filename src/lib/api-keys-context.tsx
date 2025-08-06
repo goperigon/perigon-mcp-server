@@ -1,8 +1,18 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { PerigonAuthService } from "./perigon-auth-service";
+import { useAuth } from "./auth-context";
 
 interface ApiKeys {
   perigon: string;
   anthropic: string;
+}
+
+interface PerigonApiKey {
+  id: string;
+  key: string;
+  name: string;
+  enabled: boolean;
+  createdAt: string;
 }
 
 interface ApiKeysContextType {
@@ -12,6 +22,11 @@ interface ApiKeysContextType {
   hasValidKeys: () => boolean;
   isPerigonKeyValid: boolean;
   isAnthropicKeyValid: boolean;
+  fetchPerigonApiKeys: () => Promise<void>;
+  isUsingPerigonAuth: boolean;
+  availablePerigonKeys: PerigonApiKey[];
+  selectedPerigonKeyId: string | null;
+  setSelectedPerigonKeyId: (keyId: string | null) => void;
 }
 
 const ApiKeysContext = createContext<ApiKeysContextType | undefined>(undefined);
@@ -34,6 +49,12 @@ export function ApiKeysProvider({ children }: { children: React.ReactNode }) {
 
   const [isPerigonKeyValid, setIsPerigonKeyValid] = useState(false);
   const [isAnthropicKeyValid, setIsAnthropicKeyValid] = useState(false);
+  const [isUsingPerigonAuth, setIsUsingPerigonAuth] = useState(false);
+  const [availablePerigonKeys, setAvailablePerigonKeys] = useState<PerigonApiKey[]>([]);
+  const [selectedPerigonKeyId, setSelectedPerigonKeyId] = useState<string | null>(null);
+  
+  const { isPerigonAuthenticated } = useAuth();
+  const perigonAuthService = new PerigonAuthService();
 
   // Load keys from localStorage on mount
   useEffect(() => {
@@ -53,6 +74,27 @@ export function ApiKeysProvider({ children }: { children: React.ReactNode }) {
     setIsPerigonKeyValid(validatePerigonKey(apiKeys.perigon));
     setIsAnthropicKeyValid(validateAnthropicKey(apiKeys.anthropic));
   }, [apiKeys]);
+
+  // Fetch Perigon API keys when user is authenticated
+  useEffect(() => {
+    if (isPerigonAuthenticated) {
+      fetchPerigonApiKeys();
+    } else {
+      setIsUsingPerigonAuth(false);
+      setAvailablePerigonKeys([]);
+      setSelectedPerigonKeyId(null);
+    }
+  }, [isPerigonAuthenticated]);
+
+  // Update API key when selected key changes
+  useEffect(() => {
+    if (selectedPerigonKeyId && availablePerigonKeys.length > 0) {
+      const selectedKey = availablePerigonKeys.find(k => k.id === selectedPerigonKeyId);
+      if (selectedKey) {
+        setApiKeysState(prev => ({ ...prev, perigon: selectedKey.key }));
+      }
+    }
+  }, [selectedPerigonKeyId, availablePerigonKeys]);
 
   const setApiKeys = (newKeys: Partial<ApiKeys>) => {
     const updatedKeys = { ...apiKeys, ...newKeys };
@@ -74,7 +116,38 @@ export function ApiKeysProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const fetchPerigonApiKeys = async () => {
+    if (!isPerigonAuthenticated) {
+      return;
+    }
+
+    try {
+      const keys = await perigonAuthService.fetchApiKeys();
+      setAvailablePerigonKeys(keys);
+      
+      if (keys.length > 0) {
+        // Use selected key or default to first key
+        const keyToUse = selectedPerigonKeyId 
+          ? keys.find(k => k.id === selectedPerigonKeyId) || keys[0]
+          : keys[0];
+        
+        setApiKeysState(prev => ({ ...prev, perigon: keyToUse.key }));
+        setIsUsingPerigonAuth(true);
+        
+        // Set selected key if not already set
+        if (!selectedPerigonKeyId) {
+          setSelectedPerigonKeyId(keyToUse.id);
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching Perigon API keys:", error);
+    }
+  };
+
   const hasValidKeys = () => {
+    if (isUsingPerigonAuth && isPerigonAuthenticated) {
+      return isPerigonKeyValid;
+    }
     return isPerigonKeyValid && isAnthropicKeyValid;
   };
 
@@ -87,6 +160,11 @@ export function ApiKeysProvider({ children }: { children: React.ReactNode }) {
         hasValidKeys,
         isPerigonKeyValid,
         isAnthropicKeyValid,
+        fetchPerigonApiKeys,
+        isUsingPerigonAuth,
+        availablePerigonKeys,
+        selectedPerigonKeyId,
+        setSelectedPerigonKeyId,
       }}
     >
       {children}

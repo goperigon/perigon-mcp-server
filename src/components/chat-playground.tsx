@@ -24,6 +24,7 @@ import { MessageText } from "./message-text";
 import { useAuth } from "@/lib/auth-context";
 import { useApiKeys } from "@/lib/api-keys-context";
 
+
 const STORAGE_KEY = "chat-messages";
 
 const getDefaultMessage = () => ({
@@ -77,7 +78,7 @@ const saveMessagesToStorage = (messages: any[]) => {
 };
 
 export default function ChatPlayground() {
-  const { secret, invalidate, isAuthenticated } = useAuth();
+  const { secret, invalidate, isAuthenticated, isPerigonAuthenticated } = useAuth();
   const { apiKeys, hasValidKeys } = useApiKeys();
   const [initialMessages] = React.useState(() => loadMessagesFromStorage());
   const [showError, setShowError] = React.useState(false);

@@ -104,6 +104,14 @@ export default {
       return handleAuthRequest(request, env);
     }
 
+    if (url.pathname === "/v1/validate-user") {
+      return handleValidateUserRequest(request, env);
+    }
+
+    if (url.pathname === "/v1/perigon-api-keys") {
+      return handlePerigonApiKeysRequest(request, env);
+    }
+
     if (url.pathname === "/v1/api/chat") {
       return handleChatRequest(request, env);
     }
@@ -125,6 +133,96 @@ export default {
     return new Response("Not found", { status: 404 });
   },
 } satisfies ExportedHandler<Env>;
+
+/**
+ * AUTH HELPER
+ */
+async function validatePerigonAuth(request: Request): Promise<boolean> {
+  try {
+    const response = await fetch("https://api.perigon.io/v1/user", {
+      headers: {
+        Cookie: request.headers.get("Cookie") || "",
+      },
+    });
+    return response.ok;
+  } catch (error) {
+    console.error("Error validating Perigon auth:", error);
+    return false;
+  }
+}
+
+/**
+ * VALIDATE USER PROXY
+ */
+async function handleValidateUserRequest(
+  request: Request,
+  env: Env
+): Promise<Response> {
+  if (request.method !== "GET") {
+    return handleError("Method not allowed", 405);
+  }
+
+  try {
+    const response = await fetch("https://api.perigon.io/v1/user", {
+      headers: {
+        Cookie: request.headers.get("Cookie") || "",
+        'User-Agent': request.headers.get('User-Agent') || '',
+        'Accept': 'application/json'
+      },
+    });
+
+    if (response.ok) {
+      const userData = await response.json();
+      // Return clean response without Set-Cookie headers to prevent cookie clearing
+      return Response.json(userData);
+    } else {
+      return new Response(null, { status: response.status });
+    }
+  } catch (error) {
+    console.error("Error validating user:", error);
+    return handleError("User validation failed", 500);
+  }
+}
+
+/**
+ * PERIGON API KEYS
+ */
+async function handlePerigonApiKeysRequest(
+  request: Request,
+  env: Env
+): Promise<Response> {
+  if (request.method !== "GET") {
+    return handleError("Method not allowed", 405);
+  }
+
+  // Validate authentication first
+  if (!(await validatePerigonAuth(request))) {
+    return handleError("Authentication required", 401);
+  }
+
+  try {
+    const response = await fetch(
+      "https://api.perigon.io/v1/apiKeys?size=100&sortBy=createdAt&sortOrder=desc&enabled=true",
+      {
+        headers: {
+          Cookie: request.headers.get("Cookie") || "",
+        },
+      }
+    );
+
+    if (!response.ok) {
+      return handleError("Failed to fetch API keys", response.status);
+    }
+
+    const apiKeys = await response.json();
+    return Response.json(apiKeys);
+  } catch (error) {
+    console.error("Error fetching API keys:", error);
+    return handleError("Failed to fetch API keys", 500);
+  }
+}
+
+
 
 /**
  * AUTH
@@ -284,36 +382,66 @@ async function handleChatRequest(
     return new Response("Method not allowed", { status: 405 });
   }
   try {
-    // const key = await authenticate(request, env);
+    // Validate Perigon authentication first
+    const isPerigonAuthenticated = await validatePerigonAuth(request);
+    
     const { messages = [] } = (await request.json()) as {
       messages: CoreMessage[];
     };
 
-    // Get API keys from headers (user-provided only - no fallback to env)
+    // Get API keys from headers
     const userAnthropicKey = request.headers.get("X-Anthropic-API-Key");
     const userPerigonKey = request.headers.get("X-Perigon-API-Key");
 
-    // Only use user-provided keys - no fallback to environment variables
-    const anthropicApiKey = userAnthropicKey;
-    const perigonApiKey = userPerigonKey;
+    let anthropicApiKey = userAnthropicKey;
+    let perigonApiKey = userPerigonKey;
 
-    // Require user-provided API keys - no fallback allowed
-    if (!userAnthropicKey || !userPerigonKey) {
+    // If user is authenticated with Perigon, use internal keys
+    if (isPerigonAuthenticated) {
+      // Use internal Anthropic key for authenticated Perigon users
+      anthropicApiKey = env.ANTHROPIC_API_KEY;
+      
+      // If no user Perigon key provided, fetch from Perigon API
+      if (!userPerigonKey) {
+        try {
+          const keysResponse = await fetch(
+            "https://api.perigon.io/v1/apiKeys?size=100&sortBy=createdAt&sortOrder=desc&enabled=true",
+            {
+              headers: {
+                Cookie: request.headers.get("Cookie") || "",
+              },
+            }
+          );
+
+          if (keysResponse.ok) {
+            const apiKeys = await keysResponse.json() as Array<{ key: string }>;
+            if (apiKeys.length > 0) {
+              perigonApiKey = apiKeys[0].key;
+            }
+          }
+        } catch (error) {
+          console.error("Error fetching Perigon API keys:", error);
+        }
+      }
+    }
+
+    // Require API keys
+    if (!anthropicApiKey || !perigonApiKey) {
       const missingKeys = [];
-      if (!userAnthropicKey) missingKeys.push("Anthropic API key");
-      if (!userPerigonKey) missingKeys.push("Perigon API key");
+      if (!anthropicApiKey) missingKeys.push("Anthropic API key");
+      if (!perigonApiKey) missingKeys.push("Perigon API key");
 
       return handleError(
-        `User API keys required: ${missingKeys.join(
+        `API keys required: ${missingKeys.join(
           ", "
-        )}. Please configure your own API keys in the application settings to use this service.`,
+        )}. Please configure your API keys or sign in with Perigon.`,
         401,
-        "User API keys required"
+        "API keys required"
       );
     }
 
     // Validate API key formats
-    if (!userAnthropicKey.startsWith("sk-ant-")) {
+    if (anthropicApiKey && !anthropicApiKey.startsWith("sk-ant-")) {
       return handleError(
         "Invalid Anthropic API key format. Keys should start with 'sk-ant-'",
         400,
@@ -322,7 +450,7 @@ async function handleChatRequest(
     }
 
     // Basic validation - just check if key is not empty
-    if (userPerigonKey.trim().length === 0) {
+    if (perigonApiKey && perigonApiKey.trim().length === 0) {
       return handleError(
         "Invalid Perigon API key. Please provide a valid API key.",
         400,
@@ -362,10 +490,10 @@ async function handleChatRequest(
     }
 
     const anthropic = createAnthropic({
-      apiKey: userAnthropicKey,
+      apiKey: anthropicApiKey,
     });
 
-    const tools = createAISDKTools(userPerigonKey);
+    const tools = createAISDKTools(perigonApiKey);
 
     const result = streamText({
       model: anthropic("claude-4-sonnet-20250514"),

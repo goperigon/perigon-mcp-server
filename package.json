@@ -47,6 +47,7 @@
     "@radix-ui/react-collapsible": "^1.1.11",
     "@radix-ui/react-select": "^2.2.5",
     "@radix-ui/react-slot": "^1.2.3",
+    "@vitejs/plugin-basic-ssl": "^2.1.0",
     "@vitejs/plugin-react": "^4.6.0",
     "agents": "^0.0.97",
     "ai": "^4.3.16",

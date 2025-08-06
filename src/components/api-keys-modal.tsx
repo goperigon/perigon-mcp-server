@@ -3,8 +3,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Eye, EyeOff, Key, ExternalLink, X, Check, AlertCircle } from "lucide-react";
+import { Eye, EyeOff, Key, ExternalLink, X, Check, AlertCircle, User } from "lucide-react";
 import { useApiKeys } from "@/lib/api-keys-context";
+import { useAuth } from "@/lib/auth-context";
 
 interface ApiKeysModalProps {
   isOpen: boolean;
@@ -12,7 +13,8 @@ interface ApiKeysModalProps {
 }
 
 export default function ApiKeysModal({ isOpen, onClose }: ApiKeysModalProps) {
-  const { apiKeys, setApiKeys, clearApiKeys, isPerigonKeyValid, isAnthropicKeyValid } = useApiKeys();
+  const { apiKeys, setApiKeys, clearApiKeys, isPerigonKeyValid, isAnthropicKeyValid, isUsingPerigonAuth } = useApiKeys();
+  const { isPerigonAuthenticated, user } = useAuth();
   const [showPerigonKey, setShowPerigonKey] = useState(false);
   const [showAnthropicKey, setShowAnthropicKey] = useState(false);
   const [tempKeys, setTempKeys] = useState({
@@ -69,6 +71,28 @@ export default function ApiKeysModal({ isOpen, onClose }: ApiKeysModalProps) {
           <div className="text-sm text-muted-foreground">
             Configure your API keys to use the Perigon MCP Server. Both keys are required for full functionality.
           </div>
+
+          {/* Perigon Authentication Status */}
+          {isPerigonAuthenticated && user && (
+            <div className="bg-green-50 border border-green-200 p-3 rounded-lg">
+              <div className="flex items-center space-x-2 mb-2">
+                <User className="w-4 h-4 text-green-600" />
+                <span className="text-sm font-medium text-green-800">Signed in with Perigon</span>
+                <Badge variant="outline" className="text-green-600 border-green-600">
+                  <Check className="w-3 h-3 mr-1" />
+                  Authenticated
+                </Badge>
+              </div>
+              <div className="text-xs text-green-700">
+                Signed in as: {user.email}
+              </div>
+              {isUsingPerigonAuth && (
+                <div className="text-xs text-green-700 mt-1">
+                  Using your Perigon API key automatically
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Perigon API Key */}
           <div className="space-y-3">
