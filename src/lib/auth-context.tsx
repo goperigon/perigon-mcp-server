@@ -38,24 +38,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const perigonAuthService = new PerigonAuthService();
 
   useEffect(() => {
-    const request = new Request("https://api.perigon.io/v1/user", {
-      credentials: "include",
-    });
-
     const storedSecret = localStorage.getItem("auth-secret");
     if (storedSecret) {
       setSecret(storedSecret);
       setIsAuthenticated(true);
     }
 
-    checkPerigonAuth(request);
+    checkPerigonAuth();
   }, []);
 
-  const checkPerigonAuth = async (request: Request) => {
+  const checkPerigonAuth = async () => {
     try {
-      const validatedUser = await perigonAuthService.validatePerigonUser(
-        request
-      );
+      const validatedUser = await perigonAuthService.validatePerigonUser();
       if (validatedUser) {
         setIsPerigonAuthenticated(true);
         setUser(validatedUser);

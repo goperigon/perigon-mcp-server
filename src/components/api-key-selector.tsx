@@ -2,33 +2,42 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { 
-  User, 
-  ChevronDown, 
-  Key, 
-  Check, 
-  Calendar,
-  Settings,
-  LogOut
-} from "lucide-react";
+import { User, ChevronDown, Key, Check, Calendar, LogOut } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { useApiKeys } from "@/lib/api-keys-context";
 
-interface ApiKeySelectorProps {
-  onOpenSettings: () => void;
-}
-
-export default function ApiKeySelector({ onOpenSettings }: ApiKeySelectorProps) {
+export default function ApiKeySelector() {
   const [isOpen, setIsOpen] = useState(false);
   const { isPerigonAuthenticated, user } = useAuth();
-  const { 
-    availablePerigonKeys, 
-    selectedPerigonKeyId, 
+  const {
+    availablePerigonKeys,
+    selectedPerigonKeyId,
     setSelectedPerigonKeyId,
-    isUsingPerigonAuth 
+    isUsingPerigonAuth,
+    isLoadingApiKeys,
+    selectedPerigonKey,
   } = useApiKeys();
 
-  if (!isPerigonAuthenticated || !user || !isUsingPerigonAuth) {
+  if (!isPerigonAuthenticated || !user) {
+    return null;
+  }
+
+  // Show loading state while fetching API keys
+  if (isLoadingApiKeys) {
+    return (
+      <div className="flex items-center space-x-2 z-50">
+        <div className="w-6 h-6 bg-muted rounded-full flex items-center justify-center animate-pulse">
+          <User className="w-3 h-3 text-muted-foreground" />
+        </div>
+        <span className="text-xs text-muted-foreground hidden sm:inline">
+          Loading...
+        </span>
+      </div>
+    );
+  }
+
+  // Don't show if not using Perigon auth or no keys available
+  if (!isUsingPerigonAuth || availablePerigonKeys.length === 0) {
     return null;
   }
 
@@ -59,11 +68,11 @@ export default function ApiKeySelector({ onOpenSettings }: ApiKeySelectorProps) 
 
       {isOpen && (
         <>
-          <div 
-            className="fixed inset-0 z-40" 
+          <div
+            className="fixed inset-0 z-[9998]"
             onClick={() => setIsOpen(false)}
           />
-          <Card className="absolute right-0 top-full mt-2 w-80 z-50 shadow-lg">
+          <Card className="absolute right-0 top-full mt-2 w-80 z-[9999] shadow-lg">
             <CardHeader className="pb-3">
               <div className="flex items-center space-x-2">
                 <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
@@ -71,11 +80,13 @@ export default function ApiKeySelector({ onOpenSettings }: ApiKeySelectorProps) 
                 </div>
                 <div>
                   <CardTitle className="text-sm">{user.email}</CardTitle>
-                  <p className="text-xs text-muted-foreground">Perigon Account</p>
+                  <p className="text-xs text-muted-foreground">
+                    Perigon Account
+                  </p>
                 </div>
               </div>
             </CardHeader>
-            
+
             <CardContent className="space-y-4">
               {/* API Key Selection */}
               <div>
@@ -85,8 +96,16 @@ export default function ApiKeySelector({ onOpenSettings }: ApiKeySelectorProps) 
                     {availablePerigonKeys.length} available
                   </Badge>
                 </div>
-                
+
+                {selectedPerigonKey && (
+                  <div className="mb-2 p-2 bg-green-50 dark:bg-green-900/20 rounded text-xs">
+                    <strong>Selected:</strong>{" "}
+                    {selectedPerigonKey.name || "Unnamed Key"}
+                  </div>
+                )}
+
                 <div className="space-y-2 max-h-40 overflow-y-auto">
+                  {" "}
                   {availablePerigonKeys.map((apiKey) => (
                     <div
                       key={apiKey.id}
@@ -113,7 +132,7 @@ export default function ApiKeySelector({ onOpenSettings }: ApiKeySelectorProps) 
                             <span className="text-xs text-muted-foreground">
                               {new Date(apiKey.createdAt).toLocaleDateString()}
                             </span>
-                            <Badge 
+                            <Badge
                               variant={apiKey.enabled ? "outline" : "secondary"}
                               className="text-xs"
                             >
@@ -128,19 +147,7 @@ export default function ApiKeySelector({ onOpenSettings }: ApiKeySelectorProps) 
               </div>
 
               {/* Actions */}
-              <div className="border-t pt-3 space-y-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    onOpenSettings();
-                    setIsOpen(false);
-                  }}
-                  className="w-full justify-start"
-                >
-                  <Settings className="w-4 h-4 mr-2" />
-                  Settings
-                </Button>
+              <div className="border-t pt-3 space-y-2 z-50">
                 <Button
                   variant="ghost"
                   size="sm"

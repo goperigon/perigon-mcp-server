@@ -1,79 +1,48 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { PerigonAuthService } from "./perigon-auth-service";
+import { PerigonApiKey, PerigonAuthService } from "./perigon-auth-service";
 import { useAuth } from "./auth-context";
 
-interface ApiKeys {
-  perigon: string;
-  anthropic: string;
-}
-
-interface PerigonApiKey {
-  id: string;
-  key: string;
-  name: string;
-  enabled: boolean;
-  createdAt: string;
-}
-
 interface ApiKeysContextType {
-  apiKeys: ApiKeys;
-  setApiKeys: (keys: Partial<ApiKeys>) => void;
-  clearApiKeys: () => void;
-  hasValidKeys: () => boolean;
-  isPerigonKeyValid: boolean;
-  isAnthropicKeyValid: boolean;
-  fetchPerigonApiKeys: () => Promise<void>;
-  isUsingPerigonAuth: boolean;
   availablePerigonKeys: PerigonApiKey[];
   selectedPerigonKeyId: string | null;
   setSelectedPerigonKeyId: (keyId: string | null) => void;
+  selectedPerigonKey: PerigonApiKey | null;
+  fetchPerigonApiKeys: () => Promise<void>;
+  isUsingPerigonAuth: boolean;
+  hasNoApiKeys: boolean;
+  isLoadingApiKeys: boolean;
+  apiKeysError: string | null;
 }
 
 const ApiKeysContext = createContext<ApiKeysContextType | undefined>(undefined);
 
-const STORAGE_KEY = "perigon-api-keys";
-
-const validatePerigonKey = (key: string): boolean => {
-  return key.length > 0;
-};
-
-const validateAnthropicKey = (key: string): boolean => {
-  return key.length > 0 && key.startsWith("sk-ant-");
-};
+const SELECTED_KEY_STORAGE = "perigon-selected-key";
 
 export function ApiKeysProvider({ children }: { children: React.ReactNode }) {
-  const [apiKeys, setApiKeysState] = useState<ApiKeys>({
-    perigon: "",
-    anthropic: "",
-  });
-
-  const [isPerigonKeyValid, setIsPerigonKeyValid] = useState(false);
-  const [isAnthropicKeyValid, setIsAnthropicKeyValid] = useState(false);
+  const [availablePerigonKeys, setAvailablePerigonKeys] = useState<
+    PerigonApiKey[]
+  >([]);
+  const [selectedPerigonKeyId, setSelectedPerigonKeyIdState] = useState<
+    string | null
+  >(null);
   const [isUsingPerigonAuth, setIsUsingPerigonAuth] = useState(false);
-  const [availablePerigonKeys, setAvailablePerigonKeys] = useState<PerigonApiKey[]>([]);
-  const [selectedPerigonKeyId, setSelectedPerigonKeyId] = useState<string | null>(null);
-  
+  const [isLoadingApiKeys, setIsLoadingApiKeys] = useState(false);
+  const [apiKeysError, setApiKeysError] = useState<string | null>(null);
+
   const { isPerigonAuthenticated } = useAuth();
   const perigonAuthService = new PerigonAuthService();
 
-  // Load keys from localStorage on mount
+  // Load selected key from localStorage on mount
   useEffect(() => {
     try {
-      const stored = localStorage.getItem(STORAGE_KEY);
+      const stored = localStorage.getItem(SELECTED_KEY_STORAGE);
       if (stored) {
-        const parsed = JSON.parse(stored) as ApiKeys;
-        setApiKeysState(parsed);
+        setSelectedPerigonKeyIdState(stored);
       }
     } catch (error) {
-      console.warn("Failed to load API keys from localStorage:", error);
+      console.warn("Failed to load selected key from localStorage:", error);
     }
   }, []);
-
-  // Validate keys whenever they change
-  useEffect(() => {
-    setIsPerigonKeyValid(validatePerigonKey(apiKeys.perigon));
-    setIsAnthropicKeyValid(validateAnthropicKey(apiKeys.anthropic));
-  }, [apiKeys]);
 
   // Fetch Perigon API keys when user is authenticated
   useEffect(() => {
@@ -82,89 +51,75 @@ export function ApiKeysProvider({ children }: { children: React.ReactNode }) {
     } else {
       setIsUsingPerigonAuth(false);
       setAvailablePerigonKeys([]);
-      setSelectedPerigonKeyId(null);
+      setSelectedPerigonKeyIdState(null);
     }
   }, [isPerigonAuthenticated]);
-
-  // Update API key when selected key changes
-  useEffect(() => {
-    if (selectedPerigonKeyId && availablePerigonKeys.length > 0) {
-      const selectedKey = availablePerigonKeys.find(k => k.id === selectedPerigonKeyId);
-      if (selectedKey) {
-        setApiKeysState(prev => ({ ...prev, perigon: selectedKey.key }));
-      }
-    }
-  }, [selectedPerigonKeyId, availablePerigonKeys]);
-
-  const setApiKeys = (newKeys: Partial<ApiKeys>) => {
-    const updatedKeys = { ...apiKeys, ...newKeys };
-    setApiKeysState(updatedKeys);
-    
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedKeys));
-    } catch (error) {
-      console.warn("Failed to save API keys to localStorage:", error);
-    }
-  };
-
-  const clearApiKeys = () => {
-    setApiKeysState({ perigon: "", anthropic: "" });
-    try {
-      localStorage.removeItem(STORAGE_KEY);
-    } catch (error) {
-      console.warn("Failed to clear API keys from localStorage:", error);
-    }
-  };
 
   const fetchPerigonApiKeys = async () => {
     if (!isPerigonAuthenticated) {
       return;
     }
 
+    setIsLoadingApiKeys(true);
+    setApiKeysError(null);
+
     try {
       const keys = await perigonAuthService.fetchApiKeys();
-      setAvailablePerigonKeys(keys);
-      
+      setAvailablePerigonKeys(keys as PerigonApiKey[]);
+      setIsUsingPerigonAuth(true);
+
       if (keys.length > 0) {
-        // Use selected key or default to first key
-        const keyToUse = selectedPerigonKeyId 
-          ? keys.find(k => k.id === selectedPerigonKeyId) || keys[0]
-          : keys[0];
-        
-        setApiKeysState(prev => ({ ...prev, perigon: keyToUse.key }));
-        setIsUsingPerigonAuth(true);
-        
-        // Set selected key if not already set
-        if (!selectedPerigonKeyId) {
-          setSelectedPerigonKeyId(keyToUse.id);
+        // Check if the currently selected key still exists
+        const currentKeyExists =
+          selectedPerigonKeyId &&
+          keys.find((k) => k.id === selectedPerigonKeyId);
+
+        // If no key is selected or the selected key no longer exists, use the first available key
+        if (!selectedPerigonKeyId || !currentKeyExists) {
+          setSelectedPerigonKeyIdState(keys[0].id);
         }
       }
     } catch (error) {
-      console.error("Error fetching Perigon API keys:", error);
+      setApiKeysError(
+        error instanceof Error ? error.message : "Failed to fetch API keys"
+      );
+    } finally {
+      setIsLoadingApiKeys(false);
     }
   };
 
-  const hasValidKeys = () => {
-    if (isUsingPerigonAuth && isPerigonAuthenticated) {
-      return isPerigonKeyValid;
+  const setSelectedPerigonKeyId = (keyId: string | null) => {
+    setSelectedPerigonKeyIdState(keyId);
+    try {
+      if (keyId) {
+        localStorage.setItem(SELECTED_KEY_STORAGE, keyId);
+      } else {
+        localStorage.removeItem(SELECTED_KEY_STORAGE);
+      }
+    } catch (error) {
+      console.warn("Failed to save selected key to localStorage:", error);
     }
-    return isPerigonKeyValid && isAnthropicKeyValid;
   };
+
+  const selectedPerigonKey = selectedPerigonKeyId
+    ? availablePerigonKeys.find((k) => k.id === selectedPerigonKeyId) || null
+    : null;
+
+  const hasNoApiKeys =
+    isPerigonAuthenticated && availablePerigonKeys.length === 0;
 
   return (
     <ApiKeysContext.Provider
       value={{
-        apiKeys,
-        setApiKeys,
-        clearApiKeys,
-        hasValidKeys,
-        isPerigonKeyValid,
-        isAnthropicKeyValid,
-        fetchPerigonApiKeys,
-        isUsingPerigonAuth,
         availablePerigonKeys,
         selectedPerigonKeyId,
         setSelectedPerigonKeyId,
+        selectedPerigonKey,
+        fetchPerigonApiKeys,
+        isUsingPerigonAuth,
+        hasNoApiKeys,
+        isLoadingApiKeys,
+        apiKeysError,
       }}
     >
       {children}

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -40,11 +40,13 @@ interface MCPTool {
 
 export default function InspectorPage() {
   const { secret, invalidate } = useAuth();
-  const { apiKeys, isPerigonKeyValid } = useApiKeys();
+  const { selectedPerigonKey, hasNoApiKeys, isLoadingApiKeys, apiKeysError } =
+    useApiKeys();
+
   const [selectedTool, setSelectedTool] = useState<string | null>(null);
   const [toolParams, setToolParams] = useState<Record<string, any>>({});
   const [rawInputValues, setRawInputValues] = useState<Record<string, string>>(
-    {},
+    {}
   );
   const [executionResult, setExecutionResult] = useState<string | null>(null);
   const [isExecuting, setIsExecuting] = useState(false);
@@ -74,7 +76,7 @@ export default function InspectorPage() {
   }, []);
 
   const getDefaultParams = (
-    properties: Record<string, ToolParameter>,
+    properties: Record<string, ToolParameter>
   ): Record<string, any> => {
     const defaults: Record<string, any> = {};
 
@@ -87,44 +89,54 @@ export default function InspectorPage() {
     return defaults;
   };
 
-  const handleExecuteTool = async () => {
+  const handleExecuteTool = useCallback(async () => {
     if (!selectedTool) return;
 
-    const callTool = async () => {
-      setIsExecuting(true);
-      setExecutionResult(null);
-      try {
-        const response = await fetch("/v1/api/tools", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${secret}`,
-            "X-Perigon-API-Key": apiKeys.perigon,
-          },
-          body: JSON.stringify({
-            tool: selectedTool,
-            args: toolParams,
-          }),
-        });
-        if (!response.ok) {
-          if (response.status === 401) {
-            invalidate();
-            return;
-          }
-          throw new Error(`Failed to execute tool: ${response.statusText}`);
-        }
-        const data = (await response.json()) as { result: string };
-        setExecutionResult(data.result);
-      } catch (err) {
-        setExecutionResult(
-          err instanceof Error ? err.message : "Failed to execute tool",
-        );
-      } finally {
-        setIsExecuting(false);
+    setIsExecuting(true);
+    setExecutionResult(null);
+    try {
+      // Build headers object
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${secret}`,
+      };
+
+      // Only add Perigon API key header if we have a valid key
+      if (selectedPerigonKey?.token) {
+        headers["X-Perigon-API-Key"] = selectedPerigonKey.token;
       }
-    };
-    callTool();
-  };
+
+      const response = await fetch("/v1/api/tools", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          tool: selectedTool,
+          args: toolParams,
+        }),
+      });
+      if (!response.ok) {
+        if (response.status === 401) {
+          invalidate();
+          return;
+        }
+        throw new Error(`Failed to execute tool: ${response.statusText}`);
+      }
+      const data = (await response.json()) as { result: string };
+      setExecutionResult(data.result);
+    } catch (err) {
+      setExecutionResult(
+        err instanceof Error ? err.message : "Failed to execute tool"
+      );
+    } finally {
+      setIsExecuting(false);
+    }
+  }, [selectedTool, toolParams, selectedPerigonKey, invalidate, secret]);
+
+  useEffect(() => {
+    if (selectedTool) {
+      handleExecuteTool();
+    }
+  }, [selectedTool, handleExecuteTool]);
 
   const selectedToolData = tools.find((tool) => tool.name === selectedTool);
 
@@ -132,7 +144,7 @@ export default function InspectorPage() {
   const renderParameterInput = (
     paramName: string,
     param: ToolParameter,
-    value: any,
+    value: any
   ) => {
     const updateValue = (newValue: any) => {
       setToolParams((prev) => ({
@@ -230,17 +242,39 @@ export default function InspectorPage() {
 
   return (
     <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-4 h-full bg-background">
-      {/* API Key Warning */}
-      {!isPerigonKeyValid && (
-        <Card className="mb-4 border-yellow-500/20 bg-yellow-500/10">
+      {/* API Key Status */}
+      {isLoadingApiKeys && (
+        <Card className="mb-4 border-blue-500/20 bg-blue-500/10">
           <CardContent className="py-3 px-4">
-            <div className="font-mono text-sm text-yellow-700 dark:text-yellow-300">
-              <strong>Perigon API Key Required:</strong> Please configure your Perigon API key in the header to use the inspector tools.
+            <div className="font-mono text-sm text-blue-700 dark:text-blue-300">
+              <strong>Loading API Keys:</strong> Fetching your Perigon API
+              keys...
             </div>
           </CardContent>
         </Card>
       )}
-      
+
+      {apiKeysError && (
+        <Card className="mb-4 border-red-500/20 bg-red-500/10">
+          <CardContent className="py-3 px-4">
+            <div className="font-mono text-sm text-red-700 dark:text-red-300">
+              <strong>API Key Error:</strong> {apiKeysError}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {!isLoadingApiKeys && !apiKeysError && !selectedPerigonKey && (
+        <Card className="mb-4 border-yellow-500/20 bg-yellow-500/10">
+          <CardContent className="py-3 px-4">
+            <div className="font-mono text-sm text-yellow-700 dark:text-yellow-300">
+              <strong>No API Key Selected:</strong> Please select a Perigon API
+              key from the dropdown in the header to use the inspector tools.
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-2 lg:gap-4 h-full">
         {/* Tools List - Mobile Dropdown */}
         <div className="lg:hidden flex flex-col h-full min-h-0">
@@ -253,8 +287,8 @@ export default function InspectorPage() {
                 {loading
                   ? "Loading..."
                   : error
-                    ? "Error loading tools"
-                    : `${tools.length} available tools`}
+                  ? "Error loading tools"
+                  : `${tools.length} available tools`}
               </div>
             </CardContent>
           </Card>
@@ -375,7 +409,7 @@ export default function InspectorPage() {
                         {renderParameterInput(
                           paramName,
                           param,
-                          toolParams[paramName],
+                          toolParams[paramName]
                         )}
                         {param.description && (
                           <p className="text-xs text-muted-foreground leading-tight pl-4 border-l-2 border-border">
@@ -383,7 +417,7 @@ export default function InspectorPage() {
                           </p>
                         )}
                       </div>
-                    ),
+                    )
                   )}
                 </CardContent>
               </Card>
@@ -414,8 +448,8 @@ export default function InspectorPage() {
                 {loading
                   ? "Loading..."
                   : error
-                    ? "Error loading tools"
-                    : `There are currently ${tools.length} supported tools`}
+                  ? "Error loading tools"
+                  : `There are currently ${tools.length} supported tools`}
               </div>
             </CardContent>
           </Card>
@@ -505,7 +539,9 @@ export default function InspectorPage() {
                   </div>
                   <Button
                     onClick={handleExecuteTool}
-                    disabled={isExecuting || !isPerigonKeyValid}
+                    disabled={
+                      isExecuting || !selectedPerigonKey || isLoadingApiKeys
+                    }
                     className="hidden sm:flex font-mono text-xs h-8 sm:h-4 px-3 sm:px-2"
                     size="sm"
                     variant="ghost"
@@ -549,7 +585,7 @@ export default function InspectorPage() {
                       {renderParameterInput(
                         paramName,
                         param,
-                        toolParams[paramName],
+                        toolParams[paramName]
                       )}
                       {param.description && (
                         <p className="text-xs text-muted-foreground leading-tight pl-4 border-l-2 border-border">
@@ -557,7 +593,7 @@ export default function InspectorPage() {
                         </p>
                       )}
                     </div>
-                  ),
+                  )
                 )}
               </CardContent>
             </Card>

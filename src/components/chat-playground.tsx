@@ -24,7 +24,6 @@ import { MessageText } from "./message-text";
 import { useAuth } from "@/lib/auth-context";
 import { useApiKeys } from "@/lib/api-keys-context";
 
-
 const STORAGE_KEY = "chat-messages";
 
 const getDefaultMessage = () => ({
@@ -62,7 +61,7 @@ const loadMessagesFromStorage = () => {
   } catch (error) {
     console.warn(
       "Failed to load messages from localStorage, clearing storage:",
-      error,
+      error
     );
     localStorage.removeItem(STORAGE_KEY);
     return [getDefaultMessage()];
@@ -78,8 +77,8 @@ const saveMessagesToStorage = (messages: any[]) => {
 };
 
 export default function ChatPlayground() {
-  const { secret, invalidate, isAuthenticated, isPerigonAuthenticated } = useAuth();
-  const { apiKeys, hasValidKeys } = useApiKeys();
+  const { secret, invalidate, isAuthenticated } = useAuth();
+  const { selectedPerigonKey, isLoadingApiKeys, apiKeysError } = useApiKeys();
   const [initialMessages] = React.useState(() => loadMessagesFromStorage());
   const [showError, setShowError] = React.useState(false);
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
@@ -94,14 +93,24 @@ export default function ChatPlayground() {
     setMessages,
     reload,
   } = useChat({
-    key: `${secret || "no-auth"}-${apiKeys.anthropic}-${apiKeys.perigon}`, // Force reinit when keys change
+    key: `${secret || "no-auth"}-${selectedPerigonKey?.id || "no-key"}`, // Force reinit when keys change
     api: "/v1/api/chat",
     initialMessages,
-    headers: {
-      Authorization: `Bearer ${secret}`,
-      "X-Anthropic-API-Key": apiKeys.anthropic,
-      "X-Perigon-API-Key": apiKeys.perigon,
-    },
+    headers: (() => {
+      const headers: Record<string, string> = {
+        Authorization: `Bearer ${secret}`,
+      };
+
+      // Only add Perigon API key header if we have a valid key
+      if (selectedPerigonKey?.token) {
+        headers["X-Perigon-API-Key"] = selectedPerigonKey.token;
+        console.log("Chat - sending Perigon API key header");
+      } else {
+        console.log("Chat - no Perigon API key available");
+      }
+
+      return headers;
+    })(),
     onResponse: async (response) => {
       if (response.status === 401) {
         // Check if it's an API key error vs auth error
@@ -109,7 +118,9 @@ export default function ChatPlayground() {
         try {
           const text = await responseClone.text();
           if (text.includes("API key")) {
-            setErrorMessage("API keys required. Please configure your Perigon and Anthropic API keys.");
+            setErrorMessage(
+              "No API key selected. Please select a Perigon API key from the dropdown in the header."
+            );
             setShowError(true);
             return;
           }
@@ -135,7 +146,7 @@ export default function ChatPlayground() {
   const autoScrollDisabledRef = useRef(false);
   const isAutoScrollingRef = useRef(false);
   const [copiedMessageId, setCopiedMessageId] = React.useState<string | null>(
-    null,
+    null
   );
 
   useEffect(() => {
@@ -252,12 +263,34 @@ export default function ChatPlayground() {
 
   return (
     <div className="fixed inset-0 top-12 flex flex-col bg-background">
-      {/* API Keys Warning */}
-      {!hasValidKeys() && (
+      {/* API Key Status */}
+      {isLoadingApiKeys && (
+        <Card className="mx-6 mt-4 border-blue-500/20 bg-blue-500/10 animate-in slide-in-from-top-2">
+          <CardContent className="py-3 px-4">
+            <div className="font-mono text-sm text-blue-700 dark:text-blue-300">
+              <strong>Loading API Keys:</strong> Fetching your Perigon API
+              keys...
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {apiKeysError && (
+        <Card className="mx-6 mt-4 border-red-500/20 bg-red-500/10 animate-in slide-in-from-top-2">
+          <CardContent className="py-3 px-4">
+            <div className="font-mono text-sm text-red-700 dark:text-red-300">
+              <strong>API Key Error:</strong> {apiKeysError}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {!isLoadingApiKeys && !apiKeysError && !selectedPerigonKey && (
         <Card className="mx-6 mt-4 border-yellow-500/20 bg-yellow-500/10 animate-in slide-in-from-top-2">
           <CardContent className="py-3 px-4">
             <div className="font-mono text-sm text-yellow-700 dark:text-yellow-300">
-              <strong>API Keys Required:</strong> Please configure your Perigon and Anthropic API keys in the header to use the chat functionality.
+              <strong>No API Key Selected:</strong> Please select a Perigon API
+              key from the dropdown in the header to use the chat functionality.
             </div>
           </CardContent>
         </Card>
@@ -303,7 +336,9 @@ export default function ChatPlayground() {
                 </div>
 
                 <div
-                  className={`flex-1 max-w-[85%] ${message.role === "user" ? "text-right" : ""}`}
+                  className={`flex-1 max-w-[85%] ${
+                    message.role === "user" ? "text-right" : ""
+                  }`}
                 >
                   {message.parts?.map((part, index) => {
                     switch (part.type) {
@@ -327,7 +362,7 @@ export default function ChatPlayground() {
                               onClick={() =>
                                 copyMessageContent(
                                   `${message.id}-${index}`,
-                                  part.text,
+                                  part.text
                                 )
                               }
                             >
@@ -430,7 +465,12 @@ export default function ChatPlayground() {
             />
             <Button
               type="submit"
-              disabled={status !== "ready" || !input.trim() || !hasValidKeys()}
+              disabled={
+                status !== "ready" ||
+                !input.trim() ||
+                !selectedPerigonKey ||
+                isLoadingApiKeys
+              }
               className="font-mono mt-3"
               variant="outline"
             >
