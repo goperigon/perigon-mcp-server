@@ -9,6 +9,7 @@ import basicSsl from "@vitejs/plugin-basic-ssl";
 export default defineConfig(() => ({
   plugins: [react(), cloudflare(), basicSsl()],
   server: {
+    //Make sure to add this to /etc/hosts - 127.0.0.1 local-mcp.perigon.io
     host: "local-mcp.perigon.io",
     port: 5173,
   },

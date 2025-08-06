@@ -6,12 +6,7 @@ import {
   ReactNode,
   useRef,
 } from "react";
-import { PerigonAuthService } from "./perigon-auth-service";
-
-interface User {
-  id: string;
-  email: string;
-}
+import { PerigonAuthService, User } from "./perigon-auth-service";
 
 interface AuthContextType {
   isAuthenticated: boolean;

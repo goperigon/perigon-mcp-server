@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { User, ChevronDown, Key, Check, Calendar, LogOut } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { useApiKeys } from "@/lib/api-keys-context";
+import { Link } from "react-router-dom";
 
 export default function ApiKeySelector() {
   const [isOpen, setIsOpen] = useState(false);
@@ -59,8 +60,14 @@ export default function ApiKeySelector() {
         onClick={() => setIsOpen(!isOpen)}
         className="h-8 px-2 flex items-center space-x-2"
       >
-        <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center">
-          <User className="w-3 h-3 text-white" />
+        <div className="w-6 h-6 rounded-full flex items-center justify-center">
+          {user.imageUrl && (
+            <img
+              src={user.imageUrl}
+              alt="Perigon Logo"
+              className="rounded-full"
+            />
+          )}
         </div>
         <span className="text-xs hidden sm:inline">{user.email}</span>
         <ChevronDown className="w-3 h-3" />
@@ -74,17 +81,25 @@ export default function ApiKeySelector() {
           />
           <Card className="absolute right-0 top-full mt-2 w-80 z-[9999] shadow-lg">
             <CardHeader className="pb-3">
-              <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
-                  <User className="w-4 h-4 text-white" />
+              <a href="https://perigon.io/settings/account" target="_blank">
+                <div className="flex items-center space-x-2">
+                  <div className="w-6 h-6 rounded-full flex items-center justify-center">
+                    {user.imageUrl && (
+                      <img
+                        src={user.imageUrl}
+                        alt="Perigon Logo"
+                        className="rounded-full"
+                      />
+                    )}
+                  </div>
+                  <div>
+                    <CardTitle className="text-sm">{user.email}</CardTitle>
+                    <p className="text-xs text-muted-foreground">
+                      Perigon Account
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <CardTitle className="text-sm">{user.email}</CardTitle>
-                  <p className="text-xs text-muted-foreground">
-                    Perigon Account
-                  </p>
-                </div>
-              </div>
+              </a>
             </CardHeader>
 
             <CardContent className="space-y-4">
