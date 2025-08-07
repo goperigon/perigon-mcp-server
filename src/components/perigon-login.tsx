@@ -5,7 +5,9 @@ import { LogIn, ExternalLink } from "lucide-react";
 export default function PerigonLogin() {
   const handleLogin = () => {
     const currentUrl = window.location.href;
-    const redirectUrl = `https://perigon.io/sign-in?redirectTo=${encodeURIComponent(currentUrl)}`;
+    const redirectUrl = `https://perigon.io/sign-in?redirectTo=${encodeURIComponent(
+      currentUrl
+    )}`;
     window.location.href = redirectUrl;
   };
 
@@ -13,11 +15,6 @@ export default function PerigonLogin() {
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="flex justify-center mb-4">
-            <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center">
-              <LogIn className="w-6 h-6 text-white" />
-            </div>
-          </div>
           <CardTitle className="text-xl">Sign in with Perigon</CardTitle>
           <p className="text-sm text-muted-foreground">
             Access the MCP server with your Perigon account
@@ -32,19 +29,18 @@ export default function PerigonLogin() {
               <li>• Secure authentication via Perigon</li>
             </ul>
           </div>
-          
+
           <Button onClick={handleLogin} className="w-full" size="lg">
-            <LogIn className="w-4 h-4 mr-2" />
             Sign in with Perigon
             <ExternalLink className="w-4 h-4 ml-2" />
           </Button>
-          
+
           <div className="text-center">
             <p className="text-xs text-muted-foreground">
               Don't have a Perigon account?{" "}
-              <a 
-                href="https://perigon.io/sign-up" 
-                target="_blank" 
+              <a
+                href="https://perigon.io/sign-up"
+                target="_blank"
                 rel="noopener noreferrer"
                 className="text-primary hover:underline"
               >

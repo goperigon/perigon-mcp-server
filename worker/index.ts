@@ -18,6 +18,11 @@ import { zodToJsonSchema } from "zod-to-json-schema";
 import { hashKey } from "./lib/hash";
 import { handleError } from "./lib/handle-error";
 import { authenticate } from "./lib/auth";
+import {
+  fetchPerigonApiKeys,
+  parseApiKeysResponse,
+  getFirstApiKey,
+} from "./lib/api-keys-utils";
 
 export { PerigonMCP };
 
@@ -199,38 +204,9 @@ async function handlePerigonApiKeysRequest(
   }
 
   try {
-    const response = await fetch(
-      "https://api.perigon.io/v1/apiKeys?size=100&sortBy=createdAt&sortOrder=desc&enabled=true",
-      {
-        headers: {
-          Cookie: request.headers.get("Cookie") || "",
-        },
-      }
+    const apiKeys = await fetchPerigonApiKeys(
+      request.headers.get("Cookie") || ""
     );
-
-    if (!response.ok) {
-      return handleError("Failed to fetch API keys", response.status);
-    }
-
-    const apiKeysResponse = (await response.json()) as any;
-
-    // Extract the data array from the paginated response
-    // Perigon API might return { data: [...] } or just [...]
-    let apiKeys;
-    if (Array.isArray(apiKeysResponse)) {
-      apiKeys = apiKeysResponse;
-    } else if (apiKeysResponse.data && Array.isArray(apiKeysResponse.data)) {
-      apiKeys = apiKeysResponse.data;
-    } else if (
-      apiKeysResponse.results &&
-      Array.isArray(apiKeysResponse.results)
-    ) {
-      apiKeys = apiKeysResponse.results;
-    } else {
-      console.error("Unexpected API keys response structure:", apiKeysResponse);
-      apiKeys = [];
-    }
-
     return Response.json(apiKeys);
   } catch (error) {
     console.error("Error fetching API keys:", error);
@@ -335,44 +311,10 @@ async function handleToolRequest(
           } else {
             // Fallback: fetch user's first available API key
             try {
-              const keysResponse = await fetch(
-                "https://api.perigon.io/v1/apiKeys?size=100&sortBy=createdAt&sortOrder=desc&enabled=true",
-                {
-                  headers: {
-                    Cookie: request.headers.get("Cookie") || "",
-                  },
-                }
+              const apiKeys = await fetchPerigonApiKeys(
+                request.headers.get("Cookie") || ""
               );
-
-              if (keysResponse.ok) {
-                const apiKeysResponse = (await keysResponse.json()) as any;
-
-                // Extract the data array from the paginated response
-                let apiKeys;
-                if (Array.isArray(apiKeysResponse)) {
-                  apiKeys = apiKeysResponse;
-                } else if (
-                  apiKeysResponse.data &&
-                  Array.isArray(apiKeysResponse.data)
-                ) {
-                  apiKeys = apiKeysResponse.data;
-                } else if (
-                  apiKeysResponse.results &&
-                  Array.isArray(apiKeysResponse.results)
-                ) {
-                  apiKeys = apiKeysResponse.results;
-                } else {
-                  console.error(
-                    "Unexpected API keys response structure in tools:",
-                    apiKeysResponse
-                  );
-                  apiKeys = [];
-                }
-
-                if (apiKeys.length > 0) {
-                  perigonApiKey = apiKeys[0].key;
-                }
-              }
+              perigonApiKey = getFirstApiKey(apiKeys);
             } catch (error) {
               console.error(
                 "Error fetching Perigon API keys in tools endpoint:",
@@ -480,45 +422,12 @@ async function handleChatRequest(
       } else {
         // Fetch user's API keys from Perigon
         try {
-          const keysResponse = await fetch(
-            "https://api.perigon.io/v1/apiKeys?size=100&sortBy=createdAt&sortOrder=desc&enabled=true",
-            {
-              headers: {
-                Cookie: request.headers.get("Cookie") || "",
-              },
-            }
+          const apiKeys = await fetchPerigonApiKeys(
+            request.headers.get("Cookie") || ""
           );
-
-          if (keysResponse.ok) {
-            const apiKeysResponse = (await keysResponse.json()) as any;
-
-            // Extract the data array from the paginated response
-            let apiKeys;
-            if (Array.isArray(apiKeysResponse)) {
-              apiKeys = apiKeysResponse;
-            } else if (
-              apiKeysResponse.data &&
-              Array.isArray(apiKeysResponse.data)
-            ) {
-              apiKeys = apiKeysResponse.data;
-            } else if (
-              apiKeysResponse.results &&
-              Array.isArray(apiKeysResponse.results)
-            ) {
-              apiKeys = apiKeysResponse.results;
-            } else {
-              console.error(
-                "Unexpected API keys response structure in chat:",
-                apiKeysResponse
-              );
-              apiKeys = [];
-            }
-
-            if (apiKeys.length > 0) {
-              perigonApiKey = apiKeys[0].key;
-            } else {
-              console.log("Chat endpoint - no API keys found in fallback");
-            }
+          perigonApiKey = getFirstApiKey(apiKeys);
+          if (!perigonApiKey) {
+            console.log("Chat endpoint - no API keys found in fallback");
           }
         } catch (error) {
           console.error("Error fetching Perigon API keys:", error);

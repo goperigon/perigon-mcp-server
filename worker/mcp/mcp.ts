@@ -10,15 +10,19 @@ export type Props = {
 };
 
 // Map scopes to tool names
-const SCOPE_TO_TOOLS: Partial<Record<Scopes, ToolName>> = {
-  [Scopes.CLUSTERS]: "search_news_stories,get_top_headlines,get_location_news",
-  [Scopes.JOURNALISTS]: "search_journalists",
-  [Scopes.SOURCES]: "search_sources",
-  [Scopes.PEOPLE]: "search_people,get_person_news",
-  [Scopes.COMPANIES]: "search_companies,get_company_news",
-  [Scopes.TOPICS]: "search_topics",
-  [Scopes.WIKIPEDIA]: "search_wikipedia",
-  [Scopes.VECTOR_SEARCH_WIKIPEDIA]: "search_vector_wikipedia",
+const SCOPE_TO_TOOLS: Partial<Record<Scopes, ToolName[]>> = {
+  [Scopes.CLUSTERS]: [
+    "search_news_stories",
+    "get_top_headlines",
+    "get_location_news",
+  ],
+  [Scopes.JOURNALISTS]: ["search_journalists"],
+  [Scopes.SOURCES]: ["search_sources"],
+  [Scopes.PEOPLE]: ["search_people", "get_person_news"],
+  [Scopes.COMPANIES]: ["search_companies", "get_company_news"],
+  [Scopes.TOPICS]: ["search_topics"],
+  [Scopes.WIKIPEDIA]: ["search_wikipedia"],
+  [Scopes.VECTOR_SEARCH_WIKIPEDIA]: ["search_vector_wikipedia"],
 };
 
 export class PerigonMCP extends McpAgent<Env, unknown, Props> {
@@ -43,23 +47,17 @@ export class PerigonMCP extends McpAgent<Env, unknown, Props> {
     for (const scope of this.props.scopes) {
       if (!scope) continue;
 
-      const currentToolName = SCOPE_TO_TOOLS[scope];
-      if (!currentToolName) continue;
+      const currentToolNames = SCOPE_TO_TOOLS[scope];
+      if (!currentToolNames) continue;
 
-      const toolsNames = currentToolName?.includes(",")
-        ? currentToolName.split(",")
-        : [currentToolName];
-
-      if (toolsNames) {
-        for (const toolName of toolsNames) {
-          const definition = TOOL_DEFINITIONS[toolName as ToolName];
-          this.server.tool(
-            definition.name,
-            definition.description,
-            definition.parameters.shape,
-            definition.createHandler(perigon)
-          );
-        }
+      for (const toolName of currentToolNames) {
+        const definition = TOOL_DEFINITIONS[toolName as ToolName];
+        this.server.tool(
+          definition.name,
+          definition.description,
+          definition.parameters.shape,
+          definition.createHandler(perigon)
+        );
       }
     }
   }
