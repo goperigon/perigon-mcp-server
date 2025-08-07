@@ -94,10 +94,14 @@ export default {
     ctx: ExecutionContext
   ): Promise<Response> {
     // API keys are now optional - can be provided by users via headers
-    // Only log warnings if both env vars are missing
-    if (!env.PERIGON_API_KEY && !env.ANTHROPIC_API_KEY) {
-      console.warn(
-        "No default API keys configured - users must provide their own keys"
+    if (!env.ANTHROPIC_API_KEY) {
+      console.error("ANTHROPIC_API_KEY is not set");
+      return new Response(
+        JSON.stringify({ error: "ANTHROPIC_API_KEY is not set" }),
+        {
+          status: 500,
+          headers: { "content-type": "application/json" },
+        }
       );
     }
 
