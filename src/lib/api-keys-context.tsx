@@ -8,6 +8,7 @@ interface ApiKeysContextType {
   setSelectedPerigonKeyId: (keyId: string | null) => void;
   selectedPerigonKey: PerigonApiKey | null;
   fetchPerigonApiKeys: () => Promise<void>;
+  ensureApiKeysLoaded: () => Promise<boolean>;
   isUsingPerigonAuth: boolean;
   hasNoApiKeys: boolean;
   isLoadingApiKeys: boolean;
@@ -28,8 +29,9 @@ export function ApiKeysProvider({ children }: { children: React.ReactNode }) {
   const [isUsingPerigonAuth, setIsUsingPerigonAuth] = useState(false);
   const [isLoadingApiKeys, setIsLoadingApiKeys] = useState(false);
   const [apiKeysError, setApiKeysError] = useState<string | null>(null);
+  const [hasAttemptedApiKeysLoad, setHasAttemptedApiKeysLoad] = useState(false);
 
-  const { isPerigonAuthenticated } = useAuth();
+  const { authCheckStatus, ensureAuthenticated } = useAuth();
   const perigonAuthService = new PerigonAuthService();
 
   // Load selected key from localStorage on mount
@@ -46,26 +48,28 @@ export function ApiKeysProvider({ children }: { children: React.ReactNode }) {
 
   // Fetch Perigon API keys when user is authenticated
   useEffect(() => {
-    if (isPerigonAuthenticated) {
+    if (authCheckStatus === 'authenticated') {
       fetchPerigonApiKeys();
-    } else {
+    } else if (authCheckStatus === 'unauthenticated') {
       setIsUsingPerigonAuth(false);
       setAvailablePerigonKeys([]);
       setSelectedPerigonKeyIdState(null);
+      setHasAttemptedApiKeysLoad(false);
     }
-  }, [isPerigonAuthenticated]);
+  }, [authCheckStatus]);
 
   const fetchPerigonApiKeys = async () => {
-    if (!isPerigonAuthenticated) {
+    if (authCheckStatus !== 'authenticated') {
       return;
     }
 
     setIsLoadingApiKeys(true);
     setApiKeysError(null);
+    setHasAttemptedApiKeysLoad(true);
 
     try {
       const keys = await perigonAuthService.fetchApiKeys();
-      setAvailablePerigonKeys(keys as PerigonApiKey[]);
+      setAvailablePerigonKeys(keys);
       setIsUsingPerigonAuth(true);
 
       if (keys.length > 0) {
@@ -88,6 +92,33 @@ export function ApiKeysProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const ensureApiKeysLoaded = async (): Promise<boolean> => {
+    // First ensure authentication
+    const isAuth = await ensureAuthenticated();
+    if (!isAuth) return false;
+
+    // If we already have keys loaded, return true
+    if (availablePerigonKeys.length > 0) return true;
+
+    // If we're already loading, wait for it to complete
+    if (isLoadingApiKeys) {
+      return new Promise((resolve) => {
+        const checkLoaded = () => {
+          if (!isLoadingApiKeys) {
+            resolve(availablePerigonKeys.length > 0);
+          } else {
+            setTimeout(checkLoaded, 100);
+          }
+        };
+        checkLoaded();
+      });
+    }
+
+    // Fetch the keys
+    await fetchPerigonApiKeys();
+    return availablePerigonKeys.length > 0;
+  };
+
   const setSelectedPerigonKeyId = (keyId: string | null) => {
     setSelectedPerigonKeyIdState(keyId);
     try {
@@ -106,7 +137,10 @@ export function ApiKeysProvider({ children }: { children: React.ReactNode }) {
     : null;
 
   const hasNoApiKeys =
-    isPerigonAuthenticated && availablePerigonKeys.length === 0;
+    authCheckStatus === 'authenticated' && 
+    hasAttemptedApiKeysLoad && 
+    !isLoadingApiKeys && 
+    availablePerigonKeys.length === 0;
 
   return (
     <ApiKeysContext.Provider
@@ -116,6 +150,7 @@ export function ApiKeysProvider({ children }: { children: React.ReactNode }) {
         setSelectedPerigonKeyId,
         selectedPerigonKey,
         fetchPerigonApiKeys,
+        ensureApiKeysLoaded,
         isUsingPerigonAuth,
         hasNoApiKeys,
         isLoadingApiKeys,

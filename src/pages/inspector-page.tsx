@@ -242,18 +242,6 @@ export default function InspectorPage() {
 
   return (
     <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-4 h-full bg-background">
-      {/* API Key Status */}
-      {isLoadingApiKeys && (
-        <Card className="mb-4 border-blue-500/20 bg-blue-500/10">
-          <CardContent className="py-3 px-4">
-            <div className="font-mono text-sm text-blue-700 dark:text-blue-300">
-              <strong>Loading API Keys:</strong> Fetching your Perigon API
-              keys...
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
       {apiKeysError && (
         <Card className="mb-4 border-red-500/20 bg-red-500/10">
           <CardContent className="py-3 px-4">
@@ -264,7 +252,7 @@ export default function InspectorPage() {
         </Card>
       )}
 
-      {!isLoadingApiKeys && !apiKeysError && !selectedPerigonKey && (
+      {!isLoadingApiKeys && !apiKeysError && hasNoApiKeys && (
         <Card className="mb-4 border-yellow-500/20 bg-yellow-500/10">
           <CardContent className="py-3 px-4">
             <div className="font-mono text-sm text-yellow-700 dark:text-yellow-300">

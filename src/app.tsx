@@ -15,18 +15,22 @@ import { useAuth } from "@/lib/auth-context";
 import { useApiKeys } from "@/lib/api-keys-context";
 
 function AppContent() {
-  const { isPerigonAuthenticated } = useAuth();
-  const { hasNoApiKeys } = useApiKeys();
+  const { authCheckStatus } = useAuth();
+  const { hasNoApiKeys, isLoadingApiKeys } = useApiKeys();
 
-  // Show Perigon login if not authenticated
-  if (!isPerigonAuthenticated) {
+  // Show Perigon login only if auth check was triggered and failed
+  if (authCheckStatus === "unauthenticated") {
     return <PerigonLogin />;
   }
 
   // Show no API keys alert if authenticated but no keys
-  if (hasNoApiKeys) {
-    return <NoApiKeysAlert />;
-  }
+  // if (
+  //   hasNoApiKeys &&
+  //   authCheckStatus === "authenticated" &&
+  //   !isLoadingApiKeys
+  // ) {
+  //   return <NoApiKeysAlert />;
+  // }
 
   return (
     <>

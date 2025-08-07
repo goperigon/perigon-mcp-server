@@ -1,40 +1,51 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { User, ChevronDown, Key, Check, Calendar, LogOut } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { useApiKeys } from "@/lib/api-keys-context";
-import { Link } from "react-router-dom";
+import { SignInButton } from "@/components/ui/sign-in-button";
+import { LoadingState } from "@/components/ui/loading-state";
+import { UserAvatar } from "@/components/ui/user-avatar";
+import { UserProfileDropdown } from "@/components/profile/user-profile-dropdown";
 
 export default function ApiKeySelector() {
   const [isOpen, setIsOpen] = useState(false);
-  const { isPerigonAuthenticated, user } = useAuth();
+  const { authCheckStatus, user, ensureAuthenticated } = useAuth();
   const {
     availablePerigonKeys,
     selectedPerigonKeyId,
     setSelectedPerigonKeyId,
     isUsingPerigonAuth,
     isLoadingApiKeys,
-    selectedPerigonKey,
+    ensureApiKeysLoaded,
   } = useApiKeys();
 
-  if (!isPerigonAuthenticated || !user) {
+  // Show sign in button when auth is idle or background checking
+  if (authCheckStatus === "idle" || authCheckStatus === "background-checking") {
+    return (
+      <SignInButton
+        user={user}
+        isBackgroundChecking={authCheckStatus === "background-checking"}
+        onClick={async () => {
+          await ensureAuthenticated();
+        }}
+      />
+    );
+  }
+
+  // Show loading state during user-triggered auth check
+  if (authCheckStatus === "checking") {
+    return <LoadingState user={user} message="Signing In..." />;
+  }
+
+  // Don't show if not authenticated or no user
+  if (authCheckStatus !== "authenticated" || !user) {
     return null;
   }
 
   // Show loading state while fetching API keys
   if (isLoadingApiKeys) {
-    return (
-      <div className="flex items-center space-x-2 z-50">
-        <div className="w-6 h-6 bg-muted rounded-full flex items-center justify-center animate-pulse">
-          <User className="w-3 h-3 text-muted-foreground" />
-        </div>
-        <span className="text-xs text-muted-foreground hidden sm:inline">
-          Loading...
-        </span>
-      </div>
-    );
+    return <LoadingState user={user} message="Loading..." className="z-50" />;
   }
 
   // Don't show if not using Perigon auth or no keys available
@@ -47,9 +58,12 @@ export default function ApiKeySelector() {
     setIsOpen(false);
   };
 
-  const handleSignOut = () => {
-    // Redirect to sign out
-    window.location.href = "https://perigon.io/sign-out";
+  const handleDropdownToggle = async () => {
+    if (!isOpen) {
+      // Ensure API keys are loaded when opening dropdown
+      await ensureApiKeysLoaded();
+    }
+    setIsOpen(!isOpen);
   };
 
   return (
@@ -57,126 +71,25 @@ export default function ApiKeySelector() {
       <Button
         variant="ghost"
         size="sm"
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={handleDropdownToggle}
         className="h-8 px-2 flex items-center space-x-2"
       >
-        <div className="w-6 h-6 rounded-full flex items-center justify-center">
-          {user.imageUrl && (
-            <img
-              src={user.imageUrl}
-              alt="Perigon Logo"
-              className="rounded-full"
-            />
-          )}
-        </div>
+        <UserAvatar user={user} />
         <span className="text-xs hidden sm:inline">{user.email}</span>
         <ChevronDown className="w-3 h-3" />
       </Button>
 
       {isOpen && (
-        <>
-          <div
-            className="fixed inset-0 z-[9998]"
-            onClick={() => setIsOpen(false)}
-          />
-          <Card className="absolute right-0 top-full mt-2 w-80 z-[9999] shadow-lg">
-            <CardHeader className="pb-3">
-              <a href="https://perigon.io/settings/account" target="_blank">
-                <div className="flex items-center space-x-2">
-                  <div className="w-6 h-6 rounded-full flex items-center justify-center">
-                    {user.imageUrl && (
-                      <img
-                        src={user.imageUrl}
-                        alt="Perigon Logo"
-                        className="rounded-full"
-                      />
-                    )}
-                  </div>
-                  <div>
-                    <CardTitle className="text-sm">{user.email}</CardTitle>
-                    <p className="text-xs text-muted-foreground">
-                      Perigon Account
-                    </p>
-                  </div>
-                </div>
-              </a>
-            </CardHeader>
-
-            <CardContent className="space-y-4">
-              {/* API Key Selection */}
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <h4 className="text-sm font-medium">API Keys</h4>
-                  <Badge variant="outline" className="text-xs">
-                    {availablePerigonKeys.length} available
-                  </Badge>
-                </div>
-
-                {selectedPerigonKey && (
-                  <div className="mb-2 p-2 bg-green-50 dark:bg-green-900/20 rounded text-xs">
-                    <strong>Selected:</strong>{" "}
-                    {selectedPerigonKey.name || "Unnamed Key"}
-                  </div>
-                )}
-
-                <div className="space-y-2 max-h-40 overflow-y-auto">
-                  {" "}
-                  {availablePerigonKeys.map((apiKey) => (
-                    <div
-                      key={apiKey.id}
-                      className={`p-2 rounded-lg border cursor-pointer transition-colors ${
-                        selectedPerigonKeyId === apiKey.id
-                          ? "border-primary bg-primary/5"
-                          : "border-border hover:border-primary/50"
-                      }`}
-                      onClick={() => handleKeySelect(apiKey.id)}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center space-x-2">
-                            <Key className="w-3 h-3 text-muted-foreground" />
-                            <span className="text-sm font-medium truncate">
-                              {apiKey.name || "Unnamed Key"}
-                            </span>
-                            {selectedPerigonKeyId === apiKey.id && (
-                              <Check className="w-3 h-3 text-primary" />
-                            )}
-                          </div>
-                          <div className="flex items-center space-x-2 mt-1">
-                            <Calendar className="w-3 h-3 text-muted-foreground" />
-                            <span className="text-xs text-muted-foreground">
-                              {new Date(apiKey.createdAt).toLocaleDateString()}
-                            </span>
-                            <Badge
-                              variant={apiKey.enabled ? "outline" : "secondary"}
-                              className="text-xs"
-                            >
-                              {apiKey.enabled ? "Active" : "Disabled"}
-                            </Badge>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Actions */}
-              <div className="border-t pt-3 space-y-2 z-50">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleSignOut}
-                  className="w-full justify-start text-red-600 hover:text-red-700"
-                >
-                  <LogOut className="w-4 h-4 mr-2" />
-                  Sign Out
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </>
+        <UserProfileDropdown
+          user={user}
+          apiKeys={availablePerigonKeys}
+          selectedKeyId={selectedPerigonKeyId}
+          onKeySelect={handleKeySelect}
+          onClose={() => setIsOpen(false)}
+        />
       )}
     </div>
   );
 }
+
+

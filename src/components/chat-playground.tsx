@@ -77,8 +77,15 @@ const saveMessagesToStorage = (messages: any[]) => {
 };
 
 export default function ChatPlayground() {
-  const { secret, invalidate, isAuthenticated } = useAuth();
-  const { selectedPerigonKey, isLoadingApiKeys, apiKeysError } = useApiKeys();
+  const { secret, invalidate, isAuthenticated, ensureAuthenticated } =
+    useAuth();
+  const {
+    selectedPerigonKey,
+    isLoadingApiKeys,
+    apiKeysError,
+    hasNoApiKeys,
+    ensureApiKeysLoaded,
+  } = useApiKeys();
   const [initialMessages] = React.useState(() => loadMessagesFromStorage());
   const [showError, setShowError] = React.useState(false);
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
@@ -116,14 +123,7 @@ export default function ChatPlayground() {
         // Check if it's an API key error vs auth error
         const responseClone = response.clone();
         try {
-          const text = await responseClone.text();
-          if (text.includes("API key")) {
-            setErrorMessage(
-              "No API key selected. Please select a Perigon API key from the dropdown in the header."
-            );
-            setShowError(true);
-            return;
-          }
+          await responseClone.text();
         } catch (e) {
           // Ignore parsing errors
         }
@@ -229,6 +229,23 @@ export default function ChatPlayground() {
     }
   }, [input]);
 
+  const handleAuthenticatedSubmit = async (
+    e: React.FormEvent<HTMLFormElement>
+  ) => {
+    e.preventDefault();
+    if (!input.trim() || status !== "ready") return;
+
+    // Ensure user is authenticated and API keys are loaded before sending message
+    const hasApiKeys = await ensureApiKeysLoaded();
+    if (!hasApiKeys) {
+      // Authentication failed or no API keys, modal will be shown by App.tsx
+      return;
+    }
+
+    // Proceed with normal submit
+    handleSubmit(e);
+  };
+
   const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -263,18 +280,6 @@ export default function ChatPlayground() {
 
   return (
     <div className="fixed inset-0 top-12 flex flex-col bg-background">
-      {/* API Key Status */}
-      {isLoadingApiKeys && (
-        <Card className="mx-6 mt-4 border-blue-500/20 bg-blue-500/10 animate-in slide-in-from-top-2">
-          <CardContent className="py-3 px-4">
-            <div className="font-mono text-sm text-blue-700 dark:text-blue-300">
-              <strong>Loading API Keys:</strong> Fetching your Perigon API
-              keys...
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
       {apiKeysError && (
         <Card className="mx-6 mt-4 border-red-500/20 bg-red-500/10 animate-in slide-in-from-top-2">
           <CardContent className="py-3 px-4">
@@ -285,16 +290,20 @@ export default function ChatPlayground() {
         </Card>
       )}
 
-      {!isLoadingApiKeys && !apiKeysError && !selectedPerigonKey && (
-        <Card className="mx-6 mt-4 border-yellow-500/20 bg-yellow-500/10 animate-in slide-in-from-top-2">
-          <CardContent className="py-3 px-4">
-            <div className="font-mono text-sm text-yellow-700 dark:text-yellow-300">
-              <strong>No API Key Selected:</strong> Please select a Perigon API
-              key from the dropdown in the header to use the chat functionality.
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      {!isLoadingApiKeys &&
+        !apiKeysError &&
+        hasNoApiKeys &&
+        !selectedPerigonKey && (
+          <Card className="mx-6 mt-4 border-yellow-500/20 bg-yellow-500/10 animate-in slide-in-from-top-2">
+            <CardContent className="py-3 px-4">
+              <div className="font-mono text-sm text-yellow-700 dark:text-yellow-300">
+                <strong>No API Key Selected:</strong> Please select a Perigon
+                API key from the dropdown in the header to use the chat
+                functionality.
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
       {/* Error display - Toast style */}
       {showError && errorMessage && (
@@ -454,7 +463,7 @@ export default function ChatPlayground() {
           <div className="font-mono text-xs text-muted-foreground mb-4 hidden sm:block">
             INPUT CONSOLE • Press Enter to send, Shift+Enter for new line
           </div>
-          <form onSubmit={handleSubmit} className="flex space-x-3">
+          <form onSubmit={handleAuthenticatedSubmit} className="flex space-x-3">
             <Textarea
               ref={textareaRef}
               value={input}
