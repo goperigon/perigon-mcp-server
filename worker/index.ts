@@ -127,8 +127,6 @@ export default {
       return handleToolRequest(request, env);
     }
 
-    console.log("url.pathname", url.pathname);
-
     if (
       url.pathname === "/v1/sse" ||
       url.pathname === "/v1/sse/message" ||
@@ -773,8 +771,6 @@ async function handleMCPRequest(
     const perigon = new Perigon(apiKey);
 
     const apiKeyDetails = await perigon.introspection();
-
-    console.log("apiKeyDetails", apiKeyDetails);
 
     const props: Props = {
       apiKey,
