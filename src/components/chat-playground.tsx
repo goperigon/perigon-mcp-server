@@ -22,7 +22,6 @@ import {
 } from "lucide-react";
 import { MessageText } from "./message-text";
 import { useAuth } from "@/lib/auth-context";
-import { useApiKeys } from "@/lib/api-keys-context";
 
 const STORAGE_KEY = "chat-messages";
 
@@ -61,7 +60,7 @@ const loadMessagesFromStorage = () => {
   } catch (error) {
     console.warn(
       "Failed to load messages from localStorage, clearing storage:",
-      error
+      error,
     );
     localStorage.removeItem(STORAGE_KEY);
     return [getDefaultMessage()];
@@ -77,15 +76,7 @@ const saveMessagesToStorage = (messages: any[]) => {
 };
 
 export default function ChatPlayground() {
-  const { secret, invalidate, isAuthenticated, ensureAuthenticated } =
-    useAuth();
-  const {
-    selectedPerigonKey,
-    isLoadingApiKeys,
-    apiKeysError,
-    hasNoApiKeys,
-    ensureApiKeysLoaded,
-  } = useApiKeys();
+  const { secret, invalidate, isAuthenticated } = useAuth();
   const [initialMessages] = React.useState(() => loadMessagesFromStorage());
   const [showError, setShowError] = React.useState(false);
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
@@ -100,33 +91,14 @@ export default function ChatPlayground() {
     setMessages,
     reload,
   } = useChat({
-    key: `${secret || "no-auth"}-${selectedPerigonKey?.id || "no-key"}`, // Force reinit when keys change
+    key: secret || "no-auth", // Force reinit when secret changes
     api: "/v1/api/chat",
     initialMessages,
-    headers: (() => {
-      const headers: Record<string, string> = {
-        Authorization: `Bearer ${secret}`,
-      };
-
-      // Only add Perigon API key header if we have a valid key
-      if (selectedPerigonKey?.token) {
-        headers["X-Perigon-API-Key"] = selectedPerigonKey.token;
-        console.log("Chat - sending Perigon API key header");
-      } else {
-        console.log("Chat - no Perigon API key available");
-      }
-
-      return headers;
-    })(),
+    headers: {
+      Authorization: `Bearer ${secret}`,
+    },
     onResponse: async (response) => {
       if (response.status === 401) {
-        // Check if it's an API key error vs auth error
-        const responseClone = response.clone();
-        try {
-          await responseClone.text();
-        } catch (e) {
-          // Ignore parsing errors
-        }
         await invalidate();
       }
     },
@@ -146,7 +118,7 @@ export default function ChatPlayground() {
   const autoScrollDisabledRef = useRef(false);
   const isAutoScrollingRef = useRef(false);
   const [copiedMessageId, setCopiedMessageId] = React.useState<string | null>(
-    null
+    null,
   );
 
   useEffect(() => {
@@ -229,23 +201,6 @@ export default function ChatPlayground() {
     }
   }, [input]);
 
-  const handleAuthenticatedSubmit = async (
-    e: React.FormEvent<HTMLFormElement>
-  ) => {
-    e.preventDefault();
-    if (!input.trim() || status !== "ready") return;
-
-    // Ensure user is authenticated and API keys are loaded before sending message
-    const hasApiKeys = await ensureApiKeysLoaded();
-    if (!hasApiKeys) {
-      // Authentication failed or no API keys, modal will be shown by App.tsx
-      return;
-    }
-
-    // Proceed with normal submit
-    handleSubmit(e);
-  };
-
   const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -280,31 +235,6 @@ export default function ChatPlayground() {
 
   return (
     <div className="fixed inset-0 top-12 flex flex-col bg-background">
-      {apiKeysError && (
-        <Card className="mx-6 mt-4 border-red-500/20 bg-red-500/10 animate-in slide-in-from-top-2">
-          <CardContent className="py-3 px-4">
-            <div className="font-mono text-sm text-red-700 dark:text-red-300">
-              <strong>API Key Error:</strong> {apiKeysError}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {!isLoadingApiKeys &&
-        !apiKeysError &&
-        hasNoApiKeys &&
-        !selectedPerigonKey && (
-          <Card className="mx-6 mt-4 border-yellow-500/20 bg-yellow-500/10 animate-in slide-in-from-top-2">
-            <CardContent className="py-3 px-4">
-              <div className="font-mono text-sm text-yellow-700 dark:text-yellow-300">
-                <strong>No API Key Selected:</strong> Please select a Perigon
-                API key from the dropdown in the header to use the chat
-                functionality.
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
       {/* Error display - Toast style */}
       {showError && errorMessage && (
         <Card className="mx-6 mt-4 border-destructive/20 bg-destructive/10 animate-in slide-in-from-top-2">
@@ -345,9 +275,7 @@ export default function ChatPlayground() {
                 </div>
 
                 <div
-                  className={`flex-1 max-w-[85%] ${
-                    message.role === "user" ? "text-right" : ""
-                  }`}
+                  className={`flex-1 max-w-[85%] ${message.role === "user" ? "text-right" : ""}`}
                 >
                   {message.parts?.map((part, index) => {
                     switch (part.type) {
@@ -371,7 +299,7 @@ export default function ChatPlayground() {
                               onClick={() =>
                                 copyMessageContent(
                                   `${message.id}-${index}`,
-                                  part.text
+                                  part.text,
                                 )
                               }
                             >
@@ -463,7 +391,7 @@ export default function ChatPlayground() {
           <div className="font-mono text-xs text-muted-foreground mb-4 hidden sm:block">
             INPUT CONSOLE • Press Enter to send, Shift+Enter for new line
           </div>
-          <form onSubmit={handleAuthenticatedSubmit} className="flex space-x-3">
+          <form onSubmit={handleSubmit} className="flex space-x-3">
             <Textarea
               ref={textareaRef}
               value={input}
@@ -474,12 +402,7 @@ export default function ChatPlayground() {
             />
             <Button
               type="submit"
-              disabled={
-                status !== "ready" ||
-                !input.trim() ||
-                !selectedPerigonKey ||
-                isLoadingApiKeys
-              }
+              disabled={status !== "ready" || !input.trim()}
               className="font-mono mt-3"
               variant="outline"
             >
