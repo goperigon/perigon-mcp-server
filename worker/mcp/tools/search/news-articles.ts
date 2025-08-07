@@ -5,7 +5,11 @@ import { Perigon } from "../../../lib/perigon";
 import { ToolCallback, ToolDefinition } from "../types";
 import { createBaseSearchArgs } from "../schemas/base";
 import { createSearchField } from "../schemas/search";
-import { toolResult, noResults, createPaginationHeader } from "../utils/formatting";
+import {
+  toolResult,
+  noResults,
+  createPaginationHeader,
+} from "../utils/formatting";
 import { createErrorMessage } from "../utils/error-handling";
 
 /**
@@ -65,14 +69,14 @@ export const newsArticlesArgs = createBaseSearchArgs().extend({
 
 /**
  * Search for individual news articles with advanced filtering capabilities
- * 
+ *
  * This tool allows you to search through news articles using various filters including:
  * - Keywords and search queries with Elasticsearch syntax
  * - Location-based filtering (countries, states, cities)
  * - Time range filtering
  * - Source and journalist filtering
  * - Article ID and news story ID filtering
- * 
+ *
  * @param perigon - The Perigon API client instance
  * @returns Tool callback function for MCP
  */
@@ -116,9 +120,8 @@ export function searchNewsArticles(perigon: Perigon): ToolCallback {
 
       const articles = result.articles.map((article) => {
         const journalistIds =
-          article.journalists
-            ?.map((journalist) => journalist.id)
-            .join(", ") ?? "";
+          article.journalists?.map((journalist) => journalist.id).join(", ") ??
+          "";
 
         return `<article id="${article.articleId}" title="${article.title}">
 Content: ${summarize ? article.summary : article.content}
@@ -143,7 +146,9 @@ Journalist Ids: ${journalistIds}
     } catch (error) {
       console.error("Error searching news articles:", error);
       return toolResult(
-        `Error: Failed to search news articles: ${await createErrorMessage(error)}`
+        `Error: Failed to search news articles: ${await createErrorMessage(
+          error
+        )}`
       );
     }
   };
