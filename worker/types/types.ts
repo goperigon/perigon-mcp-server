@@ -28,7 +28,6 @@ export interface AuthIntrospectionResponse {
 }
 
 export enum Scopes {
-  ANY = "ANY",
   VECTOR_SEARCH_NEWS = "VECTOR_SEARCH_NEWS",
   JOURNALISTS = "JOURNALISTS",
   PEOPLE = "PEOPLE",
