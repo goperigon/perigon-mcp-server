@@ -170,6 +170,14 @@ Add the following environment variables to `.dev.vars`
 | `ANTHROPIC_API_KEY` | Anthropic API key (used for playground) |
 | `PERIGON_API_KEY` | Perigon API key (used for playground) |
 
+If you wish to contribute to the MCP playground (tools inspector & chat), please make sure to modify your network hosts file (/etc/hosts on mac) to include the following
+
+```txt
+127.0.0.1 local-mcp.perigon.io
+```
+
+This will allow perigon.io cookies to be available for you while doing local development. 
+
 ```zsh
 # install deps
 bun i

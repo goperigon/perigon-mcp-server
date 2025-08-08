@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Settings, MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "./theme-toggle";
+import ApiKeySelector from "./api-key-selector";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -18,7 +19,7 @@ export default function Layout({ children }: LayoutProps) {
   return (
     <div className="h-screen bg-background overflow-hidden flex flex-col">
       {/* Clean Header */}
-      <header className="relative z-10 border-b border-border bg-card flex-shrink-0">
+      <header className="relative z-10 border-b border-border bg-card flex-shrink-0 z-50">
         <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-14 sm:h-12">
             <div className="flex items-center">
@@ -32,13 +33,14 @@ export default function Layout({ children }: LayoutProps) {
               </h1>
             </div>
             <div className="flex items-center space-x-3">
+              <ApiKeySelector />
               <nav className="flex space-x-1">
                 <Button
                   variant="ghost"
                   asChild
                   className={cn(
                     "flex items-center space-x-1 sm:space-x-2 h-10 sm:h-8 px-2 sm:px-3 text-xs sm:text-sm font-mono cursor-pointer border-2 border-transparent hover:border-border/50",
-                    isInspector && "border-border",
+                    isInspector && "border-border"
                   )}
                 >
                   <Link to="/">
@@ -51,7 +53,7 @@ export default function Layout({ children }: LayoutProps) {
                   asChild
                   className={cn(
                     "flex items-center space-x-1 sm:space-x-2 h-10 sm:h-8 px-2 sm:px-3 text-xs sm:text-sm font-mono cursor-pointer border-2 border-transparent hover:border-border/50",
-                    isChat && "border-border",
+                    isChat && "border-border"
                   )}
                 >
                   <Link to="/chat">
