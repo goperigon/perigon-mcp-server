@@ -5,7 +5,11 @@ import { Perigon } from "../../../lib/perigon";
 import { ToolCallback, ToolDefinition } from "../types";
 import { createBaseSearchArgs, categories, topics } from "../schemas/base";
 import { createSearchField } from "../schemas/search";
-import { toolResult, noResults, createPaginationHeader } from "../utils/formatting";
+import {
+  toolResult,
+  noResults,
+  createPaginationHeader,
+} from "../utils/formatting";
 import { createErrorMessage } from "../utils/error-handling";
 
 /**
@@ -37,22 +41,26 @@ export const newsStoriesArgs = createBaseSearchArgs().extend({
     .describe(
       `Filter news stories by specific publisher domains or subdomains. Supports wildcards (* and ?) for pattern matching (e.g., *cnn.com)`
     ),
+  isTopHeadlines: z
+    .boolean()
+    .optional()
+    .describe("Whether to return only top headlines or all stories"),
 });
 
 /**
  * Search for clustered news stories and headlines
- * 
+ *
  * This tool searches through news stories that are clustered together from multiple sources.
  * It provides story summaries, sentiment analysis, and metadata for understanding major
  * news events and trends across multiple sources.
- * 
+ *
  * Features:
  * - Story clustering across multiple sources
  * - Sentiment analysis for each story
  * - Category and topic filtering
  * - Time-based and location-based filtering
  * - Source filtering with wildcard support
- * 
+ *
  * @param perigon - The Perigon API client instance
  * @returns Tool callback function for MCP
  */
@@ -71,8 +79,17 @@ export function searchNewsStories(perigon: Perigon): ToolCallback {
     sources,
     categories,
     topics,
+    isTopHeadlines,
   }: z.infer<typeof newsStoriesArgs>): Promise<CallToolResult> => {
     try {
+      let fromDate = from;
+
+      if (isTopHeadlines) {
+        let now: Date = new Date();
+        fromDate = new Date(now);
+        fromDate.setHours(now.getHours() - 24);
+      }
+
       const result = await perigon.searchStories({
         q: query,
         page,
@@ -80,7 +97,7 @@ export function searchNewsStories(perigon: Perigon): ToolCallback {
         state: states,
         city: cities,
         country: countries,
-        from,
+        from: fromDate,
         to,
         sortBy,
         clusterId: newsStoryIds,
@@ -117,7 +134,9 @@ Sentiment: ${JSON.stringify(story.sentiment)}
     } catch (error) {
       console.error("Error searching news stories:", error);
       return toolResult(
-        `Error: Failed to search news stories: ${await createErrorMessage(error)}`
+        `Error: Failed to search news stories: ${await createErrorMessage(
+          error
+        )}`
       );
     }
   };

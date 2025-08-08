@@ -20,8 +20,6 @@
  * Use-Case Tools (Simplified workflows for common tasks):
  * - Company News: Get recent news about a specific company
  * - Person News: Get recent news about a specific person
- * - Top Headlines: Get current top headlines and breaking news
- * - Location News: Get news by geographic location (city, state, country)
  *
  * Each tool is designed to be:
  * - Well-documented with comprehensive JSDoc comments
@@ -44,7 +42,6 @@ export { wikipediaVectorTool } from "./search/wikipedia-vector";
 // Export use-case tools
 export { companyNewsTool } from "./use-cases/company-news";
 export { personNewsTool } from "./use-cases/person-news";
-export { topHeadlinesTool } from "./use-cases/top-headlines";
 export { locationNewsTool } from "./use-cases/location-news";
 
 // Export individual tool functions for direct use
@@ -61,7 +58,6 @@ export { searchVectorWikipedia } from "./search/wikipedia-vector";
 // Export use-case tool functions
 export { getCompanyNews } from "./use-cases/company-news";
 export { getPersonNews } from "./use-cases/person-news";
-export { getTopHeadlines } from "./use-cases/top-headlines";
 export { getLocationNews } from "./use-cases/location-news";
 
 // Export argument schemas for external use
@@ -78,7 +74,6 @@ export { wikipediaVectorArgs } from "./search/wikipedia-vector";
 // Export use-case argument schemas
 export { companyNewsArgs } from "./use-cases/company-news";
 export { personNewsArgs } from "./use-cases/person-news";
-export { topHeadlinesArgs } from "./use-cases/top-headlines";
 export { locationNewsArgs } from "./use-cases/location-news";
 
 // Export shared types and utilities
@@ -116,8 +111,6 @@ import { wikipediaTool } from "./search/wikipedia";
 import { wikipediaVectorTool } from "./search/wikipedia-vector";
 import { companyNewsTool } from "./use-cases/company-news";
 import { personNewsTool } from "./use-cases/person-news";
-import { topHeadlinesTool } from "./use-cases/top-headlines";
-import { locationNewsTool } from "./use-cases/location-news";
 import { ToolDefinition } from "./types";
 
 /**
@@ -142,8 +135,6 @@ export const TOOL_DEFINITIONS: Record<string, ToolDefinition> = {
   // Use-case tools
   get_company_news: companyNewsTool,
   get_person_news: personNewsTool,
-  get_top_headlines: topHeadlinesTool,
-  get_location_news: locationNewsTool,
 } as const;
 
 /**
