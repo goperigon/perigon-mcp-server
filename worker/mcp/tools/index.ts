@@ -1,11 +1,11 @@
 /**
  * Perigon MCP Server Tools
- * 
+ *
  * This module provides a comprehensive set of tools for searching and retrieving
  * information from the Perigon API through the Model Context Protocol (MCP).
- * 
+ *
  * Available Tools:
- * 
+ *
  * Search Tools:
  * - News Articles: Search individual news articles with advanced filtering
  * - News Stories: Search clustered news stories and headlines
@@ -16,13 +16,13 @@
  * - Topics: Search available topics in the Perigon taxonomy
  * - Wikipedia: Search Wikipedia pages with advanced filtering
  * - Wikipedia Vector: Semantic search of Wikipedia using vector embeddings
- * 
+ *
  * Use-Case Tools (Simplified workflows for common tasks):
  * - Company News: Get recent news about a specific company
  * - Person News: Get recent news about a specific person
  * - Top Headlines: Get current top headlines and breaking news
  * - Location News: Get news by geographic location (city, state, country)
- * 
+ *
  * Each tool is designed to be:
  * - Well-documented with comprehensive JSDoc comments
  * - MCP-compliant with proper parameter schemas
@@ -86,18 +86,22 @@ export type { ToolCallback, ToolDefinition } from "./types";
 export { CONSTANTS } from "./types";
 
 // Export utility functions
-export { toolResult, noResults, createPaginationHeader } from "./utils/formatting";
+export {
+  toolResult,
+  noResults,
+  createPaginationHeader,
+} from "./utils/formatting";
 export { createErrorMessage } from "./utils/error-handling";
 
 // Export schema utilities
 export { createSearchField, sortByEnum } from "./schemas/search";
-export { 
-  locationArgs, 
-  paginationArgs, 
-  defaultArgs, 
-  categories, 
-  topics, 
-  createBaseSearchArgs 
+export {
+  locationArgs,
+  paginationArgs,
+  defaultArgs,
+  categories,
+  topics,
+  createBaseSearchArgs,
 } from "./schemas/base";
 
 // Import all tool definitions
@@ -118,7 +122,7 @@ import { ToolDefinition } from "./types";
 
 /**
  * Complete registry of all available tools
- * 
+ *
  * This object provides a centralized registry of all MCP tools available
  * in the Perigon server. Each tool is keyed by its name and contains
  * all necessary metadata for MCP registration.
@@ -134,7 +138,7 @@ export const TOOL_DEFINITIONS: Record<string, ToolDefinition> = {
   search_topics: topicsTool,
   search_wikipedia: wikipediaTool,
   search_vector_wikipedia: wikipediaVectorTool,
-  
+
   // Use-case tools
   get_company_news: companyNewsTool,
   get_person_news: personNewsTool,

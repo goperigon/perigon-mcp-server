@@ -11,6 +11,7 @@ import {
   createPaginationHeader,
 } from "../utils/formatting";
 import { createErrorMessage } from "../utils/error-handling";
+import { applyLocationFilter, createLocationSchema } from "../utils/location";
 
 /**
  * Schema for news articles search arguments
@@ -65,6 +66,7 @@ export const newsArticlesArgs = createBaseSearchArgs().extend({
     .describe(
       "Read the article summary instead of full content, defaults to true"
     ),
+  ...createLocationSchema(),
 });
 
 /**
@@ -72,10 +74,13 @@ export const newsArticlesArgs = createBaseSearchArgs().extend({
  *
  * This tool allows you to search through news articles using various filters including:
  * - Keywords and search queries with Elasticsearch syntax
- * - Location-based filtering (countries, states, cities)
+ * - Location-based filtering (countries, states, cities) with smart location detection
  * - Time range filtering
  * - Source and journalist filtering
  * - Article ID and news story ID filtering
+ *
+ * Location filtering supports both explicit arrays (states, cities, countries) and
+ * intelligent parsing via the 'location' parameter with automatic type detection.
  *
  * @param perigon - The Perigon API client instance
  * @returns Tool callback function for MCP
@@ -96,9 +101,12 @@ export function searchNewsArticles(perigon: Perigon): ToolCallback {
     newsStoryIds,
     sources,
     summarize,
+    location,
+    locationType,
   }: z.infer<typeof newsArticlesArgs>): Promise<CallToolResult> => {
     try {
-      const result = await perigon.searchArticles({
+      // Prepare search parameters
+      let searchParams: any = {
         q: query,
         page,
         size,
@@ -114,7 +122,17 @@ export function searchNewsArticles(perigon: Perigon): ToolCallback {
         source: sources,
         showNumResults: true,
         showReprints: false,
-      });
+      };
+
+      // Apply location filtering using the utility function
+      searchParams = applyLocationFilter(
+        searchParams,
+        location,
+        locationType,
+        query
+      );
+
+      const result = await perigon.searchArticles(searchParams);
 
       if (result.numResults === 0) return noResults;
 
@@ -160,7 +178,7 @@ Journalist Ids: ${journalistIds}
 export const newsArticlesTool: ToolDefinition = {
   name: "search_news_articles",
   description:
-    "Search individual news articles with advanced filtering by keywords, location, time range, sources, and journalists. Returns full article content or summaries with metadata.",
+    "Search individual news articles with advanced filtering by keywords, location (with smart detection), time range, sources, and journalists. Supports both explicit location arrays and intelligent location parsing. Returns full article content or summaries with metadata.",
   parameters: newsArticlesArgs,
   createHandler: (perigon: Perigon) => searchNewsArticles(perigon),
 };
