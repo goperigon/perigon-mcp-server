@@ -5,9 +5,7 @@ import { LogIn, ExternalLink } from "lucide-react";
 export default function PerigonLogin() {
   const handleLogin = () => {
     const currentUrl = window.location.href;
-    const redirectUrl = `https://perigon.io/sign-in?redirectTo=${encodeURIComponent(
-      currentUrl
-    )}`;
+    const redirectUrl = `https://www.perigon.io/sign-in?redirectTo=${currentUrl}`;
     window.location.href = redirectUrl;
   };
 
