@@ -132,12 +132,6 @@ export default function InspectorPage() {
     }
   }, [selectedTool, toolParams, selectedPerigonKey, invalidate, secret]);
 
-  useEffect(() => {
-    if (selectedTool) {
-      handleExecuteTool();
-    }
-  }, [selectedTool, handleExecuteTool]);
-
   const selectedToolData = tools.find((tool) => tool.name === selectedTool);
 
   // todo: proper json schema handling...
