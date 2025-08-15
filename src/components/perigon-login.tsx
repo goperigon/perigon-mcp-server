@@ -15,16 +15,20 @@ export default function PerigonLogin() {
         <CardHeader className="text-center">
           <CardTitle className="text-xl">Sign in with Perigon</CardTitle>
           <p className="text-sm text-muted-foreground">
-            Access the MCP server with your Perigon account
+            Access the MCP playground with your Perigon account
           </p>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="bg-muted/50 p-3 rounded-lg text-xs text-muted-foreground">
             <div className="font-medium mb-1">What you'll get:</div>
             <ul className="space-y-1">
-              <li>• Automatic API key management</li>
-              <li>• No manual key configuration needed</li>
-              <li>• Secure authentication via Perigon</li>
+              <li>
+                • Interactive tools explorer to discover powerful MCP
+                capabilities
+              </li>
+              <li>• AI chat playground with the available tools</li>
+              <li>• Secure single sign-on with your Perigon account</li>
+              <li>• Seamless access to your existing Perigon API keys</li>
             </ul>
           </div>
 
