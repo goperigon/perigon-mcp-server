@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://goperigon.com/favicon.ico" width="120" alt="Perigon logo" />
+  <img src="https://marketing.perigon.io/_next/image?url=%2Flogos%2FLogo-Perigon-Dark.png&w=256&q=75" width="120" alt="Perigon logo" />
 </p>
 
 <h1 align="center">Perigon&nbsp;MCP&nbsp;Server</h1>
