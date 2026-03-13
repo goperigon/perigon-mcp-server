@@ -141,7 +141,7 @@ Journalist Ids: ${journalistIds}
 export const personNewsTool: ToolDefinition = {
   name: "get_person_news",
   description:
-    "Get recent news about a specific person. Searches for the person first to get context, then finds recent news articles mentioning that person. Includes today's date for proper temporal filtering.",
+    "Quick shortcut to get recent news about a specific person by name. Automatically looks up the person's profile for context, then finds recent articles mentioning them within a configurable time window. Use this for simple 'what's the latest news about [person]?' queries. For advanced filtering, use search_news_articles with personName instead.",
   parameters: personNewsArgs,
   createHandler: (perigon: Perigon) => getPersonNews(perigon),
 };

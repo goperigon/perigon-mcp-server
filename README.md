@@ -176,7 +176,7 @@ If you wish to contribute to the MCP playground (tools inspector & chat), please
 127.0.0.1 local-mcp.perigon.io
 ```
 
-This will allow perigon.io cookies to be available for you while doing local development. 
+This will allow perigon.io cookies to be available for you while doing local development.
 
 ```zsh
 # install deps

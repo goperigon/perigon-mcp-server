@@ -15,13 +15,36 @@ export const companiesArgs = z.object({
   query: createSearchField(
     "company name, alternative names, domains, and ticker symbol"
   ),
+  name: createSearchField("company name specifically"),
   industry: createSearchField("company industry"),
   sector: createSearchField("company sector classification"),
   domains: z
     .array(z.string())
     .optional()
     .describe(
-      "Filter by company domains or websites (e.g., apple.com, microsoft.com)"
+      "Filter by company domains or websites (e.g., apple.com, microsoft.com)."
+    ),
+  symbol: z
+    .array(z.string())
+    .optional()
+    .describe(
+      "Filter by stock ticker symbols (e.g., AAPL, MSFT, GOOGL)."
+    ),
+  id: z
+    .array(z.string())
+    .optional()
+    .describe("Filter by Perigon company IDs."),
+  country: z
+    .array(z.string())
+    .optional()
+    .describe(
+      "Filter by country code where the company is headquartered (e.g., us, gb)."
+    ),
+  exchange: z
+    .array(z.string())
+    .optional()
+    .describe(
+      "Filter by stock exchange (e.g., NASDAQ, NYSE)."
     ),
 });
 
@@ -59,16 +82,26 @@ export function searchCompanies(perigon: Perigon): ToolCallback {
     page,
     size,
     query,
+    name,
     domains,
+    symbol,
+    id: companyIds,
+    country,
+    exchange,
     industry,
     sector,
   }: z.infer<typeof companiesArgs>): Promise<CallToolResult> => {
     try {
       const result = await perigon.searchCompanies({
         q: query,
+        name,
         page,
         size,
         domain: domains,
+        symbol,
+        id: companyIds,
+        country,
+        exchange,
         industry,
         sector,
       });
@@ -111,7 +144,7 @@ Country: ${company.country}
 export const companiesTool: ToolDefinition = {
   name: "search_companies",
   description:
-    "Find corporations and businesses by name, domain, or industry. Returns company profiles with CEO information, employee count, industry classification, and business descriptions.",
+    "Search corporations and businesses in the Perigon database. Use this to look up company information, find companies by industry/sector, or identify companies by stock ticker or domain. Filter by name, domain, ticker symbol, industry, sector, country, or stock exchange. Returns company profiles with CEO, employee count, industry classification, country, and business descriptions.",
   parameters: companiesArgs,
   createHandler: (perigon: Perigon) => searchCompanies(perigon),
 };

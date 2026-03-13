@@ -89,7 +89,6 @@ export default function ChatPlayground() {
   const [initialMessages] = React.useState(() => loadMessagesFromStorage());
   const [showError, setShowError] = React.useState(false);
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
-  console.log(JSON.stringify(initialMessages));
   const {
     messages,
     input,
@@ -111,9 +110,6 @@ export default function ChatPlayground() {
       // Only add Perigon API key header if we have a valid key
       if (selectedPerigonKey?.token) {
         headers["X-Perigon-API-Key"] = selectedPerigonKey.token;
-        console.log("Chat - sending Perigon API key header");
-      } else {
-        console.log("Chat - no Perigon API key available");
       }
 
       return headers;
@@ -330,11 +326,10 @@ export default function ChatPlayground() {
           {messages.map((message) => (
             <div key={message.id} className="space-y-3">
               <div
-                className={`flex items-start space-x-4 ${
-                  message.role === "user"
-                    ? "flex-row-reverse space-x-reverse"
-                    : ""
-                }`}
+                className={`flex items-start space-x-4 ${message.role === "user"
+                  ? "flex-row-reverse space-x-reverse"
+                  : ""
+                  }`}
               >
                 <div className="w-10 h-10 flex items-center justify-center text-muted-foreground">
                   {message.role === "user" ? (
@@ -345,9 +340,8 @@ export default function ChatPlayground() {
                 </div>
 
                 <div
-                  className={`flex-1 max-w-[85%] ${
-                    message.role === "user" ? "text-right" : ""
-                  }`}
+                  className={`flex-1 max-w-[85%] ${message.role === "user" ? "text-right" : ""
+                    }`}
                 >
                   {message.parts?.map((part, index) => {
                     switch (part.type) {

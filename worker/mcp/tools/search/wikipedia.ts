@@ -11,6 +11,11 @@ import { SortBy } from "@goperigon/perigon-ts";
 /**
  * Schema for Wikipedia search arguments
  */
+function parseTime(str: string) {
+  if (str === "") return undefined;
+  return new Date(str);
+}
+
 export const wikipediaArgs = z.object({
   ...paginationArgs.shape,
   query: createSearchField("Wikipedia article content and titles"),
@@ -27,35 +32,63 @@ export const wikipediaArgs = z.object({
   wikidataId: z
     .array(z.string())
     .optional()
-    .describe("Filter by Wikidata entity IDs (e.g., Q7747, Q937)"),
+    .describe("Filter by Wikidata entity IDs (e.g., Q42, Q937)."),
   wikidataInstanceOfId: z
     .array(z.string())
     .optional()
     .describe(
-      "Filter pages whose Wikidata entities are instances of these IDs"
+      "Filter pages whose Wikidata entities are instances of these IDs."
     ),
   wikidataInstanceOfLabel: z
     .array(z.string())
     .optional()
     .describe(
-      "Filter pages whose Wikidata entities are instances of these labels"
+      "Filter pages whose Wikidata entities are instances of these labels (e.g., human, city, country)."
     ),
   category: z
     .array(z.string())
     .optional()
-    .describe("Filter by Wikipedia categories"),
+    .describe("Filter by Wikipedia categories."),
   withPageviews: z
     .boolean()
     .optional()
-    .describe("Whether to include only pages with viewership statistics"),
+    .describe("Only return pages that have viewership statistics."),
   pageviewsFrom: z
     .number()
     .optional()
-    .describe("Minimum average daily page views"),
+    .describe("Minimum average daily page views."),
   pageviewsTo: z
     .number()
     .optional()
-    .describe("Maximum average daily page views"),
+    .describe("Maximum average daily page views."),
+  wikiRevisionFrom: z
+    .string()
+    .transform(parseTime)
+    .optional()
+    .describe(
+      "Pages modified on Wikipedia after this date. ISO 8601 or yyyy-mm-dd."
+    ),
+  wikiRevisionTo: z
+    .string()
+    .transform(parseTime)
+    .optional()
+    .describe(
+      "Pages modified on Wikipedia before this date. ISO 8601 or yyyy-mm-dd."
+    ),
+  scrapedAtFrom: z
+    .string()
+    .transform(parseTime)
+    .optional()
+    .describe(
+      "Pages scraped/indexed by Perigon after this date. ISO 8601 or yyyy-mm-dd."
+    ),
+  scrapedAtTo: z
+    .string()
+    .transform(parseTime)
+    .optional()
+    .describe(
+      "Pages scraped/indexed by Perigon before this date. ISO 8601 or yyyy-mm-dd."
+    ),
   sortBy: sortByEnum.default(SortBy.Relevance).optional(),
 });
 
@@ -108,6 +141,10 @@ export function searchWikipedia(perigon: Perigon): ToolCallback {
     withPageviews,
     pageviewsFrom,
     pageviewsTo,
+    wikiRevisionFrom,
+    wikiRevisionTo,
+    scrapedAtFrom,
+    scrapedAtTo,
     sortBy,
   }: z.infer<typeof wikipediaArgs>): Promise<CallToolResult> => {
     try {
@@ -127,6 +164,10 @@ export function searchWikipedia(perigon: Perigon): ToolCallback {
         withPageviews,
         pageviewsFrom,
         pageviewsTo,
+        wikiRevisionFrom,
+        wikiRevisionTo,
+        scrapedAtFrom,
+        scrapedAtTo,
         sortBy,
         showNumResults: true,
       });
@@ -170,7 +211,7 @@ Last Modified: ${page.wikiRevisionTs}
 export const wikipediaTool: ToolDefinition = {
   name: "search_wikipedia",
   description:
-    "Search Wikipedia pages for information on any topic. Returns page summaries, content, categories, and metadata with support for advanced filtering by Wikidata entities, categories, and page views.",
+    "Search Wikipedia pages using keyword-based queries with advanced filtering. Use this for factual background information, encyclopedia-style lookups, or when you need structured Wikipedia data. Filter by title, summary, content, Wikidata entity IDs, categories, page views, and revision dates. Returns page summaries, URLs, Wikidata IDs, categories, page view statistics, and last modification dates.",
   parameters: wikipediaArgs,
   createHandler: (perigon: Perigon) => searchWikipedia(perigon),
 };

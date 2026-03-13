@@ -1,21 +1,26 @@
-import { SortBy } from "@goperigon/perigon-ts";
 import { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 import { Perigon } from "../../../lib/perigon";
 import { ToolCallback, ToolDefinition } from "../types";
 import { paginationArgs } from "../schemas/base";
-import { toolResult, noResults, createPaginationHeader } from "../utils/formatting";
+import {
+  toolResult,
+  noResults,
+  createPaginationHeader,
+} from "../utils/formatting";
 import { createErrorMessage } from "../utils/error-handling";
 
-/**
- * Schema for Wikipedia vector search arguments
- */
+function parseTime(str: string) {
+  if (str === "") return undefined;
+  return new Date(str);
+}
+
 export const wikipediaVectorArgs = z.object({
   ...paginationArgs.shape,
   query: z
     .string()
     .describe(
-      "Natural language query for semantic search of Wikipedia content. This will be converted to a vector embedding to find semantically similar Wikipedia articles."
+      "Natural language query for semantic search of Wikipedia content. Describe what you're looking for in conversational language. The query is converted to a vector embedding to find semantically similar Wikipedia pages and sections."
     ),
   wikiCode: z
     .array(z.string())
@@ -26,79 +31,51 @@ export const wikipediaVectorArgs = z.object({
   wikidataId: z
     .array(z.string())
     .optional()
-    .describe("Filter by Wikidata entity IDs (e.g., Q7747, Q937)"),
+    .describe("Filter by Wikidata entity IDs (e.g., Q42, Q937)."),
   wikidataInstanceOfId: z
     .array(z.string())
     .optional()
     .describe(
-      "Filter pages whose Wikidata entities are instances of these IDs"
+      "Filter pages whose Wikidata entities are instances of these IDs."
     ),
   wikidataInstanceOfLabel: z
     .array(z.string())
     .optional()
     .describe(
-      "Filter pages whose Wikidata entities are instances of these labels"
+      "Filter pages whose Wikidata entities are instances of these labels (e.g., human, city, country)."
     ),
   category: z
     .array(z.string())
     .optional()
-    .describe("Filter by Wikipedia categories"),
+    .describe("Filter by Wikipedia categories."),
   withPageviews: z
     .boolean()
     .optional()
-    .describe("Whether to include only pages with viewership statistics"),
+    .describe("Only return pages that have viewership statistics."),
   pageviewsFrom: z
     .number()
     .optional()
-    .describe("Minimum average daily page views"),
+    .describe("Minimum average daily page views."),
   pageviewsTo: z
     .number()
     .optional()
-    .describe("Maximum average daily page views"),
-  sortBy: z
-    .enum([SortBy.Relevance, SortBy.CreatedAt, SortBy.UpdatedAt])
-    .default(SortBy.Relevance)
-    .optional(),
+    .describe("Maximum average daily page views."),
+  wikiRevisionFrom: z
+    .string()
+    .transform(parseTime)
+    .optional()
+    .describe(
+      "Pages modified on Wikipedia after this date. ISO 8601 or yyyy-mm-dd."
+    ),
+  wikiRevisionTo: z
+    .string()
+    .transform(parseTime)
+    .optional()
+    .describe(
+      "Pages modified on Wikipedia before this date. ISO 8601 or yyyy-mm-dd."
+    ),
 });
 
-/**
- * Search Wikipedia pages using semantic vector search
- * 
- * This tool provides advanced semantic search capabilities across Wikipedia content
- * using vector embeddings to find conceptually related articles, even when they
- * don't share exact keywords with your query.
- * 
- * Key advantages of vector search:
- * - Semantic understanding: Finds articles related by meaning, not just keywords
- * - Conceptual similarity: Discovers connections between related topics
- * - Natural language queries: Use conversational language to describe what you're looking for
- * - Cross-linguistic concepts: Finds related content even with different terminology
- * 
- * Use cases:
- * - Research on complex topics with multiple related concepts
- * - Finding background information on unfamiliar subjects
- * - Discovering connections between different fields or topics
- * - Exploring related concepts and ideas
- * 
- * Filtering options:
- * - Wikidata entity IDs for precise identification
- * - Wikipedia categories for topic-based filtering
- * - Page view statistics for popularity-based filtering
- * - Instance-of relationships for entity type filtering
- * - Multiple wiki project support (currently English Wikipedia)
- * 
- * Returns comprehensive page information including:
- * - Page titles and URLs with semantic similarity scores
- * - Article summaries and content excerpts
- * - Wikidata identifiers for cross-referencing
- * - Category classifications
- * - Page view statistics and popularity metrics
- * - Last modification timestamps
- * - Similarity scores indicating semantic relevance
- * 
- * @param perigon - The Perigon API client instance
- * @returns Tool callback function for MCP
- */
 export function searchVectorWikipedia(perigon: Perigon): ToolCallback {
   return async ({
     query,
@@ -112,72 +89,52 @@ export function searchVectorWikipedia(perigon: Perigon): ToolCallback {
     withPageviews,
     pageviewsFrom,
     pageviewsTo,
-    sortBy,
+    wikiRevisionFrom,
+    wikiRevisionTo,
   }: z.infer<typeof wikipediaVectorArgs>): Promise<CallToolResult> => {
     try {
-      // Note: Using direct API call since the SDK method might not be available yet
-      // This can be replaced with perigon.searchWikipediaVector() when available in the SDK
-      const params = new URLSearchParams();
-      if (query) params.append("q", query);
-      if (page !== undefined) params.append("page", page.toString());
-      if (size !== undefined) params.append("size", size.toString());
-      if (wikiCode) wikiCode.forEach((code) => params.append("wikiCode", code));
-      if (wikidataId) wikidataId.forEach((id) => params.append("wikidataId", id));
+      const filter: Record<string, any> = {};
+      if (wikiCode) filter.wikiCode = wikiCode;
+      if (wikidataId) filter.wikidataId = wikidataId;
       if (wikidataInstanceOfId)
-        wikidataInstanceOfId.forEach((id) =>
-          params.append("wikidataInstanceOfId", id)
-        );
+        filter.wikidataInstanceOfId = wikidataInstanceOfId;
       if (wikidataInstanceOfLabel)
-        wikidataInstanceOfLabel.forEach((label) =>
-          params.append("wikidataInstanceOfLabel", label)
-        );
-      if (category) category.forEach((cat) => params.append("category", cat));
-      if (withPageviews !== undefined)
-        params.append("withPageviews", withPageviews.toString());
-      if (pageviewsFrom !== undefined)
-        params.append("pageviewsFrom", pageviewsFrom.toString());
-      if (pageviewsTo !== undefined)
-        params.append("pageviewsTo", pageviewsTo.toString());
-      if (sortBy) params.append("sortBy", sortBy);
-      params.append("showNumResults", "true");
+        filter.wikidataInstanceOfLabel = wikidataInstanceOfLabel;
+      if (category) filter.category = category;
 
-      // TODO: Replace with actual vector search endpoint when available
-      // For now, use regular search as fallback
-      const result = await (perigon as any).searchWikipedia({
-        q: query,
-        page,
-        size,
-        wikiCode,
-        wikidataId,
-        wikidataInstanceOfId,
-        wikidataInstanceOfLabel,
-        category,
-        withPageviews,
-        pageviewsFrom,
-        pageviewsTo,
-        sortBy,
-        showNumResults: true,
+      const result = await perigon.vectorSearchWikipedia({
+        wikipediaSearchParams: {
+          prompt: query,
+          page,
+          size,
+          pageviewsFrom,
+          pageviewsTo,
+          wikiRevisionFrom,
+          wikiRevisionTo,
+          ...(Object.keys(filter).length > 0 ? { filter } : {}),
+        },
       });
 
-      if (result.numResults === 0) return noResults;
+      if (!result.results || result.results.length === 0) return noResults;
 
-      const articles = result.results.map((page: any) => {
-        return `<wikipedia_page id="${page.id}" title="${page.wikiTitle}">
-URL: ${page.url}
-Summary: ${page.summary}
-Wikidata ID: ${page.wikidataId}
-Categories: ${page.categories?.join(", ") || "N/A"}
-Page Views: ${page.pageviews || "N/A"}
-Last Modified: ${page.wikiRevisionTs}
-Similarity Score: ${page.score || "N/A"}
+      const articles = result.results.map((scored: any) => {
+        const pageData = scored.data || scored;
+        return `<wikipedia_page id="${pageData.id || "N/A"}" title="${pageData.wikiTitle || pageData.title || "N/A"}">
+URL: ${pageData.url || "N/A"}
+Summary: ${pageData.summary || "N/A"}
+Wikidata ID: ${pageData.wikidataId || "N/A"}
+Categories: ${pageData.categories?.join(", ") || "N/A"}
+Page Views: ${pageData.pageviews || "N/A"}
+Last Modified: ${pageData.wikiRevisionTs || "N/A"}
+Similarity Score: ${scored.score || "N/A"}
 </wikipedia_page>`;
       });
 
       let output = createPaginationHeader(
-        result.numResults,
-        page as number,
+        result.results.length,
+        page,
         size,
-        "Wikipedia pages"
+        "Wikipedia pages (vector search)"
       );
       output += "\n<wikipedia_pages>\n";
       output += articles.join("\n\n");
@@ -187,19 +144,18 @@ Similarity Score: ${page.score || "N/A"}
     } catch (error: any) {
       console.error("Error searching Wikipedia with vector:", error);
       return toolResult(
-        `Error: Failed to search Wikipedia with vector: ${await createErrorMessage(error)}`
+        `Error: Failed to search Wikipedia with vector: ${await createErrorMessage(
+          error
+        )}`
       );
     }
   };
 }
 
-/**
- * Tool definition for Wikipedia vector search
- */
 export const wikipediaVectorTool: ToolDefinition = {
   name: "search_vector_wikipedia",
   description:
-    "Search Wikipedia pages for information on any topic using semantic vector search. Returns page summaries, content, categories, and metadata with support for advanced filtering by Wikidata entities, categories, and page views.",
+    "Semantic search over Wikipedia pages using natural language and vector embeddings. Use this instead of search_wikipedia when the query is conceptual or conversational rather than keyword-based. Finds pages related by meaning even without exact keyword matches. Returns page summaries, content excerpts, Wikidata IDs, categories, and similarity scores.",
   parameters: wikipediaVectorArgs,
   createHandler: (perigon: Perigon) => searchVectorWikipedia(perigon),
 };

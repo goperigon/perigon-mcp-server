@@ -15,15 +15,19 @@ export const topicsArgs = z.object({
     .string()
     .optional()
     .describe(
-      "Search for topics by exact name or partial text match. Does not support wildcards." +
-        " Examples include Markets, Cryptocurrency, Climate Change, etc."
+      "Search for topics by exact name or partial text match (no wildcards). Examples: Markets, Cryptocurrency, Climate Change."
     ),
   category: z
     .string()
     .optional()
     .describe(
-      "Filter topics by broad article categories such as Politics, Tech, Sports, Business," +
-        " Finance, Entertainment, etc."
+      "Filter topics by parent category: Politics, Tech, Sports, Business, Finance, Entertainment, etc."
+    ),
+  subcategory: z
+    .string()
+    .optional()
+    .describe(
+      "Filter topics by subcategory within a category for more specific results."
     ),
 });
 
@@ -60,6 +64,7 @@ export function searchTopics(perigon: Perigon): ToolCallback {
     size,
     name,
     category,
+    subcategory,
   }: z.infer<typeof topicsArgs>): Promise<CallToolResult> => {
     try {
       const result = await perigon.searchTopics({
@@ -67,6 +72,7 @@ export function searchTopics(perigon: Perigon): ToolCallback {
         size,
         name,
         category,
+        subcategory,
       });
 
       if (result.total === 0) return noResults;
@@ -99,7 +105,8 @@ Sub Category: ${topic.labels?.subcategory}
  */
 export const topicsTool: ToolDefinition = {
   name: "search_topics",
-  description: "Search topics currently supported via Perigon API",
+  description:
+    "Browse and search the Perigon topic taxonomy. Use this to discover available topics for use as filters in other search tools (articles, stories, journalists). Topics are more granular than categories. Filter by name, category, or subcategory. Returns topic names with their category/subcategory classification.",
   parameters: topicsArgs,
   createHandler: (perigon: Perigon) => searchTopics(perigon),
 };

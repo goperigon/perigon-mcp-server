@@ -11,24 +11,27 @@ export type Props = {
 
 // Map scopes to tool names
 const SCOPE_TO_TOOLS: Partial<Record<Scopes, ToolName[]>> = {
-  [Scopes.CLUSTERS]: ["search_news_stories"],
+  [Scopes.CLUSTERS]: ["search_news_stories", "summarize_news"],
   [Scopes.JOURNALISTS]: ["search_journalists"],
   [Scopes.SOURCES]: ["search_sources"],
   [Scopes.PEOPLE]: ["search_people", "get_person_news"],
   [Scopes.COMPANIES]: ["search_companies", "get_company_news"],
   [Scopes.TOPICS]: ["search_topics"],
+  [Scopes.LOCATIONS]: ["get_location_news"],
   [Scopes.WIKIPEDIA]: ["search_wikipedia"],
+  [Scopes.VECTOR_SEARCH_NEWS]: ["search_vector_news"],
   [Scopes.VECTOR_SEARCH_WIKIPEDIA]: ["search_vector_wikipedia"],
 };
 
 export class PerigonMCP extends McpAgent<Env, unknown, Props> {
+  // Type assertion needed: agents bundles its own @modelcontextprotocol/sdk copy
   server = new McpServer({
     name: "Perigon News API",
     version: "1.0.0",
-  });
+  }) as any;
 
   async init() {
-    const perigon = new Perigon(this.props.apiKey);
+    const perigon = new Perigon(this.props!.apiKey);
 
     // Always include articles search
     const articlesDefinition = TOOL_DEFINITIONS.search_news_articles;
@@ -40,7 +43,7 @@ export class PerigonMCP extends McpAgent<Env, unknown, Props> {
     );
 
     // Add tools based on scopes
-    for (const scope of this.props.scopes) {
+    for (const scope of this.props!.scopes) {
       if (!scope) continue;
 
       const currentToolNames = SCOPE_TO_TOOLS[scope];

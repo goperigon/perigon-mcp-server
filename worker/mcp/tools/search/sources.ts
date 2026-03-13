@@ -18,9 +18,19 @@ export const sourcesArgs = z.object({
     .array(z.string())
     .optional()
     .describe(
-      `Filter sources by specific publisher domains or subdomains. Supports wildcards (* and ?) for pattern matching (e.g., *cnn.com)`
+      "Filter by exact publisher domains or subdomains. Supports wildcards (* and ?) for pattern matching (e.g., *.cnn.com)."
     ),
   name: createSearchField("source name or alternative names"),
+  sourceGroup: z
+    .string()
+    .optional()
+    .describe(
+      "Filter by curated source bundles: top10, top25, top50, top100, top25tech, top25crypto."
+    ),
+  paywall: z
+    .boolean()
+    .optional()
+    .describe("Filter by paywall status: true for paywalled, false for free."),
   sortBy: z
     .enum([
       SortBy.Count,
@@ -35,22 +45,22 @@ export const sourcesArgs = z.object({
     .number()
     .int()
     .optional()
-    .describe("Filter for sources with at least this many monthly visits"),
+    .describe("Minimum monthly visitors threshold."),
   maxMonthlyVisits: z
     .number()
     .int()
     .optional()
-    .describe("Filter for sources with no more than this many monthly visits"),
+    .describe("Maximum monthly visitors threshold."),
   minMonthlyPosts: z
     .number()
     .int()
     .optional()
-    .describe("Filter for sources with at least this many monthly posts"),
+    .describe("Minimum articles published per month."),
   maxMonthlyPosts: z
     .number()
     .int()
     .optional()
-    .describe("Filter for sources with no more than this many monthly posts"),
+    .describe("Maximum articles published per month."),
 });
 
 /**
@@ -86,11 +96,15 @@ export function searchSources(perigon: Perigon): ToolCallback {
     minMonthlyVisits,
     name,
     domains,
+    sourceGroup,
+    paywall,
   }: z.infer<typeof sourcesArgs>): Promise<CallToolResult> => {
     try {
       const result = await perigon.searchSources({
-        name: name,
+        name,
         domain: domains,
+        sourceGroup,
+        paywall,
         page,
         size,
         sourceCountry: countries,
@@ -139,7 +153,7 @@ Top Topics: ${source.topTopics?.map((topic) => topic.name).join(", ")}
 export const sourcesTool: ToolDefinition = {
   name: "search_sources",
   description:
-    "Discover news publications and media outlets by name, domain, location, or audience size. Returns source details including monthly visits, top topics, and geographic focus.",
+    "Search 200k+ news publications and media outlets in the Perigon database. Use this to discover or compare news sources by name, domain, location, audience size, or publishing volume. Filter by curated bundles (top10, top100), paywall status, or geographic location. Returns source profiles with domain, monthly visits, top topics covered, and publishing frequency.",
   parameters: sourcesArgs,
   createHandler: (perigon: Perigon) => searchSources(perigon),
 };

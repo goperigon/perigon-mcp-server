@@ -158,7 +158,7 @@ Journalist Ids: ${journalistIds}
 export const locationNewsTool: ToolDefinition = {
   name: "get_location_news",
   description:
-    "Get recent news by geographic location (city, state, or country). Intelligently detects location type and searches for relevant news articles. Includes today's date for proper temporal filtering.",
+    "Quick shortcut to get recent news for a geographic location (city, state, or country). Automatically detects the location type and applies appropriate geographic filters. Use this for simple 'what's happening in [location]?' queries. For advanced filtering, use search_news_articles with explicit city/state/country parameters instead.",
   parameters: locationNewsArgs,
   createHandler: (perigon: Perigon) => getLocationNews(perigon),
 };

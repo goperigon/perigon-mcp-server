@@ -23,7 +23,7 @@ export const newsStoriesArgs = createBaseSearchArgs().extend({
     .array(z.string())
     .optional()
     .describe(
-      `Filter for a specific articles by news story IDs they belong to (id of the "headlines" or news clusters).`
+      `Filter for specific stories by their cluster IDs (the "headlines" or grouped news clusters).`
     ),
   sortBy: z
     .enum([
@@ -39,12 +39,48 @@ export const newsStoriesArgs = createBaseSearchArgs().extend({
     .array(z.string())
     .optional()
     .describe(
-      `Filter news stories by specific publisher domains or subdomains. Supports wildcards (* and ?) for pattern matching (e.g., *cnn.com)`
+      "Filter stories by publisher domains or subdomains. Supports wildcards (* and ?) for pattern matching (e.g., *.cnn.com)."
+    ),
+  sourceGroup: z
+    .array(z.string())
+    .optional()
+    .describe(
+      "Filter using curated publisher bundles: top10, top25, top50, top100, top25tech, top25crypto."
+    ),
+  language: z
+    .array(z.string())
+    .optional()
+    .describe(
+      "Filter by language using ISO-639 two-letter codes (e.g., en, es, fr)."
+    ),
+  label: z
+    .array(z.string())
+    .optional()
+    .describe(
+      "Filter by editorial labels: Opinion, Paid-news, Non-news, Fact Check, Press Release."
+    ),
+  personName: z
+    .string()
+    .optional()
+    .describe("Filter for stories mentioning a specific person by exact name."),
+  companyDomain: z
+    .array(z.string())
+    .optional()
+    .describe(
+      "Filter for stories mentioning companies by domain (e.g., apple.com)."
+    ),
+  companySymbol: z
+    .array(z.string())
+    .optional()
+    .describe(
+      "Filter for stories mentioning companies by ticker symbol (e.g., AAPL)."
     ),
   isTopHeadlines: z
     .boolean()
     .optional()
-    .describe("Whether to return only top headlines or all stories"),
+    .describe(
+      "When true, returns only top headlines from the last 24 hours."
+    ),
 });
 
 /**
@@ -77,6 +113,12 @@ export function searchNewsStories(perigon: Perigon): ToolCallback {
     sortBy,
     newsStoryIds,
     sources,
+    sourceGroup,
+    language,
+    label,
+    personName,
+    companyDomain,
+    companySymbol,
     categories,
     topics,
     isTopHeadlines,
@@ -102,11 +144,18 @@ export function searchNewsStories(perigon: Perigon): ToolCallback {
         sortBy,
         clusterId: newsStoryIds,
         source: sources,
+        sourceGroup,
+        personName,
+        companyDomain,
+        companySymbol,
         showNumResults: false,
         showDuplicates: true,
         category: categories,
         topic: topics,
-      });
+        // language and label are supported by the API but not typed in the SDK
+        ...(language ? { language } : {}),
+        ...(label ? { label } : {}),
+      } as any);
 
       if (result.numResults === 0) return noResults;
 
@@ -148,7 +197,7 @@ Sentiment: ${JSON.stringify(story.sentiment)}
 export const newsStoriesTool: ToolDefinition = {
   name: "search_news_stories",
   description:
-    "Search clustered news stories and headlines. Returns story summaries, sentiment analysis, and metadata for understanding major news events and trends across multiple sources.",
+    "Search clustered news stories (headlines) that group related articles across multiple sources into a single narrative. Use this to understand major news events, trending headlines, and story arcs rather than finding individual articles. Filter by category, topic, source, location, person, company, or time range. Returns story summaries, sentiment analysis, article counts, and creation/update timestamps.",
   parameters: newsStoriesArgs,
   createHandler: (perigon: Perigon) => searchNewsStories(perigon),
 };

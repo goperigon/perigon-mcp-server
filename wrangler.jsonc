@@ -66,7 +66,8 @@
     {
       "binding": "AUTH_KV",
       "id": "5a6572b47a1c4f92800ea9a66c7b6c6f",
-    },
+      "preview_id": "0da3be4bc5d84a00bcc3ded53fa882db"
+    }
   ],
   "env": {
     "production": {

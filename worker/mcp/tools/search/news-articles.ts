@@ -43,28 +43,125 @@ export const newsArticlesArgs = createBaseSearchArgs().extend({
   articleIds: z
     .array(z.string())
     .optional()
-    .describe("Filter for a specific articles by ID."),
+    .describe("Filter for specific articles by their unique article IDs."),
   journalistIds: z
     .array(z.string())
     .optional()
-    .describe("Filter for a specific articles by journalist ID."),
+    .describe("Filter for articles written by specific journalist IDs."),
   newsStoryIds: z
     .array(z.string())
     .optional()
     .describe(
-      `Filter for a specific articles by news story IDs they belong to (id of the "headlines" or news clusters).`
+      `Filter for articles by news story/cluster IDs they belong to (the "headlines" or grouped news clusters).`
     ),
   sources: z
     .array(z.string())
     .optional()
     .describe(
-      `Filter articles by specific publisher domains or subdomains. Supports wildcards (* and ?) for pattern matching (e.g., *cnn.com)`
+      "Filter by publisher domains or subdomains. Supports wildcards (* and ?) for pattern matching (e.g., *.cnn.com)."
     ),
+  sourceGroup: z
+    .array(z.string())
+    .optional()
+    .describe(
+      "Filter using Perigon's curated publisher bundles for quality-filtered results: top10, top25, top50, top100, top25tech, top25crypto, etc."
+    ),
+  category: z
+    .array(z.string())
+    .optional()
+    .describe(
+      "Filter by content categories (e.g., Politics, Tech, Sports, Business, Finance, Entertainment). Use 'none' for uncategorized. Multiple values use OR logic."
+    ),
+  topic: z
+    .array(z.string())
+    .optional()
+    .describe(
+      "Filter by specific topics (e.g., Markets, Crime, Cryptocurrency, Climate Change, College Sports). More granular than categories. Multiple values use OR logic."
+    ),
+  language: z
+    .array(z.string())
+    .optional()
+    .describe(
+      "Filter by language using ISO-639 two-letter codes in lowercase (e.g., en, es, fr, de, ja). Multiple values use OR logic."
+    ),
+  label: z
+    .array(z.string())
+    .optional()
+    .describe(
+      "Filter by editorial labels: Opinion, Paid-news, Non-news, Fact Check, Press Release."
+    ),
+  medium: z
+    .array(z.string())
+    .optional()
+    .describe("Filter by content medium: Article or Video."),
+  personName: z
+    .array(z.string())
+    .optional()
+    .describe(
+      "Filter for articles mentioning specific people by exact name match."
+    ),
+  companyDomain: z
+    .array(z.string())
+    .optional()
+    .describe(
+      "Filter for articles mentioning specific companies by domain (e.g., apple.com, microsoft.com)."
+    ),
+  companySymbol: z
+    .array(z.string())
+    .optional()
+    .describe(
+      "Filter for articles mentioning specific companies by stock ticker symbol (e.g., AAPL, MSFT)."
+    ),
+  showReprints: z
+    .boolean()
+    .optional()
+    .default(false)
+    .describe(
+      "Include wire-service reprints (AP, Reuters) that appear on multiple sites. Default false for deduplication."
+    ),
+  addDateFrom: z
+    .string()
+    .transform((str) => (str === "" ? undefined : new Date(str)))
+    .optional()
+    .describe(
+      "Filter for articles added/ingested to Perigon after this date. ISO 8601 or yyyy-mm-dd."
+    ),
+  addDateTo: z
+    .string()
+    .transform((str) => (str === "" ? undefined : new Date(str)))
+    .optional()
+    .describe(
+      "Filter for articles added/ingested to Perigon before this date. ISO 8601 or yyyy-mm-dd."
+    ),
+  positiveSentimentFrom: z
+    .number()
+    .min(0)
+    .max(1)
+    .optional()
+    .describe("Minimum positive sentiment score (0.0 to 1.0)."),
+  positiveSentimentTo: z
+    .number()
+    .min(0)
+    .max(1)
+    .optional()
+    .describe("Maximum positive sentiment score (0.0 to 1.0)."),
+  negativeSentimentFrom: z
+    .number()
+    .min(0)
+    .max(1)
+    .optional()
+    .describe("Minimum negative sentiment score (0.0 to 1.0)."),
+  negativeSentimentTo: z
+    .number()
+    .min(0)
+    .max(1)
+    .optional()
+    .describe("Maximum negative sentiment score (0.0 to 1.0)."),
   summarize: z
     .boolean()
     .default(true)
     .describe(
-      "Read the article summary instead of full content, defaults to true"
+      "Return article summary instead of full content. Defaults to true."
     ),
   ...createLocationSchema(),
 });
@@ -100,12 +197,27 @@ export function searchNewsArticles(perigon: Perigon): ToolCallback {
     journalistIds,
     newsStoryIds,
     sources,
+    sourceGroup,
+    category,
+    topic,
+    language,
+    label,
+    medium,
+    personName,
+    companyDomain,
+    companySymbol,
+    showReprints,
+    addDateFrom,
+    addDateTo,
+    positiveSentimentFrom,
+    positiveSentimentTo,
+    negativeSentimentFrom,
+    negativeSentimentTo,
     summarize,
     location,
     locationType,
   }: z.infer<typeof newsArticlesArgs>): Promise<CallToolResult> => {
     try {
-      // Prepare search parameters
       let searchParams: any = {
         q: query,
         page,
@@ -120,11 +232,25 @@ export function searchNewsArticles(perigon: Perigon): ToolCallback {
         journalistId: journalistIds,
         clusterId: newsStoryIds,
         source: sources,
+        sourceGroup,
+        category,
+        topic,
+        language,
+        label,
+        medium,
+        personName,
+        companyDomain,
+        companySymbol,
         showNumResults: true,
-        showReprints: false,
+        showReprints,
+        addDateFrom,
+        addDateTo,
+        positiveSentimentFrom,
+        positiveSentimentTo,
+        negativeSentimentFrom,
+        negativeSentimentTo,
       };
 
-      // Apply location filtering using the utility function
       searchParams = applyLocationFilter(
         searchParams,
         location,
@@ -178,7 +304,7 @@ Journalist Ids: ${journalistIds}
 export const newsArticlesTool: ToolDefinition = {
   name: "search_news_articles",
   description:
-    "Search individual news articles with advanced filtering by keywords, location (with smart detection), time range, sources, and journalists. Supports both explicit location arrays and intelligent location parsing. Returns full article content or summaries with metadata.",
+    "Search and filter individual news articles from 200k+ global sources. Use this for finding specific articles by keyword, topic, category, source, location, person, company, journalist, sentiment, or time range. Supports Boolean query syntax (AND, OR, NOT), exact phrases, and wildcards. Returns article content or summaries with publication dates, sources, story cluster IDs, and journalist metadata.",
   parameters: newsArticlesArgs,
   createHandler: (perigon: Perigon) => searchNewsArticles(perigon),
 };

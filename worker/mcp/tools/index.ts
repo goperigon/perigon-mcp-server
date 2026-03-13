@@ -31,6 +31,8 @@
 // Export all tool definitions
 export { newsArticlesTool } from "./search/news-articles";
 export { newsStoriesTool } from "./search/news-stories";
+export { newsVectorTool } from "./search/news-vector";
+export { summarizeTool } from "./search/summarize";
 export { journalistsTool } from "./search/journalists";
 export { sourcesTool } from "./search/sources";
 export { peopleTool } from "./search/people";
@@ -47,6 +49,8 @@ export { locationNewsTool } from "./use-cases/location-news";
 // Export individual tool functions for direct use
 export { searchNewsArticles } from "./search/news-articles";
 export { searchNewsStories } from "./search/news-stories";
+export { searchVectorNews } from "./search/news-vector";
+export { summarizeNews } from "./search/summarize";
 export { searchJournalists } from "./search/journalists";
 export { searchSources } from "./search/sources";
 export { searchPeople } from "./search/people";
@@ -63,6 +67,8 @@ export { getLocationNews } from "./use-cases/location-news";
 // Export argument schemas for external use
 export { newsArticlesArgs } from "./search/news-articles";
 export { newsStoriesArgs } from "./search/news-stories";
+export { newsVectorArgs } from "./search/news-vector";
+export { summarizeArgs } from "./search/summarize";
 export { journalistsArgs } from "./search/journalists";
 export { sourcesArgs } from "./search/sources";
 export { peopleArgs } from "./search/people";
@@ -102,6 +108,8 @@ export {
 // Import all tool definitions
 import { newsArticlesTool } from "./search/news-articles";
 import { newsStoriesTool } from "./search/news-stories";
+import { newsVectorTool } from "./search/news-vector";
+import { summarizeTool } from "./search/summarize";
 import { journalistsTool } from "./search/journalists";
 import { sourcesTool } from "./search/sources";
 import { peopleTool } from "./search/people";
@@ -111,6 +119,7 @@ import { wikipediaTool } from "./search/wikipedia";
 import { wikipediaVectorTool } from "./search/wikipedia-vector";
 import { companyNewsTool } from "./use-cases/company-news";
 import { personNewsTool } from "./use-cases/person-news";
+import { locationNewsTool } from "./use-cases/location-news";
 import { ToolDefinition } from "./types";
 
 /**
@@ -124,6 +133,8 @@ export const TOOL_DEFINITIONS: Record<string, ToolDefinition> = {
   // Search tools
   search_news_articles: newsArticlesTool,
   search_news_stories: newsStoriesTool,
+  search_vector_news: newsVectorTool,
+  summarize_news: summarizeTool,
   search_journalists: journalistsTool,
   search_sources: sourcesTool,
   search_people: peopleTool,
@@ -135,6 +146,7 @@ export const TOOL_DEFINITIONS: Record<string, ToolDefinition> = {
   // Use-case tools
   get_company_news: companyNewsTool,
   get_person_news: personNewsTool,
+  get_location_news: locationNewsTool,
 } as const;
 
 /**

@@ -12,38 +12,45 @@ import { createErrorMessage } from "../utils/error-handling";
  */
 export const journalistsArgs = z.object({
   ...paginationArgs.shape,
-  query: createSearchField("journalist name and title"),
+  query: createSearchField("journalist name, title, and Twitter bio"),
+  name: createSearchField("journalist name specifically"),
   categories,
   topics,
   labels: z
     .array(z.string())
     .optional()
     .describe(
-      "Filter journalists by the type of content they typically produce (e.g., Opinion, Paid-news, Non-news)"
+      "Filter journalists by the type of content they typically produce (e.g., Opinion, Paid-news, Non-news)."
     ),
   journalistIds: z
     .array(z.string())
     .optional()
-    .describe("Filter for specific journalists by journalist ID."),
+    .describe("Filter for specific journalists by their unique IDs."),
   sources: z
     .array(z.string())
     .optional()
     .describe(
-      `Filter journalists by specific publisher domains or subdomains. Supports wildcards (* and ?) for pattern matching (e.g., *cnn.com)`
+      "Filter journalists by publisher domains or subdomains. Supports wildcards (e.g., *.cnn.com)."
+    ),
+  twitter: z
+    .string()
+    .optional()
+    .describe(
+      "Filter by exact Twitter/X handle (without the @ symbol)."
     ),
   maxMonthlyPosts: z
     .number()
     .int()
     .positive()
     .optional()
-    .describe("Filter journalists by maximum monthly posts."),
+    .describe("Maximum articles per month threshold."),
   minMonthlyPosts: z
     .number()
     .min(0)
     .int()
     .positive()
     .optional()
-    .describe("Filter journalists by minimum monthly posts."),
+    .describe("Minimum articles per month threshold."),
   countries: z
     .array(z.string())
     .optional()
@@ -53,7 +60,7 @@ export const journalistsArgs = z.object({
       return countries.map((country) => country.toLowerCase());
     })
     .describe(
-      "Filter journalists by countries they commonly cover in their reporting. Uses ISO 3166-1 alpha-2 two-letter country codes in lowercase (e.g., us, gb, jp)"
+      "Filter journalists by countries they commonly cover. Two-letter codes in lowercase (e.g., us, gb, jp)."
     ),
 });
 
@@ -80,12 +87,14 @@ export const journalistsArgs = z.object({
 export function searchJournalists(perigon: Perigon): ToolCallback {
   return async ({
     query,
+    name,
     page,
     size,
     countries,
     maxMonthlyPosts,
     minMonthlyPosts,
     sources,
+    twitter,
     categories,
     topics,
     labels,
@@ -93,10 +102,12 @@ export function searchJournalists(perigon: Perigon): ToolCallback {
     try {
       const result = await perigon.searchJournalists({
         q: query,
+        name,
         page,
         size,
         country: countries,
         source: sources,
+        twitter,
         showNumResults: true,
         minMonthlyPosts,
         maxMonthlyPosts,
@@ -152,7 +163,7 @@ Locations: ${journalist?.locations
 export const journalistsTool: ToolDefinition = {
   name: "search_journalists",
   description:
-    "Find journalists and reporters by name, publication, location, or coverage area. Returns journalist profiles with their top sources, locations, and monthly posting activity.",
+    "Search 230k+ journalist and reporter profiles in the Perigon database. Use this to find who covers specific topics, publications, or regions. Filter by name, Twitter handle, publication, country, content category, topic, or posting activity. Returns journalist profiles with their top sources, geographic coverage areas, and monthly posting frequency.",
   parameters: journalistsArgs,
   createHandler: (perigon: Perigon) => searchJournalists(perigon),
 };
