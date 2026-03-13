@@ -11,7 +11,8 @@ export type Props = {
 
 // Map scopes to tool names
 const SCOPE_TO_TOOLS: Partial<Record<Scopes, ToolName[]>> = {
-  [Scopes.CLUSTERS]: ["search_news_stories", "summarize_news"],
+  [Scopes.CLUSTERS]: ["search_news_stories", "search_story_history"],
+  [Scopes.SEARCH_SUMMARY]: ["summarize_news"],
   [Scopes.JOURNALISTS]: ["search_journalists"],
   [Scopes.SOURCES]: ["search_sources"],
   [Scopes.PEOPLE]: ["search_people", "get_person_news"],

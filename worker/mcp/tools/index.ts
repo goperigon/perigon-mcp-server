@@ -31,6 +31,7 @@
 // Export all tool definitions
 export { newsArticlesTool } from "./search/news-articles";
 export { newsStoriesTool } from "./search/news-stories";
+export { storyHistoryTool } from "./search/story-history";
 export { newsVectorTool } from "./search/news-vector";
 export { summarizeTool } from "./search/summarize";
 export { journalistsTool } from "./search/journalists";
@@ -49,6 +50,7 @@ export { locationNewsTool } from "./use-cases/location-news";
 // Export individual tool functions for direct use
 export { searchNewsArticles } from "./search/news-articles";
 export { searchNewsStories } from "./search/news-stories";
+export { searchStoryHistory } from "./search/story-history";
 export { searchVectorNews } from "./search/news-vector";
 export { summarizeNews } from "./search/summarize";
 export { searchJournalists } from "./search/journalists";
@@ -67,6 +69,7 @@ export { getLocationNews } from "./use-cases/location-news";
 // Export argument schemas for external use
 export { newsArticlesArgs } from "./search/news-articles";
 export { newsStoriesArgs } from "./search/news-stories";
+export { storyHistoryArgs } from "./search/story-history";
 export { newsVectorArgs } from "./search/news-vector";
 export { summarizeArgs } from "./search/summarize";
 export { journalistsArgs } from "./search/journalists";
@@ -108,6 +111,7 @@ export {
 // Import all tool definitions
 import { newsArticlesTool } from "./search/news-articles";
 import { newsStoriesTool } from "./search/news-stories";
+import { storyHistoryTool } from "./search/story-history";
 import { newsVectorTool } from "./search/news-vector";
 import { summarizeTool } from "./search/summarize";
 import { journalistsTool } from "./search/journalists";
@@ -133,6 +137,7 @@ export const TOOL_DEFINITIONS: Record<string, ToolDefinition> = {
   // Search tools
   search_news_articles: newsArticlesTool,
   search_news_stories: newsStoriesTool,
+  search_story_history: storyHistoryTool,
   search_vector_news: newsVectorTool,
   summarize_news: summarizeTool,
   search_journalists: journalistsTool,
