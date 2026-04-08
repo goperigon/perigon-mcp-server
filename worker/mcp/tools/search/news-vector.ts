@@ -152,11 +152,34 @@ export function searchVectorNews(perigon: Perigon): ToolCallback {
           (article as any).journalists
             ?.map((j: any) => j.id)
             .join(", ") ?? "";
+        const categories =
+          (article as any).categories
+            ?.map((c: any) => c.name)
+            .join(", ") ?? "";
+        const topics =
+          (article as any).topics
+            ?.map((t: any) => t.name)
+            .join(", ") ?? "";
+        const labels =
+          (article as any).labels
+            ?.map((l: any) => l.name)
+            .join(", ") ?? "";
 
         return `<article id="${article.articleId}" title="${article.title}" score="${scored.score ?? "N/A"}">
+URL: ${article.url}
 Content: ${article.summary || article.content}
 Pub Date: ${article.pubDate} (utc)
+Add Date: ${(article as any).addDate} (utc)
+Refresh Date: ${(article as any).refreshDate} (utc)
 Source: ${article.source?.domain}
+Author: ${(article as any).authorsByline}
+Language: ${(article as any).language}
+Country: ${(article as any).country}
+Medium: ${(article as any).medium}
+Sentiment: ${JSON.stringify((article as any).sentiment)}
+Categories: ${categories}
+Topics: ${topics}
+Labels: ${labels}
 Story Id: ${article.clusterId}
 Journalist Ids: ${journalistIds}
 Similarity Score: ${scored.score ?? "N/A"}

@@ -266,11 +266,28 @@ export function searchNewsArticles(perigon: Perigon): ToolCallback {
         const journalistIds =
           article.journalists?.map((journalist) => journalist.id).join(", ") ??
           "";
+        const categories =
+          article.categories?.map((c) => c.name).join(", ") ?? "";
+        const topics =
+          article.topics?.map((t) => t.name).join(", ") ?? "";
+        const labels =
+          article.labels?.map((l) => l.name).join(", ") ?? "";
 
         return `<article id="${article.articleId}" title="${article.title}">
+URL: ${article.url}
 Content: ${summarize ? article.summary : article.content}
 Pub Date: ${article.pubDate} (utc)
+Add Date: ${article.addDate} (utc)
+Refresh Date: ${article.refreshDate} (utc)
 Source: ${article.source?.domain}
+Author: ${article.authorsByline}
+Language: ${article.language}
+Country: ${article.country}
+Medium: ${article.medium}
+Sentiment: ${JSON.stringify(article.sentiment)}
+Categories: ${categories}
+Topics: ${topics}
+Labels: ${labels}
 Story Id: ${article.clusterId}
 Journalist Ids: ${journalistIds}
 </article>`;
