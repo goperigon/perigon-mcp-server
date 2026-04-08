@@ -10,6 +10,11 @@ This is the official MCP server for the Perigon news API.
 
 For more information on how to use and connect the MCP, visit the [MCP docs.](https://dev.perigon.io/docs/mcp)
 
+## Maintainers
+The Perigon MCP Server is developed and maintained by the Perigon engineering team.
+
+Lead Developer: Islem Maboud, responsible for the architecture, implementation, and ongoing development of this MCP server, including the remote transport layer, authentication handling, deployment configuration, and the MCP playground.
+
 ## Usage
 
 ### Playground
