@@ -14,6 +14,86 @@ export interface StoryHistoryParams {
   changelogExists?: boolean;
 }
 
+/** Shared article-filter params accepted by all /v1/stats/* endpoints */
+export interface StatsArticleFilters {
+  q?: string;
+  from?: Date;
+  to?: Date;
+  source?: string[];
+  sourceGroup?: string[];
+  category?: string[];
+  topic?: string[];
+  language?: string[];
+  country?: string[];
+  personName?: string[];
+  companyDomain?: string[];
+  companySymbol?: string[];
+}
+
+export type StatsSplitBy = "HOUR" | "DAY" | "WEEK" | "MONTH" | "NONE";
+
+export interface StatsTimeSeriesParams extends StatsArticleFilters {
+  splitBy?: StatsSplitBy;
+}
+
+export interface TopEntitiesParams extends StatsArticleFilters {
+  entity?: string[];
+}
+
+export interface TopSpikeParams extends StatsArticleFilters {
+  currentFrom?: Date;
+  currentTo?: Date;
+  baselineFrom?: Date;
+  baselineTo?: Date;
+  normalizeByDay?: boolean;
+  size?: number;
+}
+
+export interface CountStatDto {
+  pubDate: string;
+  addDate: string;
+  count: number;
+}
+
+export interface AvgSentimentStatDto {
+  pubDate: string;
+  addDate: string;
+  positive: number;
+  negative: number;
+  neutral: number;
+}
+
+export interface StatResult<T> {
+  status: number;
+  numResults: number;
+  results: T[];
+}
+
+export interface EntitySpike {
+  id: string;
+  name: string;
+  currentCount: number;
+  baselineCount: number;
+  spikeScore: number;
+  [key: string]: unknown;
+}
+
+export interface TableSearchResult<T> {
+  status: number;
+  numResults: number;
+  results: T[];
+}
+
+export interface TopEntitiesDto {
+  topics?: unknown[];
+  people?: unknown[];
+  companies?: unknown[];
+  cities?: unknown[];
+  journalists?: unknown[];
+  sources?: unknown[];
+  [key: string]: unknown;
+}
+
 export interface StoryHistoryKeyPoint {
   point: string;
   references: string[];
@@ -54,6 +134,86 @@ export class Perigon extends V1Api {
         },
       },
     );
+  }
+
+  /** Build URLSearchParams from shared article filters used by all /v1/stats/* endpoints */
+  private buildStatsFilters(params: StatsArticleFilters): URLSearchParams {
+    const sp = new URLSearchParams();
+    if (params.q) sp.set("q", params.q);
+    if (params.from) sp.set("from", params.from.toISOString());
+    if (params.to) sp.set("to", params.to.toISOString());
+    if (params.source) for (const s of params.source) sp.append("source", s);
+    if (params.sourceGroup) for (const g of params.sourceGroup) sp.append("sourceGroup", g);
+    if (params.category) for (const c of params.category) sp.append("category", c);
+    if (params.topic) for (const t of params.topic) sp.append("topic", t);
+    if (params.language) for (const l of params.language) sp.append("language", l);
+    if (params.country) for (const c of params.country) sp.append("country", c);
+    if (params.personName) for (const p of params.personName) sp.append("personName", p);
+    if (params.companyDomain) for (const d of params.companyDomain) sp.append("companyDomain", d);
+    if (params.companySymbol) for (const s of params.companySymbol) sp.append("companySymbol", s);
+    return sp;
+  }
+
+  async getAvgSentiment(
+    params: StatsTimeSeriesParams,
+  ): Promise<StatResult<AvgSentimentStatDto>> {
+    const sp = this.buildStatsFilters(params);
+    if (params.splitBy) sp.set("splitBy", params.splitBy);
+    return await typedFetch<StatResult<AvgSentimentStatDto>>(
+      `${BASE_URL}/stats/avgSentiment?${sp.toString()}`,
+      { headers: { Authorization: `Bearer ${this.apiKey}` } },
+    );
+  }
+
+  async getArticleCounts(
+    params: StatsTimeSeriesParams,
+  ): Promise<StatResult<CountStatDto>> {
+    const sp = this.buildStatsFilters(params);
+    if (params.splitBy) sp.set("splitBy", params.splitBy);
+    return await typedFetch<StatResult<CountStatDto>>(
+      `${BASE_URL}/stats/intervalArticleCounts?${sp.toString()}`,
+      { headers: { Authorization: `Bearer ${this.apiKey}` } },
+    );
+  }
+
+  async getTopEntities(params: TopEntitiesParams): Promise<TopEntitiesDto> {
+    const sp = this.buildStatsFilters(params);
+    if (params.entity) for (const e of params.entity) sp.append("entity", e);
+    return await typedFetch<TopEntitiesDto>(
+      `${BASE_URL}/stats/topEntities?${sp.toString()}`,
+      { headers: { Authorization: `Bearer ${this.apiKey}` } },
+    );
+  }
+
+  async getTopPeople(
+    params: TopSpikeParams,
+  ): Promise<TableSearchResult<EntitySpike>> {
+    const sp = this.buildStatsFilters(params);
+    this.applySpikePrams(sp, params);
+    return await typedFetch<TableSearchResult<EntitySpike>>(
+      `${BASE_URL}/stats/topPeople?${sp.toString()}`,
+      { headers: { Authorization: `Bearer ${this.apiKey}` } },
+    );
+  }
+
+  async getTopCompanies(
+    params: TopSpikeParams,
+  ): Promise<TableSearchResult<EntitySpike>> {
+    const sp = this.buildStatsFilters(params);
+    this.applySpikePrams(sp, params);
+    return await typedFetch<TableSearchResult<EntitySpike>>(
+      `${BASE_URL}/stats/topCompanies?${sp.toString()}`,
+      { headers: { Authorization: `Bearer ${this.apiKey}` } },
+    );
+  }
+
+  private applySpikePrams(sp: URLSearchParams, params: TopSpikeParams) {
+    if (params.currentFrom) sp.set("currentFrom", params.currentFrom.toISOString());
+    if (params.currentTo) sp.set("currentTo", params.currentTo.toISOString());
+    if (params.baselineFrom) sp.set("baselineFrom", params.baselineFrom.toISOString());
+    if (params.baselineTo) sp.set("baselineTo", params.baselineTo.toISOString());
+    if (params.normalizeByDay !== undefined) sp.set("normalizeByDay", String(params.normalizeByDay));
+    if (params.size !== undefined) sp.set("size", String(params.size));
   }
 
   async searchStoriesHistory(
