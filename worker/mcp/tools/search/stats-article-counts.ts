@@ -2,7 +2,7 @@ import { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 import { Perigon, CountStatDto, StatResult } from "../../../lib/perigon";
 import { ToolCallback, ToolDefinition } from "../types";
-import { statsFilterArgs, splitByEnum } from "../schemas/stats";
+import { statsFilterArgs, splitByEnum, normalizeSplitBy } from "../schemas/stats";
 import { toolResult, noResults } from "../utils/formatting";
 import { createErrorMessage } from "../utils/error-handling";
 
@@ -26,18 +26,18 @@ export function getArticleCounts(perigon: Perigon): ToolCallback {
         personName: args.personName,
         companyDomain: args.companyDomain,
         companySymbol: args.companySymbol,
-        splitBy: args.splitBy,
+        splitBy: normalizeSplitBy(args.splitBy),
       });
 
       if (!result.results || result.results.length === 0) return noResults;
 
-      const totalArticles = result.results.reduce((sum, r) => sum + r.count, 0);
+      const totalArticles = result.results.reduce((sum, r) => sum + r.numResults, 0);
 
       const rows = result.results.map((r) =>
-        `<count_bucket date="${r.pubDate ?? r.addDate}" count="${r.count}" />`
+        `<count_bucket date="${r.date}" count="${r.numResults}" />`
       );
 
-      let output = `Got ${result.numResults} bucket(s), ${totalArticles} total articles (splitBy=${args.splitBy ?? "DAY"})\n`;
+      let output = `Got ${result.results.length} bucket(s), ${totalArticles} total articles (splitBy=${args.splitBy ?? "DAY"})\n`;
       output += `<article_count_results>\n`;
       output += rows.join("\n");
       output += `\n</article_count_results>`;

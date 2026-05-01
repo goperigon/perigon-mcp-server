@@ -1,16 +1,17 @@
 import { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
-import { Perigon, TopEntitiesDto } from "../../../lib/perigon";
+import { Perigon, TopEntitiesDto, TopEntityItem } from "../../../lib/perigon";
 import { ToolCallback, ToolDefinition } from "../types";
 import { statsFilterArgs } from "../schemas/stats";
 import { toolResult, noResults } from "../utils/formatting";
 import { createErrorMessage } from "../utils/error-handling";
 
+const ENTITY_TYPES = ["topics", "people", "companies", "cities", "journalists", "sources"] as const;
+type EntityType = (typeof ENTITY_TYPES)[number];
+
 export const topEntitiesArgs = statsFilterArgs.extend({
   entity: z
-    .array(
-      z.enum(["topics", "people", "companies", "cities", "journalists", "sources"])
-    )
+    .array(z.enum(ENTITY_TYPES))
     .optional()
     .default(["topics", "people", "companies"])
     .describe(
@@ -18,9 +19,20 @@ export const topEntitiesArgs = statsFilterArgs.extend({
     ),
 });
 
+const TOTAL_KEY: Record<EntityType, keyof TopEntitiesDto> = {
+  topics: "totalTopics",
+  people: "totalPeople",
+  companies: "totalCompanies",
+  cities: "totalCities",
+  journalists: "totalJournalists",
+  sources: "totalSources",
+};
+
 export function getTopEntities(perigon: Perigon): ToolCallback {
   return async (args: z.infer<typeof topEntitiesArgs>): Promise<CallToolResult> => {
     try {
+      const requested = args.entity ?? ["topics", "people", "companies"];
+
       const result: TopEntitiesDto = await perigon.getTopEntities({
         q: args.q,
         from: args.from,
@@ -34,21 +46,25 @@ export function getTopEntities(perigon: Perigon): ToolCallback {
         personName: args.personName,
         companyDomain: args.companyDomain,
         companySymbol: args.companySymbol,
-        entity: args.entity,
+        entity: requested,
       });
 
-      const hasResults = Object.values(result).some(
-        (v) => Array.isArray(v) && v.length > 0
-      );
+      const hasResults = requested.some((t) => {
+        const items = result[t] as TopEntityItem[] | undefined;
+        return Array.isArray(items) && items.length > 0;
+      });
       if (!hasResults) return noResults;
 
-      let output = `<top_entities>\n`;
+      let output = `<top_entities total_articles="${result.totalArticles ?? 0}">\n`;
 
-      for (const entityType of (args.entity ?? ["topics", "people", "companies"])) {
-        const items = result[entityType];
+      for (const entityType of requested) {
+        const items = result[entityType] as TopEntityItem[] | undefined;
         if (!Array.isArray(items) || items.length === 0) continue;
-        output += `\n<${entityType}>\n`;
-        output += JSON.stringify(items, null, 2);
+        const total = result[TOTAL_KEY[entityType]] as number | undefined;
+        output += `\n<${entityType} total="${total ?? items.length}">\n`;
+        output += items
+          .map((it, i) => `  <item rank="${i + 1}" key="${it.key}" count="${it.count}" />`)
+          .join("\n");
         output += `\n</${entityType}>\n`;
       }
 

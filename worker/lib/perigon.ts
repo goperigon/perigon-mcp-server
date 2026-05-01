@@ -1,8 +1,39 @@
 import { Configuration, V1Api } from "@goperigon/perigon-ts";
-import { AuthIntrospectionResponse } from "../types/types";
+import { AuthIntrospectionResponse, HttpError } from "../types/types";
 import { typedFetch } from "./typed-fetch";
 
 const BASE_URL = "https://api.perigon.io/v1";
+
+/**
+ * Retry a typed fetch on transient upstream failures (5xx + 429).
+ * The /v1/stats/* endpoints are computationally heavy and occasionally throw
+ * a 500 with a `reference = <id>` body — those are usually not deterministic
+ * and succeed on a second attempt, so we transparently retry a few times
+ * before bubbling the error up.
+ */
+async function fetchWithRetry<T>(
+  url: string,
+  options: RequestInit,
+  attempts = 3,
+  baseDelayMs = 400,
+): Promise<T> {
+  let lastError: unknown;
+  for (let i = 0; i < attempts; i++) {
+    try {
+      return await typedFetch<T>(url, options);
+    } catch (error) {
+      lastError = error;
+      const isRetryable =
+        error instanceof HttpError &&
+        (error.statusCode >= 500 || error.statusCode === 429);
+      if (!isRetryable || i === attempts - 1) throw error;
+      // exponential backoff with jitter
+      const delay = baseDelayMs * Math.pow(2, i) + Math.random() * 200;
+      await new Promise((r) => setTimeout(r, delay));
+    }
+  }
+  throw lastError;
+}
 
 export interface StoryHistoryParams {
   clusterId?: string[];
@@ -30,7 +61,8 @@ export interface StatsArticleFilters {
   companySymbol?: string[];
 }
 
-export type StatsSplitBy = "HOUR" | "DAY" | "WEEK" | "MONTH" | "NONE";
+/** Lowercase enum values accepted by the API for `splitBy`. NONE is represented by omitting the param. */
+export type StatsSplitBy = "hour" | "day" | "week" | "month";
 
 export interface StatsTimeSeriesParams extends StatsArticleFilters {
   splitBy?: StatsSplitBy;
@@ -49,49 +81,98 @@ export interface TopSpikeParams extends StatsArticleFilters {
   size?: number;
 }
 
+/** Single bucket from /v1/stats/intervalArticleCounts */
 export interface CountStatDto {
-  pubDate: string;
-  addDate: string;
+  date: string;
+  numResults: number;
+}
+
+/** Single bucket from /v1/stats/avgSentiment */
+export interface AvgSentimentStatDto {
+  date: string;
+  numResults: number;
+  avgSentiment: {
+    positive: number;
+    negative: number;
+    neutral: number;
+  };
+}
+
+/** Generic stats response wrapper (used by interval count + avg sentiment) */
+export interface StatResult<T> {
+  status: number;
+  results: T[];
+}
+
+/** Single ranked entry returned by /v1/stats/topEntities for a given entity bucket */
+export interface TopEntityItem {
+  key: string;
   count: number;
 }
 
-export interface AvgSentimentStatDto {
-  pubDate: string;
-  addDate: string;
-  positive: number;
-  negative: number;
-  neutral: number;
-}
-
-export interface StatResult<T> {
-  status: number;
-  numResults: number;
-  results: T[];
-}
-
-export interface EntitySpike {
-  id: string;
-  name: string;
-  currentCount: number;
-  baselineCount: number;
-  spikeScore: number;
-  [key: string]: unknown;
-}
-
-export interface TableSearchResult<T> {
-  status: number;
-  numResults: number;
-  results: T[];
-}
-
+/**
+ * Response shape for /v1/stats/topEntities. The keys present depend on which
+ * entity types were requested. Each entity bucket is paired with a `total*` field
+ * indicating the size of the universe that was ranked.
+ */
 export interface TopEntitiesDto {
-  topics?: unknown[];
-  people?: unknown[];
-  companies?: unknown[];
-  cities?: unknown[];
-  journalists?: unknown[];
-  sources?: unknown[];
-  [key: string]: unknown;
+  totalArticles?: number;
+  totalTopics?: number;
+  topics?: TopEntityItem[];
+  totalPeople?: number;
+  people?: TopEntityItem[];
+  totalCompanies?: number;
+  companies?: TopEntityItem[];
+  totalCities?: number;
+  cities?: TopEntityItem[];
+  totalJournalists?: number;
+  journalists?: TopEntityItem[];
+  totalSources?: number;
+  sources?: TopEntityItem[];
+}
+
+/** Single entry in /v1/stats/topPeople */
+export interface PersonSpike {
+  wikidataId: string;
+  spikeScore: number;
+  currentMentions: number;
+  baselineMentions: number;
+  currentRatePerDay: number;
+  baselineRatePerDay: number;
+  person: {
+    wikidataId: string;
+    name: string;
+    description?: string | null;
+    occupation?: Array<{ wikidataId: string; label: string }>;
+    [key: string]: unknown;
+  };
+}
+
+/** Single entry in /v1/stats/topCompanies */
+export interface CompanySpike {
+  wikidataId: string;
+  spikeScore: number;
+  currentMentions: number;
+  baselineMentions: number;
+  currentRatePerDay: number;
+  baselineRatePerDay: number;
+  company: {
+    id: string;
+    name: string;
+    domains?: string[];
+    industry?: string | null;
+    sector?: string | null;
+    country?: string | null;
+    description?: string | null;
+    symbols?: Array<{ symbol: string; exchange: string }>;
+    [key: string]: unknown;
+  };
+}
+
+/** Wrapper shape returned by /v1/stats/topPeople and /v1/stats/topCompanies */
+export interface SpikeResult<T> {
+  total: number;
+  data: T[];
 }
 
 export interface StoryHistoryKeyPoint {
@@ -159,7 +240,7 @@ export class Perigon extends V1Api {
   ): Promise<StatResult<AvgSentimentStatDto>> {
     const sp = this.buildStatsFilters(params);
     if (params.splitBy) sp.set("splitBy", params.splitBy);
-    return await typedFetch<StatResult<AvgSentimentStatDto>>(
+    return await fetchWithRetry<StatResult<AvgSentimentStatDto>>(
       `${BASE_URL}/stats/avgSentiment?${sp.toString()}`,
       { headers: { Authorization: `Bearer ${this.apiKey}` } },
     );
@@ -170,7 +251,7 @@ export class Perigon extends V1Api {
   ): Promise<StatResult<CountStatDto>> {
     const sp = this.buildStatsFilters(params);
     if (params.splitBy) sp.set("splitBy", params.splitBy);
-    return await typedFetch<StatResult<CountStatDto>>(
+    return await fetchWithRetry<StatResult<CountStatDto>>(
       `${BASE_URL}/stats/intervalArticleCounts?${sp.toString()}`,
       { headers: { Authorization: `Bearer ${this.apiKey}` } },
     );
@@ -179,7 +260,7 @@ export class Perigon extends V1Api {
   async getTopEntities(params: TopEntitiesParams): Promise<TopEntitiesDto> {
     const sp = this.buildStatsFilters(params);
     if (params.entity) for (const e of params.entity) sp.append("entity", e);
-    return await typedFetch<TopEntitiesDto>(
+    return await fetchWithRetry<TopEntitiesDto>(
       `${BASE_URL}/stats/topEntities?${sp.toString()}`,
       { headers: { Authorization: `Bearer ${this.apiKey}` } },
     );
@@ -187,10 +268,10 @@ export class Perigon extends V1Api {
 
   async getTopPeople(
     params: TopSpikeParams,
-  ): Promise<TableSearchResult<EntitySpike>> {
+  ): Promise<SpikeResult<PersonSpike>> {
     const sp = this.buildStatsFilters(params);
     this.applySpikePrams(sp, params);
-    return await typedFetch<TableSearchResult<EntitySpike>>(
+    return await fetchWithRetry<SpikeResult<PersonSpike>>(
       `${BASE_URL}/stats/topPeople?${sp.toString()}`,
       { headers: { Authorization: `Bearer ${this.apiKey}` } },
     );
@@ -198,10 +279,10 @@ export class Perigon extends V1Api {
 
   async getTopCompanies(
     params: TopSpikeParams,
-  ): Promise<TableSearchResult<EntitySpike>> {
+  ): Promise<SpikeResult<CompanySpike>> {
     const sp = this.buildStatsFilters(params);
     this.applySpikePrams(sp, params);
-    return await typedFetch<TableSearchResult<EntitySpike>>(
+    return await fetchWithRetry<SpikeResult<CompanySpike>>(
       `${BASE_URL}/stats/topCompanies?${sp.toString()}`,
       { headers: { Authorization: `Bearer ${this.apiKey}` } },
     );

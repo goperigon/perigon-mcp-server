@@ -2,7 +2,7 @@ import { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 import { Perigon, AvgSentimentStatDto, StatResult } from "../../../lib/perigon";
 import { ToolCallback, ToolDefinition } from "../types";
-import { statsFilterArgs, splitByEnum } from "../schemas/stats";
+import { statsFilterArgs, splitByEnum, normalizeSplitBy } from "../schemas/stats";
 import { toolResult, noResults } from "../utils/formatting";
 import { createErrorMessage } from "../utils/error-handling";
 
@@ -26,20 +26,20 @@ export function getAvgSentiment(perigon: Perigon): ToolCallback {
         personName: args.personName,
         companyDomain: args.companyDomain,
         companySymbol: args.companySymbol,
-        splitBy: args.splitBy,
+        splitBy: normalizeSplitBy(args.splitBy),
       });
 
       if (!result.results || result.results.length === 0) return noResults;
 
       const rows = result.results.map((r) =>
-        `<sentiment_bucket date="${r.pubDate ?? r.addDate}">` +
-        `\nPositive: ${r.positive}` +
-        `\nNegative: ${r.negative}` +
-        `\nNeutral: ${r.neutral}` +
+        `<sentiment_bucket date="${r.date}" articles="${r.numResults}">` +
+        `\nPositive: ${r.avgSentiment.positive.toFixed(4)}` +
+        `\nNegative: ${r.avgSentiment.negative.toFixed(4)}` +
+        `\nNeutral: ${r.avgSentiment.neutral.toFixed(4)}` +
         `\n</sentiment_bucket>`
       );
 
-      let output = `Got ${result.numResults} sentiment bucket(s) (splitBy=${args.splitBy ?? "DAY"})\n`;
+      let output = `Got ${result.results.length} sentiment bucket(s) (splitBy=${args.splitBy ?? "DAY"})\n`;
       output += `<avg_sentiment_results>\n`;
       output += rows.join("\n\n");
       output += `\n</avg_sentiment_results>`;

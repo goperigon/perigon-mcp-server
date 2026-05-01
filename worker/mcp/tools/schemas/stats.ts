@@ -84,5 +84,13 @@ export const splitByEnum = z
   .enum(["HOUR", "DAY", "WEEK", "MONTH", "NONE"])
   .default("DAY")
   .describe(
-    "Time interval for bucketing results. HOUR = hourly, DAY = daily, WEEK = weekly, MONTH = monthly, NONE = single aggregate value."
+    "Time interval for bucketing results. HOUR = hourly, DAY = daily, WEEK = weekly, MONTH = monthly, NONE = single aggregate value across the whole date range."
   );
+
+/** Convert the user-facing splitBy enum to the lowercase value the API expects, or undefined to omit (NONE). */
+export function normalizeSplitBy(
+  splitBy: "HOUR" | "DAY" | "WEEK" | "MONTH" | "NONE" | undefined
+): "hour" | "day" | "week" | "month" | undefined {
+  if (!splitBy || splitBy === "NONE") return undefined;
+  return splitBy.toLowerCase() as "hour" | "day" | "week" | "month";
+}

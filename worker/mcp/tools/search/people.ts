@@ -4,7 +4,14 @@ import { Perigon } from "../../../lib/perigon";
 import { ToolCallback, ToolDefinition } from "../types";
 import { paginationArgs } from "../schemas/base";
 import { createSearchField } from "../schemas/search";
-import { toolResult, noResults, createPaginationHeader } from "../utils/formatting";
+import {
+  toolResult,
+  noResults,
+  createPaginationHeader,
+  formatLabel,
+  formatLabelList,
+  formatWikidataDate,
+} from "../utils/formatting";
 import { createErrorMessage } from "../utils/error-handling";
 
 /**
@@ -71,12 +78,12 @@ export function searchPeople(perigon: Perigon): ToolCallback {
       if (result.numResults === 0) return noResults;
 
       const people = result.results.map((person) => {
-        return `<person name="${person.name}">
-Occupation: ${person.occupation}
-Position: ${person.position}
-Gender: ${person.gender}
-Date Of Birth: ${person.dateOfBirth}
-Description: ${person.description}
+        return `<person wikidata_id="${person.wikidataId ?? ""}" name="${person.name ?? ""}">
+Occupation: ${formatLabelList(person.occupation)}
+Position: ${formatLabelList(person.position)}
+Gender: ${formatLabel(person.gender)}
+Date Of Birth: ${formatWikidataDate(person.dateOfBirth)}
+Description: ${person.description ?? "N/A"}
 </person>`;
       });
 

@@ -1,6 +1,6 @@
 import { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
-import { Perigon, TableSearchResult, EntitySpike } from "../../../lib/perigon";
+import { Perigon, SpikeResult, PersonSpike } from "../../../lib/perigon";
 import { ToolCallback, ToolDefinition } from "../types";
 import { statsFilterArgs } from "../schemas/stats";
 import { toolResult, noResults } from "../utils/formatting";
@@ -9,6 +9,10 @@ import { createErrorMessage } from "../utils/error-handling";
 function parseTime(str: string) {
   if (str === "") return undefined;
   return new Date(str);
+}
+
+function escapeAttr(value: string): string {
+  return value.replace(/&/g, "&amp;").replace(/"/g, "&quot;");
 }
 
 export const topPeopleArgs = statsFilterArgs.extend({
@@ -59,7 +63,7 @@ export const topPeopleArgs = statsFilterArgs.extend({
 export function getTopPeople(perigon: Perigon): ToolCallback {
   return async (args: z.infer<typeof topPeopleArgs>): Promise<CallToolResult> => {
     try {
-      const result: TableSearchResult<EntitySpike> = await perigon.getTopPeople({
+      const result: SpikeResult<PersonSpike> = await perigon.getTopPeople({
         q: args.q,
         from: args.from,
         to: args.to,
@@ -80,13 +84,23 @@ export function getTopPeople(perigon: Perigon): ToolCallback {
         size: args.size,
       });
 
-      if (!result.results || result.results.length === 0) return noResults;
+      if (!result.data || result.data.length === 0) return noResults;
 
-      const rows = result.results.map((p, i) =>
-        `<person rank="${i + 1}" name="${p.name}" current_count="${p.currentCount}" baseline_count="${p.baselineCount}" spike_score="${p.spikeScore?.toFixed(2) ?? "N/A"}" />`
-      );
+      const rows = result.data.map((p, i) => {
+        const name = escapeAttr(p.person?.name ?? p.wikidataId);
+        const description = escapeAttr(p.person?.description ?? "");
+        const occupation = escapeAttr(
+          (p.person?.occupation ?? []).map((o) => o.label).join(", ")
+        );
+        return (
+          `<person rank="${i + 1}" wikidata_id="${p.wikidataId}" name="${name}" ` +
+          `current_mentions="${p.currentMentions}" baseline_mentions="${p.baselineMentions}" ` +
+          `current_rate_per_day="${p.currentRatePerDay.toFixed(2)}" baseline_rate_per_day="${p.baselineRatePerDay.toFixed(2)}" ` +
+          `spike_score="${p.spikeScore.toFixed(2)}" occupation="${occupation}" description="${description}" />`
+        );
+      });
 
-      let output = `Got ${result.numResults} people with highest spike scores\n`;
+      let output = `Got ${result.total} people with highest spike scores\n`;
       output += `<top_people_results>\n`;
       output += rows.join("\n");
       output += `\n</top_people_results>`;

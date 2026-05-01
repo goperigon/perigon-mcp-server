@@ -1,6 +1,6 @@
 import { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
-import { Perigon, TableSearchResult, EntitySpike } from "../../../lib/perigon";
+import { Perigon, SpikeResult, CompanySpike } from "../../../lib/perigon";
 import { ToolCallback, ToolDefinition } from "../types";
 import { statsFilterArgs } from "../schemas/stats";
 import { toolResult, noResults } from "../utils/formatting";
@@ -9,6 +9,10 @@ import { createErrorMessage } from "../utils/error-handling";
 function parseTime(str: string) {
   if (str === "") return undefined;
   return new Date(str);
+}
+
+function escapeAttr(value: string): string {
+  return value.replace(/&/g, "&amp;").replace(/"/g, "&quot;");
 }
 
 export const topCompaniesArgs = statsFilterArgs.extend({
@@ -59,7 +63,7 @@ export const topCompaniesArgs = statsFilterArgs.extend({
 export function getTopCompanies(perigon: Perigon): ToolCallback {
   return async (args: z.infer<typeof topCompaniesArgs>): Promise<CallToolResult> => {
     try {
-      const result: TableSearchResult<EntitySpike> = await perigon.getTopCompanies({
+      const result: SpikeResult<CompanySpike> = await perigon.getTopCompanies({
         q: args.q,
         from: args.from,
         to: args.to,
@@ -80,13 +84,24 @@ export function getTopCompanies(perigon: Perigon): ToolCallback {
         size: args.size,
       });
 
-      if (!result.results || result.results.length === 0) return noResults;
+      if (!result.data || result.data.length === 0) return noResults;
 
-      const rows = result.results.map((c, i) =>
-        `<company rank="${i + 1}" name="${c.name}" current_count="${c.currentCount}" baseline_count="${c.baselineCount}" spike_score="${c.spikeScore?.toFixed(2) ?? "N/A"}" />`
-      );
+      const rows = result.data.map((c, i) => {
+        const name = escapeAttr(c.company?.name ?? c.wikidataId);
+        const domain = escapeAttr((c.company?.domains ?? [])[0] ?? "");
+        const ticker = escapeAttr((c.company?.symbols ?? [])[0]?.symbol ?? "");
+        const industry = escapeAttr(c.company?.industry ?? "");
+        const sector = escapeAttr(c.company?.sector ?? "");
+        return (
+          `<company rank="${i + 1}" id="${c.wikidataId}" name="${name}" ` +
+          `domain="${domain}" ticker="${ticker}" industry="${industry}" sector="${sector}" ` +
+          `current_mentions="${c.currentMentions}" baseline_mentions="${c.baselineMentions}" ` +
+          `current_rate_per_day="${c.currentRatePerDay.toFixed(2)}" baseline_rate_per_day="${c.baselineRatePerDay.toFixed(2)}" ` +
+          `spike_score="${c.spikeScore.toFixed(2)}" />`
+        );
+      });
 
-      let output = `Got ${result.numResults} companies with highest spike scores\n`;
+      let output = `Got ${result.total} companies with highest spike scores\n`;
       output += `<top_companies_results>\n`;
       output += rows.join("\n");
       output += `\n</top_companies_results>`;
