@@ -17,6 +17,13 @@
  * - Wikipedia: Search Wikipedia pages with advanced filtering
  * - Wikipedia Vector: Semantic search of Wikipedia using vector embeddings
  *
+ * Stats Tools (Aggregate metrics and trend analysis):
+ * - Avg Sentiment: Average sentiment scores over time
+ * - Article Counts: Article publication volume over time
+ * - Top Entities: Most-mentioned topics, people, companies, cities, and sources
+ * - Top People: People with the biggest coverage spikes
+ * - Top Companies: Companies with the biggest coverage spikes
+ *
  * Use-Case Tools (Simplified workflows for common tasks):
  * - Company News: Get recent news about a specific company
  * - Person News: Get recent news about a specific person
@@ -42,6 +49,13 @@ export { topicsTool } from "./search/topics";
 export { wikipediaTool } from "./search/wikipedia";
 export { wikipediaVectorTool } from "./search/wikipedia-vector";
 
+// Export stats tool definitions
+export { avgSentimentTool } from "./search/stats-avg-sentiment";
+export { articleCountsTool } from "./search/stats-article-counts";
+export { topEntitiesTool } from "./search/stats-top-entities";
+export { topPeopleTool } from "./search/stats-top-people";
+export { topCompaniesTool } from "./search/stats-top-companies";
+
 // Export use-case tools
 export { companyNewsTool } from "./use-cases/company-news";
 export { personNewsTool } from "./use-cases/person-news";
@@ -61,6 +75,13 @@ export { searchTopics } from "./search/topics";
 export { searchWikipedia } from "./search/wikipedia";
 export { searchVectorWikipedia } from "./search/wikipedia-vector";
 
+// Export stats tool functions
+export { getAvgSentiment } from "./search/stats-avg-sentiment";
+export { getArticleCounts } from "./search/stats-article-counts";
+export { getTopEntities } from "./search/stats-top-entities";
+export { getTopPeople } from "./search/stats-top-people";
+export { getTopCompanies } from "./search/stats-top-companies";
+
 // Export use-case tool functions
 export { getCompanyNews } from "./use-cases/company-news";
 export { getPersonNews } from "./use-cases/person-news";
@@ -79,6 +100,13 @@ export { companiesArgs } from "./search/companies";
 export { topicsArgs } from "./search/topics";
 export { wikipediaArgs } from "./search/wikipedia";
 export { wikipediaVectorArgs } from "./search/wikipedia-vector";
+
+// Export stats argument schemas
+export { avgSentimentArgs } from "./search/stats-avg-sentiment";
+export { articleCountsArgs } from "./search/stats-article-counts";
+export { topEntitiesArgs } from "./search/stats-top-entities";
+export { topPeopleArgs } from "./search/stats-top-people";
+export { topCompaniesArgs } from "./search/stats-top-companies";
 
 // Export use-case argument schemas
 export { companyNewsArgs } from "./use-cases/company-news";
@@ -121,6 +149,11 @@ import { companiesTool } from "./search/companies";
 import { topicsTool } from "./search/topics";
 import { wikipediaTool } from "./search/wikipedia";
 import { wikipediaVectorTool } from "./search/wikipedia-vector";
+import { avgSentimentTool } from "./search/stats-avg-sentiment";
+import { articleCountsTool } from "./search/stats-article-counts";
+import { topEntitiesTool } from "./search/stats-top-entities";
+import { topPeopleTool } from "./search/stats-top-people";
+import { topCompaniesTool } from "./search/stats-top-companies";
 import { companyNewsTool } from "./use-cases/company-news";
 import { personNewsTool } from "./use-cases/person-news";
 import { locationNewsTool } from "./use-cases/location-news";
@@ -147,6 +180,13 @@ export const TOOL_DEFINITIONS: Record<string, ToolDefinition> = {
   search_topics: topicsTool,
   search_wikipedia: wikipediaTool,
   search_vector_wikipedia: wikipediaVectorTool,
+
+  // Stats tools
+  get_avg_sentiment: avgSentimentTool,
+  get_article_counts: articleCountsTool,
+  get_top_entities: topEntitiesTool,
+  get_top_people: topPeopleTool,
+  get_top_companies: topCompaniesTool,
 
   // Use-case tools
   get_company_news: companyNewsTool,

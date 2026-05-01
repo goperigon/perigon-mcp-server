@@ -2,7 +2,7 @@ import { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 import { Perigon } from "../../../lib/perigon";
 import { ToolCallback, ToolDefinition } from "../types";
-import { toolResult } from "../utils/formatting";
+import { toolResult, formatLabelList } from "../utils/formatting";
 import { createErrorMessage } from "../utils/error-handling";
 
 /**
@@ -77,10 +77,10 @@ export function getPersonNews(perigon: Perigon): ToolCallback {
         if (personResult.numResults > 0) {
           const person = personResult.results[0];
           personInfo = `\n<person-context>
-Name: ${person.name}
-Occupation: ${person.occupation || 'N/A'}
-Position: ${person.position || 'N/A'}
-Description: ${person.description || 'N/A'}
+Name: ${person.name ?? 'N/A'}
+Occupation: ${formatLabelList(person.occupation)}
+Position: ${formatLabelList(person.position)}
+Description: ${person.description ?? 'N/A'}
 </person-context>\n`;
         }
       } catch (error) {

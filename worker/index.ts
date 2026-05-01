@@ -343,7 +343,6 @@ async function handleToolRequest(
         } else {
           // For non-authenticated users, require manual API key
           const userPerigonKey = request.headers.get("X-Perigon-API-Key");
-          console.log("Tools endpoint - userPerigonKey 2:", userPerigonKey);
 
           if (!userPerigonKey || userPerigonKey.trim().length === 0) {
             return handleError(

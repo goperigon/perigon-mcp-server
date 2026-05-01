@@ -272,6 +272,20 @@ export function searchNewsArticles(perigon: Perigon): ToolCallback {
           article.topics?.map((t) => t.name).join(", ") ?? "";
         const labels =
           article.labels?.map((l) => l.name).join(", ") ?? "";
+        const people =
+          article.people?.map((p) => p.name).filter(Boolean).join(", ") ?? "";
+        const companies =
+          article.companies?.map((c) => c.name).filter(Boolean).join(", ") ?? "";
+        const places =
+          article.places
+            ?.map((p) => [p.city, p.state, p.country].filter(Boolean).join(", "))
+            .filter(Boolean)
+            .join("; ") ?? "";
+        const locations =
+          article.locations
+            ?.map((l) => [l.city, l.state, l.country].filter(Boolean).join(", "))
+            .filter(Boolean)
+            .join("; ") ?? "";
 
         return `<article id="${article.articleId}" title="${article.title}">
 URL: ${article.url}
@@ -284,10 +298,15 @@ Author: ${article.authorsByline}
 Language: ${article.language}
 Country: ${article.country}
 Medium: ${article.medium}
+Reprint: ${article.reprint ?? false}
 Sentiment: ${JSON.stringify(article.sentiment)}
 Categories: ${categories}
 Topics: ${topics}
 Labels: ${labels}
+People: ${people}
+Companies: ${companies}
+Places: ${places}
+Locations: ${locations}
 Story Id: ${article.clusterId}
 Journalist Ids: ${journalistIds}
 </article>`;
