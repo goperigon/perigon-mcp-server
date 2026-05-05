@@ -81,6 +81,14 @@ export const newsStoriesArgs = createBaseSearchArgs().extend({
     .describe(
       "When true, returns only top headlines from the last 24 hours."
     ),
+  minSourceDiversity: z
+    .number()
+    .min(0)
+    .max(1)
+    .optional()
+    .describe(
+      "Minimum ratio of unique sources to unique articles (uniqueSources / uniqueCount), from 0 to 1. Filters out stories dominated by a single publisher (e.g., 0.05 requires at least 1 unique source per 20 articles). Not applied by default."
+    ),
 });
 
 /**
@@ -122,6 +130,7 @@ export function searchNewsStories(perigon: Perigon): ToolCallback {
     categories,
     topics,
     isTopHeadlines,
+    minSourceDiversity,
   }: z.infer<typeof newsStoriesArgs>): Promise<CallToolResult> => {
     try {
       let fromDate = from;
@@ -152,9 +161,10 @@ export function searchNewsStories(perigon: Perigon): ToolCallback {
         showDuplicates: true,
         category: categories,
         topic: topics,
-        // language and label are supported by the API but not typed in the SDK
+        // language, label, and minSourceDiversity are supported by the API but not typed in the SDK
         ...(language ? { language } : {}),
         ...(label ? { label } : {}),
+        ...(minSourceDiversity !== undefined ? { minSourceDiversity } : {}),
       } as any);
 
       if (result.numResults === 0) return noResults;
