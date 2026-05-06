@@ -20,7 +20,10 @@ export function createAISDKTools(apiKey: string) {
   for (const [toolName, definition] of Object.entries(TOOL_DEFINITIONS)) {
     tools[toolName] = tool({
       description: definition.description,
-      parameters: definition.parameters,
+      // AI SDK v5 renamed `parameters` to `inputSchema`. The internal MCP tool
+      // definition still calls this field `parameters` (zod schema) and we
+      // simply rename it at the SDK boundary.
+      inputSchema: definition.parameters,
       execute: async (
         params: z.infer<typeof definition.parameters>
       ): Promise<string> => {

@@ -1,0 +1,14 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    // Bun globals (`bun:test`, `Bun.*`) and Cloudflare worker ambient types
+    // (`Env`, `ExecutionContext`, `ExportedHandler`).
+    "types": ["bun"],
+    "noEmit": true
+  },
+  // The root tsconfig excludes `test/`. We re-include it here, alongside the
+  // ambient Cloudflare worker types so Env/ExecutionContext resolve in the
+  // worker/index.test.ts route table tests.
+  "include": ["**/*.ts", "../worker-configuration.d.ts"],
+  "exclude": []
+}

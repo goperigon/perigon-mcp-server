@@ -21,6 +21,13 @@ jobs:
       - name: Install dependencies
         run: bun i
 
+      - name: Run tests
+        run: bun test
+        env:
+          # Optional. When set, the smoke suite (test/smoke/*) hits the live
+          # Perigon API. If unset, those tests auto-skip via `test.skipIf`.
+          PERIGON_API_KEY: ${{ secrets.PERIGON_API_KEY }}
+
       - name: Build
         run: bun run build
         env:
