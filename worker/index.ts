@@ -32,8 +32,6 @@ const ROUTES: Record<string, RouteHandler> = {
   "/v1/mcp": handleMCP,
 };
 
-const NOT_FOUND = new Response("Not found", { status: 404 });
-
 function ensureAnthropicKey(env: Env): Response | null {
   if (env.ANTHROPIC_API_KEY) return null;
   console.error("ANTHROPIC_API_KEY is not set");
@@ -53,7 +51,7 @@ export default {
 
     const { pathname } = new URL(request.url);
     const handler = ROUTES[pathname];
-    if (!handler) return NOT_FOUND;
+    if (!handler) return new Response("Not found", { status: 404 });
 
     return handler(request, env, ctx);
   },
