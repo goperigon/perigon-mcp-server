@@ -1,8 +1,16 @@
 import { TOOL_DEFINITIONS, type ToolName } from "./index";
 
 /**
- * Parses the raw `?tool=` query parameter value into a validated list of
- * known tool names.
+ * Reads the tool-filter query parameter from a URL, accepting both `?tool=`
+ * and `?tools=` (alias). `tool` takes precedence when both are present.
+ */
+export function resolveToolParam(url: URL): string | null {
+  return url.searchParams.get("tool") ?? url.searchParams.get("tools");
+}
+
+/**
+ * Parses the raw `?tool=` (or `?tools=`) query parameter value into a
+ * validated list of known tool names.
  *
  * Returns `null` in three cases:
  *   - the parameter is absent (`null` input)

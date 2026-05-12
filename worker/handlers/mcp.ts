@@ -3,7 +3,7 @@ import { Perigon } from "../lib/perigon";
 import { handleError } from "../lib/handle-error";
 import { hashKey } from "../lib/hash";
 import { PerigonMCP, type Props } from "../mcp/mcp";
-import { parseRequestedTools } from "../mcp/tools/selection";
+import { parseRequestedTools, resolveToolParam } from "../mcp/tools/selection";
 
 const SSE_PATHS = ["/v1/sse", "/v1/sse/message"] as const;
 const STREAMABLE_PATH = "/v1/mcp";
@@ -64,7 +64,7 @@ async function loadMcpProps(request: Request, apiKey: string): Promise<Props> {
   const perigon = new Perigon(apiKey);
   const apiKeyDetails = await perigon.introspection();
   const requestedTools = parseRequestedTools(
-    new URL(request.url).searchParams.get("tool")
+    resolveToolParam(new URL(request.url))
   );
   return {
     apiKey,

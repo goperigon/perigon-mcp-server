@@ -16,7 +16,7 @@ import {
   logStreamTextError,
 } from "../lib/stream-error-handler";
 import { createAISDKTools } from "../mcp/ai-sdk-adapter";
-import { parseRequestedTools } from "../mcp/tools/selection";
+import { parseRequestedTools, resolveToolParam } from "../mcp/tools/selection";
 import type { ToolName } from "../mcp/tools";
 
 const CHAT_MODEL_ID = "claude-opus-4-6";
@@ -51,7 +51,7 @@ export async function handleChat(
     const { messages = [] } = (await request.json()) as ChatRequestBody;
 
     const requestedTools = parseRequestedTools(
-      new URL(request.url).searchParams.get("tool")
+      resolveToolParam(new URL(request.url))
     );
 
     const apiKeys = await resolveApiKeys(request, env, isAuthenticated);
