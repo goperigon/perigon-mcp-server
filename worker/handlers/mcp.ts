@@ -3,6 +3,7 @@ import { Perigon } from "../lib/perigon";
 import { handleError } from "../lib/handle-error";
 import { hashKey } from "../lib/hash";
 import { PerigonMCP, type Props } from "../mcp/mcp";
+import { parseRequestedTools } from "../mcp/tools/selection";
 
 const SSE_PATHS = ["/v1/sse", "/v1/sse/message"] as const;
 const STREAMABLE_PATH = "/v1/mcp";
@@ -26,7 +27,7 @@ export async function handleMCP(
     const rateLimitResponse = await enforceRateLimit(apiKey, env);
     if (rateLimitResponse) return rateLimitResponse;
 
-    const props = await loadMcpProps(apiKey);
+    const props = await loadMcpProps(request, apiKey);
     ctx.props = props;
 
     return dispatchMcp(request, env, ctx);
@@ -59,12 +60,16 @@ async function enforceRateLimit(
   );
 }
 
-async function loadMcpProps(apiKey: string): Promise<Props> {
+async function loadMcpProps(request: Request, apiKey: string): Promise<Props> {
   const perigon = new Perigon(apiKey);
   const apiKeyDetails = await perigon.introspection();
+  const requestedTools = parseRequestedTools(
+    new URL(request.url).searchParams.get("tool")
+  );
   return {
     apiKey,
     scopes: apiKeyDetails.scopes,
+    requestedTools,
   };
 }
 

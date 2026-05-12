@@ -1,0 +1,7 @@
+allowBuilds:
+  core-js-pure: false
+  esbuild: false
+  sharp: false
+  workerd: false
+
+minimumReleaseAge: 1440
