@@ -94,24 +94,22 @@ claude mcp add --transport http perigon_news_api https://mcp.perigon.io/v1/mcp \
 
 ### Selecting specific tools
 
-By default all tools permitted by your API key are available. You can restrict a session to a smaller set by appending a `?tool=` query parameter to the server URL. This is useful for reducing context size and keeping the model focused.
+By default all tools permitted by your API key are available. You can restrict a session to a smaller set by appending a `?tools=` query parameter to the server URL. This is useful for reducing context size and keeping the model focused.
 
 ```
-https://mcp.perigon.io/v1/mcp?tool=search_news_articles,search_news_stories
+https://mcp.perigon.io/v1/mcp?tools=search_news_articles,search_news_stories
 ```
 
-Both `?tool=` and `?tools=` are accepted — use whichever reads more naturally in your client config. When both are present `?tool=` takes precedence.
-
-- Pass a comma-separated list of tool names.
+- Pass a comma-separated list of tool names, or `all` to explicitly activate every permitted tool.
 - Only tools your API key already has access to will be activated — the parameter cannot expand permissions.
-- Omitting the parameter (or passing an empty value) activates all permitted tools.
+- Omitting the parameter, passing an empty value, or passing `all` are all equivalent and activate every permitted tool.
 
 **Example — Cursor config scoped to article and story search:**
 ```json
 {
   "mcpServers": {
     "perigon_news_api": {
-      "url": "https://mcp.perigon.io/v1/mcp?tool=search_news_articles,search_news_stories",
+      "url": "https://mcp.perigon.io/v1/mcp?tools=search_news_articles,search_news_stories",
       "type": "http",
       "headers": {
         "Authorization": "Bearer YOUR_PERIGON_API_KEY"

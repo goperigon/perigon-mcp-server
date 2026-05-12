@@ -72,6 +72,16 @@ describe("parseRequestedTools", () => {
     expect(parseRequestedTools("   ")).toBeNull();
   });
 
+  test('returns null for "all" (explicit all-tools alias)', () => {
+    expect(parseRequestedTools("all")).toBeNull();
+  });
+
+  test('"all" alias is case-insensitive', () => {
+    expect(parseRequestedTools("ALL")).toBeNull();
+    expect(parseRequestedTools("All")).toBeNull();
+    expect(parseRequestedTools("  all  ")).toBeNull();
+  });
+
   test("returns single valid tool name", () => {
     const result = parseRequestedTools("search_news_articles");
     expect(result).toEqual(["search_news_articles"]);

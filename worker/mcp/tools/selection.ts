@@ -12,9 +12,10 @@ export function resolveToolParam(url: URL): string | null {
  * Parses the raw `?tool=` (or `?tools=`) query parameter value into a
  * validated list of known tool names.
  *
- * Returns `null` in three cases:
+ * Returns `null` in four cases (all meaning "no filter — use all permitted tools"):
  *   - the parameter is absent (`null` input)
  *   - the parameter is an empty string
+ *   - the parameter value is `"all"` (explicit alias for all tools)
  *   - all provided names are unknown (prevents accidental total lockout)
  *
  * Unknown names mixed with valid names are silently dropped, so callers
@@ -22,6 +23,7 @@ export function resolveToolParam(url: URL): string | null {
  */
 export function parseRequestedTools(param: string | null): ToolName[] | null {
   if (!param) return null;
+  if (param.trim().toLowerCase() === "all") return null;
 
   const candidates = param
     .split(",")
