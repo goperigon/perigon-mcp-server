@@ -17,8 +17,8 @@
   "author": "Perigon (https://www.perigon.io)",
   "type": "module",
   "scripts": {
-    "deploy": "bunx wrangler deploy",
-    "deploy:versions": "bunx wrangler versions upload",
+    "deploy": "bun run build && bunx wrangler deploy",
+    "deploy:versions": "bun run build && bunx wrangler versions upload",
     "dev": "vite dev",
     "build": "vite build",
     "mcp": "bunx @modelcontextprotocol/inspector",
@@ -26,6 +26,7 @@
     "test": "bun test",
     "test:watch": "bun test --watch",
     "test:coverage": "bun test --coverage",
+    "test:e2e": "bun test ./test/e2e/*.e2e.ts",
     "test:smoke": "bun test test/smoke"
   },
   "devDependencies": {
