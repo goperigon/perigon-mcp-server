@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useChat } from "@ai-sdk/react";
 import type { UIMessage } from "ai";
 import { useAuth } from "@/lib/auth-context";
@@ -20,6 +20,8 @@ import {
 } from "./chat/chat-alerts";
 import { ChatInput } from "./chat/chat-input";
 import { MessageList } from "./chat/message-list";
+import { ToolSelectorDialog } from "./chat/tool-selector-dialog";
+import { TOOL_COUNT } from "@/lib/mcp-tools";
 
 const isAuthError = (error: Error) => error.message.includes("401");
 
@@ -35,6 +37,18 @@ export default function ChatPlayground() {
 
   const [initialMessages] = useState<UIMessage[]>(loadMessagesFromStorage);
   const [input, setInput] = useState("");
+  /**
+   * Empty Set = all tools active (default, no ?tool= param sent).
+   * Non-empty Set = only those tool names are sent as ?tool=...
+   */
+  const [selectedTools, setSelectedTools] = useState<Set<string>>(
+    () => new Set()
+  );
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const selectedToolNames =
+    selectedTools.size > 0 ? [...selectedTools] : null;
+  const selectedToolNamesRef = useRef<string[] | null>(selectedToolNames);
+  selectedToolNamesRef.current = selectedToolNames;
 
   // Recompute on auth changes so a fresh chat instance is mounted.
   const chatId = `${secret ?? "no-auth"}-${selectedPerigonKey?.id ?? "no-key"}`;
@@ -44,6 +58,7 @@ export default function ChatPlayground() {
       createChatTransport({
         secret,
         perigonKey: selectedPerigonKey?.token ?? null,
+        getSelectedTools: () => selectedToolNamesRef.current,
         onUnauthorized: () => void invalidate(),
       }),
     [secret, selectedPerigonKey?.token, invalidate]
@@ -106,6 +121,9 @@ export default function ChatPlayground() {
     Boolean(selectedPerigonKey) &&
     !isLoadingApiKeys;
 
+  const activeToolCount =
+    selectedTools.size === 0 ? TOOL_COUNT : selectedTools.size;
+
   return (
     <div className="fixed inset-0 top-12 flex flex-col bg-background">
       {apiKeysError && <ApiKeysErrorAlert message={apiKeysError} />}
@@ -132,6 +150,15 @@ export default function ChatPlayground() {
         onClear={handleClear}
         disabled={!canSubmit}
         canSubmit={canSubmit}
+        onSettingsOpen={() => setIsSettingsOpen(true)}
+        activeToolCount={activeToolCount}
+      />
+
+      <ToolSelectorDialog
+        open={isSettingsOpen}
+        onOpenChange={setIsSettingsOpen}
+        selectedTools={selectedTools}
+        onSelectionChange={setSelectedTools}
       />
     </div>
   );

@@ -16,6 +16,8 @@ import {
   logStreamTextError,
 } from "../lib/stream-error-handler";
 import { createAISDKTools } from "../mcp/ai-sdk-adapter";
+import { parseRequestedTools } from "../mcp/tools/selection";
+import type { ToolName } from "../mcp/tools";
 
 const CHAT_MODEL_ID = "claude-opus-4-6";
 const MAX_STEPS = 20;
@@ -48,10 +50,14 @@ export async function handleChat(
     const isAuthenticated = await validatePerigonAuth(request);
     const { messages = [] } = (await request.json()) as ChatRequestBody;
 
+    const requestedTools = parseRequestedTools(
+      new URL(request.url).searchParams.get("tool")
+    );
+
     const apiKeys = await resolveApiKeys(request, env, isAuthenticated);
     if (apiKeys instanceof Response) return apiKeys;
 
-    return runChat({ messages, ...apiKeys });
+    return runChat({ messages, requestedTools, ...apiKeys });
   } catch (error) {
     return handleChatError(error);
   }
@@ -104,15 +110,17 @@ async function resolveApiKeys(
 
 interface RunChatArgs extends ApiKeys {
   messages: UIMessage[];
+  requestedTools: ToolName[] | null;
 }
 
 function runChat({
   messages,
   anthropicApiKey,
   perigonApiKey,
+  requestedTools,
 }: RunChatArgs): Response {
   const anthropic = createAnthropic({ apiKey: anthropicApiKey });
-  const tools = createAISDKTools(perigonApiKey);
+  const tools = createAISDKTools(perigonApiKey, requestedTools);
   const systemPrompt = resolveSystemPrompt(messages);
 
   const result = streamText({

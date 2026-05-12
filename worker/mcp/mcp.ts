@@ -1,12 +1,14 @@
 import { McpAgent } from "agents/mcp";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { Scopes } from "../types/types";
-import { TOOL_DEFINITIONS, ToolName } from "./tools";
+import { TOOL_DEFINITIONS, type ToolName } from "./tools";
 import { Perigon } from "../lib/perigon";
+import { resolveActiveTools } from "./tools/selection";
 
 export type Props = {
   apiKey: string;
   scopes: Scopes[];
+  requestedTools: ToolName[] | null;
 };
 
 // Map scopes to tool names
@@ -24,6 +26,23 @@ const SCOPE_TO_TOOLS: Partial<Record<Scopes, ToolName[]>> = {
   [Scopes.VECTOR_SEARCH_WIKIPEDIA]: ["search_vector_wikipedia"],
 };
 
+/**
+ * Returns a deduplicated list of tool names permitted by the given API key
+ * scopes. `search_news_articles` is always included regardless of scope.
+ */
+function getAllowedToolsForScopes(scopes: Scopes[]): ToolName[] {
+  const seen = new Set<ToolName>(["search_news_articles"]);
+  for (const scope of scopes) {
+    if (!scope) continue;
+    const toolNames = SCOPE_TO_TOOLS[scope];
+    if (!toolNames) continue;
+    for (const name of toolNames) {
+      seen.add(name);
+    }
+  }
+  return [...seen];
+}
+
 export class PerigonMCP extends McpAgent<Env, unknown, Props> {
   // Type assertion needed: agents bundles its own @modelcontextprotocol/sdk copy
   server = new McpServer({
@@ -33,32 +52,19 @@ export class PerigonMCP extends McpAgent<Env, unknown, Props> {
 
   async init() {
     const perigon = new Perigon(this.props!.apiKey);
+    const { scopes, requestedTools } = this.props!;
 
-    // Always include articles search
-    const articlesDefinition = TOOL_DEFINITIONS.search_news_articles;
-    this.server.tool(
-      articlesDefinition.name,
-      articlesDefinition.description,
-      articlesDefinition.parameters.shape,
-      articlesDefinition.createHandler(perigon)
-    );
+    const allowedTools = getAllowedToolsForScopes(scopes);
+    const activeTools = resolveActiveTools(allowedTools, requestedTools);
 
-    // Add tools based on scopes
-    for (const scope of this.props!.scopes) {
-      if (!scope) continue;
-
-      const currentToolNames = SCOPE_TO_TOOLS[scope];
-      if (!currentToolNames) continue;
-
-      for (const toolName of currentToolNames) {
-        const definition = TOOL_DEFINITIONS[toolName as ToolName];
-        this.server.tool(
-          definition.name,
-          definition.description,
-          definition.parameters.shape,
-          definition.createHandler(perigon)
-        );
-      }
+    for (const toolName of activeTools) {
+      const definition = TOOL_DEFINITIONS[toolName];
+      this.server.tool(
+        definition.name,
+        definition.description,
+        definition.parameters.shape,
+        definition.createHandler(perigon)
+      );
     }
   }
 }

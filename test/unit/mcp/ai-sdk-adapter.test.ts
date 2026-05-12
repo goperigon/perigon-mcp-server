@@ -49,4 +49,39 @@ describe("createAISDKTools", () => {
       expect(typeof tool.execute, `${name}.execute`).toBe("function");
     }
   });
+
+  test("passing null for requestedTools returns all tools (same as omitting)", () => {
+    const tools = createAISDKTools("fake-key", null);
+    const expected = Object.keys(TOOL_DEFINITIONS).sort();
+    expect(Object.keys(tools).sort()).toEqual(expected);
+  });
+
+  test("filters down to a single tool when one name is requested", () => {
+    const tools = createAISDKTools("fake-key", ["search_news_articles"]);
+    expect(Object.keys(tools)).toEqual(["search_news_articles"]);
+    expect(tools["search_news_articles"]).toBeDefined();
+  });
+
+  test("filters down to the requested subset when multiple names are provided", () => {
+    const requested = ["search_news_articles", "search_people"] as const;
+    const tools = createAISDKTools("fake-key", [...requested]);
+    expect(Object.keys(tools).sort()).toEqual([...requested].sort());
+  });
+
+  test("excluded tools are absent from the result", () => {
+    const tools = createAISDKTools("fake-key", ["search_news_articles"]);
+    const allNames = Object.keys(TOOL_DEFINITIONS);
+    const excluded = allNames.filter((n) => n !== "search_news_articles");
+    for (const name of excluded) {
+      expect(tools[name], `${name} should be absent`).toBeUndefined();
+    }
+  });
+
+  test("still exposes correct inputSchema and execute on a filtered tool", () => {
+    const tools = createAISDKTools("fake-key", ["search_people"]);
+    const t = tools["search_people"];
+    expect(t).toBeDefined();
+    expect(t.inputSchema).toBe(TOOL_DEFINITIONS["search_people"].parameters);
+    expect(typeof t.execute).toBe("function");
+  });
 });

@@ -1,8 +1,9 @@
 import React from "react";
-import { Send, Trash2 } from "lucide-react";
+import { Send, Settings2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useTextareaAutoResize } from "@/hooks/use-textarea-auto-resize";
+import { TOOL_COUNT } from "@/lib/mcp-tools";
 
 interface ChatInputProps {
   value: string;
@@ -11,6 +12,10 @@ interface ChatInputProps {
   onClear: () => void;
   disabled: boolean;
   canSubmit: boolean;
+  /** Opens the tool selector settings dialog. */
+  onSettingsOpen: () => void;
+  /** Number of currently active tools (used to show filter badge). */
+  activeToolCount: number;
 }
 
 /**
@@ -24,8 +29,11 @@ export function ChatInput({
   onClear,
   disabled,
   canSubmit,
+  onSettingsOpen,
+  activeToolCount,
 }: ChatInputProps) {
   const textareaRef = useTextareaAutoResize(value);
+  const isFiltered = activeToolCount < TOOL_COUNT;
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (event.key !== "Enter" || event.shiftKey) return;
@@ -35,7 +43,7 @@ export function ChatInput({
   };
 
   return (
-    <div className="flex-shrink-0 border-t border-border backdrop-blur-sm p-6">
+    <div className="shrink-0 border-t border-border backdrop-blur-sm p-6">
       <div className="max-w-4xl mx-auto">
         <div className="font-mono text-xs text-muted-foreground mb-4 hidden sm:block">
           INPUT CONSOLE • Press Enter to send, Shift+Enter for new line
@@ -68,6 +76,27 @@ export function ChatInput({
             <Trash2 className="size-4" />
             CLEAR
           </Button>
+          <div className="relative mt-3">
+            <Button
+              type="button"
+              onClick={onSettingsOpen}
+              variant="ghost"
+              size="icon"
+              title={
+                isFiltered
+                  ? `Tool settings (${activeToolCount}/${TOOL_COUNT} active)`
+                  : "Tool settings"
+              }
+              className={isFiltered ? "text-primary" : ""}
+            >
+              <Settings2 className="size-4" />
+            </Button>
+            {isFiltered && (
+              <span className="pointer-events-none absolute -top-1 -right-1 flex size-4 items-center justify-center rounded-full bg-primary text-[9px] font-bold text-primary-foreground leading-none">
+                {activeToolCount}
+              </span>
+            )}
+          </div>
         </form>
       </div>
     </div>
