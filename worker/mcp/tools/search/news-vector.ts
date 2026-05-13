@@ -6,7 +6,7 @@ import { paginationArgs } from "../schemas/base";
 import {
   toolResult,
   noResults,
-  createPaginationHeader,
+  createCurrentPageHeader,
 } from "../utils/formatting";
 import { createErrorMessage } from "../utils/error-handling";
 
@@ -136,6 +136,8 @@ export function searchVectorNews(perigon: Perigon): ToolCallback {
       const result = await perigon.vectorSearchArticles({
         articleSearchParams: {
           prompt: query,
+          page,
+          size,
           pubDateFrom,
           pubDateTo,
           showReprints,
@@ -186,7 +188,7 @@ Similarity Score: ${scored.score ?? "N/A"}
 </article>`;
       });
 
-      let output = createPaginationHeader(
+      let output = createCurrentPageHeader(
         result.results.length,
         page,
         size,

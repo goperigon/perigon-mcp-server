@@ -18,13 +18,20 @@ describe("searchVectorWikipedia", () => {
     const perigon = createMockPerigon({
       vectorSearchWikipedia: async () => wikipediaVectorFixture,
     });
-    const args = wikipediaVectorArgs.parse({ query: "OpenAI history" });
-    await searchVectorWikipedia(perigon)(args);
+    const args = wikipediaVectorArgs.parse({
+      query: "OpenAI history",
+      page: 3,
+      size: 25,
+    });
+    const result = await searchVectorWikipedia(perigon)(args);
 
     const call = firstCallArgs<any>(perigon.vectorSearchWikipedia);
     expect(call.wikipediaSearchParams.prompt).toBe("OpenAI history");
-    expect(call.wikipediaSearchParams.page).toBe(0);
-    expect(call.wikipediaSearchParams.size).toBe(10);
+    expect(call.wikipediaSearchParams.page).toBe(3);
+    expect(call.wikipediaSearchParams.size).toBe(25);
+    expect(text(result)).toContain(
+      "Returned 1 Wikipedia pages (vector search) (page 3, requested size 25)"
+    );
     // filter object should NOT be present when no filter fields are set
     expect(call.wikipediaSearchParams).not.toHaveProperty("filter");
   });
