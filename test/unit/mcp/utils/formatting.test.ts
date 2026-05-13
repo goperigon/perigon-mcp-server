@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import {
+  createCurrentPageHeader,
   createPaginationHeader,
   formatLabel,
   formatLabelList,
@@ -40,6 +41,14 @@ describe("createPaginationHeader", () => {
   test("produces the documented (page X of Y-1) shape on a final page", () => {
     expect(createPaginationHeader(20, 1, 10, "stories")).toBe(
       "Got 20 stories (page 1 of 1)"
+    );
+  });
+});
+
+describe("createCurrentPageHeader", () => {
+  test("reports current page details without implying a known total", () => {
+    expect(createCurrentPageHeader(15, 50, 15, "articles")).toBe(
+      "Returned 15 articles (page 50, requested size 15)"
     );
   });
 });

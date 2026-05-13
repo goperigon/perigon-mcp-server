@@ -35,6 +35,19 @@ export function createPaginationHeader(
 }
 
 /**
+ * Create a header for endpoints that return the current page only and do not
+ * expose total result counts.
+ */
+export function createCurrentPageHeader(
+  returned: number,
+  page: number,
+  size: number,
+  itemType: string
+): string {
+  return `Returned ${returned} ${itemType} (page ${page}, requested size ${size})`;
+}
+
+/**
  * Format an array of `WikidataLabelHolder`-like objects (or strings) into a
  * human-readable comma-separated list of labels. Returns "N/A" when the
  * collection is empty/null/undefined so the LLM never sees `[object Object]`.

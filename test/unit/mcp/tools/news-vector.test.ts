@@ -63,16 +63,19 @@ describe("searchVectorNews", () => {
     });
   });
 
-  test("PINNED BUG: page/size are accepted but not forwarded to the SDK", async () => {
+  test("forwards page and size to the SDK", async () => {
     const perigon = createMockPerigon({
       vectorSearchArticles: async () => newsVectorFixture,
     });
-    await searchVectorNews(perigon)(
+    const result = await searchVectorNews(perigon)(
       newsVectorArgs.parse({ query: "x", page: 2, size: 50 })
     );
     const call = firstCallArgs<any>(perigon.vectorSearchArticles);
-    expect(call.articleSearchParams).not.toHaveProperty("page");
-    expect(call.articleSearchParams).not.toHaveProperty("size");
+    expect(call.articleSearchParams.page).toBe(2);
+    expect(call.articleSearchParams.size).toBe(50);
+    expect(text(result)).toContain(
+      "Returned 1 articles (vector search) (page 2, requested size 50)"
+    );
   });
 
   test("renders Similarity Score from scored.score", async () => {

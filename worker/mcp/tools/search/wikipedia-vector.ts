@@ -6,7 +6,7 @@ import { paginationArgs } from "../schemas/base";
 import {
   toolResult,
   noResults,
-  createPaginationHeader,
+  createCurrentPageHeader,
 } from "../utils/formatting";
 import { createErrorMessage } from "../utils/error-handling";
 
@@ -130,7 +130,7 @@ Similarity Score: ${scored.score || "N/A"}
 </wikipedia_page>`;
       });
 
-      let output = createPaginationHeader(
+      let output = createCurrentPageHeader(
         result.results.length,
         page,
         size,
