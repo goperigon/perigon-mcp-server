@@ -2,8 +2,9 @@ import { HttpError } from "../types/types";
 import { Perigon } from "../lib/perigon";
 import { handleError } from "../lib/handle-error";
 import { hashKey } from "../lib/hash";
+import { McpAgent } from "agents/mcp";
 import { PerigonMCP, type Props } from "../mcp/mcp";
-import { parseRequestedTools } from "../mcp/tools/selection";
+import { parseRequestedTools, resolveToolParam } from "../mcp/tools/selection";
 
 const SSE_PATHS = ["/v1/sse", "/v1/sse/message"] as const;
 const STREAMABLE_PATH = "/v1/mcp";
@@ -64,7 +65,7 @@ async function loadMcpProps(request: Request, apiKey: string): Promise<Props> {
   const perigon = new Perigon(apiKey);
   const apiKeyDetails = await perigon.introspection();
   const requestedTools = parseRequestedTools(
-    new URL(request.url).searchParams.get("tool")
+    resolveToolParam(new URL(request.url))
   );
   return {
     apiKey,
@@ -80,12 +81,16 @@ function dispatchMcp(
 ): Promise<Response> | Response {
   const { pathname } = new URL(request.url);
 
+  // Cast required: TypeScript doesn't propagate static methods from a generic
+  // abstract base class (McpAgent) onto the concrete subclass type.
+  const McpAgentClass = PerigonMCP as unknown as typeof McpAgent;
+
   if (SSE_PATHS.includes(pathname as (typeof SSE_PATHS)[number])) {
-    return PerigonMCP.serveSSE("/v1/sse").fetch(request, env, ctx);
+    return McpAgentClass.serveSSE("/v1/sse").fetch(request, env, ctx);
   }
 
   if (pathname === STREAMABLE_PATH) {
-    return PerigonMCP.serve(STREAMABLE_PATH).fetch(request, env, ctx);
+    return McpAgentClass.serve(STREAMABLE_PATH).fetch(request, env, ctx);
   }
 
   return new Response("Not found", { status: 404 });

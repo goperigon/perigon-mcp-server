@@ -25,53 +25,15 @@ You can try out the Perigon MCP server in our [playground](https://mcp.perigon.i
 
 ### Connecting
 
-You can connect to our remote MCP server using local or remote MCP clients.
+You can connect to our remote MCP server using any MCP-compatible client.
 
 **Server URL:** `https://mcp.perigon.io`
 
-**Supported Connection Types:**
-- **HTTP (Streamable):** `https://mcp.perigon.io/v1/mcp`
-- **Server-Sent Events (SSE):** `https://mcp.perigon.io/v1/sse`
+The recommended transport is **Streamable HTTP** (`/v1/mcp`). SSE (`/v1/sse`) is supported for legacy clients but not recommended for new integrations.
 
 #### Quick Setup Examples
 
-**For MCP clients (SSE with mcp-remote):**
-```json
-{
-  "mcpServers": {
-    "perigon_news_api": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "mcp-remote@latest",
-        "https://mcp.perigon.io/v1/sse",
-        "--header",
-        "Authorization: Bearer ${PERIGON_API_KEY}"
-      ],
-      "env": {
-        "PERIGON_API_KEY": "YOUR_PERIGON_API_KEY"
-      }
-    }
-  }
-}
-```
-
-**For MCP clients (With SSE support):**
-```json
-{
-  "mcpServers": {
-    "perigon_news_api": {
-      "url": "https://mcp.perigon.io/v1/sse",
-      "type": "sse",
-      "headers": {
-        "Authorization": "Bearer YOUR_PERIGON_API_KEY"
-      }
-    }
-  }
-}
-```
-
-**For clients supporting HTTP (Streamable):**
+**Streamable HTTP — native support (recommended):**
 ```json
 {
   "mcpServers": {
@@ -86,27 +48,76 @@ You can connect to our remote MCP server using local or remote MCP clients.
 }
 ```
 
+**Streamable HTTP — via `mcp-remote` (for clients without native HTTP support):**
+```json
+{
+  "mcpServers": {
+    "perigon_news_api": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-remote@latest",
+        "https://mcp.perigon.io/v1/mcp",
+        "--header",
+        "Authorization: Bearer ${PERIGON_API_KEY}"
+      ],
+      "env": {
+        "PERIGON_API_KEY": "YOUR_PERIGON_API_KEY"
+      }
+    }
+  }
+}
+```
+
 **For Claude Code (CLI):**
 ```bash
-claude mcp add --transport sse perigon_news_api https://mcp.perigon.io/v1/sse \
+claude mcp add --transport http perigon_news_api https://mcp.perigon.io/v1/mcp \
   --header "Authorization: Bearer YOUR_PERIGON_API_KEY"
+```
+
+**SSE (legacy clients only):**
+```json
+{
+  "mcpServers": {
+    "perigon_news_api": {
+      "url": "https://mcp.perigon.io/v1/sse",
+      "type": "sse",
+      "headers": {
+        "Authorization": "Bearer YOUR_PERIGON_API_KEY"
+      }
+    }
+  }
+}
 ```
 
 📖 **For detailed setup instructions for different clients, see our [comprehensive MCP documentation](https://dev.perigon.io/docs/mcp).**
 
-### Smithery Deployment
+### Selecting specific tools
 
-This MCP server can be easily deployed to [Smithery](https://smithery.ai) using the included Docker configuration. The repository includes:
+By default all tools permitted by your API key are available. You can restrict a session to a smaller set by appending a `?tools=` query parameter to the server URL. This is useful for reducing context size and keeping the model focused.
 
-- `Dockerfile` - Container build configuration
-- `smithery.yaml` - Smithery deployment configuration 
-- `server.js` - HTTP server wrapper for the MCP
+```
+https://mcp.perigon.io/v1/mcp?tools=search_news_articles,search_news_stories
+```
 
-**Configuration Options:**
-- `apiKey` (required): Your Perigon API key
-- `rateLimitBypass` (optional): Bypass rate limiting in containerized environment (default: true)
+- Pass a comma-separated list of tool names, or `all` to explicitly activate every permitted tool.
+- Only tools your API key already has access to will be activated — the parameter cannot expand permissions.
+- Omitting the parameter, passing an empty value, or passing `all` are all equivalent and activate every permitted tool.
 
-The MCP endpoint will be available at `/mcp` and automatically handles Smithery's query parameter configuration format.
+**Example — Cursor config scoped to article and story search:**
+```json
+{
+  "mcpServers": {
+    "perigon_news_api": {
+      "url": "https://mcp.perigon.io/v1/mcp?tools=search_news_articles,search_news_stories",
+      "type": "http",
+      "headers": {
+        "Authorization": "Bearer YOUR_PERIGON_API_KEY"
+      }
+    }
+  }
+}
+```
 
 ### Prompt Examples
 
@@ -136,17 +147,7 @@ When prompting your agent we recommend providing the current date (or a tool to 
 
 ## Supported tools
 
-| Tool | Description |
-|------|-------------|
-| `search_news_articles` | Search individual news articles with advanced filtering by keywords, location, time range, sources, and journalists. Returns full article content or summaries with metadata. |
-| `search_news_stories` | Search clustered news stories and headlines. Returns story summaries, sentiment analysis, and metadata for understanding major news events and trends across multiple sources. |
-| `search_journalists` | Find journalists and reporters by name, publication, location, or coverage area. Returns journalist profiles with their top sources, locations, and monthly posting activity. |
-| `search_sources` | Discover news publications and media outlets by name, domain, location, or audience size. Returns source details including monthly visits, top topics, and geographic focus. |
-| `search_people` | Search for public figures, politicians, celebrities, and newsworthy individuals. Returns biographical information including occupation, position, and detailed descriptions. |
-| `search_companies` | Find corporations and businesses by name, domain, or industry. Returns company profiles with CEO information, employee count, industry classification, and business descriptions. |
-| `search_topics` | Search topics currently supported via Perigon API for discovering available news categories and subjects. |
-| `search_wikipedia` | Search Wikipedia pages for information on any topic. Returns page summaries, content, categories, and metadata with support for advanced filtering by Wikidata entities, categories, and page views. |
-| `search_vector_wikipedia` | Search Wikipedia pages using semantic vector search for more contextual and meaning-based results. Returns page summaries, content, categories, and metadata. |
+The full list of available tools — including names, descriptions, and parameter schemas — is visible in the [MCP playground](https://mcp.perigon.io). The tools available to you depend on the scopes granted to your API key.
 
 ## Issues / Contributing
 

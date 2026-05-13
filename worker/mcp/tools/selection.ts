@@ -1,12 +1,21 @@
 import { TOOL_DEFINITIONS, type ToolName } from "./index";
 
 /**
- * Parses the raw `?tool=` query parameter value into a validated list of
- * known tool names.
+ * Reads the tool-filter query parameter from a URL, accepting both `?tool=`
+ * and `?tools=` (alias). `tool` takes precedence when both are present.
+ */
+export function resolveToolParam(url: URL): string | null {
+  return url.searchParams.get("tool") ?? url.searchParams.get("tools");
+}
+
+/**
+ * Parses the raw `?tool=` (or `?tools=`) query parameter value into a
+ * validated list of known tool names.
  *
- * Returns `null` in three cases:
+ * Returns `null` in four cases (all meaning "no filter — use all permitted tools"):
  *   - the parameter is absent (`null` input)
  *   - the parameter is an empty string
+ *   - the parameter value is `"all"` (explicit alias for all tools)
  *   - all provided names are unknown (prevents accidental total lockout)
  *
  * Unknown names mixed with valid names are silently dropped, so callers
@@ -14,6 +23,7 @@ import { TOOL_DEFINITIONS, type ToolName } from "./index";
  */
 export function parseRequestedTools(param: string | null): ToolName[] | null {
   if (!param) return null;
+  if (param.trim().toLowerCase() === "all") return null;
 
   const candidates = param
     .split(",")

@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import {
   parseRequestedTools,
   resolveActiveTools,
+  resolveToolParam,
 } from "../../../worker/mcp/tools/selection";
 import type { ToolName } from "../../../worker/mcp/tools";
 
@@ -21,6 +22,40 @@ const ALL_ALLOWED: ToolName[] = [
 ];
 
 // ---------------------------------------------------------------------------
+// resolveToolParam
+// ---------------------------------------------------------------------------
+
+describe("resolveToolParam", () => {
+  const u = (qs: string) => new URL(`https://example.com/v1/mcp${qs}`);
+
+  test("returns value of ?tool= when present", () => {
+    expect(resolveToolParam(u("?tool=search_news_articles"))).toBe(
+      "search_news_articles"
+    );
+  });
+
+  test("returns value of ?tools= when present (alias)", () => {
+    expect(resolveToolParam(u("?tools=search_news_articles"))).toBe(
+      "search_news_articles"
+    );
+  });
+
+  test("?tool= takes precedence over ?tools= when both are present", () => {
+    expect(
+      resolveToolParam(u("?tool=search_news_articles&tools=search_people"))
+    ).toBe("search_news_articles");
+  });
+
+  test("returns null when neither param is present", () => {
+    expect(resolveToolParam(u(""))).toBeNull();
+  });
+
+  test("returns empty string (falsy) for ?tool= with no value", () => {
+    expect(resolveToolParam(u("?tool="))).toBe("");
+  });
+});
+
+// ---------------------------------------------------------------------------
 // parseRequestedTools
 // ---------------------------------------------------------------------------
 
@@ -35,6 +70,16 @@ describe("parseRequestedTools", () => {
 
   test("returns null for whitespace-only string", () => {
     expect(parseRequestedTools("   ")).toBeNull();
+  });
+
+  test('returns null for "all" (explicit all-tools alias)', () => {
+    expect(parseRequestedTools("all")).toBeNull();
+  });
+
+  test('"all" alias is case-insensitive', () => {
+    expect(parseRequestedTools("ALL")).toBeNull();
+    expect(parseRequestedTools("All")).toBeNull();
+    expect(parseRequestedTools("  all  ")).toBeNull();
   });
 
   test("returns single valid tool name", () => {
