@@ -7,13 +7,14 @@ import {
   handleTurnstileAuth,
   handleValidateUser,
 } from "./handlers";
+import { createCorsPreflightResponse, withCorsHeaders } from "./lib/cors";
 
 export { PerigonMCP };
 
 type RouteHandler = (
   request: Request,
   env: Env,
-  ctx: ExecutionContext
+  ctx: ExecutionContext,
 ) => Promise<Response> | Response;
 
 /**
@@ -35,24 +36,37 @@ const ROUTES: Record<string, RouteHandler> = {
 function ensureAnthropicKey(env: Env): Response | null {
   if (env.ANTHROPIC_API_KEY) return null;
   console.error("ANTHROPIC_API_KEY is not set");
-  return Response.json({ error: "ANTHROPIC_API_KEY is not set" }, {
-    status: 500,
-  });
+  return Response.json(
+    { error: "ANTHROPIC_API_KEY is not set" },
+    {
+      status: 500,
+    },
+  );
 }
 
 export default {
   async fetch(
     request: Request,
     env: Env,
-    ctx: ExecutionContext
+    ctx: ExecutionContext,
   ): Promise<Response> {
+    const preflightResponse = createCorsPreflightResponse(request, env);
+    if (preflightResponse) return preflightResponse;
+
     const missingKey = ensureAnthropicKey(env);
-    if (missingKey) return missingKey;
+    if (missingKey) return withCorsHeaders(request, missingKey, env);
 
     const { pathname } = new URL(request.url);
     const handler = ROUTES[pathname];
-    if (!handler) return new Response("Not found", { status: 404 });
+    if (!handler) {
+      return withCorsHeaders(
+        request,
+        new Response("Not found", { status: 404 }),
+        env,
+      );
+    }
 
-    return handler(request, env, ctx);
+    const response = await handler(request, env, ctx);
+    return withCorsHeaders(request, response, env);
   },
 } satisfies ExportedHandler<Env>;
