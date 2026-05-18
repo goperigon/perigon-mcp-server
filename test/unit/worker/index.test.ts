@@ -7,14 +7,14 @@ const handlerSpies = {
   handleChat: mock(async () => new Response("chat", { status: 200 })),
   handleMCP: mock(async () => new Response("mcp", { status: 200 })),
   handlePerigonApiKeys: mock(
-    async () => new Response("api-keys", { status: 200 })
+    async () => new Response("api-keys", { status: 200 }),
   ),
   handleTools: mock(async () => new Response("tools", { status: 200 })),
   handleTurnstileAuth: mock(
-    async () => new Response("turnstile", { status: 200 })
+    async () => new Response("turnstile", { status: 200 }),
   ),
   handleValidateUser: mock(
-    async () => new Response("validate-user", { status: 200 })
+    async () => new Response("validate-user", { status: 200 }),
   ),
 };
 
@@ -29,6 +29,16 @@ const workerModule = await import("../../../worker/index");
 const worker = workerModule.default;
 
 const fakeEnv = { ANTHROPIC_API_KEY: "sk-ant-fake" } as unknown as Env;
+const fakeLocalCorsEnv = {
+  ANTHROPIC_API_KEY: "sk-ant-fake",
+  ENVIRONMENT: "development",
+  ALLOW_LOCAL_CORS: true,
+} as unknown as Env;
+const fakeProductionCorsEnv = {
+  ANTHROPIC_API_KEY: "sk-ant-fake",
+  ENVIRONMENT: "production",
+  ALLOW_LOCAL_CORS: true,
+} as unknown as Env;
 const fakeCtx = {} as ExecutionContext;
 
 beforeAll(() => {
@@ -40,6 +50,118 @@ afterAll(() => {
 });
 
 describe("worker/index ROUTES", () => {
+  test("allowlisted playground API preflight returns CORS headers", async () => {
+    const res = await worker.fetch(
+      new Request("https://localhost/v1/api/tools", {
+        method: "OPTIONS",
+        headers: {
+          Origin: "https://perigon.io",
+          "Access-Control-Request-Method": "POST",
+          "Access-Control-Request-Headers":
+            "content-type,authorization,x-perigon-api-key",
+        },
+      }),
+      {} as Env,
+      fakeCtx,
+    );
+
+    expect(res.status).toBe(204);
+    expect(res.headers.get("Access-Control-Allow-Origin")).toBe(
+      "https://perigon.io",
+    );
+    expect(res.headers.get("Access-Control-Allow-Credentials")).toBe("true");
+    expect(res.headers.get("Access-Control-Allow-Methods")).toContain("POST");
+    expect(res.headers.get("Access-Control-Allow-Headers")).toContain(
+      "X-Perigon-API-Key",
+    );
+  });
+
+  test("disallowed playground API preflight is rejected", async () => {
+    const res = await worker.fetch(
+      new Request("https://localhost/v1/api/tools", {
+        method: "OPTIONS",
+        headers: {
+          Origin: "https://example.com",
+          "Access-Control-Request-Method": "POST",
+        },
+      }),
+      fakeEnv,
+      fakeCtx,
+    );
+
+    expect(res.status).toBe(403);
+    expect(res.headers.get("Access-Control-Allow-Origin")).toBeNull();
+  });
+
+  test("local playground API preflight is allowed only in local CORS mode", async () => {
+    const res = await worker.fetch(
+      new Request("https://localhost/v1/api/tools", {
+        method: "OPTIONS",
+        headers: {
+          Origin: "http://localhost:5173",
+          "Access-Control-Request-Method": "POST",
+        },
+      }),
+      fakeLocalCorsEnv,
+      fakeCtx,
+    );
+
+    expect(res.status).toBe(204);
+    expect(res.headers.get("Access-Control-Allow-Origin")).toBe(
+      "http://localhost:5173",
+    );
+  });
+
+  test("local playground API preflight is rejected in production", async () => {
+    const res = await worker.fetch(
+      new Request("https://localhost/v1/api/tools", {
+        method: "OPTIONS",
+        headers: {
+          Origin: "http://localhost:5173",
+          "Access-Control-Request-Method": "POST",
+        },
+      }),
+      fakeProductionCorsEnv,
+      fakeCtx,
+    );
+
+    expect(res.status).toBe(403);
+    expect(res.headers.get("Access-Control-Allow-Origin")).toBeNull();
+  });
+
+  test("allowlisted playground API responses include CORS headers", async () => {
+    handlerSpies.handleTools.mockClear();
+    const res = await worker.fetch(
+      new Request("https://localhost/v1/api/tools", {
+        headers: { Origin: "https://perigon.io" },
+      }),
+      fakeEnv,
+      fakeCtx,
+    );
+
+    expect(res.status).toBe(200);
+    expect(handlerSpies.handleTools).toHaveBeenCalledTimes(1);
+    expect(res.headers.get("Access-Control-Allow-Origin")).toBe(
+      "https://perigon.io",
+    );
+    expect(res.headers.get("Access-Control-Allow-Credentials")).toBe("true");
+  });
+
+  test("non-playground routes do not receive CORS headers", async () => {
+    handlerSpies.handleMCP.mockClear();
+    const res = await worker.fetch(
+      new Request("https://localhost/v1/mcp", {
+        headers: { Origin: "https://perigon.io" },
+      }),
+      fakeEnv,
+      fakeCtx,
+    );
+
+    expect(res.status).toBe(200);
+    expect(handlerSpies.handleMCP).toHaveBeenCalledTimes(1);
+    expect(res.headers.get("Access-Control-Allow-Origin")).toBeNull();
+  });
+
   test("missing ANTHROPIC_API_KEY → 500 JSON", async () => {
     const errorSpy = mock(() => {});
     const original = console.error;
@@ -48,7 +170,7 @@ describe("worker/index ROUTES", () => {
       const res = await worker.fetch(
         new Request("https://localhost/v1/api/tools"),
         {} as Env,
-        fakeCtx
+        fakeCtx,
       );
       expect(res.status).toBe(500);
       const body = (await res.json()) as { error: string };
@@ -62,7 +184,7 @@ describe("worker/index ROUTES", () => {
     const res = await worker.fetch(
       new Request("https://localhost/v1/totally-bogus"),
       fakeEnv,
-      fakeCtx
+      fakeCtx,
     );
     expect(res.status).toBe(404);
     expect(await res.text()).toBe("Not found");
@@ -79,7 +201,7 @@ describe("worker/index ROUTES", () => {
     const res = await worker.fetch(
       new Request(`https://localhost${path}`),
       fakeEnv,
-      fakeCtx
+      fakeCtx,
     );
     expect(res.status).toBe(200);
     expect(handlerSpies[handlerKey]).toHaveBeenCalledTimes(1);
@@ -92,10 +214,10 @@ describe("worker/index ROUTES", () => {
       const res = await worker.fetch(
         new Request(`https://localhost${path}`),
         fakeEnv,
-        fakeCtx
+        fakeCtx,
       );
       expect(res.status).toBe(200);
       expect(handlerSpies.handleMCP).toHaveBeenCalledTimes(1);
-    }
+    },
   );
 });
