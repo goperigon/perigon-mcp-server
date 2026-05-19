@@ -4,9 +4,10 @@ const PRODUCTION_ORIGINS = new Set([
   "https://mcp.perigon.io",
   "https://perigon.io",
   "https://www.perigon.io",
+  "https://vercel-local.perigon.io",
 ]);
 
-const LOCALHOST_HOSTNAMES = new Set(["localhost", "127.0.0.1", "::1", "vercel-local.perigon.io"]);
+const LOCALHOST_HOSTNAMES = new Set(["localhost", "127.0.0.1", "::1"]);
 const PRODUCTION_ENVIRONMENT = "production";
 
 const ALLOW_METHODS = "GET, POST, OPTIONS";
