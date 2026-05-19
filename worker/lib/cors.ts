@@ -1,11 +1,7 @@
 const CORS_ENABLED_PATHS = new Set(["/v1/api/chat", "/v1/api/tools"]);
 
-const PRODUCTION_ORIGINS = new Set([
-  "https://mcp.perigon.io",
-  "https://perigon.io",
-  "https://www.perigon.io",
-  "https://vercel-local.perigon.io",
-]);
+const PRODUCTION_ROOT_HOSTNAME = "perigon.io";
+const PRODUCTION_SUBDOMAIN_SUFFIX = ".perigon.io";
 
 const LOCALHOST_HOSTNAMES = new Set(["localhost", "127.0.0.1", "::1"]);
 const PRODUCTION_ENVIRONMENT = "production";
@@ -75,12 +71,12 @@ function getAllowedOrigin(request: Request, env: CorsEnv): string | null {
   const origin = request.headers.get("Origin");
   if (!origin) return null;
 
-  if (PRODUCTION_ORIGINS.has(origin)) {
-    return origin;
-  }
-
   try {
     const url = new URL(origin);
+    if (isAllowedProductionOrigin(url)) {
+      return origin;
+    }
+
     if (
       isLocalCorsAllowed(env) &&
       (url.protocol === "http:" || url.protocol === "https:") &&
@@ -93,6 +89,14 @@ function getAllowedOrigin(request: Request, env: CorsEnv): string | null {
   }
 
   return null;
+}
+
+function isAllowedProductionOrigin(url: URL): boolean {
+  return (
+    url.protocol === "https:" &&
+    (url.hostname === PRODUCTION_ROOT_HOSTNAME ||
+      url.hostname.endsWith(PRODUCTION_SUBDOMAIN_SUFFIX))
+  );
 }
 
 function isLocalCorsAllowed(env: CorsEnv): boolean {

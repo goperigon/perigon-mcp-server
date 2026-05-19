@@ -76,6 +76,46 @@ describe("worker/index ROUTES", () => {
     );
   });
 
+  test.each([
+    "https://perigon.io",
+    "https://www.perigon.io",
+    "https://app.perigon.io",
+    "https://vercel-local.perigon.io",
+  ])("trusted production origin %s receives CORS headers", async (origin) => {
+    const res = await worker.fetch(
+      new Request("https://localhost/v1/api/tools", {
+        headers: { Origin: origin },
+      }),
+      fakeEnv,
+      fakeCtx,
+    );
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get("Access-Control-Allow-Origin")).toBe(origin);
+    expect(res.headers.get("Access-Control-Allow-Credentials")).toBe("true");
+  });
+
+  test.each([
+    "http://app.perigon.io",
+    "https://evilperigon.io",
+    "https://perigon.io.evil.com",
+  ])("untrusted production-like origin %s is rejected", async (origin) => {
+    const res = await worker.fetch(
+      new Request("https://localhost/v1/api/tools", {
+        method: "OPTIONS",
+        headers: {
+          Origin: origin,
+          "Access-Control-Request-Method": "POST",
+        },
+      }),
+      fakeEnv,
+      fakeCtx,
+    );
+
+    expect(res.status).toBe(403);
+    expect(res.headers.get("Access-Control-Allow-Origin")).toBeNull();
+  });
+
   test("disallowed playground API preflight is rejected", async () => {
     const res = await worker.fetch(
       new Request("https://localhost/v1/api/tools", {
