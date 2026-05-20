@@ -1,5 +1,27 @@
 import { TOOL_DEFINITIONS, type ToolName } from "./index";
 
+/** All signal tool names. These are always available to any valid API key. */
+export const SIGNAL_TOOL_NAMES = [
+  "create_insights_workspace",
+  "search_signals",
+  "read_signal",
+  "execute_code",
+  "shell",
+  "export_events",
+  "list",
+  "grep",
+  "read",
+  "write",
+  "str_replace",
+] as const;
+
+export type SignalToolName = (typeof SIGNAL_TOOL_NAMES)[number];
+
+const ALL_KNOWN_TOOL_NAMES = new Set<string>([
+  ...Object.keys(TOOL_DEFINITIONS),
+  ...SIGNAL_TOOL_NAMES,
+]);
+
 /**
  * Reads the tool-filter query parameter from a URL, accepting both `?tool=`
  * and `?tools=` (alias). `tool` takes precedence when both are present.
@@ -10,7 +32,7 @@ export function resolveToolParam(url: URL): string | null {
 
 /**
  * Parses the raw `?tool=` (or `?tools=`) query parameter value into a
- * validated list of known tool names.
+ * validated list of known tool names (news tools and signal tools).
  *
  * Returns `null` in four cases (all meaning "no filter — use all permitted tools"):
  *   - the parameter is absent (`null` input)
@@ -30,9 +52,7 @@ export function parseRequestedTools(param: string | null): ToolName[] | null {
     .map((s) => s.trim())
     .filter(Boolean);
 
-  const valid = candidates.filter(
-    (name): name is ToolName => name in TOOL_DEFINITIONS
-  );
+  const valid = candidates.filter((name) => ALL_KNOWN_TOOL_NAMES.has(name));
 
   return valid.length > 0 ? valid : null;
 }
@@ -48,7 +68,7 @@ export function parseRequestedTools(param: string | null): ToolName[] | null {
  */
 export function resolveActiveTools(
   allowedTools: ToolName[],
-  requestedTools: ToolName[] | null
+  requestedTools: ToolName[] | null,
 ): ToolName[] {
   if (!requestedTools || requestedTools.length === 0) return allowedTools;
   const requested = new Set<string>(requestedTools);

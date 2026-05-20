@@ -25,6 +25,7 @@ export class HttpError extends Error {
  */
 export interface AuthIntrospectionResponse {
   scopes: Scopes[];
+  organizationId: number;
 }
 
 export enum Scopes {

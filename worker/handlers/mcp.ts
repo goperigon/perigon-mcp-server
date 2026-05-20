@@ -70,6 +70,7 @@ async function loadMcpProps(request: Request, apiKey: string): Promise<Props> {
   return {
     apiKey,
     scopes: apiKeyDetails.scopes,
+    organizationId: apiKeyDetails.organizationId,
     requestedTools,
   };
 }

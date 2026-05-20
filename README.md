@@ -149,6 +149,69 @@ When prompting your agent we recommend providing the current date (or a tool to 
 
 The full list of available tools — including names, descriptions, and parameter schemas — is visible in the [MCP playground](https://mcp.perigon.io). The tools available to you depend on the scopes granted to your API key.
 
+### Signal Insights tools
+
+API keys with the **Signal Insights** scope unlock an additional set of tools for querying, exporting, and analyzing your AI signals data with a persistent Python sandbox.
+
+#### Workspace pattern
+
+Signal Insights tools use an explicit workspace handle (per [SEP-2567](https://modelcontextprotocol.io/seps/2567-sessionless-mcp)):
+
+1. Call `create_insights_workspace` **once at the start of a conversation**.
+2. Pass the returned workspace ID to every subsequent analysis tool call.
+3. Files written in `execute_code` or `shell` persist across calls within the same workspace. Exported data is accessible at `/home/user/workspace/artifacts/` inside the sandbox.
+4. If you resume a chat after a restart, the workspace UUID from the prior conversation is still valid — the sandbox kernel will be fresh but your exported S3 artifacts are preserved.
+
+#### Signal Insights tool list
+
+| Tool | Type | Description |
+|------|------|-------------|
+| `create_insights_workspace` | Setup | Create a workspace for the conversation. Must be called first. |
+| `search_signals` | Read | Search signals by name or monitoring objective. |
+| `read_signal` | Read | Get signal metadata (schema, event types, counts). |
+| `export_events` | Data | Export signal events to S3 with optional filters/aggregations. Returns a preview and file path. |
+| `execute_code` | Sandbox | Execute Python in a persistent IPython kernel. pandas, numpy, matplotlib and more pre-installed. |
+| `shell` | Sandbox | Run bash commands in the sandbox. |
+| `list` | Files | List files in the sandbox workspace. |
+| `read` | Files | Read a file from the workspace. |
+| `write` | Files | Write a file to the workspace. |
+| `grep` | Files | Search file contents with a regex pattern. |
+| `str_replace` | Files | Find and replace a string in a file. |
+
+#### Example config — Signal Insights only
+
+```json
+{
+  "mcpServers": {
+    "perigon": {
+      "url": "https://mcp.perigon.io/v1/mcp?tools=create_insights_workspace,search_signals,read_signal,export_events,execute_code,shell,list,read,write,grep,str_replace",
+      "type": "http",
+      "headers": {
+        "Authorization": "Bearer YOUR_PERIGON_API_KEY"
+      }
+    }
+  }
+}
+```
+
+#### Example config — Signal Insights combined with news tools
+
+```json
+{
+  "mcpServers": {
+    "perigon": {
+      "url": "https://mcp.perigon.io/v1/mcp",
+      "type": "http",
+      "headers": {
+        "Authorization": "Bearer YOUR_PERIGON_API_KEY"
+      }
+    }
+  }
+}
+```
+
+With no `?tools=` filter, all tools permitted by your API key's scopes are active.
+
 ## Issues / Contributing
 
 ### Issues
@@ -175,6 +238,7 @@ Add the following environment variables to `.dev.vars`
 |----------|-------------|
 | `ANTHROPIC_API_KEY` | Anthropic API key (used for playground) |
 | `PERIGON_API_KEY` | Perigon API key (used for playground) |
+| `POKEY_SIGNAL_INSIGHTS_BASE_URL` | Internal Pokey service URL for Signal Insights MCP tools (e.g. `http://localhost:3001`). Required only when using Signal Insights tools. |
 
 If you wish to contribute to the MCP playground (tools inspector & chat), please make sure to modify your network hosts file (/etc/hosts on mac) to include the following
 
