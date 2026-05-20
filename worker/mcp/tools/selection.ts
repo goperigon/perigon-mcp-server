@@ -2,17 +2,17 @@ import { TOOL_DEFINITIONS, type ToolName } from "./index";
 
 /** All signal tool names. These are always available to any valid API key. */
 export const SIGNAL_TOOL_NAMES = [
-  "create_insights_workspace",
-  "search_signals",
-  "read_signal",
-  "execute_code",
-  "shell",
-  "export_events",
-  "list",
-  "grep",
-  "read",
-  "write",
-  "str_replace",
+  "signal_insights_create_workspace",
+  "signal_insights_search_signals",
+  "signal_insights_read_signal",
+  "signal_insights_execute_code",
+  "signal_insights_shell",
+  "signal_insights_export_events",
+  "signal_insights_list_files",
+  "signal_insights_grep",
+  "signal_insights_read_file",
+  "signal_insights_write_file",
+  "signal_insights_str_replace",
 ] as const;
 
 export type SignalToolName = (typeof SIGNAL_TOOL_NAMES)[number];

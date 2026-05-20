@@ -10,8 +10,8 @@
 import { z } from "zod";
 
 const WORKSPACE_DESC =
-  "Workspace ID returned by create_insights_workspace. " +
-  "Call create_insights_workspace once at the start of a conversation, " +
+  "Workspace ID returned by signal_insights_create_workspace. " +
+  "Call signal_insights_create_workspace once at the start of a conversation, " +
   "then pass the returned workspace to all analysis tool calls.";
 
 // ── Workspace ────────────────────────────────────────────────────────────────

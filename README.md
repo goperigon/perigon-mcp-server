@@ -166,17 +166,17 @@ Signal Insights tools use an explicit workspace handle (per [SEP-2567](https://m
 
 | Tool | Type | Description |
 |------|------|-------------|
-| `create_insights_workspace` | Setup | Create a workspace for the conversation. Must be called first. |
-| `search_signals` | Read | Search signals by name or monitoring objective. |
-| `read_signal` | Read | Get signal metadata (schema, event types, counts). |
-| `export_events` | Data | Export signal events to S3 with optional filters/aggregations. Returns a preview and file path. |
-| `execute_code` | Sandbox | Execute Python in a persistent IPython kernel. pandas, numpy, matplotlib and more pre-installed. |
-| `shell` | Sandbox | Run bash commands in the sandbox. |
-| `list` | Files | List files in the sandbox workspace. |
-| `read` | Files | Read a file from the workspace. |
-| `write` | Files | Write a file to the workspace. |
-| `grep` | Files | Search file contents with a regex pattern. |
-| `str_replace` | Files | Find and replace a string in a file. |
+| `signal_insights_create_workspace` | Setup | Create a workspace for the conversation. Must be called first. |
+| `signal_insights_search_signals` | Read | Search signals by name or monitoring objective. |
+| `signal_insights_read_signal` | Read | Get signal metadata (schema, event types, counts). |
+| `signal_insights_export_events` | Data | Export signal events to S3 with optional filters/aggregations. Returns a preview and file path. |
+| `signal_insights_execute_code` | Sandbox | Execute Python in a persistent IPython kernel. pandas, numpy, matplotlib and more pre-installed. |
+| `signal_insights_shell` | Sandbox | Run bash commands in the sandbox. |
+| `signal_insights_list_files` | Files | List files in the sandbox workspace. |
+| `signal_insights_read_file` | Files | Read a file from the workspace. |
+| `signal_insights_write_file` | Files | Write a file to the workspace. |
+| `signal_insights_grep` | Files | Search file contents with a regex pattern. |
+| `signal_insights_str_replace` | Files | Find and replace a string in a file. |
 
 #### Example config — Signal Insights only
 
@@ -184,7 +184,7 @@ Signal Insights tools use an explicit workspace handle (per [SEP-2567](https://m
 {
   "mcpServers": {
     "perigon": {
-      "url": "https://mcp.perigon.io/v1/mcp?tools=create_insights_workspace,search_signals,read_signal,export_events,execute_code,shell,list,read,write,grep,str_replace",
+      "url": "https://mcp.perigon.io/v1/mcp?tools=signal_insights_create_workspace,signal_insights_search_signals,signal_insights_read_signal,signal_insights_export_events,signal_insights_execute_code,signal_insights_shell,signal_insights_list_files,signal_insights_read_file,signal_insights_write_file,signal_insights_grep,signal_insights_str_replace",
       "type": "http",
       "headers": {
         "Authorization": "Bearer YOUR_PERIGON_API_KEY"
