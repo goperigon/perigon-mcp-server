@@ -1,6 +1,6 @@
 import { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 
-const BASE_URL = "https://api.perigon.io";
+const BASE_URL = "https://api.perigon.io/v1/signal/insights/mcp";
 
 /**
  * Thin HTTP client for the Signal Insights read-only endpoints on
@@ -21,17 +21,22 @@ export class InsightsApiClient {
     page?: number;
     limit?: number;
   }): Promise<CallToolResult> {
-    const url = new URL(`${BASE_URL}/v1/api/signal/insights/search`);
+    const url = new URL(`${BASE_URL}/search`);
     if (args.query) url.searchParams.set("query", args.query);
-    if (args.page !== undefined) url.searchParams.set("page", String(args.page));
-    if (args.limit !== undefined) url.searchParams.set("limit", String(args.limit));
+    if (args.page !== undefined)
+      url.searchParams.set("page", String(args.page));
+    if (args.limit !== undefined)
+      url.searchParams.set("limit", String(args.limit));
 
     const res = await fetch(url.toString(), { headers: this.headers() });
     if (!res.ok) {
       const body = await res.text();
       return {
         content: [
-          { type: "text", text: `Signal search failed (${res.status}): ${body}` },
+          {
+            type: "text",
+            text: `Signal search failed (${res.status}): ${body}`,
+          },
         ],
         isError: true,
       };
@@ -42,10 +47,9 @@ export class InsightsApiClient {
   }
 
   async readSignal(signalUuid: string): Promise<CallToolResult> {
-    const res = await fetch(
-      `${BASE_URL}/v1/api/signal/insights/${signalUuid}/metadata`,
-      { headers: this.headers() },
-    );
+    const res = await fetch(`${BASE_URL}/${signalUuid}/metadata`, {
+      headers: this.headers(),
+    });
     if (!res.ok) {
       const body = await res.text();
       return {
