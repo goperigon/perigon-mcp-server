@@ -3,12 +3,28 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { Scopes } from "../types/types";
 import { TOOL_DEFINITIONS, type ToolName } from "./tools";
 import { Perigon } from "../lib/perigon";
-import { resolveActiveTools } from "./tools/selection";
+import { resolveActiveTools, SIGNAL_TOOL_NAMES } from "./tools/selection";
+import { InsightsApiClient } from "../lib/insights-api-client";
+import { PokeyInsightsClient } from "../lib/pokey-insights-client";
+import {
+  createWorkspaceSchema,
+  searchSignalsSchema,
+  readSignalSchema,
+  executeCodeSchema,
+  shellSchema,
+  exportEventsSchema,
+  listFilesSchema,
+  grepSchema,
+  readFileSchema,
+  writeFileSchema,
+  strReplaceSchema,
+} from "./tools/signals/schemas";
 
 export type Props = {
   apiKey: string;
   scopes: Scopes[];
-  requestedTools: ToolName[] | null;
+  requestedTools: string[] | null;
+  organizationId: number;
 };
 
 // Map scopes to tool names
@@ -43,28 +59,188 @@ function getAllowedToolsForScopes(scopes: Scopes[]): ToolName[] {
   return [...seen];
 }
 
+const WORKSPACE_DIR = "/home/user/workspace";
+const DATA_DIR = `${WORKSPACE_DIR}/artifacts`;
+const OUTPUT_DIR = `${DATA_DIR}/output`;
+
 export class PerigonMCP extends McpAgent<Env, unknown, Props> {
   // Type assertion needed: agents bundles its own @modelcontextprotocol/sdk copy
   server = new McpServer({
     name: "Perigon News API",
     version: "1.0.0",
-  }) as any;
+  });
 
   async init() {
     const perigon = new Perigon(this.props!.apiKey);
     const { scopes, requestedTools } = this.props!;
 
-    const allowedTools = getAllowedToolsForScopes(scopes);
-    const activeTools = resolveActiveTools(allowedTools, requestedTools);
+    // ── News tools (existing) ──────────────────────────────────────────────
+    const allowedNewsTools = getAllowedToolsForScopes(scopes);
+    const activeNewsTools = resolveActiveTools(
+      allowedNewsTools,
+      requestedTools,
+    );
 
-    for (const toolName of activeTools) {
+    for (const toolName of activeNewsTools) {
       const definition = TOOL_DEFINITIONS[toolName];
       this.server.tool(
         definition.name,
         definition.description,
         definition.parameters.shape,
-        definition.createHandler(perigon)
+        definition.createHandler(perigon),
       );
+    }
+
+    // ── Signal Insights tools (always available) ──────────────────────────
+    const activeSignalTools = requestedTools
+      ? SIGNAL_TOOL_NAMES.filter((n) => requestedTools.includes(n))
+      : [...SIGNAL_TOOL_NAMES];
+
+    if (activeSignalTools.length === 0) return;
+
+    const insightsApi = new InsightsApiClient(this.props!.apiKey);
+    const pokeyClient = new PokeyInsightsClient(
+      this.env.POKEY_SIGNAL_INSIGHTS_BASE_URL,
+      this.props!.apiKey,
+    );
+
+    for (const toolName of activeSignalTools) {
+      this.registerSignalTool(toolName, insightsApi, pokeyClient);
+    }
+  }
+
+  private registerSignalTool(
+    toolName: (typeof SIGNAL_TOOL_NAMES)[number],
+    insightsApi: InsightsApiClient,
+    pokeyClient: PokeyInsightsClient,
+  ) {
+    switch (toolName) {
+      case "create_insights_workspace":
+        this.server.tool(
+          "create_insights_workspace",
+          "Create a new Signal Insights analysis workspace. " +
+            "Call this ONCE at the beginning of any conversation that needs data analysis. " +
+            "Returns a workspace handle required by all analysis tools (execute_code, shell, export_events, file tools). " +
+            "Do NOT invent workspace IDs — always use the one returned here.",
+          createWorkspaceSchema.shape,
+          async () => pokeyClient.createWorkspace(),
+        );
+        break;
+
+      case "search_signals":
+        this.server.tool(
+          "search_signals",
+          "Search for signals by name or monitoring objective. " +
+            "Use this to find relevant signals before fetching data. " +
+            "If the search query is not present, this can be used to list all available signals.",
+          searchSignalsSchema.shape,
+          async (args) => insightsApi.searchSignals(args),
+        );
+        break;
+
+      case "read_signal":
+        this.server.tool(
+          "read_signal",
+          "Get full signal metadata including data schema, available event types, and event count. " +
+            "Use before export_events to understand the available fields for a signal.",
+          readSignalSchema.shape,
+          async ({ signalUuid }) => insightsApi.readSignal(signalUuid),
+        );
+        break;
+
+      case "export_events":
+        this.server.tool(
+          "export_events",
+          "Export signal events using a structured query API. No raw SQL — specify signals, fields, filters, aggregations, and ordering. " +
+            "Returns a preview of the first rows plus an S3 file path for the full dataset (JSONL). " +
+            "Available fields: eventType, eventDate, createdAt, updatedAt, summary, uuid, data, articles, signalId, or data.<path> for JSONB subfields (e.g. data.companyName). " +
+            "Filter options: eventTypes (list), date ranges (eventDateFrom/To, createdAtFrom/To), JSONB containment (data: [{op: CONTAINS, value: {key: val}}]). " +
+            "Select expressions: {type: 'field', name}, {type: 'date_trunc', granularity: HOUR|DAY|WEEK|MONTH|YEAR, field}, {type: 'agg', function: COUNT|COUNT_DISTINCT|SUM|AVG|MIN|MAX, field?}. " +
+            "Group by / order by: use {index: N} (1-based) when select is provided, or {field: 'name'} when select is omitted. " +
+            `Omit select to fetch all scalar event fields. Results are written to S3 and accessible in the sandbox at ${DATA_DIR}/<filename>.`,
+          exportEventsSchema.shape,
+          async (args) => pokeyClient.executeTool("export_events", args),
+        );
+        break;
+
+      case "execute_code":
+        this.server.tool(
+          "execute_code",
+          "Execute Python code inside a persistent sandboxed Jupyter kernel (IPython). " +
+            "State is fully preserved between calls: variables, imports, DataFrames, fitted models, and function definitions all remain in memory. " +
+            `WORKSPACE (${WORKSPACE_DIR}): default working directory. Use this to create any files you need. ` +
+            `DATA (${DATA_DIR}): S3-backed read-write directory. Query result files appear here automatically. This directory persists across sandbox restarts. ` +
+            `OUTPUT (${OUTPUT_DIR}): write user-facing deliverables here (charts, reports, CSVs, exports). Files in output/ appear in the user's Artifacts panel and are downloadable. Internal/intermediate files should stay in DATA root. ` +
+            "Pre-installed highlights: pandas, numpy, matplotlib, seaborn, scipy, scikit-learn, statsmodels, pyarrow, polars, openpyxl, sqlalchemy, beautifulsoup4, nltk, xgboost, lightgbm, shap, pillow, sympy, tabulate, rich. " +
+            "CHARTS: Use simple matplotlib calls (plt.plot, plt.bar, plt.scatter, plt.pie, plt.boxplot) — these are parsed into interactive charts in the UI. One chart per plt.show() call. For multiple charts, use separate execute_code calls. Do NOT combine chart types, use subplots, or add annotations/fill_between — these break interactive parsing. Save complex visuals with plt.savefig() to ${OUTPUT_DIR}/ instead. " +
+            "No outbound internet access except *.amazonaws.com.",
+          executeCodeSchema.shape,
+          async (args) => pokeyClient.executeTool("execute_code", args),
+        );
+        break;
+
+      case "shell":
+        this.server.tool(
+          "shell",
+          "Run a bash command in the E2B sandbox environment. " +
+            `Working directory is ${WORKSPACE_DIR}. ` +
+            `Query data files are accessible at ${DATA_DIR}. No internet access except *.amazonaws.com.`,
+          shellSchema.shape,
+          async (args) => pokeyClient.executeTool("shell", args),
+        );
+        break;
+
+      case "list":
+        this.server.tool(
+          "list",
+          "List files in a directory of the sandbox workspace. " +
+            `Default directory is the workspace root (${WORKSPACE_DIR}).`,
+          listFilesSchema.shape,
+          async (args) => pokeyClient.executeTool("list", args),
+        );
+        break;
+
+      case "grep":
+        this.server.tool(
+          "grep",
+          "Search a file's contents for lines matching a regex pattern. " +
+            "Reads the file via the SDK (no shell injection risk). Returns matching lines with line numbers. " +
+            "Use on files up to a few MB; for larger files, use execute python code directly instead.",
+          grepSchema.shape,
+          async (args) => pokeyClient.executeTool("grep", args),
+        );
+        break;
+
+      case "read":
+        this.server.tool(
+          "read",
+          "Read a file from the sandbox workspace. " +
+            "Internally, this reads the full file into memory. " +
+            "Use on files up to a few MB; for larger files, use execute python code directly instead.",
+          readFileSchema.shape,
+          async (args) => pokeyClient.executeTool("read", args),
+        );
+        break;
+
+      case "write":
+        this.server.tool(
+          "write",
+          "Write content to a file in the sandbox workspace. Creates directories as needed.",
+          writeFileSchema.shape,
+          async (args) => pokeyClient.executeTool("write", args),
+        );
+        break;
+
+      case "str_replace":
+        this.server.tool(
+          "str_replace",
+          "Find and replace a string in a file in the sandbox workspace. " +
+            "Internally, this reads the full file into memory. " +
+            "Use on files up to a few MB; for larger files, use execute python code directly instead.",
+          strReplaceSchema.shape,
+          async (args) => pokeyClient.executeTool("str_replace", args),
+        );
+        break;
     }
   }
 }

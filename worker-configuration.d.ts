@@ -9,6 +9,8 @@ declare namespace Cloudflare {
 		ANTHROPIC_API_KEY: string;
 		PERIGON_API_KEY: string;
 		TURNSTILE_SECRET_KEY: string;
+		/** Base URL of the internal Pokey service for Signal Insights MCP tools. Set via `wrangler secret put`. */
+		POKEY_SIGNAL_INSIGHTS_BASE_URL: string;
 		MCP_OBJECT: DurableObjectNamespace<import("./worker/index").PerigonMCP>;
 		MCP_RATE_LIMITER: RateLimit;
 		ASSETS: Fetcher;
