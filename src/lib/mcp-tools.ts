@@ -1,4 +1,4 @@
-export type McpToolCategory = "search" | "stats" | "use-cases";
+export type McpToolCategory = "search" | "stats" | "use-cases" | "signal-insights";
 
 export interface McpToolMeta {
   name: string;
@@ -153,6 +153,85 @@ export const MCP_TOOLS: McpToolMeta[] = [
       "Quick shortcut to get recent news for a geographic location — city, state, or country. Auto-detects location type and applies the right filters.",
     category: "use-cases",
   },
+
+  // ── Signal Insights tools ─────────────────────────────────────────────────
+  {
+    name: "signal_insights_create_workspace",
+    label: "Create Insights Workspace",
+    description:
+      "Create a new Signal Insights analysis workspace. Call this once at the start of a conversation before using any analysis tools.",
+    category: "signal-insights",
+  },
+  {
+    name: "signal_insights_search_signals",
+    label: "Search Signals",
+    description:
+      "Search for signals by name or monitoring objective. Use to find relevant signals before exporting or analyzing data.",
+    category: "signal-insights",
+  },
+  {
+    name: "signal_insights_read_signal",
+    label: "Read Signal",
+    description:
+      "Get full signal metadata including data schema, available event types, and event count. Use before exporting to understand available fields.",
+    category: "signal-insights",
+  },
+  {
+    name: "signal_insights_export_events",
+    label: "Export Signal Events",
+    description:
+      "Export signal events using a structured query API with filters, aggregations, and ordering. Returns a data preview and an S3 file path.",
+    category: "signal-insights",
+  },
+  {
+    name: "signal_insights_execute_code",
+    label: "Execute Code",
+    description:
+      "Execute Python code in a persistent sandboxed IPython kernel. Pre-installed: pandas, numpy, matplotlib, scikit-learn, and more.",
+    category: "signal-insights",
+  },
+  {
+    name: "signal_insights_shell",
+    label: "Run Shell Command",
+    description:
+      "Run a bash command in the E2B sandbox. Working directory is /home/user/workspace.",
+    category: "signal-insights",
+  },
+  {
+    name: "signal_insights_list_files",
+    label: "List Workspace Files",
+    description:
+      "List files in a directory of the sandbox workspace. Defaults to the workspace root.",
+    category: "signal-insights",
+  },
+  {
+    name: "signal_insights_read_file",
+    label: "Read Workspace File",
+    description:
+      "Read a file from the sandbox workspace. Supports offset and limit for large files.",
+    category: "signal-insights",
+  },
+  {
+    name: "signal_insights_write_file",
+    label: "Write Workspace File",
+    description:
+      "Write content to a file in the sandbox workspace. Creates directories as needed.",
+    category: "signal-insights",
+  },
+  {
+    name: "signal_insights_grep",
+    label: "Grep Workspace File",
+    description:
+      "Search a file's contents for lines matching a regex pattern. Returns matching lines with line numbers.",
+    category: "signal-insights",
+  },
+  {
+    name: "signal_insights_str_replace",
+    label: "String Replace in File",
+    description:
+      "Find and replace a string in a file in the sandbox workspace.",
+    category: "signal-insights",
+  },
 ];
 
 export const ALL_TOOL_NAMES: string[] = MCP_TOOLS.map((t) => t.name);
@@ -163,6 +242,7 @@ export const CATEGORY_LABELS: Record<McpToolCategory, string> = {
   search: "Search Tools",
   stats: "Stats & Analytics Tools",
   "use-cases": "Use-case Tools",
+  "signal-insights": "Signal Insights Tools",
 };
 
 export function getToolsByCategory(category: McpToolCategory): McpToolMeta[] {
