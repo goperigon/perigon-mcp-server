@@ -1,6 +1,5 @@
 import { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { HttpError } from "../types/types";
-import { CHART_META } from "../mcp/apps/chart-viewer-html";
 
 interface ExecuteCodeDisplayResult {
   text?: string | null;
@@ -73,9 +72,6 @@ function buildExecuteCodeResult(data: ExecuteCodeResult): CallToolResult {
     content,
     structuredContent,
     isError: !!data.error,
-    ...(structuredContent && {
-      _meta: CHART_META,
-    }),
   };
 }
 
