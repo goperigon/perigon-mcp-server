@@ -49,6 +49,7 @@
     "ALLOW_LOCAL_CORS": true,
     "VITE_TURNSTILE_SITE_KEY": "0x4AAAAAABihR9-NN72ssFjf",
     "VITE_USE_TURNSTILE": false,
+    "POKEY_SIGNAL_INSIGHTS_BASE_URL": "https://api.perigon.io/pokey",
   },
   "unsafe": {
     "bindings": [
@@ -112,6 +113,7 @@
         "ALLOW_LOCAL_CORS": false,
         "VITE_TURNSTILE_SITE_KEY": "0x4AAAAAABihR9-NN72ssFjf",
         "VITE_USE_TURNSTILE": true,
+        "POKEY_SIGNAL_INSIGHTS_BASE_URL": "https://api.perigon.io/pokey",
       },
       "unsafe": {
         "bindings": [
