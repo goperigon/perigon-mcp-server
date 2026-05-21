@@ -3,6 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
     <title>Signal Insights Charts</title>
     <script src="https://cdn.jsdelivr.net/npm/echarts@6.1.0/dist/echarts.min.js"></script>
     <style>
@@ -17,7 +18,7 @@
       html,
       body {
         background: transparent;
-        color: var(--color-text-primary, #333);
+        color: var(--color-text-primary, light-dark(#333, #e0e0e0));
         font-family: var(
           --font-sans,
           -apple-system,
@@ -80,7 +81,7 @@
 
     <script>
       // ─── State ────────────────────────────────────────────────────────────────
-      let isDark = false;
+      let isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
       let hostContext = null;
 
       // ─── JSON-RPC transport (per SEP-1865 §Communication Protocol) ────────────
