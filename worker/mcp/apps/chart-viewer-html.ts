@@ -9,8 +9,9 @@
  * chart types are added or changed there.
  */
 
-import { readFileSync } from "fs";
-import { resolve } from "path";
+import CHART_VIEWER_HTML from "../ui/chart-viewer.html?raw";
+
+export { CHART_VIEWER_HTML };
 
 export const CHART_VIEWER_MIME_TYPE = "text/html;profile=mcp-app";
 export const CHART_RESOURCE_URI = "ui://signal-insights/chart-viewer.html";
@@ -24,8 +25,3 @@ export const CHART_META = {
     },
   },
 } as const;
-
-export const CHART_VIEWER_HTML = readFileSync(
-  resolve(__dirname, "..", "ui", "chart-viewer.html"),
-  "utf8",
-);
