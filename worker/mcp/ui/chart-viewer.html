@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Signal Insights Charts</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@6.1.0/dist/echarts.min.js"></script>
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        font-size: 13px;
+        background: var(--bg, #ffffff);
+        color: var(--fg, #111111);
+        padding: 12px;
+      }
+      body.dark {
+        --bg: #0a0a0a;
+        --fg: #f5f5f5;
+        --border: #2a2a2a;
+        --fallback-bg: #141414;
+      }
+      body:not(.dark) {
+        --bg: #ffffff;
+        --fg: #111111;
+        --border: #e5e5e5;
+        --fallback-bg: #f9f9f9;
+      }
+      #charts {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+      .chart-wrap {
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        overflow: hidden;
+        background: var(--fallback-bg);
+      }
+      .chart-title {
+        padding: 8px 12px 4px;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--fg);
+        opacity: 0.75;
+      }
+      .chart-echart {
+        height: 320px;
+      }
+      .chart-img img {
+        width: 100%;
+        display: block;
+      }
+      .chart-unknown {
+        padding: 10px 12px;
+        font-size: 11px;
+        opacity: 0.5;
+        font-family: monospace;
+      }
+      #empty {
+        padding: 40px 16px;
+        text-align: center;
+        opacity: 0.4;
+        font-size: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="charts"><div id="empty">Waiting for chart output…</div></div>
+
+    <script>
+      // ── MCP Apps minimal client ─────────────────────────────────────────────────
+      const pendingRequests = new Map();
+      let requestId = 0;
+
+      function sendMsg(msg) {
+        window.parent.postMessage(msg, "*");
+      }
+
+      function sendRequest(method, params) {
+        return new Promise((resolve, reject) => {
+          const id = ++requestId;
+          pendingRequests.set(id, { resolve, reject });
+          sendMsg({ jsonrpc: "2.0", id, method, params: params ?? {} });
+        });
+      }
+
+      window.addEventListener("message", (event) => {
+        const msg = event.data;
+        if (!msg || msg.jsonrpc !== "2.0") return;
+
+        // Response to a request we sent
+        if (msg.id !== undefined && pendingRequests.has(msg.id)) {
+          const { resolve, reject } = pendingRequests.get(msg.id);
+          pendingRequests.delete(msg.id);
+          if (msg.error) reject(msg.error);
+          else resolve(msg.result);
+          return;
+        }
+
+        // Notification: tool result delivered to the view
+        if (msg.method === "ui/notifications/tool-result") {
+          const { structuredContent } = msg.params ?? {};
+          if (structuredContent?.charts?.length) {
+            renderCharts(structuredContent.charts);
+          }
+        }
+      });
+
+      // Handshake with host
+      sendRequest("ui/initialize", {
+        clientInfo: { name: "signal-insights-chart-viewer", version: "1.0.0" },
+      }).catch(() => {});
+
+      // ── Theming ─────────────────────────────────────────────────────────────────
+      function applyTheme(theme) {
+        if (theme === "dark") document.body.classList.add("dark");
+        else document.body.classList.remove("dark");
+        // Re-render charts in new theme if any exist
+        const wraps = document.querySelectorAll(".chart-echart[data-idx]");
+        wraps.forEach((el) => {
+          const chart = echarts.getInstanceByDom(el);
+          if (chart) {
+            echarts.dispose(el);
+            const data = el.__chartData;
+            if (data) {
+              const opts = buildOptions(data);
+              if (opts) initEChart(el, opts);
+            }
+          }
+        });
+      }
+
+      window.addEventListener("message", (event) => {
+        const msg = event.data;
+        if (msg?.method === "ui/notifications/theme")
+          applyTheme(msg.params?.theme);
+      });
+
+      // ── ECharts buildOptions (ported from E2BChart.tsx) ─────────────────────────
+      const SHARED_OPTIONS = {
+        grid: { top: 40, right: 16, bottom: 60, left: 60, containLabel: false },
+        legend: { bottom: 0 },
+        toolbox: {
+          right: 16,
+          feature: {
+            saveAsImage: { type: "png", pixelRatio: 2, title: "Download PNG" },
+          },
+        },
+      };
+
+      function buildOptions(chart) {
+        if (chart.type === "line" || chart.type === "scatter") {
+          return {
+            ...SHARED_OPTIONS,
+            xAxis: {
+              type: "category",
+              name: chart.x_label,
+              nameLocation: "middle",
+              nameGap: 35,
+              axisLabel: { rotate: 30 },
+            },
+            yAxis: { name: chart.y_label, nameLocation: "middle", nameGap: 40 },
+            tooltip: { trigger: "axis" },
+            series: chart.elements.map((e) => ({
+              name: e.label,
+              type: chart.type,
+              data: e.points.map((p) => [p[0], p[1]]),
+            })),
+          };
+        }
+
+        if (chart.type === "bar") {
+          const groups = {};
+          for (const e of chart.elements) {
+            (groups[e.group] ??= []).push(e);
+          }
+          return {
+            ...SHARED_OPTIONS,
+            xAxis: {
+              type: "category",
+              name: chart.x_label,
+              nameLocation: "middle",
+              nameGap: 35,
+              axisLabel: { rotate: 30 },
+            },
+            yAxis: { name: chart.y_label, nameLocation: "middle", nameGap: 40 },
+            tooltip: { trigger: "axis" },
+            series: Object.entries(groups).map(([group, elems]) => ({
+              name: group,
+              type: "bar",
+              stack: "total",
+              data: elems.map((e) => [e.label, e.value]),
+            })),
+          };
+        }
+
+        if (chart.type === "pie") {
+          return {
+            ...SHARED_OPTIONS,
+            tooltip: { trigger: "item" },
+            series: [
+              {
+                type: "pie",
+                data: chart.elements.map((e) => ({
+                  value: e.angle,
+                  name: e.label,
+                })),
+              },
+            ],
+          };
+        }
+
+        if (chart.type === "box_and_whisker") {
+          return {
+            ...SHARED_OPTIONS,
+            xAxis: {
+              type: "category",
+              name: chart.x_label,
+              nameLocation: "middle",
+            },
+            yAxis: {
+              name: chart.y_label,
+              nameLocation: "middle",
+              min: "dataMin",
+              max: "dataMax",
+            },
+            tooltip: { trigger: "item" },
+            series: chart.elements.map((e) => ({
+              name: e.label,
+              type: "boxplot",
+              data: [
+                [e.min, e.first_quartile, e.median, e.third_quartile, e.max],
+              ],
+            })),
+          };
+        }
+
+        return null;
+      }
+
+      // ── Rendering ────────────────────────────────────────────────────────────────
+      function initEChart(el, options) {
+        const isDark = document.body.classList.contains("dark");
+        const chart = echarts.init(el, isDark ? "dark" : null);
+        chart.setOption(options);
+        new ResizeObserver(() => chart.resize()).observe(el);
+      }
+
+      function renderCharts(charts) {
+        const container = document.getElementById("charts");
+        container.innerHTML = "";
+
+        for (const c of charts) {
+          const wrap = document.createElement("div");
+          wrap.className = "chart-wrap";
+
+          if (c.chart) {
+            if (
+              c.chart.type === "superchart" &&
+              Array.isArray(c.chart.elements)
+            ) {
+              // superchart: render each sub-chart
+              if (c.chart.title) {
+                const t = document.createElement("div");
+                t.className = "chart-title";
+                t.textContent = c.chart.title;
+                wrap.appendChild(t);
+              }
+              for (const sub of c.chart.elements) {
+                const sub_opts = buildOptions(sub);
+                if (sub_opts) {
+                  if (sub.title) {
+                    const t = document.createElement("div");
+                    t.className = "chart-title";
+                    t.textContent = sub.title;
+                    wrap.appendChild(t);
+                  }
+                  const el = document.createElement("div");
+                  el.className = "chart-echart";
+                  el.__chartData = sub;
+                  wrap.appendChild(el);
+                  container.appendChild(wrap);
+                  initEChart(el, sub_opts);
+                  continue;
+                }
+              }
+            } else {
+              const options = buildOptions(c.chart);
+              if (options) {
+                if (c.chart.title) {
+                  const t = document.createElement("div");
+                  t.className = "chart-title";
+                  t.textContent = c.chart.title;
+                  wrap.appendChild(t);
+                }
+                const el = document.createElement("div");
+                el.className = "chart-echart";
+                el.__chartData = c.chart;
+                wrap.appendChild(el);
+                container.appendChild(wrap);
+                initEChart(el, options);
+                continue;
+              }
+              // Unknown chart type with JSON data — show raw
+              const el = document.createElement("div");
+              el.className = "chart-unknown";
+              el.textContent = JSON.stringify(c.chart, null, 2);
+              wrap.appendChild(el);
+            }
+          } else if (c.png) {
+            // PNG fallback
+            const div = document.createElement("div");
+            div.className = "chart-img";
+            const img = document.createElement("img");
+            img.src = "data:image/png;base64," + c.png;
+            img.alt = c.text ?? "Chart";
+            div.appendChild(img);
+            wrap.appendChild(div);
+          } else {
+            continue; // nothing to render
+          }
+
+          container.appendChild(wrap);
+        }
+
+        if (!container.children.length) {
+          container.innerHTML = '<div id="empty">No chart output.</div>';
+        }
+      }
+    </script>
+  </body>
+</html>

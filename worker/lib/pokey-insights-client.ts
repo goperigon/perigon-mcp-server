@@ -1,5 +1,6 @@
 import { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { HttpError } from "../types/types";
+import { CHART_META } from "worker/mcp/apps/chart-viewer-html";
 
 interface ExecuteCodeDisplayResult {
   text?: string | null;
@@ -20,10 +21,15 @@ interface ExecuteCodeResult {
 }
 
 /**
- * Converts a Pokey execute_code JSON response into MCP content blocks.
- * - stdout/stderr/error/IPython text → single text block (model sees this)
- * - _charts[].png → ImageContent with audience:["user"] (user-visible only,
- *   excluded from model context per MCP annotation spec)
+ * Converts a Pokey execute_code JSON response into an MCP tool result.
+ *
+ * - content: text blocks only (stdout/stderr/error/IPython text) — model reads this
+ * - structuredContent.charts: full chart data (JSON + PNG) for the MCP Apps
+ *   chart viewer iframe (SEP-1865). The iframe reads structuredContent from the
+ *   ui/notifications/tool-result notification.
+ *
+ * For non-Apps clients (Cursor etc.), the ImageContent PNG fallback in content
+ * is retained so they still see charts.
  */
 function buildExecuteCodeResult(data: ExecuteCodeResult): CallToolResult {
   const content: CallToolResult["content"] = [];
@@ -41,6 +47,7 @@ function buildExecuteCodeResult(data: ExecuteCodeResult): CallToolResult {
     content.push({ type: "text", text: textParts.join("\n\n").trim() });
   }
 
+  // PNG fallback for non-Apps MCP clients (audience: user, not model context)
   for (const chart of data._charts ?? []) {
     if (chart.png) {
       content.push({
@@ -56,7 +63,20 @@ function buildExecuteCodeResult(data: ExecuteCodeResult): CallToolResult {
     content.push({ type: "text", text: "(no output)" });
   }
 
-  return { content, isError: !!data.error };
+  // structuredContent.charts is read by the MCP Apps chart viewer iframe.
+  // It is also included in model context, so the model can narrate chart types.
+  const structuredContent = data._charts?.length
+    ? { charts: data._charts }
+    : undefined;
+
+  return {
+    content,
+    structuredContent,
+    isError: !!data.error,
+    ...(structuredContent && {
+      _meta: CHART_META,
+    }),
+  };
 }
 
 /**
