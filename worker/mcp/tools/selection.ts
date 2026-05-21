@@ -17,10 +17,8 @@ export const SIGNAL_TOOL_NAMES = [
 
 export type SignalToolName = (typeof SIGNAL_TOOL_NAMES)[number];
 
-const ALL_KNOWN_TOOL_NAMES = new Set<string>([
-  ...Object.keys(TOOL_DEFINITIONS),
-  ...SIGNAL_TOOL_NAMES,
-]);
+// Signal tool names are also in TOOL_DEFINITIONS; Object.keys covers both.
+const ALL_KNOWN_TOOL_NAMES = new Set<string>(Object.keys(TOOL_DEFINITIONS));
 
 /**
  * Reads the tool-filter query parameter from a URL, accepting both `?tool=`
