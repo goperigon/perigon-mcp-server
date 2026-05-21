@@ -16,12 +16,20 @@ export { CHART_VIEWER_HTML };
 export const CHART_VIEWER_MIME_TYPE = "text/html;profile=mcp-app";
 export const CHART_RESOURCE_URI = "ui://signal-insights/chart-viewer.html";
 
-export const CHART_META = {
+// Per spec: tool _meta.ui should only contain resourceUri.
+// CSP belongs in the resource content (resources/read response _meta.ui.csp).
+export const CHART_TOOL_META = {
   ui: {
     resourceUri: CHART_RESOURCE_URI,
+  },
+} as const;
+
+// CSP for the resource content (resources/read response).
+export const CHART_RESOURCE_CONTENT_META = {
+  ui: {
     csp: {
-      resourceDomains: ["cdn.jsdelivr.net"], // for loading ECharts script
-      connectDomains: [], // no external API calls from widget
+      resourceDomains: ["https://cdn.jsdelivr.net"], // ECharts CDN
     },
+    prefersBorder: false,
   },
 } as const;

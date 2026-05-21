@@ -23,7 +23,8 @@ import {
   CHART_VIEWER_HTML,
   CHART_VIEWER_MIME_TYPE,
   CHART_RESOURCE_URI,
-  CHART_META,
+  CHART_TOOL_META,
+  CHART_RESOURCE_CONTENT_META,
 } from "./apps/chart-viewer-html";
 
 export type Props = {
@@ -109,6 +110,7 @@ export class PerigonMCP extends McpAgent<Env, unknown, Props> {
     // Register the chart viewer UI resource (MCP Apps / SEP-1865).
     // Hosts that support MCP Apps will render this HTML in a sandboxed iframe
     // after signal_insights_execute_code runs.
+    // Per SEP-1865: CSP belongs in resources/read content _meta.ui.csp.
     this.server.registerResource(
       "signal-insights-chart-viewer",
       CHART_RESOURCE_URI,
@@ -119,6 +121,7 @@ export class PerigonMCP extends McpAgent<Env, unknown, Props> {
             uri: CHART_RESOURCE_URI,
             mimeType: CHART_VIEWER_MIME_TYPE,
             text: CHART_VIEWER_HTML,
+            _meta: CHART_RESOURCE_CONTENT_META,
           },
         ],
       }),
@@ -217,7 +220,7 @@ export class PerigonMCP extends McpAgent<Env, unknown, Props> {
               "CHARTS: Call plt.show() after any matplotlib chart — the chart is rendered interactively in the UI. One plt.show() per chart; for multiple charts call signal_insights_execute_code separately. " +
               "No outbound internet access except *.amazonaws.com.",
             inputSchema: executeCodeSchema,
-            _meta: CHART_META,
+            _meta: CHART_TOOL_META,
           },
           async (args) => pokeyClient.executeTool("execute_code", args),
         );

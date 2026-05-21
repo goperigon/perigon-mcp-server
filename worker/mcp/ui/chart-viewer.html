@@ -76,7 +76,7 @@
     <div id="charts"><div id="empty">Waiting for chart output…</div></div>
 
     <script>
-      // ── MCP Apps minimal client ─────────────────────────────────────────────────
+      // ── MCP Apps minimal client (SEP-1865) ───────────────────────────────────────
       const pendingRequests = new Map();
       let requestId = 0;
 
@@ -92,6 +92,10 @@
         });
       }
 
+      function sendNotification(method, params) {
+        sendMsg({ jsonrpc: "2.0", method, params: params ?? {} });
+      }
+
       window.addEventListener("message", (event) => {
         const msg = event.data;
         if (!msg || msg.jsonrpc !== "2.0") return;
@@ -105,29 +109,81 @@
           return;
         }
 
-        // Notification: tool result delivered to the view
+        // ui/resource-teardown — host is tearing down the View (has id, needs response)
+        if (msg.method === "ui/resource-teardown" && msg.id !== undefined) {
+          sendMsg({ jsonrpc: "2.0", id: msg.id, result: {} });
+          return;
+        }
+
+        // ui/notifications/tool-input — tool arguments (before result); ignore for now
+        if (msg.method === "ui/notifications/tool-input") {
+          return;
+        }
+
+        // ui/notifications/tool-result — render charts from structuredContent
         if (msg.method === "ui/notifications/tool-result") {
           const { structuredContent } = msg.params ?? {};
           if (structuredContent?.charts?.length) {
             renderCharts(structuredContent.charts);
           }
+          return;
+        }
+
+        // ui/notifications/host-context-changed — host context updates (theme, etc.)
+        if (msg.method === "ui/notifications/host-context-changed") {
+          if (msg.params?.theme !== undefined) {
+            applyTheme(msg.params.theme);
+          }
+          if (msg.params?.styles?.variables) {
+            applyStyleVariables(msg.params.styles.variables);
+          }
+          return;
         }
       });
 
-      // Handshake with host
+      // ── Lifecycle: ui/initialize handshake ────────────────────────────────────
+      // Per SEP-1865: View sends ui/initialize, receives McpUiInitializeResult,
+      // then MUST send ui/notifications/initialized.
       sendRequest("ui/initialize", {
-        clientInfo: { name: "signal-insights-chart-viewer", version: "1.0.0" },
-      }).catch(() => {});
+        protocolVersion: "2026-01-26",
+        appCapabilities: {
+          availableDisplayModes: ["inline"],
+        },
+      })
+        .then((result) => {
+          // Apply initial theme and style variables from host context
+          const ctx = result?.hostContext;
+          if (ctx?.theme) applyTheme(ctx.theme);
+          if (ctx?.styles?.variables) applyStyleVariables(ctx.styles.variables);
+          // MUST send initialized notification after successful initialize
+          sendNotification("ui/notifications/initialized", {});
+        })
+        .catch(() => {
+          // Host may not support MCP Apps — proceed without initialization
+          sendNotification("ui/notifications/initialized", {});
+        });
+
+      // ── Size reporting ────────────────────────────────────────────────────────
+      // Per SEP-1865: View SHOULD send ui/notifications/size-changed when size changes.
+      const sizeObserver = new ResizeObserver((entries) => {
+        const entry = entries[0];
+        if (!entry) return;
+        const { width, height } = entry.contentRect;
+        sendNotification("ui/notifications/size-changed", {
+          width: Math.round(width),
+          height: Math.round(height),
+        });
+      });
+      sizeObserver.observe(document.body);
 
       // ── Theming ─────────────────────────────────────────────────────────────────
       function applyTheme(theme) {
         if (theme === "dark") document.body.classList.add("dark");
         else document.body.classList.remove("dark");
-        // Re-render charts in new theme if any exist
-        const wraps = document.querySelectorAll(".chart-echart[data-idx]");
-        wraps.forEach((el) => {
-          const chart = echarts.getInstanceByDom(el);
-          if (chart) {
+        // Re-render existing charts in new theme
+        document.querySelectorAll(".chart-echart").forEach((el) => {
+          const instance = echarts.getInstanceByDom(el);
+          if (instance) {
             echarts.dispose(el);
             const data = el.__chartData;
             if (data) {
@@ -138,11 +194,11 @@
         });
       }
 
-      window.addEventListener("message", (event) => {
-        const msg = event.data;
-        if (msg?.method === "ui/notifications/theme")
-          applyTheme(msg.params?.theme);
-      });
+      function applyStyleVariables(variables) {
+        for (const [key, value] of Object.entries(variables)) {
+          if (value != null) document.documentElement.style.setProperty(key, value);
+        }
+      }
 
       // ── ECharts buildOptions (ported from E2BChart.tsx) ─────────────────────────
       const SHARED_OPTIONS = {
