@@ -1,6 +1,6 @@
 import { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { HttpError } from "../types/types";
-import { CHART_META } from "worker/mcp/apps/chart-viewer-html";
+import { CHART_META } from "../mcp/apps/chart-viewer-html";
 
 interface ExecuteCodeDisplayResult {
   text?: string | null;
