@@ -172,7 +172,7 @@ export class PerigonMCP extends McpAgent<Env, unknown, Props> {
             `DATA (${DATA_DIR}): S3-backed read-write directory. Query result files appear here automatically. This directory persists across sandbox restarts. ` +
             `OUTPUT (${OUTPUT_DIR}): write user-facing deliverables here (charts, reports, CSVs, exports). Files in output/ appear in the user's Artifacts panel and are downloadable. Internal/intermediate files should stay in DATA root. ` +
             "Pre-installed highlights: pandas, numpy, matplotlib, seaborn, scipy, scikit-learn, statsmodels, pyarrow, polars, openpyxl, sqlalchemy, beautifulsoup4, nltk, xgboost, lightgbm, shap, pillow, sympy, tabulate, rich. " +
-            "CHARTS: Use simple matplotlib calls (plt.plot, plt.bar, plt.scatter, plt.pie, plt.boxplot) — these are parsed into interactive charts in the UI. One chart per plt.show() call. For multiple charts, use separate signal_insights_execute_code calls. Do NOT combine chart types, use subplots, or add annotations/fill_between — these break interactive parsing. Save complex visuals with plt.savefig() to ${OUTPUT_DIR}/ instead. " +
+            "CHARTS: Call plt.show() after any matplotlib chart — the PNG is returned as an inline image visible to the user. One plt.show() per chart; for multiple charts call signal_insights_execute_code separately. Use plt.savefig() to save a persistent copy to the output directory as well. " +
             "No outbound internet access except *.amazonaws.com.",
           executeCodeSchema.shape,
           async (args) => pokeyClient.executeTool("execute_code", args),

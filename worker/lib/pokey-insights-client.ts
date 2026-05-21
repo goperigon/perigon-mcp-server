@@ -1,6 +1,64 @@
 import { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { HttpError } from "../types/types";
 
+interface ExecuteCodeDisplayResult {
+  text?: string | null;
+}
+
+interface ChartOutput {
+  chart?: unknown;
+  png?: string | null;
+  text?: string | null;
+}
+
+interface ExecuteCodeResult {
+  stdout?: string;
+  stderr?: string;
+  error?: string | null;
+  results?: ExecuteCodeDisplayResult[];
+  _charts?: ChartOutput[];
+}
+
+/**
+ * Converts a Pokey execute_code JSON response into MCP content blocks.
+ * - stdout/stderr/error/IPython text → single text block (model sees this)
+ * - _charts[].png → ImageContent with audience:["user"] (user-visible only,
+ *   excluded from model context per MCP annotation spec)
+ */
+function buildExecuteCodeResult(data: ExecuteCodeResult): CallToolResult {
+  const content: CallToolResult["content"] = [];
+  const textParts: string[] = [];
+
+  if (data.stdout) textParts.push(`[stdout]\n${data.stdout}`);
+  if (data.stderr) textParts.push(`[stderr]\n${data.stderr}`);
+  if (data.error) textParts.push(`[error]\n${data.error}`);
+
+  for (const r of data.results ?? []) {
+    if (r.text) textParts.push(r.text);
+  }
+
+  if (textParts.length > 0) {
+    content.push({ type: "text", text: textParts.join("\n\n").trim() });
+  }
+
+  for (const chart of data._charts ?? []) {
+    if (chart.png) {
+      content.push({
+        type: "image",
+        data: chart.png,
+        mimeType: "image/png",
+        annotations: { audience: ["user"] },
+      });
+    }
+  }
+
+  if (content.length === 0) {
+    content.push({ type: "text", text: "(no output)" });
+  }
+
+  return { content, isError: !!data.error };
+}
+
 /**
  * HTTP client for Signal Insights stateful tool execution on Pokey.
  * All stateful tools (E2B sandbox, S3 artifacts, export) run in Pokey since
@@ -30,7 +88,11 @@ export class PokeyInsightsClient {
     );
     if (!res.ok) {
       const body = await res.text();
-      throw new HttpError(res.status, body, `Failed to create workspace: ${body}`);
+      throw new HttpError(
+        res.status,
+        body,
+        `Failed to create workspace: ${body}`,
+      );
     }
 
     const { workspace } = (await res.json()) as { workspace: string };
@@ -74,11 +136,19 @@ export class PokeyInsightsClient {
     }
 
     const result = await res.json();
+
+    if (toolName === "execute_code") {
+      return buildExecuteCodeResult(result as ExecuteCodeResult);
+    }
+
     return {
       content: [
         {
           type: "text",
-          text: typeof result === "string" ? result : JSON.stringify(result, null, 2),
+          text:
+            typeof result === "string"
+              ? result
+              : JSON.stringify(result, null, 2),
         },
       ],
     };
