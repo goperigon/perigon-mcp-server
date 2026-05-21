@@ -14,7 +14,7 @@ import CHART_VIEWER_HTML from "../ui/chart-viewer.html?raw";
 export { CHART_VIEWER_HTML };
 
 export const CHART_VIEWER_MIME_TYPE = "text/html;profile=mcp-app";
-export const CHART_RESOURCE_URI = "ui://signal-insights/chart-viewer.html";
+export const CHART_RESOURCE_URI = "ui://signal-insights/chart-viewer";
 
 // Per spec: tool _meta.ui should only contain resourceUri.
 // CSP belongs in the resource content (resources/read response _meta.ui.csp).

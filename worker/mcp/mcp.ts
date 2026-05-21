@@ -220,7 +220,6 @@ export class PerigonMCP extends McpAgent<Env, unknown, Props> {
               "CHARTS: Call plt.show() after any matplotlib chart — the chart is rendered interactively in the UI. One plt.show() per chart; for multiple charts call signal_insights_execute_code separately. " +
               "No outbound internet access except *.amazonaws.com.",
             inputSchema: executeCodeSchema,
-            _meta: CHART_TOOL_META,
           },
           async (args) => pokeyClient.executeTool("execute_code", args),
         );
