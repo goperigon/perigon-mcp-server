@@ -36,7 +36,7 @@ export const newsArticlesArgs = createBaseSearchArgs().extend({
       • ${AllEndpointSortBy.PubDate}: Sort by date of article publication (newest first)
       • ${AllEndpointSortBy.RefreshDate}: Sort by date of article refresh (most recently refreshed first)
       • ${AllEndpointSortBy.AddDate}: Sort by date of article addition (newest first)
-      • ${AllEndpointSortBy.ReverseAddDate}: Sort by date of article addition (oldest first)`
+      • ${AllEndpointSortBy.ReverseAddDate}: Sort by date of article addition (oldest first)`,
     )
     .default(AllEndpointSortBy.Date)
     .optional(),
@@ -52,43 +52,43 @@ export const newsArticlesArgs = createBaseSearchArgs().extend({
     .array(z.string())
     .optional()
     .describe(
-      `Filter for articles by news story/cluster IDs they belong to (the "headlines" or grouped news clusters).`
+      `Filter for articles by news story/cluster IDs they belong to (the "headlines" or grouped news clusters).`,
     ),
   sources: z
     .array(z.string())
     .optional()
     .describe(
-      "Filter by publisher domains or subdomains. Supports wildcards (* and ?) for pattern matching (e.g., *.cnn.com)."
+      "Filter by publisher domains or subdomains. Supports wildcards (* and ?) for pattern matching (e.g., *.cnn.com).",
     ),
   sourceGroup: z
     .array(z.string())
     .optional()
     .describe(
-      "Filter using Perigon's curated publisher bundles for quality-filtered results: top10, top25, top50, top100, top25tech, top25crypto, etc."
+      "Filter using Perigon's curated publisher bundles for quality-filtered results: top10, top25, top50, top100, top25tech, top25crypto, etc.",
     ),
   category: z
     .array(z.string())
     .optional()
     .describe(
-      "Filter by content categories (e.g., Politics, Tech, Sports, Business, Finance, Entertainment). Use 'none' for uncategorized. Multiple values use OR logic."
+      "Filter by content categories (e.g., Politics, Tech, Sports, Business, Finance, Entertainment). Use 'none' for uncategorized. Multiple values use OR logic.",
     ),
   topic: z
     .array(z.string())
     .optional()
     .describe(
-      "Filter by specific topics (e.g., Markets, Crime, Cryptocurrency, Climate Change, College Sports). More granular than categories. Multiple values use OR logic."
+      "Filter by specific topics (e.g., Markets, Crime, Cryptocurrency, Climate Change, College Sports). More granular than categories. Multiple values use OR logic.",
     ),
   language: z
     .array(z.string())
     .optional()
     .describe(
-      "Filter by language using ISO-639 two-letter codes in lowercase (e.g., en, es, fr, de, ja). Multiple values use OR logic."
+      "Filter by language using ISO-639 two-letter codes in lowercase (e.g., en, es, fr, de, ja). Multiple values use OR logic.",
     ),
   label: z
     .array(z.string())
     .optional()
     .describe(
-      "Filter by editorial labels: Opinion, Paid-news, Non-news, Fact Check, Press Release."
+      "Filter by editorial labels: Opinion, Paid-news, Non-news, Fact Check, Press Release.",
     ),
   medium: z
     .array(z.string())
@@ -98,40 +98,40 @@ export const newsArticlesArgs = createBaseSearchArgs().extend({
     .array(z.string())
     .optional()
     .describe(
-      "Filter for articles mentioning specific people by exact name match."
+      "Filter for articles mentioning specific people by exact name match.",
     ),
   companyDomain: z
     .array(z.string())
     .optional()
     .describe(
-      "Filter for articles mentioning specific companies by domain (e.g., apple.com, microsoft.com)."
+      "Filter for articles mentioning specific companies by domain (e.g., apple.com, microsoft.com).",
     ),
   companySymbol: z
     .array(z.string())
     .optional()
     .describe(
-      "Filter for articles mentioning specific companies by stock ticker symbol (e.g., AAPL, MSFT)."
+      "Filter for articles mentioning specific companies by stock ticker symbol (e.g., AAPL, MSFT).",
     ),
   showReprints: z
     .boolean()
     .optional()
     .default(false)
     .describe(
-      "Include wire-service reprints (AP, Reuters) that appear on multiple sites. Default false for deduplication."
+      "Include wire-service reprints (AP, Reuters) that appear on multiple sites. Default false for deduplication.",
     ),
   addDateFrom: z
     .string()
     .transform((str) => (str === "" ? undefined : new Date(str)))
     .optional()
     .describe(
-      "Filter for articles added/ingested to Perigon after this date. ISO 8601 or yyyy-mm-dd."
+      "Filter for articles added/ingested to Perigon after this date. ISO 8601 or yyyy-mm-dd.",
     ),
   addDateTo: z
     .string()
     .transform((str) => (str === "" ? undefined : new Date(str)))
     .optional()
     .describe(
-      "Filter for articles added/ingested to Perigon before this date. ISO 8601 or yyyy-mm-dd."
+      "Filter for articles added/ingested to Perigon before this date. ISO 8601 or yyyy-mm-dd.",
     ),
   positiveSentimentFrom: z
     .number()
@@ -161,7 +161,7 @@ export const newsArticlesArgs = createBaseSearchArgs().extend({
     .boolean()
     .default(true)
     .describe(
-      "Return article summary instead of full content. Defaults to true."
+      "Return article summary instead of full content. Defaults to true.",
     ),
   ...createLocationSchema(),
 });
@@ -182,7 +182,9 @@ export const newsArticlesArgs = createBaseSearchArgs().extend({
  * @param perigon - The Perigon API client instance
  * @returns Tool callback function for MCP
  */
-export function searchNewsArticles(perigon: Perigon): ToolCallback {
+export function searchNewsArticles(
+  perigon: Perigon,
+): ToolCallback<typeof newsArticlesArgs> {
   return async ({
     query,
     page,
@@ -255,7 +257,7 @@ export function searchNewsArticles(perigon: Perigon): ToolCallback {
         searchParams,
         location,
         locationType,
-        query
+        query,
       );
 
       const result = await perigon.searchArticles(searchParams);
@@ -268,22 +270,30 @@ export function searchNewsArticles(perigon: Perigon): ToolCallback {
           "";
         const categories =
           article.categories?.map((c) => c.name).join(", ") ?? "";
-        const topics =
-          article.topics?.map((t) => t.name).join(", ") ?? "";
-        const labels =
-          article.labels?.map((l) => l.name).join(", ") ?? "";
+        const topics = article.topics?.map((t) => t.name).join(", ") ?? "";
+        const labels = article.labels?.map((l) => l.name).join(", ") ?? "";
         const people =
-          article.people?.map((p) => p.name).filter(Boolean).join(", ") ?? "";
+          article.people
+            ?.map((p) => p.name)
+            .filter(Boolean)
+            .join(", ") ?? "";
         const companies =
-          article.companies?.map((c) => c.name).filter(Boolean).join(", ") ?? "";
+          article.companies
+            ?.map((c) => c.name)
+            .filter(Boolean)
+            .join(", ") ?? "";
         const places =
           article.places
-            ?.map((p) => [p.city, p.state, p.country].filter(Boolean).join(", "))
+            ?.map((p) =>
+              [p.city, p.state, p.country].filter(Boolean).join(", "),
+            )
             .filter(Boolean)
             .join("; ") ?? "";
         const locations =
           article.locations
-            ?.map((l) => [l.city, l.state, l.country].filter(Boolean).join(", "))
+            ?.map((l) =>
+              [l.city, l.state, l.country].filter(Boolean).join(", "),
+            )
             .filter(Boolean)
             .join("; ") ?? "";
 
@@ -316,7 +326,7 @@ Journalist Ids: ${journalistIds}
         result.numResults,
         page,
         size,
-        "articles"
+        "articles",
       );
       output += "\n<articles>\n";
       output += articles.join("\n\n");
@@ -327,8 +337,8 @@ Journalist Ids: ${journalistIds}
       console.error("Error searching news articles:", error);
       return toolResult(
         `Error: Failed to search news articles: ${await createErrorMessage(
-          error
-        )}`
+          error,
+        )}`,
       );
     }
   };
@@ -337,10 +347,10 @@ Journalist Ids: ${journalistIds}
 /**
  * Tool definition for news articles search
  */
-export const newsArticlesTool: ToolDefinition = {
+export const newsArticlesTool = {
   name: "search_news_articles",
   description:
     "Search and filter individual news articles from 200k+ global sources. Use this for finding specific articles by keyword, topic, category, source, location, person, company, journalist, sentiment, or time range. Supports Boolean query syntax (AND, OR, NOT), exact phrases, and wildcards. Returns article content or summaries with publication dates, sources, story cluster IDs, and journalist metadata.",
   parameters: newsArticlesArgs,
   createHandler: (perigon: Perigon) => searchNewsArticles(perigon),
-};
+} satisfies ToolDefinition<typeof newsArticlesArgs>;

@@ -5,7 +5,11 @@ import { Perigon } from "../../../lib/perigon";
 import { ToolCallback, ToolDefinition } from "../types";
 import { paginationArgs, locationArgs } from "../schemas/base";
 import { createSearchField } from "../schemas/search";
-import { toolResult, noResults, createPaginationHeader } from "../utils/formatting";
+import {
+  toolResult,
+  noResults,
+  createPaginationHeader,
+} from "../utils/formatting";
 import { createErrorMessage } from "../utils/error-handling";
 
 /**
@@ -18,14 +22,14 @@ export const sourcesArgs = z.object({
     .array(z.string())
     .optional()
     .describe(
-      "Filter by exact publisher domains or subdomains. Supports wildcards (* and ?) for pattern matching (e.g., *.cnn.com)."
+      "Filter by exact publisher domains or subdomains. Supports wildcards (* and ?) for pattern matching (e.g., *.cnn.com).",
     ),
   name: createSearchField("source name or alternative names"),
   sourceGroup: z
     .string()
     .optional()
     .describe(
-      "Filter by curated source bundles: top10, top25, top50, top100, top25tech, top25crypto."
+      "Filter by curated source bundles: top10, top25, top50, top100, top25tech, top25crypto.",
     ),
   paywall: z
     .boolean()
@@ -65,25 +69,27 @@ export const sourcesArgs = z.object({
 
 /**
  * Search for news publications and media outlets
- * 
+ *
  * This tool helps you discover news publications and media outlets by various criteria:
  * - Name and domain search with wildcard support
  * - Geographic filtering (countries, states, cities)
  * - Audience size filtering (monthly visits)
  * - Publishing activity filtering (monthly posts)
  * - Domain-based filtering with pattern matching
- * 
+ *
  * Returns detailed source information including:
  * - Domain and website information
  * - Monthly visit statistics
  * - Top topics covered by the source
  * - Geographic focus areas
  * - Publishing frequency metrics
- * 
+ *
  * @param perigon - The Perigon API client instance
  * @returns Tool callback function for MCP
  */
-export function searchSources(perigon: Perigon): ToolCallback {
+export function searchSources(
+  perigon: Perigon,
+): ToolCallback<typeof sourcesArgs> {
   return async ({
     page,
     size,
@@ -131,7 +137,7 @@ Top Topics: ${source.topTopics?.map((topic) => topic.name).join(", ")}
         result.numResults,
         page,
         size,
-        "sources"
+        "sources",
       );
       output += "\n<sources>\n";
       output += sources.join("\n\n");
@@ -141,7 +147,7 @@ Top Topics: ${source.topTopics?.map((topic) => topic.name).join(", ")}
     } catch (error) {
       console.error("Error searching sources:", error);
       return toolResult(
-        `Error: Failed to search sources: ${await createErrorMessage(error)}`
+        `Error: Failed to search sources: ${await createErrorMessage(error)}`,
       );
     }
   };
@@ -150,10 +156,10 @@ Top Topics: ${source.topTopics?.map((topic) => topic.name).join(", ")}
 /**
  * Tool definition for sources search
  */
-export const sourcesTool: ToolDefinition = {
+export const sourcesTool = {
   name: "search_sources",
   description:
     "Search 200k+ news publications and media outlets in the Perigon database. Use this to discover or compare news sources by name, domain, location, audience size, or publishing volume. Filter by curated bundles (top10, top100), paywall status, or geographic location. Returns source profiles with domain, monthly visits, top topics covered, and publishing frequency.",
   parameters: sourcesArgs,
   createHandler: (perigon: Perigon) => searchSources(perigon),
-};
+} satisfies ToolDefinition<typeof sourcesArgs>;

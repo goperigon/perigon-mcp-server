@@ -21,35 +21,35 @@ export const topCompaniesArgs = statsFilterArgs.extend({
     .transform(parseTime)
     .optional()
     .describe(
-      "Start of the current window for spike detection. Default: 3 days ago. ISO 8601 or yyyy-mm-dd."
+      "Start of the current window for spike detection. Default: 3 days ago. ISO 8601 or yyyy-mm-dd.",
     ),
   currentTo: z
     .string()
     .transform(parseTime)
     .optional()
     .describe(
-      "End of the current window for spike detection. Default: now. ISO 8601 or yyyy-mm-dd."
+      "End of the current window for spike detection. Default: now. ISO 8601 or yyyy-mm-dd.",
     ),
   baselineFrom: z
     .string()
     .transform(parseTime)
     .optional()
     .describe(
-      "Start of the baseline window for spike detection. Default: 30 days ago. ISO 8601 or yyyy-mm-dd."
+      "Start of the baseline window for spike detection. Default: 30 days ago. ISO 8601 or yyyy-mm-dd.",
     ),
   baselineTo: z
     .string()
     .transform(parseTime)
     .optional()
     .describe(
-      "End of the baseline window for spike detection. Default: 3 days ago. ISO 8601 or yyyy-mm-dd."
+      "End of the baseline window for spike detection. Default: 3 days ago. ISO 8601 or yyyy-mm-dd.",
     ),
   normalizeByDay: z
     .boolean()
     .optional()
     .default(true)
     .describe(
-      "If true, compares daily mention rates between current and baseline windows (adjusts for window length differences). Default: true."
+      "If true, compares daily mention rates between current and baseline windows (adjusts for window length differences). Default: true.",
     ),
   size: z
     .number()
@@ -60,8 +60,12 @@ export const topCompaniesArgs = statsFilterArgs.extend({
     .describe("Number of top companies to return (1–100). Default: 10."),
 });
 
-export function getTopCompanies(perigon: Perigon): ToolCallback {
-  return async (args: z.infer<typeof topCompaniesArgs>): Promise<CallToolResult> => {
+export function getTopCompanies(
+  perigon: Perigon,
+): ToolCallback<typeof topCompaniesArgs> {
+  return async (
+    args: z.infer<typeof topCompaniesArgs>,
+  ): Promise<CallToolResult> => {
     try {
       const result: SpikeResult<CompanySpike> = await perigon.getTopCompanies({
         q: args.q,
@@ -110,16 +114,16 @@ export function getTopCompanies(perigon: Perigon): ToolCallback {
     } catch (error) {
       console.error("Error in get_top_companies:", error);
       return toolResult(
-        `Error: Failed to retrieve top companies: ${await createErrorMessage(error)}`
+        `Error: Failed to retrieve top companies: ${await createErrorMessage(error)}`,
       );
     }
   };
 }
 
-export const topCompaniesTool: ToolDefinition = {
+export const topCompaniesTool = {
   name: "get_top_companies",
   description:
     "Get the companies whose news coverage is spiking — mentioned significantly more in a recent window than a prior baseline period. Use this when the user asks 'which companies are trending?', 'which companies are getting more coverage than usual?', or 'what companies are suddenly in the news?' — NOT for simple most-mentioned frequency (use get_top_entities for that). Returns a ranked list with current mention count, baseline count, and a spike score (higher = bigger relative increase). The comparison window defaults to last 3 days vs. last 30 days; override with currentFrom/To and baselineFrom/To. Supports all standard article filters to scope the analysis to a specific topic, source, or date range.",
   parameters: topCompaniesArgs,
   createHandler: (perigon: Perigon) => getTopCompanies(perigon),
-};
+} satisfies ToolDefinition<typeof topCompaniesArgs>;

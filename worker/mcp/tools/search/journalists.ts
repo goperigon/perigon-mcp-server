@@ -4,7 +4,11 @@ import { Perigon } from "../../../lib/perigon";
 import { ToolCallback, ToolDefinition, CONSTANTS } from "../types";
 import { paginationArgs, categories, topics } from "../schemas/base";
 import { createSearchField } from "../schemas/search";
-import { toolResult, noResults, createPaginationHeader } from "../utils/formatting";
+import {
+  toolResult,
+  noResults,
+  createPaginationHeader,
+} from "../utils/formatting";
 import { createErrorMessage } from "../utils/error-handling";
 
 /**
@@ -20,7 +24,7 @@ export const journalistsArgs = z.object({
     .array(z.string())
     .optional()
     .describe(
-      "Filter journalists by the type of content they typically produce (e.g., Opinion, Paid-news, Non-news)."
+      "Filter journalists by the type of content they typically produce (e.g., Opinion, Paid-news, Non-news).",
     ),
   journalistIds: z
     .array(z.string())
@@ -30,14 +34,12 @@ export const journalistsArgs = z.object({
     .array(z.string())
     .optional()
     .describe(
-      "Filter journalists by publisher domains or subdomains. Supports wildcards (e.g., *.cnn.com)."
+      "Filter journalists by publisher domains or subdomains. Supports wildcards (e.g., *.cnn.com).",
     ),
   twitter: z
     .string()
     .optional()
-    .describe(
-      "Filter by exact Twitter/X handle (without the @ symbol)."
-    ),
+    .describe("Filter by exact Twitter/X handle (without the @ symbol)."),
   maxMonthlyPosts: z
     .number()
     .int()
@@ -60,13 +62,13 @@ export const journalistsArgs = z.object({
       return countries.map((country) => country.toLowerCase());
     })
     .describe(
-      "Filter journalists by countries they commonly cover. Two-letter codes in lowercase (e.g., us, gb, jp)."
+      "Filter journalists by countries they commonly cover. Two-letter codes in lowercase (e.g., us, gb, jp).",
     ),
 });
 
 /**
  * Search for journalists and reporters
- * 
+ *
  * This tool helps you find journalists and reporters by various criteria including:
  * - Name and title search
  * - Publication/source filtering
@@ -74,17 +76,19 @@ export const journalistsArgs = z.object({
  * - Activity level filtering (monthly posts)
  * - Content type filtering (opinion, news, etc.)
  * - Category and topic specialization
- * 
+ *
  * Returns detailed journalist profiles including:
  * - Top sources they write for
  * - Geographic coverage areas
  * - Monthly posting activity
  * - Content categories and topics
- * 
+ *
  * @param perigon - The Perigon API client instance
  * @returns Tool callback function for MCP
  */
-export function searchJournalists(perigon: Perigon): ToolCallback {
+export function searchJournalists(
+  perigon: Perigon,
+): ToolCallback<typeof journalistsArgs> {
   return async ({
     query,
     name,
@@ -125,13 +129,13 @@ Sources:
   ${journalist?.topSources
     ?.map(
       (source) =>
-        `\t- Source: ${source.name}, Articles they wrote for Source: ${source.count}`
+        `\t- Source: ${source.name}, Articles they wrote for Source: ${source.count}`,
     )
     .join("\n")}
 Locations: ${journalist?.locations
           ?.map(
             (location) =>
-              `Country: ${location.country}, City: ${location.city}`
+              `Country: ${location.country}, City: ${location.city}`,
           )
           .join(", ")}
 </journalist>`;
@@ -141,7 +145,7 @@ Locations: ${journalist?.locations
         result.numResults,
         page,
         size,
-        "journalists"
+        "journalists",
       );
       output += "\n<journalists>\n";
       output += journalists.join("\n\n");
@@ -151,7 +155,7 @@ Locations: ${journalist?.locations
     } catch (error) {
       console.error("Error searching journalists:", error);
       return toolResult(
-        `Error: Failed to search journalists: ${await createErrorMessage(error)}`
+        `Error: Failed to search journalists: ${await createErrorMessage(error)}`,
       );
     }
   };
@@ -160,10 +164,10 @@ Locations: ${journalist?.locations
 /**
  * Tool definition for journalists search
  */
-export const journalistsTool: ToolDefinition = {
+export const journalistsTool = {
   name: "search_journalists",
   description:
     "Search 230k+ journalist and reporter profiles in the Perigon database. Use this to find who covers specific topics, publications, or regions. Filter by name, Twitter handle, publication, country, content category, topic, or posting activity. Returns journalist profiles with their top sources, geographic coverage areas, and monthly posting frequency.",
   parameters: journalistsArgs,
   createHandler: (perigon: Perigon) => searchJournalists(perigon),
-};
+} satisfies ToolDefinition<typeof journalistsArgs>;

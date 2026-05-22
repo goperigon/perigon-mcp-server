@@ -36,22 +36,24 @@ export const personNewsArgs = z.object({
 
 /**
  * Get recent news about a specific person
- * 
+ *
  * This tool simplifies finding recent news about any person by:
  * 1. First searching for the person to get accurate information
  * 2. Then searching for recent news articles mentioning that person
  * 3. Automatically filtering by recency using today's date
- * 
+ *
  * Perfect for:
  * - Tracking news about public figures, politicians, celebrities
  * - Getting latest updates on business leaders and executives
  * - Monitoring mentions of specific individuals in the news
  * - Research on newsworthy people and their recent activities
- * 
+ *
  * @param perigon - The Perigon API client instance
  * @returns Tool callback function for MCP
  */
-export function getPersonNews(perigon: Perigon): ToolCallback {
+export function getPersonNews(
+  perigon: Perigon,
+): ToolCallback<typeof personNewsArgs> {
   return async ({
     personName,
     days,
@@ -63,8 +65,8 @@ export function getPersonNews(perigon: Perigon): ToolCallback {
       const today = new Date();
       const fromDate = new Date(today);
       fromDate.setDate(today.getDate() - days);
-      
-      const todayStr = today.toISOString().split('T')[0];
+
+      const todayStr = today.toISOString().split("T")[0];
 
       // First, try to find the person to get more context
       let personInfo = "";
@@ -73,19 +75,22 @@ export function getPersonNews(perigon: Perigon): ToolCallback {
           name: personName,
           size: 1,
         });
-        
+
         if (personResult.numResults > 0) {
           const person = personResult.results[0];
           personInfo = `\n<person-context>
-Name: ${person.name ?? 'N/A'}
+Name: ${person.name ?? "N/A"}
 Occupation: ${formatLabelList(person.occupation)}
 Position: ${formatLabelList(person.position)}
-Description: ${person.description ?? 'N/A'}
+Description: ${person.description ?? "N/A"}
 </person-context>\n`;
         }
       } catch (error) {
         // Continue even if person search fails
-        console.warn("Person search failed, continuing with news search:", error);
+        console.warn(
+          "Person search failed, continuing with news search:",
+          error,
+        );
       }
 
       // Search for recent news about the person
@@ -101,13 +106,15 @@ Description: ${person.description ?? 'N/A'}
       });
 
       if (newsResult.numResults === 0) {
-        return toolResult(`No recent news found for "${personName}" in the last ${days} days.${personInfo}`);
+        return toolResult(
+          `No recent news found for "${personName}" in the last ${days} days.${personInfo}`,
+        );
       }
 
       const articles = newsResult.articles.map((article) => {
-        const journalistIds = article.journalists
-          ?.map((journalist) => journalist.id)
-          .join(", ") ?? "";
+        const journalistIds =
+          article.journalists?.map((journalist) => journalist.id).join(", ") ??
+          "";
 
         return `<article id="${article.articleId}" title="${article.title}">
 Content: ${article.summary || article.content}
@@ -129,7 +136,7 @@ Journalist Ids: ${journalistIds}
     } catch (error) {
       console.error("Error getting person news:", error);
       return toolResult(
-        `Error: Failed to get news for person "${personName}": ${await createErrorMessage(error)}`
+        `Error: Failed to get news for person "${personName}": ${await createErrorMessage(error)}`,
       );
     }
   };
@@ -138,10 +145,10 @@ Journalist Ids: ${journalistIds}
 /**
  * Tool definition for person news
  */
-export const personNewsTool: ToolDefinition = {
+export const personNewsTool = {
   name: "get_person_news",
   description:
     "Quick shortcut to get recent news about a specific person by name. Automatically looks up the person's profile for context, then finds recent articles mentioning them within a configurable time window. Use this for simple 'what's the latest news about [person]?' queries. For advanced filtering, use search_news_articles with personName instead.",
   parameters: personNewsArgs,
   createHandler: (perigon: Perigon) => getPersonNews(perigon),
-};
+} satisfies ToolDefinition<typeof personNewsArgs>;

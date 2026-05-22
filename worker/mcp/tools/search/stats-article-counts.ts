@@ -2,7 +2,11 @@ import { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 import { Perigon, CountStatDto, StatResult } from "../../../lib/perigon";
 import { ToolCallback, ToolDefinition } from "../types";
-import { statsFilterArgs, splitByEnum, normalizeSplitBy } from "../schemas/stats";
+import {
+  statsFilterArgs,
+  splitByEnum,
+  normalizeSplitBy,
+} from "../schemas/stats";
 import { toolResult, noResults } from "../utils/formatting";
 import { createErrorMessage } from "../utils/error-handling";
 
@@ -10,8 +14,12 @@ export const articleCountsArgs = statsFilterArgs.extend({
   splitBy: splitByEnum.optional(),
 });
 
-export function getArticleCounts(perigon: Perigon): ToolCallback {
-  return async (args: z.infer<typeof articleCountsArgs>): Promise<CallToolResult> => {
+export function getArticleCounts(
+  perigon: Perigon,
+): ToolCallback<typeof articleCountsArgs> {
+  return async (
+    args: z.infer<typeof articleCountsArgs>,
+  ): Promise<CallToolResult> => {
     try {
       const result: StatResult<CountStatDto> = await perigon.getArticleCounts({
         q: args.q,
@@ -31,10 +39,13 @@ export function getArticleCounts(perigon: Perigon): ToolCallback {
 
       if (!result.results || result.results.length === 0) return noResults;
 
-      const totalArticles = result.results.reduce((sum, r) => sum + r.numResults, 0);
+      const totalArticles = result.results.reduce(
+        (sum, r) => sum + r.numResults,
+        0,
+      );
 
-      const rows = result.results.map((r) =>
-        `<count_bucket date="${r.date}" count="${r.numResults}" />`
+      const rows = result.results.map(
+        (r) => `<count_bucket date="${r.date}" count="${r.numResults}" />`,
       );
 
       let output = `Got ${result.results.length} bucket(s), ${totalArticles} total articles (splitBy=${args.splitBy ?? "DAY"})\n`;
@@ -46,16 +57,16 @@ export function getArticleCounts(perigon: Perigon): ToolCallback {
     } catch (error) {
       console.error("Error in get_article_counts:", error);
       return toolResult(
-        `Error: Failed to retrieve article counts: ${await createErrorMessage(error)}`
+        `Error: Failed to retrieve article counts: ${await createErrorMessage(error)}`,
       );
     }
   };
 }
 
-export const articleCountsTool: ToolDefinition = {
+export const articleCountsTool = {
   name: "get_article_counts",
   description:
     "Get article publication volume bucketed over time for articles matching the given filters. Use this when the user asks about coverage trends, how much a topic was covered over time, or wants a chart/table of article counts — NOT just for finding the total number of articles (use search_news_articles with showNumResults for a simple total count). Returns one count per time bucket. Use splitBy to control the interval (HOUR, DAY, WEEK, MONTH, or NONE for a single total across the whole date range). Supports the same article filters as search_news_articles.",
   parameters: articleCountsArgs,
   createHandler: (perigon: Perigon) => getArticleCounts(perigon),
-};
+} satisfies ToolDefinition<typeof articleCountsArgs>;

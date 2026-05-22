@@ -16,21 +16,21 @@ export const summarizeArgs = createBaseSearchArgs().extend({
     .string()
     .optional()
     .describe(
-      "Instructions guiding how the summary should be written. Maximum 2048 characters. Example: 'Summarize the key developments and their implications'"
+      "Instructions guiding how the summary should be written. Maximum 2048 characters. Example: 'Summarize the key developments and their implications'",
     ),
   maxArticleCount: z
     .number()
     .int()
     .optional()
     .describe(
-      "Maximum number of articles to factor into the summary generation."
+      "Maximum number of articles to factor into the summary generation.",
     ),
   returnedArticleCount: z
     .number()
     .int()
     .optional()
     .describe(
-      "Maximum number of supporting articles to include in the response (can be less than maxArticleCount)."
+      "Maximum number of supporting articles to include in the response (can be less than maxArticleCount).",
     ),
   maxTokens: z
     .number()
@@ -43,7 +43,7 @@ export const summarizeArgs = createBaseSearchArgs().extend({
     .max(2)
     .optional()
     .describe(
-      "LLM sampling temperature: 0.0 = deterministic, up to 2.0 = very creative."
+      "LLM sampling temperature: 0.0 = deterministic, up to 2.0 = very creative.",
     ),
   topP: z
     .number()
@@ -67,31 +67,31 @@ export const summarizeArgs = createBaseSearchArgs().extend({
     .enum(["ARTICLES", "CLUSTERS"])
     .optional()
     .describe(
-      "Article selection method: ARTICLES includes all matches, CLUSTERS picks one per cluster for diversity."
+      "Article selection method: ARTICLES includes all matches, CLUSTERS picks one per cluster for diversity.",
     ),
   summarizeFields: z
     .enum(["TITLE", "CONTENT", "SUMMARY"])
     .optional()
     .describe(
-      "Which article fields to include when generating: TITLE, CONTENT, or SUMMARY."
+      "Which article fields to include when generating: TITLE, CONTENT, or SUMMARY.",
     ),
   sources: z
     .array(z.string())
     .optional()
     .describe(
-      "Filter articles by publisher domains. Supports wildcards (e.g., *.cnn.com)."
+      "Filter articles by publisher domains. Supports wildcards (e.g., *.cnn.com).",
     ),
   sourceGroup: z
     .array(z.string())
     .optional()
     .describe(
-      "Filter using curated publisher bundles: top10, top25, top50, top100, top25tech, top25crypto."
+      "Filter using curated publisher bundles: top10, top25, top50, top100, top25tech, top25crypto.",
     ),
   language: z
     .array(z.string())
     .optional()
     .describe(
-      "Filter by language using ISO-639 two-letter codes (e.g., en, es, fr)."
+      "Filter by language using ISO-639 two-letter codes (e.g., en, es, fr).",
     ),
   personName: z
     .array(z.string())
@@ -120,7 +120,9 @@ export const summarizeArgs = createBaseSearchArgs().extend({
     .describe("Sort order for articles fed into the summarizer."),
 });
 
-export function summarizeNews(perigon: Perigon): ToolCallback {
+export function summarizeNews(
+  perigon: Perigon,
+): ToolCallback<typeof summarizeArgs> {
   return async ({
     query,
     page,
@@ -206,16 +208,16 @@ Pub Date: ${article.pubDate} (utc)
     } catch (error) {
       console.error("Error summarizing news:", error);
       return toolResult(
-        `Error: Failed to summarize news: ${await createErrorMessage(error)}`
+        `Error: Failed to summarize news: ${await createErrorMessage(error)}`,
       );
     }
   };
 }
 
-export const summarizeTool: ToolDefinition = {
+export const summarizeTool = {
   name: "summarize_news",
   description:
     "Generate an AI-powered summary of news coverage matching your filters. Use this when the user wants a synthesized overview or briefing on a topic rather than a list of individual articles. Combines article search with LLM summarization to produce concise, coherent summaries with supporting article citations. Accepts all standard article filters (keywords, categories, topics, sources, dates, locations) plus summarization controls (prompt, model, temperature).",
   parameters: summarizeArgs,
   createHandler: (perigon: Perigon) => summarizeNews(perigon),
-};
+} satisfies ToolDefinition<typeof summarizeArgs>;

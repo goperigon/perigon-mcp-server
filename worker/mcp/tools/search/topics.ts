@@ -3,7 +3,11 @@ import { z } from "zod";
 import { Perigon } from "../../../lib/perigon";
 import { ToolCallback, ToolDefinition } from "../types";
 import { paginationArgs } from "../schemas/base";
-import { toolResult, noResults, createPaginationHeader } from "../utils/formatting";
+import {
+  toolResult,
+  noResults,
+  createPaginationHeader,
+} from "../utils/formatting";
 import { createErrorMessage } from "../utils/error-handling";
 
 /**
@@ -15,50 +19,52 @@ export const topicsArgs = z.object({
     .string()
     .optional()
     .describe(
-      "Search for topics by exact name or partial text match (no wildcards). Examples: Markets, Cryptocurrency, Climate Change."
+      "Search for topics by exact name or partial text match (no wildcards). Examples: Markets, Cryptocurrency, Climate Change.",
     ),
   category: z
     .string()
     .optional()
     .describe(
-      "Filter topics by parent category: Politics, Tech, Sports, Business, Finance, Entertainment, etc."
+      "Filter topics by parent category: Politics, Tech, Sports, Business, Finance, Entertainment, etc.",
     ),
   subcategory: z
     .string()
     .optional()
     .describe(
-      "Filter topics by subcategory within a category for more specific results."
+      "Filter topics by subcategory within a category for more specific results.",
     ),
 });
 
 /**
  * Search for topics currently supported by the Perigon API
- * 
+ *
  * This tool helps you discover and explore the topics that are available for filtering
  * in other search tools. Topics are more granular than categories and provide specific
  * subject matter classification for news content.
- * 
+ *
  * Use this tool to:
  * - Discover available topics for use in other search filters
  * - Explore topic hierarchies and categorization
  * - Find specific topics by name or category
  * - Understand the topic taxonomy used by Perigon
- * 
+ *
  * Search capabilities:
  * - Name-based topic search (exact or partial matches)
  * - Category-based filtering to find topics within broad categories
  * - Browse all available topics with pagination
- * 
+ *
  * Returns topic information including:
  * - Topic name and identifiers
  * - Category and subcategory classification
  * - Creation and update timestamps
  * - Topic metadata and labels
- * 
+ *
  * @param perigon - The Perigon API client instance
  * @returns Tool callback function for MCP
  */
-export function searchTopics(perigon: Perigon): ToolCallback {
+export function searchTopics(
+  perigon: Perigon,
+): ToolCallback<typeof topicsArgs> {
   return async ({
     page,
     size,
@@ -94,7 +100,7 @@ Sub Category: ${topic.labels?.subcategory}
     } catch (error) {
       console.error("Error searching topics:", error);
       return toolResult(
-        `Error: Failed to search topics: ${await createErrorMessage(error)}`
+        `Error: Failed to search topics: ${await createErrorMessage(error)}`,
       );
     }
   };
@@ -103,10 +109,10 @@ Sub Category: ${topic.labels?.subcategory}
 /**
  * Tool definition for topics search
  */
-export const topicsTool: ToolDefinition = {
+export const topicsTool = {
   name: "search_topics",
   description:
     "Browse and search the Perigon topic taxonomy. Use this to discover available topics for use as filters in other search tools (articles, stories, journalists). Topics are more granular than categories. Filter by name, category, or subcategory. Returns topic names with their category/subcategory classification.",
   parameters: topicsArgs,
   createHandler: (perigon: Perigon) => searchTopics(perigon),
-};
+} satisfies ToolDefinition<typeof topicsArgs>;

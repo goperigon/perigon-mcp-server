@@ -4,7 +4,11 @@ import { Perigon } from "../../../lib/perigon";
 import { ToolCallback, ToolDefinition } from "../types";
 import { paginationArgs } from "../schemas/base";
 import { createSearchField, sortByEnum } from "../schemas/search";
-import { toolResult, noResults, createPaginationHeader } from "../utils/formatting";
+import {
+  toolResult,
+  noResults,
+  createPaginationHeader,
+} from "../utils/formatting";
 import { createErrorMessage } from "../utils/error-handling";
 import { SortBy } from "@goperigon/perigon-ts";
 
@@ -27,7 +31,7 @@ export const wikipediaArgs = z.object({
     .array(z.string())
     .optional()
     .describe(
-      "Wiki project codes (e.g., enwiki). Currently only 'enwiki' is supported."
+      "Wiki project codes (e.g., enwiki). Currently only 'enwiki' is supported.",
     ),
   wikidataId: z
     .array(z.string())
@@ -37,13 +41,13 @@ export const wikipediaArgs = z.object({
     .array(z.string())
     .optional()
     .describe(
-      "Filter pages whose Wikidata entities are instances of these IDs."
+      "Filter pages whose Wikidata entities are instances of these IDs.",
     ),
   wikidataInstanceOfLabel: z
     .array(z.string())
     .optional()
     .describe(
-      "Filter pages whose Wikidata entities are instances of these labels (e.g., human, city, country)."
+      "Filter pages whose Wikidata entities are instances of these labels (e.g., human, city, country).",
     ),
   category: z
     .array(z.string())
@@ -66,38 +70,38 @@ export const wikipediaArgs = z.object({
     .transform(parseTime)
     .optional()
     .describe(
-      "Pages modified on Wikipedia after this date. ISO 8601 or yyyy-mm-dd."
+      "Pages modified on Wikipedia after this date. ISO 8601 or yyyy-mm-dd.",
     ),
   wikiRevisionTo: z
     .string()
     .transform(parseTime)
     .optional()
     .describe(
-      "Pages modified on Wikipedia before this date. ISO 8601 or yyyy-mm-dd."
+      "Pages modified on Wikipedia before this date. ISO 8601 or yyyy-mm-dd.",
     ),
   scrapedAtFrom: z
     .string()
     .transform(parseTime)
     .optional()
     .describe(
-      "Pages scraped/indexed by Perigon after this date. ISO 8601 or yyyy-mm-dd."
+      "Pages scraped/indexed by Perigon after this date. ISO 8601 or yyyy-mm-dd.",
     ),
   scrapedAtTo: z
     .string()
     .transform(parseTime)
     .optional()
     .describe(
-      "Pages scraped/indexed by Perigon before this date. ISO 8601 or yyyy-mm-dd."
+      "Pages scraped/indexed by Perigon before this date. ISO 8601 or yyyy-mm-dd.",
     ),
   sortBy: sortByEnum.default(SortBy.Relevance).optional(),
 });
 
 /**
  * Search Wikipedia pages for information on any topic
- * 
+ *
  * This tool provides comprehensive search capabilities across Wikipedia content,
  * allowing you to find relevant articles and information on virtually any topic.
- * 
+ *
  * Search capabilities:
  * - Full-text search across article content and titles
  * - Targeted searches in specific sections (title, summary, text, references)
@@ -105,14 +109,14 @@ export const wikipediaArgs = z.object({
  * - Category-based filtering for topic organization
  * - Page popularity filtering using view statistics
  * - Advanced Elasticsearch query syntax support
- * 
+ *
  * Filtering options:
  * - Wikidata entity IDs for precise identification
  * - Wikipedia categories for topic-based filtering
  * - Page view statistics for popularity-based filtering
  * - Instance-of relationships for entity type filtering
  * - Multiple wiki project support (currently English Wikipedia)
- * 
+ *
  * Returns comprehensive page information including:
  * - Page titles and URLs
  * - Article summaries and content excerpts
@@ -120,11 +124,13 @@ export const wikipediaArgs = z.object({
  * - Category classifications
  * - Page view statistics and popularity metrics
  * - Last modification timestamps
- * 
+ *
  * @param perigon - The Perigon API client instance
  * @returns Tool callback function for MCP
  */
-export function searchWikipedia(perigon: Perigon): ToolCallback {
+export function searchWikipedia(
+  perigon: Perigon,
+): ToolCallback<typeof wikipediaArgs> {
   return async ({
     query,
     title,
@@ -189,7 +195,7 @@ Last Modified: ${page.wikiRevisionTs}
         result.numResults,
         page,
         size,
-        "Wikipedia pages"
+        "Wikipedia pages",
       );
       output += "\n<wikipedia_pages>\n";
       output += articles.join("\n\n");
@@ -199,7 +205,7 @@ Last Modified: ${page.wikiRevisionTs}
     } catch (error) {
       console.error("Error searching Wikipedia:", error);
       return toolResult(
-        `Error: Failed to search Wikipedia: ${await createErrorMessage(error)}`
+        `Error: Failed to search Wikipedia: ${await createErrorMessage(error)}`,
       );
     }
   };
@@ -208,10 +214,10 @@ Last Modified: ${page.wikiRevisionTs}
 /**
  * Tool definition for Wikipedia search
  */
-export const wikipediaTool: ToolDefinition = {
+export const wikipediaTool = {
   name: "search_wikipedia",
   description:
     "Search Wikipedia pages using keyword-based queries with advanced filtering. Use this for factual background information, encyclopedia-style lookups, or when you need structured Wikipedia data. Filter by title, summary, content, Wikidata entity IDs, categories, page views, and revision dates. Returns page summaries, URLs, Wikidata IDs, categories, page view statistics, and last modification dates.",
   parameters: wikipediaArgs,
   createHandler: (perigon: Perigon) => searchWikipedia(perigon),
-};
+} satisfies ToolDefinition<typeof wikipediaArgs>;

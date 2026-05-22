@@ -19,36 +19,34 @@ export const storyHistoryArgs = z.object({
     .array(z.string())
     .optional()
     .describe(
-      "Filter to specific stories by their cluster IDs. Only history entries for the specified clusters will be returned."
+      "Filter to specific stories by their cluster IDs. Only history entries for the specified clusters will be returned.",
     ),
   from: z
     .string()
     .transform(parseTime)
     .optional()
     .describe(
-      "Filter stories created after this date. Accepts ISO 8601 format (e.g., 2023-03-01T00:00:00) or yyyy-mm-dd format."
+      "Filter stories created after this date. Accepts ISO 8601 format (e.g., 2023-03-01T00:00:00) or yyyy-mm-dd format.",
     ),
   to: z
     .string()
     .transform(parseTime)
     .optional()
     .describe(
-      "Filter stories created before this date. Accepts ISO 8601 format (e.g., 2023-03-01T23:59:59) or yyyy-mm-dd format."
+      "Filter stories created before this date. Accepts ISO 8601 format (e.g., 2023-03-01T23:59:59) or yyyy-mm-dd format.",
     ),
   sortBy: z
     .enum(["createdAt", "triggeredAt"])
     .default("createdAt")
     .optional()
     .describe(
-      "Sort stories by creation date (createdAt) or story refresh trigger date (triggeredAt)."
+      "Sort stories by creation date (createdAt) or story refresh trigger date (triggeredAt).",
     ),
   page: z
     .number()
     .min(0)
     .default(0)
-    .describe(
-      "Zero-based page number for pagination. From 0 to 10000."
-    ),
+    .describe("Zero-based page number for pagination. From 0 to 10000."),
   size: z
     .number()
     .min(1)
@@ -59,7 +57,7 @@ export const storyHistoryArgs = z.object({
     .boolean()
     .optional()
     .describe(
-      "When set, filter to only include clusters that have a changelog (true) or don't have one (false)."
+      "When set, filter to only include clusters that have a changelog (true) or don't have one (false).",
     ),
 });
 
@@ -69,7 +67,9 @@ export const storyHistoryArgs = z.object({
  * Returns timestamped snapshots of story clusters including summaries,
  * key points, changelogs, and metadata showing how stories developed.
  */
-export function searchStoryHistory(perigon: Perigon): ToolCallback {
+export function searchStoryHistory(
+  perigon: Perigon,
+): ToolCallback<typeof storyHistoryArgs> {
   return async ({
     clusterIds,
     from,
@@ -119,7 +119,7 @@ export function searchStoryHistory(perigon: Perigon): ToolCallback {
         result.numResults,
         page,
         size,
-        "story history entries"
+        "story history entries",
       );
 
       output += "\n<story_history_results>\n";
@@ -130,16 +130,16 @@ export function searchStoryHistory(perigon: Perigon): ToolCallback {
     } catch (error) {
       console.error("Error searching story history:", error);
       return toolResult(
-        `Error: Failed to search story history: ${await createErrorMessage(error)}`
+        `Error: Failed to search story history: ${await createErrorMessage(error)}`,
       );
     }
   };
 }
 
-export const storyHistoryTool: ToolDefinition = {
+export const storyHistoryTool = {
   name: "search_story_history",
   description:
     "Search story history to track how news stories evolve over time. Returns timestamped snapshots of story clusters including summaries, short summaries, key points, and changelogs. Use this to understand how a story has developed, what changed between updates, and to review the timeline of a news event. Filter by cluster ID, date range, sort order, or changelog presence. Only use this tool instead of search_news_stories tool when you need to understand the history of a story.",
   parameters: storyHistoryArgs,
   createHandler: (perigon: Perigon) => searchStoryHistory(perigon),
-};
+} satisfies ToolDefinition<typeof storyHistoryArgs>;

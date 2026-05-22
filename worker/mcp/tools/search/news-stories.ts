@@ -23,7 +23,7 @@ export const newsStoriesArgs = createBaseSearchArgs().extend({
     .array(z.string())
     .optional()
     .describe(
-      `Filter for specific stories by their cluster IDs (the "headlines" or grouped news clusters).`
+      `Filter for specific stories by their cluster IDs (the "headlines" or grouped news clusters).`,
     ),
   sortBy: z
     .enum([
@@ -39,25 +39,25 @@ export const newsStoriesArgs = createBaseSearchArgs().extend({
     .array(z.string())
     .optional()
     .describe(
-      "Filter stories by publisher domains or subdomains. Supports wildcards (* and ?) for pattern matching (e.g., *.cnn.com)."
+      "Filter stories by publisher domains or subdomains. Supports wildcards (* and ?) for pattern matching (e.g., *.cnn.com).",
     ),
   sourceGroup: z
     .array(z.string())
     .optional()
     .describe(
-      "Filter using curated publisher bundles: top10, top25, top50, top100, top25tech, top25crypto."
+      "Filter using curated publisher bundles: top10, top25, top50, top100, top25tech, top25crypto.",
     ),
   language: z
     .array(z.string())
     .optional()
     .describe(
-      "Filter by language using ISO-639 two-letter codes (e.g., en, es, fr)."
+      "Filter by language using ISO-639 two-letter codes (e.g., en, es, fr).",
     ),
   label: z
     .array(z.string())
     .optional()
     .describe(
-      "Filter by editorial labels: Opinion, Paid-news, Non-news, Fact Check, Press Release."
+      "Filter by editorial labels: Opinion, Paid-news, Non-news, Fact Check, Press Release.",
     ),
   personName: z
     .string()
@@ -67,27 +67,25 @@ export const newsStoriesArgs = createBaseSearchArgs().extend({
     .array(z.string())
     .optional()
     .describe(
-      "Filter for stories mentioning companies by domain (e.g., apple.com)."
+      "Filter for stories mentioning companies by domain (e.g., apple.com).",
     ),
   companySymbol: z
     .array(z.string())
     .optional()
     .describe(
-      "Filter for stories mentioning companies by ticker symbol (e.g., AAPL)."
+      "Filter for stories mentioning companies by ticker symbol (e.g., AAPL).",
     ),
   isTopHeadlines: z
     .boolean()
     .optional()
-    .describe(
-      "When true, returns only top headlines from the last 24 hours."
-    ),
+    .describe("When true, returns only top headlines from the last 24 hours."),
   minSourceDiversity: z
     .number()
     .min(0)
     .max(1)
     .optional()
     .describe(
-      "Minimum ratio of unique sources to unique articles (uniqueSources / uniqueCount), from 0 to 1. Filters out stories dominated by a single publisher (e.g., 0.05 requires at least 1 unique source per 20 articles). Not applied by default."
+      "Minimum ratio of unique sources to unique articles (uniqueSources / uniqueCount), from 0 to 1. Filters out stories dominated by a single publisher (e.g., 0.05 requires at least 1 unique source per 20 articles). Not applied by default.",
     ),
 });
 
@@ -108,7 +106,9 @@ export const newsStoriesArgs = createBaseSearchArgs().extend({
  * @param perigon - The Perigon API client instance
  * @returns Tool callback function for MCP
  */
-export function searchNewsStories(perigon: Perigon): ToolCallback {
+export function searchNewsStories(
+  perigon: Perigon,
+): ToolCallback<typeof newsStoriesArgs> {
   return async ({
     query,
     page,
@@ -182,7 +182,7 @@ Sentiment: ${JSON.stringify(story.sentiment)}
         result.numResults,
         page,
         size,
-        "stories"
+        "stories",
       );
 
       output += "\n<stories>\n";
@@ -194,8 +194,8 @@ Sentiment: ${JSON.stringify(story.sentiment)}
       console.error("Error searching news stories:", error);
       return toolResult(
         `Error: Failed to search news stories: ${await createErrorMessage(
-          error
-        )}`
+          error,
+        )}`,
       );
     }
   };
@@ -204,10 +204,10 @@ Sentiment: ${JSON.stringify(story.sentiment)}
 /**
  * Tool definition for news stories search
  */
-export const newsStoriesTool: ToolDefinition = {
+export const newsStoriesTool = {
   name: "search_news_stories",
   description:
     "Search clustered news stories (headlines) that group related articles across multiple sources into a single narrative. Use this to understand major news events, trending headlines, and story arcs rather than finding individual articles. Filter by category, topic, source, location, person, company, or time range. Returns story summaries, sentiment analysis, article counts, and creation/update timestamps.",
   parameters: newsStoriesArgs,
   createHandler: (perigon: Perigon) => searchNewsStories(perigon),
-};
+} satisfies ToolDefinition<typeof newsStoriesArgs>;

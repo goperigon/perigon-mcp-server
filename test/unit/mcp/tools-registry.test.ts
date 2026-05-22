@@ -26,14 +26,26 @@ const EXPECTED_TOOL_NAMES = [
   "get_company_news",
   "get_person_news",
   "get_location_news",
+  // Signal Insights tools
+  "signal_insights_create_workspace",
+  "signal_insights_search_signals",
+  "signal_insights_read_signal",
+  "signal_insights_export_events",
+  "signal_insights_execute_code",
+  "signal_insights_shell",
+  "signal_insights_list_files",
+  "signal_insights_grep",
+  "signal_insights_read_file",
+  "signal_insights_write_file",
+  "signal_insights_str_replace",
 ] as const;
 
 describe("TOOL_DEFINITIONS", () => {
-  test("contains exactly the expected 20 tool names", () => {
+  test("contains exactly the expected tool names", () => {
     const actual = Object.keys(TOOL_DEFINITIONS).sort();
     const expected = [...EXPECTED_TOOL_NAMES].sort();
     expect(actual).toEqual(expected);
-    expect(actual.length).toBe(20);
+    expect(actual.length).toBe(31);
   });
 
   test("each tool exposes name, description, parameters, and createHandler", () => {

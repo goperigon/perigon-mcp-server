@@ -20,13 +20,13 @@ export const wikipediaVectorArgs = z.object({
   query: z
     .string()
     .describe(
-      "Natural language query for semantic search of Wikipedia content. Describe what you're looking for in conversational language. The query is converted to a vector embedding to find semantically similar Wikipedia pages and sections."
+      "Natural language query for semantic search of Wikipedia content. Describe what you're looking for in conversational language. The query is converted to a vector embedding to find semantically similar Wikipedia pages and sections.",
     ),
   wikiCode: z
     .array(z.string())
     .optional()
     .describe(
-      "Wiki project codes (e.g., enwiki). Currently only 'enwiki' is supported."
+      "Wiki project codes (e.g., enwiki). Currently only 'enwiki' is supported.",
     ),
   wikidataId: z
     .array(z.string())
@@ -36,13 +36,13 @@ export const wikipediaVectorArgs = z.object({
     .array(z.string())
     .optional()
     .describe(
-      "Filter pages whose Wikidata entities are instances of these IDs."
+      "Filter pages whose Wikidata entities are instances of these IDs.",
     ),
   wikidataInstanceOfLabel: z
     .array(z.string())
     .optional()
     .describe(
-      "Filter pages whose Wikidata entities are instances of these labels (e.g., human, city, country)."
+      "Filter pages whose Wikidata entities are instances of these labels (e.g., human, city, country).",
     ),
   category: z
     .array(z.string())
@@ -65,18 +65,20 @@ export const wikipediaVectorArgs = z.object({
     .transform(parseTime)
     .optional()
     .describe(
-      "Pages modified on Wikipedia after this date. ISO 8601 or yyyy-mm-dd."
+      "Pages modified on Wikipedia after this date. ISO 8601 or yyyy-mm-dd.",
     ),
   wikiRevisionTo: z
     .string()
     .transform(parseTime)
     .optional()
     .describe(
-      "Pages modified on Wikipedia before this date. ISO 8601 or yyyy-mm-dd."
+      "Pages modified on Wikipedia before this date. ISO 8601 or yyyy-mm-dd.",
     ),
 });
 
-export function searchVectorWikipedia(perigon: Perigon): ToolCallback {
+export function searchVectorWikipedia(
+  perigon: Perigon,
+): ToolCallback<typeof wikipediaVectorArgs> {
   return async ({
     query,
     page,
@@ -134,7 +136,7 @@ Similarity Score: ${scored.score || "N/A"}
         result.results.length,
         page,
         size,
-        "Wikipedia pages (vector search)"
+        "Wikipedia pages (vector search)",
       );
       output += "\n<wikipedia_pages>\n";
       output += articles.join("\n\n");
@@ -145,17 +147,17 @@ Similarity Score: ${scored.score || "N/A"}
       console.error("Error searching Wikipedia with vector:", error);
       return toolResult(
         `Error: Failed to search Wikipedia with vector: ${await createErrorMessage(
-          error
-        )}`
+          error,
+        )}`,
       );
     }
   };
 }
 
-export const wikipediaVectorTool: ToolDefinition = {
+export const wikipediaVectorTool = {
   name: "search_vector_wikipedia",
   description:
     "Semantic search over Wikipedia pages using natural language and vector embeddings. Use this instead of search_wikipedia when the query is conceptual or conversational rather than keyword-based. Finds pages related by meaning even without exact keyword matches. Returns page summaries, content excerpts, Wikidata IDs, categories, and similarity scores.",
   parameters: wikipediaVectorArgs,
   createHandler: (perigon: Perigon) => searchVectorWikipedia(perigon),
-};
+} satisfies ToolDefinition<typeof wikipediaVectorArgs>;

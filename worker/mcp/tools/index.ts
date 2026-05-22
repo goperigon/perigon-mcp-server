@@ -165,29 +165,38 @@ import { companyNewsTool } from "./use-cases/company-news";
 import { personNewsTool } from "./use-cases/person-news";
 import { locationNewsTool } from "./use-cases/location-news";
 import { ToolDefinition } from "./types";
-import {
-  createWorkspaceSchema,
-  searchSignalsSchema,
-  readSignalSchema,
-  exportEventsSchema,
-  executeCodeSchema,
-  shellSchema,
-  listFilesSchema,
-  grepSchema,
-  readFileSchema,
-  writeFileSchema,
-  strReplaceSchema,
-} from "./signals/schemas";
+import { createWorkspaceTool } from "./signals/create-workspace";
+import { searchSignalsTool } from "./signals/search-signals";
+import { readSignalTool } from "./signals/read-signal";
+import { exportEventsTool } from "./signals/export-events";
+import { executeCodeTool } from "./signals/execute-code";
+import { shellTool } from "./signals/shell";
+import { listFilesTool } from "./signals/list-files";
+import { grepTool } from "./signals/grep";
+import { readFileTool } from "./signals/read-file";
+import { writeFileTool } from "./signals/write-file";
+import { strReplaceTool } from "./signals/str-replace";
 
-const InsightsHandler = () => async () => ({
-  content: [
-    {
-      type: "text" as const,
-      text: "Signal Insights tools require MCP transport. Connect via /v1/mcp.",
-    },
-  ],
-  isError: true,
-});
+function signalStub(tool: {
+  name: string;
+  description: string;
+  parameters: any;
+}): ToolDefinition<any> {
+  return {
+    name: tool.name,
+    description: tool.description,
+    parameters: tool.parameters,
+    createHandler: () => async () => ({
+      content: [
+        {
+          type: "text" as const,
+          text: "Signal Insights tools require MCP transport. Connect via /v1/mcp.",
+        },
+      ],
+      isError: true,
+    }),
+  };
+}
 
 /**
  * Complete registry of all available tools
@@ -196,7 +205,7 @@ const InsightsHandler = () => async () => ({
  * in the Perigon server. Each tool is keyed by its name and contains
  * all necessary metadata for MCP registration.
  */
-export const TOOL_DEFINITIONS: Record<string, ToolDefinition> = {
+export const TOOL_DEFINITIONS: Record<string, ToolDefinition<any>> = {
   // Search tools
   search_news_articles: newsArticlesTool,
   search_news_stories: newsStoriesTool,
@@ -225,83 +234,17 @@ export const TOOL_DEFINITIONS: Record<string, ToolDefinition> = {
 
   // Signal Insights tools — schemas listed for inspector/tool-selector discovery.
   // createHandler stubs return an error; actual execution requires MCP transport.
-  signal_insights_create_workspace: {
-    name: "signal_insights_create_workspace",
-    description:
-      "Create a new Signal Insights analysis workspace. Call this ONCE at the beginning of any conversation that needs data analysis. Returns a workspace handle required by all analysis tools. Do NOT invent workspace IDs — always use the one returned here.",
-    parameters: createWorkspaceSchema,
-    createHandler: InsightsHandler,
-  } satisfies ToolDefinition,
-  signal_insights_search_signals: {
-    name: "signal_insights_search_signals",
-    description:
-      "Search for signals by name or monitoring objective. Use this to find relevant signals before fetching data. If the search query is not present, this can be used to list all available signals.",
-    parameters: searchSignalsSchema,
-    createHandler: InsightsHandler,
-  } satisfies ToolDefinition,
-  signal_insights_read_signal: {
-    name: "signal_insights_read_signal",
-    description:
-      "Get full signal metadata including data schema, available event types, and event count. Use before signal_insights_export_events to understand the available fields for a signal.",
-    parameters: readSignalSchema,
-    createHandler: InsightsHandler,
-  } satisfies ToolDefinition,
-  signal_insights_export_events: {
-    name: "signal_insights_export_events",
-    description:
-      "Export signal events using a structured query API. No raw SQL — specify signals, fields, filters, aggregations, and ordering. Returns a preview of the first rows plus an S3 file path.",
-    parameters: exportEventsSchema,
-    createHandler: InsightsHandler,
-  } satisfies ToolDefinition,
-  signal_insights_execute_code: {
-    name: "signal_insights_execute_code",
-    description:
-      "Execute Python code inside a persistent sandboxed Jupyter kernel (IPython). State is fully preserved between calls. Pre-installed: pandas, numpy, matplotlib, and more.",
-    parameters: executeCodeSchema,
-    createHandler: InsightsHandler,
-  } satisfies ToolDefinition,
-  signal_insights_shell: {
-    name: "signal_insights_shell",
-    description:
-      "Run a bash command in the E2B sandbox environment. Working directory is /home/user/workspace.",
-    parameters: shellSchema,
-    createHandler: InsightsHandler,
-  } satisfies ToolDefinition,
-  signal_insights_list_files: {
-    name: "signal_insights_list_files",
-    description:
-      "List files in a directory of the sandbox workspace. Default directory is the workspace root (/home/user/workspace).",
-    parameters: listFilesSchema,
-    createHandler: InsightsHandler,
-  } satisfies ToolDefinition,
-  signal_insights_grep: {
-    name: "signal_insights_grep",
-    description:
-      "Search a file's contents for lines matching a regex pattern. Returns matching lines with line numbers.",
-    parameters: grepSchema,
-    createHandler: InsightsHandler,
-  } satisfies ToolDefinition,
-  signal_insights_read_file: {
-    name: "signal_insights_read_file",
-    description:
-      "Read a file from the sandbox workspace. Internally, this reads the full file into memory. Use on files up to a few MB.",
-    parameters: readFileSchema,
-    createHandler: InsightsHandler,
-  } satisfies ToolDefinition,
-  signal_insights_write_file: {
-    name: "signal_insights_write_file",
-    description:
-      "Write content to a file in the sandbox workspace. Creates directories as needed.",
-    parameters: writeFileSchema,
-    createHandler: InsightsHandler,
-  } satisfies ToolDefinition,
-  signal_insights_str_replace: {
-    name: "signal_insights_str_replace",
-    description:
-      "Find and replace a string in a file in the sandbox workspace. Internally, this reads the full file into memory.",
-    parameters: strReplaceSchema,
-    createHandler: InsightsHandler,
-  } satisfies ToolDefinition,
+  signal_insights_create_workspace: signalStub(createWorkspaceTool),
+  signal_insights_search_signals: signalStub(searchSignalsTool),
+  signal_insights_read_signal: signalStub(readSignalTool),
+  signal_insights_export_events: signalStub(exportEventsTool),
+  signal_insights_execute_code: signalStub(executeCodeTool),
+  signal_insights_shell: signalStub(shellTool),
+  signal_insights_list_files: signalStub(listFilesTool),
+  signal_insights_grep: signalStub(grepTool),
+  signal_insights_read_file: signalStub(readFileTool),
+  signal_insights_write_file: signalStub(writeFileTool),
+  signal_insights_str_replace: signalStub(strReplaceTool),
 } as const;
 
 /**

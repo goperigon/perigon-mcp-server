@@ -1,24 +1,16 @@
 import { TOOL_DEFINITIONS, type ToolName } from "./index";
+import { SIGNAL_TOOL_DEFINITIONS } from "./signals";
 
-/** All signal tool names. These are always available to any valid API key. */
-export const SIGNAL_TOOL_NAMES = [
-  "signal_insights_create_workspace",
-  "signal_insights_search_signals",
-  "signal_insights_read_signal",
-  "signal_insights_execute_code",
-  "signal_insights_shell",
-  "signal_insights_export_events",
-  "signal_insights_list_files",
-  "signal_insights_grep",
-  "signal_insights_read_file",
-  "signal_insights_write_file",
-  "signal_insights_str_replace",
-] as const;
+export const SIGNAL_TOOL_NAMES = Object.keys(
+  SIGNAL_TOOL_DEFINITIONS,
+) as readonly SignalToolName[];
 
-export type SignalToolName = (typeof SIGNAL_TOOL_NAMES)[number];
+export type SignalToolName = keyof typeof SIGNAL_TOOL_DEFINITIONS;
 
 // Signal tool names are also in TOOL_DEFINITIONS; Object.keys covers both.
-const ALL_KNOWN_TOOL_NAMES = new Set<string>(Object.keys(TOOL_DEFINITIONS));
+const ALL_KNOWN_TOOL_NAMES = new Set(
+  Object.keys(TOOL_DEFINITIONS) as ToolName[],
+);
 
 /**
  * Reads the tool-filter query parameter from a URL, accepting both `?tool=`
@@ -50,7 +42,9 @@ export function parseRequestedTools(param: string | null): ToolName[] | null {
     .map((s) => s.trim())
     .filter(Boolean);
 
-  const valid = candidates.filter((name) => ALL_KNOWN_TOOL_NAMES.has(name));
+  const valid = candidates.filter((name): name is ToolName =>
+    ALL_KNOWN_TOOL_NAMES.has(name as ToolName),
+  );
 
   return valid.length > 0 ? valid : null;
 }
@@ -66,7 +60,7 @@ export function parseRequestedTools(param: string | null): ToolName[] | null {
  */
 export function resolveActiveTools(
   allowedTools: ToolName[],
-  requestedTools: ToolName[] | null,
+  requestedTools: string[] | null,
 ): ToolName[] {
   if (!requestedTools || requestedTools.length === 0) return allowedTools;
   const requested = new Set<string>(requestedTools);

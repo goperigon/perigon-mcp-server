@@ -36,22 +36,24 @@ export const companyNewsArgs = z.object({
 
 /**
  * Get recent news about a specific company
- * 
+ *
  * This tool simplifies finding recent news about any company by:
  * 1. First searching for the company to get accurate information
  * 2. Then searching for recent news articles mentioning that company
  * 3. Automatically filtering by recency using today's date
- * 
+ *
  * Perfect for:
  * - Getting latest company updates and announcements
  * - Tracking company performance and market news
  * - Monitoring corporate developments and changes
  * - Research on specific businesses and their recent activities
- * 
+ *
  * @param perigon - The Perigon API client instance
  * @returns Tool callback function for MCP
  */
-export function getCompanyNews(perigon: Perigon): ToolCallback {
+export function getCompanyNews(
+  perigon: Perigon,
+): ToolCallback<typeof companyNewsArgs> {
   return async ({
     companyName,
     days,
@@ -63,8 +65,8 @@ export function getCompanyNews(perigon: Perigon): ToolCallback {
       const today = new Date();
       const fromDate = new Date(today);
       fromDate.setDate(today.getDate() - days);
-      
-      const todayStr = today.toISOString().split('T')[0];
+
+      const todayStr = today.toISOString().split("T")[0];
 
       // First, try to find the company to get more context
       let companyInfo = "";
@@ -73,19 +75,22 @@ export function getCompanyNews(perigon: Perigon): ToolCallback {
           q: companyName,
           size: 1,
         });
-        
+
         if (companyResult.numResults > 0) {
           const company = companyResult.results[0];
           companyInfo = `\n<company-context>
 Company: ${company.name}
-Industry: ${company.industry || 'N/A'}
-CEO: ${company.ceo || 'N/A'}
-Description: ${company.description || 'N/A'}
+Industry: ${company.industry || "N/A"}
+CEO: ${company.ceo || "N/A"}
+Description: ${company.description || "N/A"}
 </company-context>\n`;
         }
       } catch (error) {
         // Continue even if company search fails
-        console.warn("Company search failed, continuing with news search:", error);
+        console.warn(
+          "Company search failed, continuing with news search:",
+          error,
+        );
       }
 
       // Search for recent news about the company
@@ -101,13 +106,15 @@ Description: ${company.description || 'N/A'}
       });
 
       if (newsResult.numResults === 0) {
-        return toolResult(`No recent news found for "${companyName}" in the last ${days} days.${companyInfo}`);
+        return toolResult(
+          `No recent news found for "${companyName}" in the last ${days} days.${companyInfo}`,
+        );
       }
 
       const articles = newsResult.articles.map((article) => {
-        const journalistIds = article.journalists
-          ?.map((journalist) => journalist.id)
-          .join(", ") ?? "";
+        const journalistIds =
+          article.journalists?.map((journalist) => journalist.id).join(", ") ??
+          "";
 
         return `<article id="${article.articleId}" title="${article.title}">
 Content: ${article.summary || article.content}
@@ -129,7 +136,7 @@ Journalist Ids: ${journalistIds}
     } catch (error) {
       console.error("Error getting company news:", error);
       return toolResult(
-        `Error: Failed to get news for company "${companyName}": ${await createErrorMessage(error)}`
+        `Error: Failed to get news for company "${companyName}": ${await createErrorMessage(error)}`,
       );
     }
   };
@@ -138,10 +145,10 @@ Journalist Ids: ${journalistIds}
 /**
  * Tool definition for company news
  */
-export const companyNewsTool: ToolDefinition = {
+export const companyNewsTool = {
   name: "get_company_news",
   description:
     "Quick shortcut to get recent news about a specific company by name. Automatically looks up company details for context, then finds recent articles mentioning that company within a configurable time window. Use this for simple 'what's the latest news about [company]?' queries. For advanced filtering, use search_news_articles with companyDomain or companySymbol instead.",
   parameters: companyNewsArgs,
   createHandler: (perigon: Perigon) => getCompanyNews(perigon),
-};
+} satisfies ToolDefinition<typeof companyNewsArgs>;
