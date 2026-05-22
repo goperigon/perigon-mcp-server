@@ -19,6 +19,14 @@ interface ExecuteCodeResult {
   _charts?: ChartOutput[];
 }
 
+interface ExportEventsResult {
+  columns: string[];
+  rowCount: number;
+  preview: Record<string, unknown>[];
+  s3File: string | null;
+  error?: string;
+}
+
 /**
  * Converts a Pokey execute_code JSON response into an MCP tool result.
  *
@@ -67,6 +75,42 @@ function buildExecuteCodeResult(data: ExecuteCodeResult): CallToolResult {
   const structuredContent = data._charts?.length
     ? { charts: data._charts }
     : undefined;
+
+  return {
+    content,
+    structuredContent,
+    isError: !!data.error,
+  };
+}
+
+function buildExportEventsResult(data: ExportEventsResult): CallToolResult {
+  const content: CallToolResult["content"] = [];
+  const textParts: string[] = [];
+
+  if (data.error) textParts.push(`[error]\n${data.error}`);
+
+  textParts.push(
+    `Exported ${data.rowCount} rows with columns: ${data.columns.join(", ")}`,
+  );
+
+  if (data.s3File) textParts.push(`S3 file: ${data.s3File}`);
+
+  if (data.preview.length > 0) {
+    textParts.push(
+      `Preview (first ${data.preview.length} rows):\n${JSON.stringify(data.preview, null, 2)}`,
+    );
+  }
+
+  content.push({ type: "text", text: textParts.join("\n\n").trim() });
+
+  const structuredContent = {
+    export: {
+      columns: data.columns,
+      preview: data.preview,
+      rowCount: data.rowCount,
+      s3File: data.s3File,
+    },
+  };
 
   return {
     content,
@@ -155,6 +199,10 @@ export class PokeyInsightsClient {
 
     if (toolName === "execute_code") {
       return buildExecuteCodeResult(result as ExecuteCodeResult);
+    }
+
+    if (toolName === "export_events") {
+      return buildExportEventsResult(result as ExportEventsResult);
     }
 
     return {

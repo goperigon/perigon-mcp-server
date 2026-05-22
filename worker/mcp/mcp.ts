@@ -30,6 +30,12 @@ import {
   CHART_RESOURCE_URI,
   CHART_RESOURCE_CONTENT_META,
 } from "./apps/chart-viewer-html";
+import {
+  EXPORT_VIEWER_HTML,
+  EXPORT_VIEWER_MIME_TYPE,
+  EXPORT_RESOURCE_URI,
+  EXPORT_RESOURCE_CONTENT_META,
+} from "./apps/export-viewer-html";
 import { SIGNAL_TOOL_DEFINITIONS } from "./tools/signals";
 import * as instructions from "./instructions";
 import { SignalToolDefinition } from "./tools/signals/types";
@@ -128,6 +134,22 @@ export class PerigonMCP extends McpAgent<Env, unknown, Props> {
             mimeType: CHART_VIEWER_MIME_TYPE,
             text: CHART_VIEWER_HTML,
             _meta: CHART_RESOURCE_CONTENT_META,
+          },
+        ],
+      }),
+    );
+
+    this.server.registerResource(
+      "signal-insights-export-viewer",
+      EXPORT_RESOURCE_URI,
+      { mimeType: EXPORT_VIEWER_MIME_TYPE },
+      () => ({
+        contents: [
+          {
+            uri: EXPORT_RESOURCE_URI,
+            mimeType: EXPORT_VIEWER_MIME_TYPE,
+            text: EXPORT_VIEWER_HTML,
+            _meta: EXPORT_RESOURCE_CONTENT_META,
           },
         ],
       }),
