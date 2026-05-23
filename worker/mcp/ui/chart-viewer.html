@@ -224,30 +224,82 @@
       }
 
       // ─── ECharts buildOptions (ported from E2BChart.tsx) ──────────────────────
+      var LABEL_PADDING = 12; // fixed gap between y-axis name and tick labels
+      var NAME_WIDTH = 14; // approximate width of rotated name text
+
       function sharedOpts() {
-        const textColor = isDark ? "#ccc" : "#555";
-        const lineColor = isDark
-          ? "rgba(255,255,255,0.08)"
-          : "rgba(0,0,0,0.08)";
+        var textColor = isDark ? "#ccc" : "#555";
         return {
           backgroundColor: "transparent",
           textStyle: { color: textColor, fontSize: 11 },
-          grid: {
-            top: 30,
-            right: 12,
-            bottom: 90,
-            left: 20,
-            containLabel: true,
-          },
-          legend: { bottom: 0, textStyle: { color: textColor, fontSize: 11 } },
+        };
+      }
+
+      /** Estimate pixel width of a formatted number at font-size 11. */
+      function estimateLabelWidth(value) {
+        var text = Math.abs(value).toLocaleString();
+        var width = 0;
+        for (var i = 0; i < text.length; i++) {
+          var ch = text[i];
+          if (ch === "," || ch === ".") width += 3.5;
+          else if (ch === "-") width += 5;
+          else width += 6.5;
+        }
+        return width;
+      }
+
+      /** Compute nameGap and grid.left from data values. */
+      function yAxisLayout(values) {
+        var maxVal = 0;
+        for (var i = 0; i < values.length; i++) {
+          var v = Math.abs(values[i]);
+          if (v > maxVal) maxVal = v;
+        }
+        var labelWidth = estimateLabelWidth(maxVal);
+        var nameGap = Math.ceil(labelWidth + LABEL_PADDING);
+        var left = Math.ceil(nameGap + NAME_WIDTH + 4);
+        return { nameGap: nameGap, left: left };
+      }
+
+      /** Extract all numeric y-values from chart data. */
+      function extractYValues(chart) {
+        var values = [];
+        if (chart.type === "line" || chart.type === "scatter") {
+          for (var e of chart.elements || [])
+            for (var p of e.points || []) values.push(Number(p[1]));
+        } else if (chart.type === "bar") {
+          for (var e of chart.elements || []) values.push(Number(e.value));
+        } else if (chart.type === "box_and_whisker") {
+          for (var e of chart.elements || []) {
+            values.push(e.min);
+            values.push(e.max);
+          }
+        }
+        return values;
+      }
+
+      // Hide legend for single-series; show at bottom for multi-series.
+      // Returns { legend, grid } with adjusted bottom spacing.
+      function layoutOpts(seriesCount, left) {
+        var textColor = isDark ? "#ccc" : "#555";
+        var grid = { top: 40, right: 12, left: left, containLabel: false };
+        if (seriesCount <= 1) {
+          return {
+            legend: { show: false },
+            grid: Object.assign({}, grid, { bottom: 45 }),
+          };
+        }
+        return {
+          legend: { bottom: 5, textStyle: { color: textColor, fontSize: 11 } },
+          grid: Object.assign({}, grid, { bottom: 90 }),
         };
       }
 
       function axisDefaults() {
-        const lineColor = isDark
+        var lineColor = isDark
           ? "rgba(255,255,255,0.08)"
           : "rgba(0,0,0,0.08)";
-        const labelColor = isDark ? "#aaa" : "#666";
+        var labelColor = isDark ? "#aaa" : "#666";
         return {
           axisLine: { lineStyle: { color: lineColor } },
           splitLine: { lineStyle: { color: lineColor } },
@@ -257,24 +309,27 @@
       }
 
       function buildOptions(chart) {
-        const shared = sharedOpts();
-        const axis = axisDefaults();
+        var shared = sharedOpts();
+        var axis = axisDefaults();
 
         if (chart.type === "line" || chart.type === "scatter") {
+          var yl = yAxisLayout(extractYValues(chart));
+          var layout = layoutOpts((chart.elements || []).length, yl.left);
           return {
             ...shared,
+            ...layout,
             xAxis: {
               type: "category",
               name: chart.x_label,
               nameLocation: "middle",
-              nameGap: 55,
+              nameGap: 40,
               axisLabel: { ...axis.axisLabel, rotate: 30 },
               ...axis,
             },
             yAxis: {
               name: chart.y_label,
               nameLocation: "middle",
-              nameGap: 70,
+              nameGap: yl.nameGap,
               ...axis,
             },
             tooltip: { trigger: "axis" },
@@ -289,24 +344,27 @@
         }
 
         if (chart.type === "bar") {
-          const groups = {};
-          for (const e of chart.elements || []) {
+          var groups = {};
+          for (var e of chart.elements || []) {
             (groups[e.group] ??= []).push(e);
           }
+          var yl = yAxisLayout(extractYValues(chart));
+          var layout = layoutOpts(Object.keys(groups).length, yl.left);
           return {
             ...shared,
+            ...layout,
             xAxis: {
               type: "category",
               name: chart.x_label,
               nameLocation: "middle",
-              nameGap: 55,
+              nameGap: 40,
               axisLabel: { ...axis.axisLabel, rotate: 30 },
               ...axis,
             },
             yAxis: {
               name: chart.y_label,
               nameLocation: "middle",
-              nameGap: 70,
+              nameGap: yl.nameGap,
               ...axis,
             },
             tooltip: { trigger: "axis" },
@@ -320,8 +378,11 @@
         }
 
         if (chart.type === "pie") {
+          var textColor = isDark ? "#ccc" : "#555";
           return {
             ...shared,
+            grid: { top: 40, right: 12, left: 100, bottom: 90, containLabel: false },
+            legend: { bottom: 5, textStyle: { color: textColor, fontSize: 11 } },
             tooltip: { trigger: "item", formatter: "{b}: {c} ({d}%)" },
             series: [
               {
@@ -339,19 +400,22 @@
         }
 
         if (chart.type === "box_and_whisker") {
+          var yl = yAxisLayout(extractYValues(chart));
+          var layout = layoutOpts((chart.elements || []).length, yl.left);
           return {
             ...shared,
+            ...layout,
             xAxis: {
               type: "category",
               name: chart.x_label,
               nameLocation: "middle",
-              nameGap: 35,
+              nameGap: 40,
               ...axis,
             },
             yAxis: {
               name: chart.y_label,
               nameLocation: "middle",
-              nameGap: 50,
+              nameGap: yl.nameGap,
               min: "dataMin",
               max: "dataMax",
               ...axis,

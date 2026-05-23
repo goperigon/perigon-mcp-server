@@ -1,0 +1,300 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Chart Viewer Preview</title>
+    <style>
+      body {
+        font-family: system-ui;
+        margin: 40px auto;
+        max-width: 900px;
+      }
+      iframe {
+        width: 100%;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+      }
+      .controls {
+        margin-bottom: 16px;
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      button {
+        padding: 6px 14px;
+        border-radius: 6px;
+        border: 1px solid #ccc;
+        background: #f5f5f5;
+        cursor: pointer;
+        font-size: 13px;
+      }
+      button:hover {
+        background: #e8e8e8;
+      }
+      button.active {
+        background: #4a7dff;
+        color: white;
+        border-color: #4a7dff;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>Chart Viewer Preview</h2>
+    <div class="controls">
+      <button onclick="sendChart('bar')" class="active">Bar</button>
+      <button onclick="sendChart('line')">Line</button>
+      <button onclick="sendChart('scatter')">Scatter</button>
+      <button onclick="sendChart('pie')">Pie</button>
+      <button onclick="sendChart('stacked')">Stacked Bar</button>
+      <button onclick="sendChart('box')">Box & Whisker</button>
+      <button onclick="sendChart('superchart')">Superchart</button>
+      <button onclick="sendChart('longlabels')">Long Labels</button>
+    </div>
+    <iframe
+      id="viewer"
+      src="../chart-viewer.html"
+      style="height: 500px"
+    ></iframe>
+
+    <script>
+      const iframe = document.getElementById("viewer");
+      let ready = false;
+
+      const MOCK_CHARTS = {
+        bar: {
+          type: "bar",
+          title:
+            "Average Funding Amount per Round (Jan-May 2026, USD Millions)",
+          x_label: "Funding Round",
+          y_label: "Avg Funding (USD Millions)",
+          elements: [
+            { label: "Series A", value: 200, group: "Funding Round" },
+            { label: "Series B", value: 450, group: "Funding Round" },
+            { label: "Series C", value: 2400, group: "Funding Round" },
+            { label: "Series D", value: 360, group: "Funding Round" },
+            { label: "Series E", value: 1800, group: "Funding Round" },
+            { label: "Series F", value: 420, group: "Funding Round" },
+          ],
+        },
+        line: {
+          type: "line",
+          title: "Startup Funding Rounds vs Layoff Events — Monthly Trend",
+          x_label: "Month",
+          y_label: "Event Count",
+          elements: [
+            {
+              label: "Startup Funding Rounds (Series A-F)",
+              points: [
+                ["Nov '25", 195],
+                ["Dec '25", 105],
+                ["Jan '26", 595],
+                ["Feb '26", 685],
+                ["Mar '26", 720],
+                ["Apr '26", 855],
+                ["May '26", 325],
+              ],
+            },
+            {
+              label: "Layoff Events",
+              points: [
+                ["Nov '25", 270],
+                ["Dec '25", 280],
+                ["Jan '26", 430],
+                ["Feb '26", 525],
+                ["Mar '26", 605],
+                ["Apr '26", 650],
+                ["May '26", 410],
+              ],
+            },
+          ],
+        },
+        scatter: {
+          type: "scatter",
+          title: "Company Size vs Funding Amount",
+          x_label: "Employee Count",
+          y_label: "Funding (USD Millions)",
+          elements: [
+            {
+              label: "Tech Companies",
+              points: [
+                [50, 12],
+                [120, 45],
+                [300, 150],
+                [800, 380],
+                [1500, 620],
+                [200, 85],
+                [450, 210],
+                [75, 22],
+                [950, 440],
+                [2000, 900],
+              ],
+            },
+          ],
+        },
+        pie: {
+          type: "pie",
+          title: "Funding Distribution by Round Type",
+          elements: [
+            { label: "Series A", angle: 35 },
+            { label: "Series B", angle: 25 },
+            { label: "Series C", angle: 20 },
+            { label: "Series D", angle: 10 },
+            { label: "Series E", angle: 7 },
+            { label: "Series F", angle: 3 },
+          ],
+        },
+        stacked: {
+          type: "bar",
+          title: "US Layoffs vs Corporate Bankruptcies — Monthly Comparison",
+          x_label: "Month",
+          y_label: "Event Count",
+          elements: [
+            { label: "Nov '25", value: 275, group: "Layoff Events" },
+            { label: "Dec '25", value: 280, group: "Layoff Events" },
+            { label: "Jan '26", value: 425, group: "Layoff Events" },
+            { label: "Feb '26", value: 530, group: "Layoff Events" },
+            { label: "Mar '26", value: 610, group: "Layoff Events" },
+            { label: "Apr '26", value: 650, group: "Layoff Events" },
+            { label: "May '26", value: 410, group: "Layoff Events" },
+            { label: "Nov '25", value: 65, group: "Bankruptcy Events" },
+            { label: "Dec '25", value: 100, group: "Bankruptcy Events" },
+            { label: "Jan '26", value: 460, group: "Bankruptcy Events" },
+            { label: "Feb '26", value: 460, group: "Bankruptcy Events" },
+            { label: "Mar '26", value: 460, group: "Bankruptcy Events" },
+            { label: "Apr '26", value: 400, group: "Bankruptcy Events" },
+            { label: "May '26", value: 220, group: "Bankruptcy Events" },
+          ],
+        },
+        box: {
+          type: "box_and_whisker",
+          title: "Salary Distribution by Department",
+          x_label: "Department",
+          y_label: "Salary (USD thousands)",
+          elements: [
+            {
+              label: "Engineering",
+              min: 80,
+              first_quartile: 110,
+              median: 140,
+              third_quartile: 175,
+              max: 250,
+            },
+            {
+              label: "Marketing",
+              min: 55,
+              first_quartile: 75,
+              median: 95,
+              third_quartile: 120,
+              max: 180,
+            },
+            {
+              label: "Sales",
+              min: 45,
+              first_quartile: 70,
+              median: 100,
+              third_quartile: 145,
+              max: 220,
+            },
+            {
+              label: "Design",
+              min: 60,
+              first_quartile: 85,
+              median: 105,
+              third_quartile: 130,
+              max: 190,
+            },
+          ],
+        },
+        longlabels: {
+          type: "bar",
+          title: "Top 20 Companies by People Affected",
+          x_label: "Company",
+          y_label: "People affected",
+          elements: [
+            { label: "Atlas", value: 600000, group: "People affected" },
+            { label: "Bravo", value: 1200000, group: "People affected" },
+            { label: "Cerro", value: 400000, group: "People affected" },
+            { label: "Delta", value: 800000, group: "People affected" },
+            { label: "Eagle", value: 300000, group: "People affected" },
+            { label: "Foxtrot", value: 1000000, group: "People affected" },
+            { label: "Gamma", value: 500000, group: "People affected" },
+          ],
+        },
+        superchart: {
+          type: "superchart",
+          title: "Market Overview Dashboard",
+          elements: [
+            {
+              type: "bar",
+              title: "Revenue by Quarter",
+              x_label: "Quarter",
+              y_label: "Revenue (USD Millions)",
+              elements: [
+                { label: "Q1", value: 120, group: "Revenue" },
+                { label: "Q2", value: 185, group: "Revenue" },
+                { label: "Q3", value: 210, group: "Revenue" },
+                { label: "Q4", value: 290, group: "Revenue" },
+              ],
+            },
+            {
+              type: "pie",
+              title: "Market Share",
+              elements: [
+                { label: "Company A", angle: 40 },
+                { label: "Company B", angle: 30 },
+                { label: "Company C", angle: 20 },
+                { label: "Others", angle: 10 },
+              ],
+            },
+          ],
+        },
+      };
+
+      window.addEventListener("message", (ev) => {
+        const msg = ev.data;
+        if (!msg || msg.jsonrpc !== "2.0") return;
+
+        if (msg.id !== undefined && msg.method === "ui/initialize") {
+          iframe.contentWindow.postMessage(
+            {
+              jsonrpc: "2.0",
+              id: msg.id,
+              result: { hostContext: {} },
+            },
+            "*",
+          );
+          ready = true;
+          setTimeout(() => sendChart("bar"), 100);
+        }
+
+        if (
+          msg.method === "ui/notifications/size-changed" &&
+          msg.params?.height
+        ) {
+          iframe.style.height = Math.max(200, msg.params.height + 20) + "px";
+        }
+      });
+
+      function sendChart(type) {
+        if (!ready) return;
+        document
+          .querySelectorAll(".controls button")
+          .forEach((b) => b.classList.remove("active"));
+        event.target.classList.add("active");
+
+        iframe.contentWindow.postMessage(
+          {
+            jsonrpc: "2.0",
+            method: "ui/notifications/tool-result",
+            params: {
+              structuredContent: {
+                charts: [{ chart: MOCK_CHARTS[type] }],
+              },
+            },
+          },
+          "*",
+        );
+      }
+    </script>
+  </body>
+</html>
