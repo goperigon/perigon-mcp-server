@@ -78,7 +78,6 @@ Analyze structured event data from Perigon's monitoring signals (funding rounds,
    - Read exported data: \`pd.read_json("${DATA_DIR}/<file>.jsonl", lines=True)\`
    - Charts: use simple matplotlib calls (plt.bar, plt.plot, plt.scatter, plt.pie, plt.boxplot). One plt.show() per chart. Charts render as interactive widgets in the UI.
    - Do NOT use subplots, annotations, fill_between, dual axes, or combine chart types — these break interactive parsing.
-   - For complex visualizations that need subplots or annotations, save with plt.savefig() to ${OUTPUT_DIR}/ instead of plt.show().
    - No internet access in the sandbox except *.amazonaws.com.
 
 ### File Management
