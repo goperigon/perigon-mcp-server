@@ -60,6 +60,10 @@ Tips:
 
 Analyze structured event data from Perigon's monitoring signals (funding rounds, layoffs, M&A, product launches, cybersecurity incidents, etc.). Requires a workspace.
 
+### What are signals?
+Signals are a way to monitor news media. Users can define arbitrary monitoring goals, and Perigon's processing pipeline uses them to produce a realtime stream of events, derived from news data and other sources.
+Each event in the stream has a structured schema, defined by the user.
+
 ### Setup (required once per conversation)
 1. Call \`${createWorkspaceTool.name}\` — returns a workspace ID needed by all subsequent tools.
 2. NEVER invent workspace IDs. Always use the one returned by \`${createWorkspaceTool.name}\`.
