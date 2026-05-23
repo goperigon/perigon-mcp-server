@@ -74,11 +74,26 @@ Analyze structured event data from Perigon's monitoring signals (funding rounds,
    - For complex analysis (window functions, pivots, joins across signals), fetch raw data first, then use \`${executeCodeTool.name}\` with pandas.
 
 ### Analysis & Visualization
-6. \`${executeCodeTool.name}\` — run Python in a persistent Jupyter kernel. State persists between calls. Pre-installed: pandas, numpy, matplotlib, seaborn, scipy, scikit-learn, and more.
+6. \`${executeCodeTool.name}\` — run Python in a persistent Jupyter kernel. State persists between calls. Pre-installed: pandas, numpy, matplotlib, seaborn, scipy, scikit-learn, openpyxl, jinja2.
    - Read exported data: \`pd.read_json("${DATA_DIR}/<file>.jsonl", lines=True)\`
-   - Charts: use simple matplotlib calls (plt.bar, plt.plot, plt.scatter, plt.pie, plt.boxplot). One plt.show() per chart. Charts render as interactive widgets in the UI.
-   - Do NOT use subplots, annotations, fill_between, dual axes, or combine chart types — these break interactive parsing.
+   - The kernel is persistent — ALL state carries across calls: variables, imports, DataFrames, functions. Import once, reuse everywhere.
    - No internet access in the sandbox except *.amazonaws.com.
+
+#### Chart Rules (CRITICAL)
+
+Charts are automatically parsed into interactive widgets in the chat UI. The parser only supports: line, scatter, bar, pie, box_and_whisker.
+
+To ensure charts render interactively:
+   - Use ONLY simple matplotlib calls: plt.plot() (line), plt.scatter(), plt.bar()/plt.barh(), plt.pie(), plt.boxplot().
+   - Call plt.show() at the end of EACH chart. One chart per plt.show() call.
+   - Do NOT combine multiple chart types in one figure (no fill_between + plot, no twin axes).
+   - Do NOT use plt.subplots() with multiple axes — create separate \`${executeCodeTool.name}\` calls instead, each with its own plt.figure() and plt.show().
+   - Do NOT use plt.annotate(), plt.fill_between(), plt.axhline(), or other decorative overlays — they prevent interactive parsing.
+   - Use plt.title(), plt.xlabel(), plt.ylabel(), and plt.legend() — these are parsed correctly.
+   - Use seaborn's simple wrappers (sns.lineplot, sns.barplot, sns.scatterplot, sns.boxplot) — they produce parseable output.
+   - NEVER use plotly, bokeh, altair, or write charts to HTML files.
+   - NEVER call plt.savefig() for charts you want displayed inline.
+   - If a complex visualization is truly needed (annotations, dual axes, etc.), you can render it and it will display correctly as a PNG. But always prefer interactive simpler charts.
 
 ### File Management
 7. \`${shellTool.name}\` — run bash commands in the sandbox. Useful for installing packages, moving files, or quick shell operations.
