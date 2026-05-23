@@ -49,6 +49,7 @@
       <button onclick="sendChart('box')">Box & Whisker</button>
       <button onclick="sendChart('superchart')">Superchart</button>
       <button onclick="sendChart('longlabels')">Long Labels</button>
+      <button onclick="sendChart('noxlabel')">No X-Axis Name</button>
     </div>
     <iframe
       id="viewer"
@@ -218,6 +219,21 @@
             { label: "Eagle", value: 300000, group: "People affected" },
             { label: "Foxtrot", value: 1000000, group: "People affected" },
             { label: "Gamma", value: 500000, group: "People affected" },
+          ],
+        },
+        noxlabel: {
+          type: "bar",
+          title: "Layoff Events by Month (multi-series, no x-axis name)",
+          y_label: "Event Count",
+          elements: [
+            { label: "Jan '26", value: 425, group: "Layoff Events" },
+            { label: "Feb '26", value: 530, group: "Layoff Events" },
+            { label: "Mar '26", value: 610, group: "Layoff Events" },
+            { label: "Apr '26", value: 650, group: "Layoff Events" },
+            { label: "Jan '26", value: 460, group: "Bankruptcy Events" },
+            { label: "Feb '26", value: 460, group: "Bankruptcy Events" },
+            { label: "Mar '26", value: 460, group: "Bankruptcy Events" },
+            { label: "Apr '26", value: 400, group: "Bankruptcy Events" },
           ],
         },
         superchart: {

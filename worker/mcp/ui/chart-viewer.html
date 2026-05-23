@@ -280,18 +280,18 @@
 
       // Hide legend for single-series; show at bottom for multi-series.
       // Returns { legend, grid } with adjusted bottom spacing.
-      function layoutOpts(seriesCount, left) {
+      function layoutOpts(seriesCount, left, hasXAxisName) {
         var textColor = isDark ? "#ccc" : "#555";
         var grid = { top: 40, right: 12, left: left, containLabel: false };
         if (seriesCount <= 1) {
           return {
             legend: { show: false },
-            grid: Object.assign({}, grid, { bottom: 45 }),
+            grid: Object.assign({}, grid, { bottom: hasXAxisName ? 45 : 30 }),
           };
         }
         return {
           legend: { bottom: 5, textStyle: { color: textColor, fontSize: 11 } },
-          grid: Object.assign({}, grid, { bottom: 90 }),
+          grid: Object.assign({}, grid, { bottom: hasXAxisName ? 90 : 55 }),
         };
       }
 
@@ -314,7 +314,7 @@
 
         if (chart.type === "line" || chart.type === "scatter") {
           var yl = yAxisLayout(extractYValues(chart));
-          var layout = layoutOpts((chart.elements || []).length, yl.left);
+          var layout = layoutOpts((chart.elements || []).length, yl.left, !!chart.x_label);
           return {
             ...shared,
             ...layout,
@@ -349,7 +349,7 @@
             (groups[e.group] ??= []).push(e);
           }
           var yl = yAxisLayout(extractYValues(chart));
-          var layout = layoutOpts(Object.keys(groups).length, yl.left);
+          var layout = layoutOpts(Object.keys(groups).length, yl.left, !!chart.x_label);
           return {
             ...shared,
             ...layout,
@@ -401,7 +401,7 @@
 
         if (chart.type === "box_and_whisker") {
           var yl = yAxisLayout(extractYValues(chart));
-          var layout = layoutOpts((chart.elements || []).length, yl.left);
+          var layout = layoutOpts((chart.elements || []).length, yl.left, !!chart.x_label);
           return {
             ...shared,
             ...layout,
