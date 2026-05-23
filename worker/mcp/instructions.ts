@@ -97,7 +97,8 @@ To ensure charts render interactively:
    - Use seaborn's simple wrappers (sns.lineplot, sns.barplot, sns.scatterplot, sns.boxplot) — they produce parseable output.
    - NEVER use plotly, bokeh, altair, or write charts to HTML files.
    - NEVER call plt.savefig() for charts you want displayed inline.
-   - If a complex visualization is truly needed (annotations, dual axes, etc.), you can render it and it will display correctly as a PNG. But **always** prefer interactive simpler charts.
+   - If a complex visualization is truly needed (annotations, dual axes, heatmaps, etc.), you can render it and it will display correctly as a PNG. But **always** prefer interactive simpler charts.
+   - **Always** render charts on a light background.
 
 ### File Management
 7. \`${shellTool.name}\` — run bash commands in the sandbox. Useful for installing packages, moving files, or quick shell operations.
