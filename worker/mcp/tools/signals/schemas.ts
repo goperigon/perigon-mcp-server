@@ -104,6 +104,13 @@ const OrderByExprSchema = z.object({
 
 export const exportEventsSchema = z.object({
   workspace: z.string().describe(WORKSPACE_DESC),
+  name: z
+    .string()
+    .optional()
+    .describe(
+      "Human-readable name/title for this export. " +
+        "Generate a concise, descriptive name summarizing what this export contains.",
+    ),
   signalUuids: z
     .array(z.string().uuid())
     .min(1)

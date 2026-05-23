@@ -26,7 +26,7 @@
           Roboto,
           sans-serif
         );
-        font-size: 13px;
+        font-size: var(--font-size-base, 14px);
       }
 
       body {
@@ -49,7 +49,7 @@
       table {
         width: 100%;
         border-collapse: collapse;
-        font-size: 12px;
+        font-size: var(--font-size-sm, 13px);
       }
 
       thead th {
@@ -92,6 +92,27 @@
         text-align: center;
         opacity: 0.4;
         font-size: 13px;
+      }
+
+      .export-title {
+        padding: 6px 8px 2px;
+        font-size: inherit;
+        font-weight: 600;
+        line-height: 1.3;
+        word-break: break-word;
+      }
+
+      .expand-bar {
+        padding: 6px 8px;
+        text-align: center;
+        font-size: 12px;
+        cursor: pointer;
+        opacity: 0.6;
+        border-top: 1px solid light-dark(#eee, #333);
+      }
+      .expand-bar:hover {
+        opacity: 1;
+        background: light-dark(rgba(0, 0, 0, 0.03), rgba(255, 255, 255, 0.03));
       }
     </style>
   </head>
@@ -266,6 +287,8 @@
           .replace(/>/g, "&gt;");
       }
 
+      var COLLAPSED_ROWS = 10;
+
       function renderTable(data) {
         var container = document.getElementById("export");
         container.innerHTML = "";
@@ -273,6 +296,14 @@
         var columns = data.columns || [];
         var preview = data.preview || [];
         var rowCount = data.rowCount || 0;
+
+        // Title
+        if (data.name) {
+          var title = document.createElement("div");
+          title.className = "export-title";
+          title.textContent = data.name;
+          container.appendChild(title);
+        }
 
         // Summary line
         var summary = document.createElement("div");
@@ -310,38 +341,73 @@
           columns = Array.from(seen);
         }
 
-        var scroll = document.createElement("div");
-        scroll.className = "table-scroll";
+        var isExpanded = false;
 
-        var table = document.createElement("table");
+        function buildTable(expanded) {
+          var visibleRows = expanded
+            ? preview
+            : preview.slice(0, COLLAPSED_ROWS);
+          var canExpand = preview.length > COLLAPSED_ROWS;
 
-        // Header
-        var thead = document.createElement("thead");
-        var headerRow = document.createElement("tr");
-        for (var i = 0; i < columns.length; i++) {
-          var th = document.createElement("th");
-          th.textContent = columns[i];
-          headerRow.appendChild(th);
-        }
-        thead.appendChild(headerRow);
-        table.appendChild(thead);
+          var oldScroll = container.querySelector(".table-scroll");
+          if (oldScroll) oldScroll.remove();
+          var oldBar = container.querySelector(".expand-bar");
+          if (oldBar) oldBar.remove();
 
-        // Body
-        var tbody = document.createElement("tbody");
-        for (var r = 0; r < preview.length; r++) {
-          var row = preview[r];
-          var tr = document.createElement("tr");
-          for (var c = 0; c < columns.length; c++) {
-            var td = document.createElement("td");
-            td.innerHTML = formatCell(row[columns[c]]);
-            tr.appendChild(td);
+          var scroll = document.createElement("div");
+          scroll.className = "table-scroll";
+
+          if (expanded) {
+            scroll.style.maxHeight = "400px";
+            scroll.style.overflowY = "auto";
+            scroll.style.overflowX = "auto";
+          } else {
+            scroll.style.overflow = "hidden";
           }
-          tbody.appendChild(tr);
-        }
-        table.appendChild(tbody);
 
-        scroll.appendChild(table);
-        container.appendChild(scroll);
+          var table = document.createElement("table");
+
+          var thead = document.createElement("thead");
+          var headerRow = document.createElement("tr");
+          for (var i = 0; i < columns.length; i++) {
+            var th = document.createElement("th");
+            th.textContent = columns[i];
+            headerRow.appendChild(th);
+          }
+          thead.appendChild(headerRow);
+          table.appendChild(thead);
+
+          var tbody = document.createElement("tbody");
+          for (var r = 0; r < visibleRows.length; r++) {
+            var row = visibleRows[r];
+            var tr = document.createElement("tr");
+            for (var c = 0; c < columns.length; c++) {
+              var td = document.createElement("td");
+              td.innerHTML = formatCell(row[columns[c]]);
+              tr.appendChild(td);
+            }
+            tbody.appendChild(tr);
+          }
+          table.appendChild(tbody);
+
+          scroll.appendChild(table);
+          container.appendChild(scroll);
+
+          if (canExpand) {
+            var bar = document.createElement("div");
+            bar.className = "expand-bar";
+            bar.textContent = expanded
+              ? "Collapse"
+              : "Show all " + preview.length + " preview rows";
+            bar.onclick = function () {
+              isExpanded = !isExpanded;
+              buildTable(isExpanded);
+            };
+            container.appendChild(bar);
+          }
+        }
+
+        buildTable(false);
       }
     </script>
   </body>

@@ -20,6 +20,7 @@ interface ExecuteCodeResult {
 }
 
 interface ExportEventsResult {
+  name?: string;
   columns: string[];
   rowCount: number;
   preview: Record<string, unknown>[];
@@ -89,6 +90,8 @@ function buildExportEventsResult(data: ExportEventsResult): CallToolResult {
 
   if (data.error) textParts.push(`[error]\n${data.error}`);
 
+  if (data.name) textParts.push(`Export: ${data.name}`);
+
   textParts.push(
     `Exported ${data.rowCount} rows with columns: ${data.columns.join(", ")}`,
   );
@@ -105,6 +108,7 @@ function buildExportEventsResult(data: ExportEventsResult): CallToolResult {
 
   const structuredContent = {
     export: {
+      name: data.name,
       columns: data.columns,
       preview: data.preview,
       rowCount: data.rowCount,
