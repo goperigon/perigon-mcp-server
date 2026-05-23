@@ -10,9 +10,12 @@ const BASE_URL = "https://api.perigon.io/v1/signal/insights/mcp";
  * business-api-server and require the SIGNAL_INSIGHTS permission scope.
  */
 export class InsightsApiClient {
-  constructor(private readonly apiKey: string) {}
+  constructor(
+    private readonly apiKey: string,
+    private readonly timeoutMs: number = 60_000,
+  ) {}
 
-  private headers(): HeadersInit {
+  private get headers(): HeadersInit {
     return { Authorization: `Bearer ${this.apiKey}` };
   }
 
@@ -28,7 +31,10 @@ export class InsightsApiClient {
     if (args.limit !== undefined)
       url.searchParams.set("limit", String(args.limit));
 
-    const res = await fetch(url.toString(), { headers: this.headers() });
+    const res = await fetch(url.toString(), {
+      headers: this.headers,
+      signal: AbortSignal.timeout(this.timeoutMs),
+    });
     if (!res.ok) {
       const body = await res.text();
       return {
@@ -48,7 +54,8 @@ export class InsightsApiClient {
 
   async readSignal(signalUuid: string): Promise<CallToolResult> {
     const res = await fetch(`${BASE_URL}/${signalUuid}/metadata`, {
-      headers: this.headers(),
+      headers: this.headers,
+      signal: AbortSignal.timeout(this.timeoutMs),
     });
     if (!res.ok) {
       const body = await res.text();

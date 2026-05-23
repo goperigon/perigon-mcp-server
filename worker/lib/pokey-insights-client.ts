@@ -128,9 +128,10 @@ export class PokeyInsightsClient {
   constructor(
     private readonly baseUrl: string,
     private readonly apiKey: string,
+    private readonly timeoutMs: number = 60_000,
   ) {}
 
-  private headers(): HeadersInit {
+  private get headers(): HeadersInit {
     return {
       Authorization: `Bearer ${this.apiKey}`,
       "Content-Type": "application/json",
@@ -144,7 +145,11 @@ export class PokeyInsightsClient {
   async createWorkspace(): Promise<CallToolResult> {
     const res = await fetch(
       `${this.baseUrl}/v1/signal-insights/mcp/workspaces`,
-      { method: "POST", headers: this.headers() },
+      {
+        method: "POST",
+        headers: this.headers,
+        signal: AbortSignal.timeout(this.timeoutMs),
+      },
     );
     if (!res.ok) {
       const body = await res.text();
@@ -175,8 +180,9 @@ export class PokeyInsightsClient {
       `${this.baseUrl}/v1/signal-insights/mcp/tools/${toolName}`,
       {
         method: "POST",
-        headers: this.headers(),
+        headers: this.headers,
         body: JSON.stringify(args),
+        signal: AbortSignal.timeout(this.timeoutMs),
       },
     );
 
