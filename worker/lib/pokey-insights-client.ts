@@ -1,6 +1,6 @@
 import { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { HttpError } from "../types/types";
-import { NAME as PREVIEW_CHART_NAME } from "../mcp/tools/signals/preview-chart";
+import { previewChartTool } from "../mcp/tools/signals/preview-chart";
 
 interface ExecuteCodeDisplayResult {
   text?: string | null;
@@ -67,7 +67,7 @@ function buildExecuteCodeResult(
   if (!chartViewer && chartCount > 0) {
     textParts.push(
       `[charts] ${chartCount} chart(s) were generated but are NOT shown to the user. ` +
-        `To display a chart, call ${PREVIEW_CHART_NAME} with the plotting code.`,
+        `To display a chart, call ${previewChartTool.name} with the plotting code.`,
     );
   }
 
