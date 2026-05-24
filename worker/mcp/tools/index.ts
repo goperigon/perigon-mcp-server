@@ -170,6 +170,7 @@ import { searchSignalsTool } from "./signals/search-signals";
 import { readSignalTool } from "./signals/read-signal";
 import { exportEventsTool } from "./signals/export-events";
 import { executeCodeTool } from "./signals/execute-code";
+import { previewChartTool } from "./signals/preview-chart";
 import { shellTool } from "./signals/shell";
 import { listFilesTool } from "./signals/list-files";
 import { grepTool } from "./signals/grep";
@@ -239,6 +240,7 @@ export const TOOL_DEFINITIONS: Record<string, ToolDefinition<any>> = {
   signal_insights_read_signal: signalStub(readSignalTool),
   signal_insights_export_events: signalStub(exportEventsTool),
   signal_insights_execute_code: signalStub(executeCodeTool),
+  signal_insights_preview_chart: signalStub(previewChartTool),
   signal_insights_shell: signalStub(shellTool),
   signal_insights_list_files: signalStub(listFilesTool),
   signal_insights_grep: signalStub(grepTool),

@@ -1,5 +1,6 @@
 import { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { HttpError } from "../types/types";
+import { NAME as PREVIEW_CHART_NAME } from "../mcp/tools/signals/preview-chart";
 
 interface ExecuteCodeDisplayResult {
   text?: string | null;
@@ -31,15 +32,25 @@ interface ExportEventsResult {
 /**
  * Converts a Pokey execute_code JSON response into an MCP tool result.
  *
- * - content: text blocks only (stdout/stderr/error/IPython text) — model reads this
- * - structuredContent.charts: full chart data (JSON + PNG) for the MCP Apps
- *   chart viewer iframe (SEP-1865). The iframe reads structuredContent from the
- *   ui/notifications/tool-result notification.
+ * Both signal_insights_execute_code and signal_insights_preview_chart run code
+ * through the same Pokey execute_code endpoint; the `chartViewer` flag decides
+ * how charts are surfaced:
  *
- * For non-Apps clients (Cursor etc.), the ImageContent PNG fallback in content
- * is retained so they still see charts.
+ * - chartViewer=true (preview_chart): drives the MCP Apps chart viewer.
+ *   structuredContent.charts holds the full chart data (JSON + PNG) read by the
+ *   viewer iframe (SEP-1865) from the ui/notifications/tool-result notification,
+ *   and a PNG ImageContent fallback is included for non-Apps clients (Cursor etc.).
+ * - chartViewer=false (execute_code): no chart UI. Any charts produced are
+ *   dropped and replaced with a note nudging the model to re-run the plotting
+ *   code via signal_insights_preview_chart to actually display them.
+ *
+ * In both cases content text blocks (stdout/stderr/error/IPython text) are
+ * returned for the model to read.
  */
-function buildExecuteCodeResult(data: ExecuteCodeResult): CallToolResult {
+function buildExecuteCodeResult(
+  data: ExecuteCodeResult,
+  { chartViewer }: { chartViewer: boolean },
+): CallToolResult {
   const content: CallToolResult["content"] = [];
   const textParts: string[] = [];
 
@@ -51,19 +62,31 @@ function buildExecuteCodeResult(data: ExecuteCodeResult): CallToolResult {
     if (r.text) textParts.push(r.text);
   }
 
+  const chartCount = data._charts?.length ?? 0;
+
+  if (!chartViewer && chartCount > 0) {
+    textParts.push(
+      `[charts] ${chartCount} chart(s) were generated but are NOT shown to the user. ` +
+        `To display a chart, call ${PREVIEW_CHART_NAME} with the plotting code.`,
+    );
+  }
+
   if (textParts.length > 0) {
     content.push({ type: "text", text: textParts.join("\n\n").trim() });
   }
 
-  // PNG fallback for non-Apps MCP clients (audience: user, not model context)
-  for (const chart of data._charts ?? []) {
-    if (chart.png) {
-      content.push({
-        type: "image",
-        data: chart.png,
-        mimeType: "image/png",
-        annotations: { audience: ["user"] },
-      });
+  // PNG fallback for non-Apps MCP clients (audience: user, not model context).
+  // Only the chart viewer tool surfaces chart images.
+  if (chartViewer) {
+    for (const chart of data._charts ?? []) {
+      if (chart.png) {
+        content.push({
+          type: "image",
+          data: chart.png,
+          mimeType: "image/png",
+          annotations: { audience: ["user"] },
+        });
+      }
     }
   }
 
@@ -73,9 +96,8 @@ function buildExecuteCodeResult(data: ExecuteCodeResult): CallToolResult {
 
   // structuredContent.charts is read by the MCP Apps chart viewer iframe.
   // It is also included in model context, so the model can narrate chart types.
-  const structuredContent = data._charts?.length
-    ? { charts: data._charts }
-    : undefined;
+  const structuredContent =
+    chartViewer && chartCount > 0 ? { charts: data._charts } : undefined;
 
   return {
     content,
@@ -179,7 +201,11 @@ export class PokeyInsightsClient {
    * Executes a stateful tool in Pokey. The `workspace` field in `args` scopes
    * the E2B sandbox and S3 artifacts for this call.
    */
-  async executeTool(toolName: string, args: unknown): Promise<CallToolResult> {
+  async executeTool(
+    toolName: string,
+    args: unknown,
+    opts?: { chartViewer?: boolean },
+  ): Promise<CallToolResult> {
     const res = await fetch(
       `${this.baseUrl}/v1/signal-insights/mcp/tools/${toolName}`,
       {
@@ -208,7 +234,9 @@ export class PokeyInsightsClient {
     const result = await res.json();
 
     if (toolName === "execute_code") {
-      return buildExecuteCodeResult(result as ExecuteCodeResult);
+      return buildExecuteCodeResult(result as ExecuteCodeResult, {
+        chartViewer: opts?.chartViewer ?? false,
+      });
     }
 
     if (toolName === "export_events") {

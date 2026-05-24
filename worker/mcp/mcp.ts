@@ -121,7 +121,7 @@ export class PerigonMCP extends McpAgent<Env, unknown, Props> {
 
     // Register the chart viewer UI resource (MCP Apps / SEP-1865).
     // Hosts that support MCP Apps will render this HTML in a sandboxed iframe
-    // after signal_insights_execute_code runs.
+    // after signal_insights_preview_chart runs.
     // Per SEP-1865: CSP belongs in resources/read content _meta.ui.csp.
     this.server.registerResource(
       "signal-insights-chart-viewer",

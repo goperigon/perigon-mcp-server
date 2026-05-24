@@ -18,6 +18,7 @@ import { searchSignalsTool } from "./tools/signals/search-signals";
 import { readSignalTool } from "./tools/signals/read-signal";
 import { exportEventsTool } from "./tools/signals/export-events";
 import { executeCodeTool } from "./tools/signals/execute-code";
+import { previewChartTool } from "./tools/signals/preview-chart";
 import { shellTool } from "./tools/signals/shell";
 import { listFilesTool } from "./tools/signals/list-files";
 import { grepTool } from "./tools/signals/grep";
@@ -78,20 +79,23 @@ Each event in the stream has a structured schema, defined by the user.
    - For complex analysis (window functions, pivots, joins across signals), fetch raw data first, then use \`${executeCodeTool.name}\` with pandas.
 
 ### Analysis & Visualization
-6. \`${executeCodeTool.name}\` — run Python in a persistent Jupyter kernel. State persists between calls. Pre-installed: pandas, numpy, matplotlib, seaborn, scipy, scikit-learn, openpyxl, jinja2.
+6. \`${executeCodeTool.name}\` — run Python for data prep and analysis in a persistent Jupyter kernel. State persists between calls. Pre-installed: pandas, numpy, matplotlib, seaborn, scipy, scikit-learn, openpyxl, jinja2.
    - Read exported data: \`pd.read_json("${DATA_DIR}/<file>.jsonl", lines=True)\`
    - The kernel is persistent — ALL state carries across calls: variables, imports, DataFrames, functions. Import once, reuse everywhere.
+   - Charts produced here are NOT shown to the user. To display a chart, use \`${previewChartTool.name}\`.
    - No internet access in the sandbox except *.amazonaws.com.
+7. \`${previewChartTool.name}\` — render a chart to the user. This is the ONLY tool that drives the interactive chart viewer. It shares the same kernel/state as \`${executeCodeTool.name}\`, so do analysis there and pass only the plotting code here.
 
 #### Chart Rules (CRITICAL)
 
-Charts are automatically parsed into interactive widgets in the chat UI. The parser only supports: line, scatter, bar, pie, box_and_whisker.
+Charts rendered via \`${previewChartTool.name}\` are automatically parsed into interactive widgets in the chat UI. The parser only supports: line, scatter, bar, pie, box_and_whisker.
 
 To ensure charts render interactively:
+   - Always use \`${previewChartTool.name}\` (not \`${executeCodeTool.name}\`) for any chart you want the user to see.
    - Use ONLY simple matplotlib calls: plt.plot() (line), plt.scatter(), plt.bar()/plt.barh(), plt.pie(), plt.boxplot().
    - Call plt.show() at the end of EACH chart. One chart per plt.show() call.
    - Do NOT combine multiple chart types in one figure (no fill_between + plot, no twin axes).
-   - Do NOT use plt.subplots() with multiple axes — create separate \`${executeCodeTool.name}\` calls instead, each with its own plt.figure() and plt.show().
+   - Do NOT use plt.subplots() with multiple axes — create separate \`${previewChartTool.name}\` calls instead, each with its own plt.figure() and plt.show().
    - Do NOT use plt.annotate(), plt.fill_between(), plt.axhline(), or other decorative overlays — they prevent interactive parsing.
    - Use plt.title(), plt.xlabel(), plt.ylabel(), and plt.legend() — these are parsed correctly.
    - Use seaborn's simple wrappers (sns.lineplot, sns.barplot, sns.scatterplot, sns.boxplot) — they produce parseable output.
@@ -101,19 +105,20 @@ To ensure charts render interactively:
    - **Always** render charts on a light background.
 
 ### File Management
-7. \`${shellTool.name}\` — run bash commands in the sandbox. Useful for installing packages, moving files, or quick shell operations.
-8. \`${listFilesTool.name}\`, \`${readFileTool.name}\`, \`${writeFileTool.name}\`, \`${grepTool.name}\`, \`${strReplaceTool.name}\` — file read/write/search in the sandbox.
+8. \`${shellTool.name}\` — run bash commands in the sandbox. Useful for installing packages, moving files, or quick shell operations.
+9. \`${listFilesTool.name}\`, \`${readFileTool.name}\`, \`${writeFileTool.name}\`, \`${grepTool.name}\`, \`${strReplaceTool.name}\` — file read/write/search in the sandbox.
 
 ### Output
-9. Save deliverables (reports, CSVs, charts) to ${OUTPUT_DIR}/ — files here appear in the user's Artifacts panel and are downloadable.
+10. Save deliverables (reports, CSVs, charts) to ${OUTPUT_DIR}/ — files here appear in the user's Artifacts panel and are downloadable.
 
 ### Typical Workflow
-\`${searchSignalsTool.name}\` → \`${readSignalTool.name}\` → \`${createWorkspaceTool.name}\` → \`${exportEventsTool.name}\` → \`${executeCodeTool.name}\` (load + analyze + chart)
+\`${searchSignalsTool.name}\` → \`${readSignalTool.name}\` → \`${createWorkspaceTool.name}\` → \`${exportEventsTool.name}\` → \`${executeCodeTool.name}\` (load + analyze) → \`${previewChartTool.name}\` (display charts)
 
 ### Common Mistakes to Avoid
 - Calling \`${executeCodeTool.name}\` before \`${createWorkspaceTool.name}\`.
 - Using \`${exportEventsTool.name}\` without first calling \`${readSignalTool.name}\` to understand the schema.
-- Using \`plt.subplots()\` or combining chart types — make separate \`${executeCodeTool.name}\` calls instead.
+- Using \`${executeCodeTool.name}\` to render charts — charts are only shown to the user via \`${previewChartTool.name}\`.
+- Using \`plt.subplots()\` or combining chart types — make separate \`${previewChartTool.name}\` calls instead.
 - Inventing workspace IDs instead of using the one from \`${createWorkspaceTool.name}\`.
 - Writing raw SQL — all data access goes through \`${exportEventsTool.name}\`.
 `;

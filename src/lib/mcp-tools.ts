@@ -191,6 +191,13 @@ export const MCP_TOOLS: McpToolMeta[] = [
     category: "signal-insights",
   },
   {
+    name: "signal_insights_preview_chart",
+    label: "Preview Chart",
+    description:
+      "Render a chart to the user in the interactive chart viewer. Runs plotting code in the same kernel as Execute Code.",
+    category: "signal-insights",
+  },
+  {
     name: "signal_insights_shell",
     label: "Run Shell Command",
     description:

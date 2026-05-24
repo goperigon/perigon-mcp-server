@@ -5,6 +5,7 @@ export { searchSignalsTool } from "./search-signals";
 export { readSignalTool } from "./read-signal";
 export { exportEventsTool } from "./export-events";
 export { executeCodeTool } from "./execute-code";
+export { previewChartTool } from "./preview-chart";
 export { shellTool } from "./shell";
 export { listFilesTool } from "./list-files";
 export { grepTool } from "./grep";
@@ -18,6 +19,7 @@ import { searchSignalsTool } from "./search-signals";
 import { readSignalTool } from "./read-signal";
 import { exportEventsTool } from "./export-events";
 import { executeCodeTool } from "./execute-code";
+import { previewChartTool } from "./preview-chart";
 import { shellTool } from "./shell";
 import { listFilesTool } from "./list-files";
 import { grepTool } from "./grep";
@@ -32,6 +34,7 @@ export const SIGNAL_TOOL_DEFINITIONS = {
   [readSignalTool.name]: readSignalTool,
   [exportEventsTool.name]: exportEventsTool,
   [executeCodeTool.name]: executeCodeTool,
+  [previewChartTool.name]: previewChartTool,
   [shellTool.name]: shellTool,
   [listFilesTool.name]: listFilesTool,
   [grepTool.name]: grepTool,
