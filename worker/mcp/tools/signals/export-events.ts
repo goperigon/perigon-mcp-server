@@ -10,7 +10,7 @@ export const exportEventsTool = {
     "Returns a preview of the first rows plus an S3 file path for the full dataset (JSONL). " +
     "Available fields: eventType, eventDate, createdAt, updatedAt, summary, uuid, data, articles, signalId, or data.<path> for JSONB subfields (e.g. data.companyName). " +
     "Filter options: eventTypes (list), date ranges (eventDateFrom/To, createdAtFrom/To), JSONB containment (data: [{op: CONTAINS, value: {key: val}}]). " +
-    "Select expressions: {type: 'field', name}, {type: 'date_trunc', granularity: HOUR|DAY|WEEK|MONTH|YEAR, field}, {type: 'agg', function: COUNT|COUNT_DISTINCT|SUM|AVG|MIN|MAX, field?}. " +
+    "Select expressions: {type: 'field', name}, {type: 'date_trunc', granularity: HOUR|DAY|WEEK|MONTH|QUARTER|YEAR, field}, {type: 'agg', function: COUNT|COUNT_DISTINCT|SUM|AVG|MIN|MAX, field?}. " +
     "Group by / order by: use {index: N} (1-based) when select is provided, or {field: 'name'} when select is omitted. " +
     `Omit select to fetch all scalar event fields. Results are written to S3 and accessible in the sandbox at ${DATA_DIR}/<filename>.`,
   parameters: exportEventsSchema,

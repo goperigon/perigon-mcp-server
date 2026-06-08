@@ -50,16 +50,25 @@ const AggFunctionSchema = z.enum([
   "MAX",
 ]);
 
-const BucketStrategySchema = z.enum(["HOUR", "DAY", "WEEK", "MONTH", "YEAR"]);
+const BucketStrategySchema = z.enum([
+  "HOUR",
+  "DAY",
+  "WEEK",
+  "MONTH",
+  "QUARTER",
+  "YEAR",
+]);
 const SortDirectionSchema = z.enum(["ASC", "DESC"]);
 const NullsPositionSchema = z.enum(["FIRST", "LAST"]);
 
 const SelectFieldSchema = z.object({
   type: z.literal("field"),
-  name: z.string().describe(
-    "Field name: eventType, eventDate, createdAt, updatedAt, summary, uuid, " +
-      "data, articles, signalId, or data.<path> for JSONB subfields",
-  ),
+  name: z
+    .string()
+    .describe(
+      "Field name: eventType, eventDate, createdAt, updatedAt, summary, uuid, " +
+        "data, articles, signalId, or data.<path> for JSONB subfields",
+    ),
   alias: z.string().optional(),
 });
 
@@ -86,7 +95,9 @@ const SelectExprSchema = z.discriminatedUnion("type", [
 ]);
 
 const DataFilterSchema = z.object({
-  op: z.enum(["CONTAINS", "NOT_CONTAINS"]).describe("JSONB containment operator"),
+  op: z
+    .enum(["CONTAINS", "NOT_CONTAINS"])
+    .describe("JSONB containment operator"),
   value: z.record(z.string(), z.unknown()),
 });
 
@@ -119,7 +130,10 @@ export const exportEventsSchema = z.object({
       "UUIDs of the signals to export data from. " +
         "Use search_signals to find signals first.",
     ),
-  eventTypes: z.array(z.string()).optional().describe("Filter by event type(s)"),
+  eventTypes: z
+    .array(z.string())
+    .optional()
+    .describe("Filter by event type(s)"),
   eventDateFrom: z
     .string()
     .optional()
@@ -184,12 +198,16 @@ export const listFilesSchema = z.object({
   path: z
     .string()
     .optional()
-    .describe("Directory path relative to workspace root. Defaults to workspace root."),
+    .describe(
+      "Directory path relative to workspace root. Defaults to workspace root.",
+    ),
 });
 
 export const grepSchema = z.object({
   workspace: z.string().describe(WORKSPACE_DESC),
-  pattern: z.string().describe("JavaScript-compatible regex pattern to search for"),
+  pattern: z
+    .string()
+    .describe("JavaScript-compatible regex pattern to search for"),
   path: z.string().describe("File path relative to workspace to search"),
   maxMatches: z.number().min(1).max(200).default(50).optional(),
 });
@@ -197,7 +215,10 @@ export const grepSchema = z.object({
 export const readFileSchema = z.object({
   workspace: z.string().describe(WORKSPACE_DESC),
   path: z.string().describe("File path relative to workspace"),
-  offset: z.number().optional().describe("Line number to start from (0-indexed)"),
+  offset: z
+    .number()
+    .optional()
+    .describe("Line number to start from (0-indexed)"),
   limit: z.number().optional().describe("Number of lines to read"),
 });
 
