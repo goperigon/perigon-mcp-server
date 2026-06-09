@@ -97,7 +97,9 @@ To ensure charts render interactively:
    - Do NOT combine multiple chart types in one figure (no fill_between + plot, no twin axes).
    - Do NOT use plt.subplots() with multiple axes — create separate \`${previewChartTool.name}\` calls instead, each with its own plt.figure() and plt.show().
    - Do NOT use plt.annotate(), plt.fill_between(), plt.axhline(), or other decorative overlays — they prevent interactive parsing.
-   - Use plt.title(), plt.xlabel(), plt.ylabel(), and plt.legend() — these are parsed correctly.
+   - Use plt.title(), plt.xlabel(), plt.ylabel() — these are parsed correctly.
+   - ALWAYS pass a meaningful label= to every plot/bar/scatter call (e.g. plt.plot(x, y, label="Revenue")). Without label=, matplotlib auto-names series "Line 0", "Group 0", etc.
+   - Call plt.legend() only when there are 2 or more series. For a single series, omit plt.legend() — it adds noise without value.
    - Use seaborn's simple wrappers (sns.lineplot, sns.barplot, sns.scatterplot, sns.boxplot) — they produce parseable output.
    - NEVER use plotly, bokeh, altair, or write charts to HTML files.
    - NEVER call plt.savefig() for charts you want displayed inline.
