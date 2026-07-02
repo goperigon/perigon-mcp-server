@@ -100,6 +100,7 @@ To ensure charts render interactively:
    - Use plt.title(), plt.xlabel(), plt.ylabel() — these are parsed correctly.
    - ALWAYS pass a meaningful label= to every plot/bar/scatter call (e.g. plt.plot(x, y, label="Revenue")). Without label=, matplotlib auto-names series "Line 0", "Group 0", etc.
    - Call plt.legend() only when there are 2 or more series. For a single series, omit plt.legend() — it adds noise without value.
+   - Before charting grouped counts or top-N rankings, drop rows with missing category values (e.g. df.dropna(subset=["investor"]) or df[df["investor"].notna()]). Never plot null/NaN/empty categories — they often dominate the chart and mislead users.
    - Use seaborn's simple wrappers (sns.lineplot, sns.barplot, sns.scatterplot, sns.boxplot) — they produce parseable output.
    - NEVER use plotly, bokeh, altair, or write charts to HTML files.
    - NEVER call plt.savefig() for charts you want displayed inline.

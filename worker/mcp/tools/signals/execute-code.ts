@@ -14,6 +14,7 @@ export const executeCodeTool = {
     "Pre-installed highlights: pandas, numpy, matplotlib, seaborn, scipy, scikit-learn, statsmodels, pyarrow, polars, openpyxl, sqlalchemy, beautifulsoup4, nltk, xgboost, lightgbm, shap, pillow, sympy, tabulate, rich. " +
     "CHARTS: charts produced here (e.g. via plt.show()) are NOT displayed to the user. " +
     `To show a chart to the user, call ${PREVIEW_CHART_TOOL_NAME} with the plotting code instead. ` +
+    "Before groupby/value_counts/top-N charts, drop rows with missing category values (dropna / notna on the label column) — null categories often dominate and mislead. " +
     "No outbound internet access except *.amazonaws.com.",
   parameters: executeCodeSchema,
   createHandler: (_insightsApi, pokeyClient) => async (args) =>
