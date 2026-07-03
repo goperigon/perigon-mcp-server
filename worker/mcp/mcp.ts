@@ -188,6 +188,9 @@ export class PerigonMCP extends McpAgent<Env, unknown, Props> {
           {
             description: def.description,
             inputSchema: def.parameters,
+            // Required for the host to forward structuredContent to the widget.
+            // registerTool expects the raw shape, not the ZodObject wrapper.
+            ...(def.outputSchema ? { outputSchema: def.outputSchema.shape } : {}),
             _meta: def._meta,
           },
           handler,
