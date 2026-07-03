@@ -87,39 +87,39 @@ faithfully mimicking Claude Desktop. This is deliberate: a static-width
 harness (the original one) gave the iframe a real width up front and could
 never reproduce the flat-widget bug.
 
-### Why we disable the SDK's `autoResize` (the core sizing fix)
+### Sizing: leave it to the SDK + host (the PostHog model)
 
-The `ext-apps` `App` class's built-in `autoResize` reports **`window.innerWidth`**
-for width — an ECHO of whatever width the host has already given the iframe,
-not a value derived from content. Claude Desktop starts the iframe at width 0
-and grows it from the width the guest reports. So with `autoResize: true`,
-the guest reports `innerWidth` = 0 → host keeps it at 0 → the widget renders
-flat ("flashes then gone"). It's a deadlock the guest can never escape by
-echoing.
+The guests do **not** manage width at all. This mirrors PostHog's shipping MCP
+UI apps (`services/mcp/src/ui-apps` — `useToolResult`/`AppWrapper`), which
+render correctly in Claude Desktop:
 
-The fix (see `reportSize()` in each guest `main.ts`): construct the `App`
-with `{ autoResize: false }` and report size ourselves —
+- The `App` is constructed with `{ autoResize: true }`. The SDK observes the
+  body/document and reports size to the host.
+- The **host sizes the iframe width** to its layout slot; our content is
+  `width:100%` and simply fills it. We never set `root.style.width` or report
+  a custom width — doing so fights the host and produced the flat/0-width
+  widget in earlier iterations.
+- **Height** is content-driven and reported by the SDK's autoResize.
+- The `ui://` stub HTML stays minimal (styles + a mount node + the script
+  tag), with no width/height CSS — same as PostHog's `buildAppStubHtml`.
 
-- **width** = the concrete width the host advertised in
-  `hostContext.containerDimensions` (`width` → `maxWidth` → a `640` default),
-  never a measured/echoed value. The host can actually act on this to size
-  the iframe.
-- **height** = measured content height (`body.getBoundingClientRect().height`).
-
-If Claude Desktop ever shows a flat/0-width widget again, check that
-`hostContext.containerDimensions` still carries a usable width (or that our
-default is being applied) — not the SDK's `innerWidth` echo path.
+Note on the SDK's autoResize: it reports `window.innerWidth` for width, i.e.
+an echo of the width the host already gave the iframe. That's fine **because
+the host gives a real width up front** — the guest's job is only to fill it
+and report height. (An earlier theory that Claude starts the iframe at width
+0 and waits for the guest to report a width was wrong; PostHog's apps prove
+the host provides the width.)
 
 ### Harness fidelity notes
 
-- The harness starts the iframe at 0×0 and applies BOTH reported width and
-  height (`onsizechange`) — i.e. it trusts the guest's reported width, like
-  Claude. If a change here shows a flat widget, so will Claude.
+- The harness models Claude: it seeds the iframe **width** up front from the
+  advertised `containerDimensions` and only grows **height** from the guest's
+  reported size. Do NOT start the iframe at width 0 — that would make the
+  correct (SDK autoResize) approach look broken, since innerWidth would echo 0.
 - `remount()` closes the previous `AppBridge` and waits for the iframe
   `load` event before wiring the transport. An earlier version did neither,
   leaking stale bridges that kept posting old host context — a pure harness
-  artifact (a real host has one bridge per view) that produced very
-  confusing "stuck at the previous width" behavior.
+  artifact (a real host has one bridge per view).
 - Vite's dev server has not reliably hot-reloaded edits to these files in
   this environment; if the browser seems to run stale code, fully restart
   `bun run dev:apps` (and make sure no old instance is still holding the

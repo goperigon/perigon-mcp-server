@@ -8,10 +8,10 @@
  * (unsupported chart shape, ECharts failing to init, etc.) so the widget
  * never silently shows nothing.
  *
- * Built with the official `@modelcontextprotocol/ext-apps` SDK: the `App`
- * class owns the `ui/initialize` handshake (incl. `appInfo`). We deliberately
- * DISABLE the SDK's built-in `autoResize` and report size ourselves — see the
- * "Sizing" note below for why.
+ * Built with the official `@modelcontextprotocol/ext-apps` SDK. Sizing is
+ * left entirely to the SDK's built-in `autoResize` and to the host — see the
+ * "Sizing" note below. This mirrors PostHog's shipping MCP UI apps, which
+ * render correctly in Claude Desktop.
  */
 import { App, PostMessageTransport, type McpUiHostContext } from "@modelcontextprotocol/ext-apps";
 import * as echarts from "echarts";
@@ -27,20 +27,14 @@ interface ChartsStructuredContent {
   charts?: ChartOutput[];
 }
 
-const DEFAULT_VIEW_WIDTH = 640;
-
 let isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
 let hasCharts = false;
-// Width the host has committed to for this view (see the "Sizing" note on
-// reportSize). Starts at the default until the host tells us its bounds.
-let containerWidth = DEFAULT_VIEW_WIDTH;
 
 const body = document.body;
 const chartsEl = document.getElementById("charts")!;
 
 function collapse() {
   body.classList.add("collapsed");
-  reportSize(true);
 }
 
 function show() {
@@ -68,50 +62,16 @@ function applyHostContext(ctx: McpUiHostContext | undefined) {
     }
     tag.textContent = ctx.styles.css.fonts;
   }
-  applyContainerWidth(ctx.containerDimensions);
   reRenderAll();
 }
 
 // ─── Sizing ─────────────────────────────────────────────────────────────
-// We DON'T use the SDK's built-in autoResize: it reports `window.innerWidth`
-// for width, which is just an echo of whatever width the host already gave
-// the iframe. Claude Desktop starts the iframe at width 0 and grows it from
-// the width WE report — so echoing innerWidth reports 0 forever and the
-// widget renders flat (0-wide, "flashes then gone"). Instead we report the
-// concrete width the host advertised in `containerDimensions`, which the
-// host can actually act on to size the iframe. Height stays content-driven.
-function applyContainerWidth(dim: McpUiHostContext["containerDimensions"]) {
-  const root = document.documentElement;
-  containerWidth = DEFAULT_VIEW_WIDTH;
-  if (dim && "width" in dim && dim.width) containerWidth = dim.width;
-  else if (dim && "maxWidth" in dim && dim.maxWidth) containerWidth = dim.maxWidth;
-  root.style.width = `${containerWidth}px`;
-
-  if (dim && "height" in dim && dim.height) {
-    root.style.height = "100vh";
-  } else if (dim && "maxHeight" in dim && dim.maxHeight) {
-    root.style.maxHeight = `${dim.maxHeight}px`;
-  }
-  reportSize();
-}
-
-/**
- * Report our size to the host. Width = the host-advertised container width
- * (never a measured/echoed value — see the note on applyContainerWidth).
- * Height = measured content height. `collapsed` reports 0×0 so the host
- * removes the box entirely.
- */
-function reportSize(collapsed = false) {
-  if (!connected) return;
-  app.sendSizeChanged(
-    collapsed
-      ? { width: 0, height: 0 }
-      : {
-          width: containerWidth,
-          height: Math.ceil(body.getBoundingClientRect().height),
-        },
-  );
-}
+// We do NOT manage width. The host (Claude Desktop, etc.) sizes the iframe
+// to its layout slot and our content is width:100%, so it just fills it. The
+// SDK's built-in `autoResize` reports the measured height so the host can
+// grow the iframe vertically. This mirrors PostHog's shipping MCP UI apps,
+// which render correctly in Claude Desktop. Earlier attempts to set or report
+// a width ourselves fought the host and produced the flat/0-width widget.
 
 function reRenderAll() {
   document.querySelectorAll<HTMLElement>(".chart-echart").forEach((el) => {
@@ -222,12 +182,10 @@ function renderCharts(charts: ChartOutput[]) {
 }
 
 // ─── MCP Apps wiring ──────────────────────────────────────────────────────
-let connected = false;
-
 const app = new App(
   { name: "signal-insights-chart-viewer", version: "1.0.0" },
   { availableDisplayModes: ["inline"] },
-  { autoResize: false }, // we report size ourselves — see reportSize()
+  { autoResize: true }, // SDK observes body/root and reports size to the host
 );
 
 app.ontoolresult = (result) => {
@@ -236,7 +194,6 @@ app.ontoolresult = (result) => {
     hasCharts = true;
     show();
     renderCharts(sc.charts);
-    reportSize();
   } else if (!hasCharts) {
     // Only collapse if we never rendered. A later empty re-delivery (e.g.
     // session restore without structuredContent) must not wipe an
@@ -256,11 +213,7 @@ app.onteardown = () => ({});
 app
   .connect(new PostMessageTransport(window.parent, window.parent))
   .then(() => {
-    connected = true;
     applyHostContext(app.getHostContext());
-    // Re-report whenever content reflows (chart appears, fonts load, etc.).
-    new ResizeObserver(() => reportSize()).observe(body);
-    reportSize();
   })
   .catch((err) => {
     console.error("[chart-viewer] failed to connect to host", err);

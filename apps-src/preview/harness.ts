@@ -58,6 +58,15 @@ function buildDevHtml(template: string, devScriptTag: string): string {
   return template.replace(scriptTagPattern, devScriptTag);
 }
 
+const FALLBACK_WIDTH = 400;
+
+/** The width the host commits to for the iframe up front (Claude-like). */
+function resolveInitialWidth(dim: McpUiHostContext["containerDimensions"]): number {
+  if (dim && "width" in dim && dim.width) return dim.width;
+  if (dim && "maxWidth" in dim && dim.maxWidth) return dim.maxWidth;
+  return FALLBACK_WIDTH;
+}
+
 export function readContainerDimensions(
   modeSelect: HTMLSelectElement,
   valueInput: HTMLInputElement,
@@ -88,15 +97,15 @@ export function createHarness(
     bridge?.close().catch(() => {});
     bridge = null;
 
-    // Faithfully mimic Claude Desktop: the iframe starts at 0×0 and the host
-    // grows BOTH dimensions from whatever the guest reports via
-    // `size-changed`. This is the crucial part of the harness — an earlier
-    // version pre-seeded a CSS width, which masked the real bug (a guest that
-    // reports width:0, e.g. via the SDK's innerWidth-echo autoResize, renders
-    // flat). The guest must report a real, host-advertised width for anything
-    // to show; if this harness shows a flat 0-wide widget, so will Claude.
+    // Model Claude Desktop faithfully: the HOST sizes the iframe WIDTH up
+    // front (to the container bounds it advertises) and only grows HEIGHT
+    // from what the guest reports. The guest never manages width — its
+    // width:100% content just fills the host-given width (this is how
+    // PostHog's shipping apps work in Claude). Starting the iframe at width 0
+    // would be wrong: the SDK's innerWidth-echo autoResize would report 0 and
+    // render flat, which does NOT happen in real Claude.
     const ctx = getHostContext();
-    iframe.style.width = "0px";
+    iframe.style.width = `${resolveInitialWidth(ctx.containerDimensions)}px`;
     iframe.style.height = "0px";
 
     // Wait for the srcdoc document to load before wiring the transport — the
@@ -118,8 +127,11 @@ export function createHarness(
           { hostContext: ctx },
         );
 
+        // Height is content-driven (grow from reported height). Width stays
+        // host-authoritative (seeded above); the reported width is just the
+        // SDK's innerWidth echo of the width we already gave, so applying it
+        // is a harmless no-op.
         b.onsizechange = ({ width, height }) => {
-          if (width != null) iframe.style.width = `${width}px`;
           if (height != null) iframe.style.height = `${height}px`;
           log(logEl, `size-changed → ${width ?? "?"}×${height ?? "?"}`);
         };
