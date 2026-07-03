@@ -149,6 +149,7 @@
       // ─── Lifecycle: ui/initialize → initialized (per SEP-1865 §Lifecycle) ─────
       request("ui/initialize", {
         protocolVersion: "2026-01-26",
+        appInfo: { name: "signal-insights-chart-viewer", version: "1.0.0" },
         appCapabilities: { availableDisplayModes: ["inline"] },
       })
         .then((result) => {
