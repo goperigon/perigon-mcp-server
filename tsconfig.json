@@ -43,5 +43,10 @@
     }
   },
   "exclude": ["test"],
-  "include": ["worker-configuration.d.ts", "worker/**/*.ts", "src/**/*"]
+  "include": [
+    "worker-configuration.d.ts",
+    "worker/**/*.ts",
+    "src/**/*",
+    "apps-src/**/*"
+  ]
 }

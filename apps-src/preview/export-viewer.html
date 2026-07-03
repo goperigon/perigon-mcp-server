@@ -1,0 +1,119 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Export Viewer Preview</title>
+    <style>
+      body {
+        font-family: system-ui;
+        margin: 40px auto;
+        max-width: 900px;
+      }
+      h2 {
+        margin-bottom: 4px;
+      }
+      .hint {
+        color: #777;
+        font-size: 13px;
+        margin-bottom: 16px;
+      }
+      .controls,
+      .sizing {
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .sizing {
+        padding: 10px;
+        background: #f7f7f8;
+        border-radius: 8px;
+        border: 1px solid #eee;
+      }
+      .sizing label {
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+      button {
+        padding: 6px 14px;
+        border-radius: 6px;
+        border: 1px solid #ccc;
+        background: #f5f5f5;
+        cursor: pointer;
+        font-size: 13px;
+      }
+      button:hover {
+        background: #e8e8e8;
+      }
+      button.active {
+        background: #4a7dff;
+        color: white;
+        border-color: #4a7dff;
+      }
+      .frame-shell {
+        border: 1px dashed #ccc;
+        border-radius: 8px;
+        padding: 8px;
+        display: inline-block;
+        min-width: 40px;
+        min-height: 40px;
+      }
+      iframe {
+        display: block;
+        border: none;
+        transition: width 0.15s ease;
+      }
+      #log {
+        margin-top: 16px;
+        font: 11px/1.4 ui-monospace, monospace;
+        color: #666;
+        white-space: pre-wrap;
+        max-height: 120px;
+        overflow: auto;
+        background: #fafafa;
+        border: 1px solid #eee;
+        border-radius: 6px;
+        padding: 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>Export Viewer Preview</h2>
+    <div class="hint">
+      Drives the real ext-apps guest (apps-src/export-viewer/main.ts) via
+      AppBridge. Use the sizing controls to reproduce host container-dimension
+      modes (fixed / flexible / unbounded).
+    </div>
+
+    <div class="sizing">
+      <label
+        >Width mode:
+        <select id="width-mode">
+          <option value="fixed">fixed (width)</option>
+          <option value="flexible" selected>flexible (maxWidth)</option>
+          <option value="unbounded">unbounded (no width hint)</option>
+        </select>
+      </label>
+      <label>Width value: <input id="width-value" type="number" value="420" min="100" max="1000" style="width: 70px" /></label>
+      <button id="remount">Remount (re-run ui/initialize)</button>
+    </div>
+
+    <div class="controls">
+      <button data-export="small" class="active">Small table</button>
+      <button data-export="large">Large table (25/128 rows)</button>
+      <button data-export="empty">Empty result</button>
+      <button data-export="__none__">No structuredContent (collapse)</button>
+    </div>
+
+    <div class="frame-shell">
+      <iframe id="viewer" title="export-viewer guest" sandbox="allow-scripts allow-same-origin"></iframe>
+    </div>
+
+    <div id="log"></div>
+
+    <script type="module" src="/preview/export-viewer-preview.ts"></script>
+  </body>
+</html>

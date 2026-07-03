@@ -50,6 +50,11 @@
     "VITE_TURNSTILE_SITE_KEY": "0x4AAAAAABihR9-NN72ssFjf",
     "VITE_USE_TURNSTILE": false,
     "POKEY_SIGNAL_INSIGHTS_BASE_URL": "https://api.perigon.io/pokey",
+    // Origin serving the built MCP Apps guest JS bundles (dist/client/apps/*.js
+    // via the ASSETS binding). Referenced by ui:// resource HTML so the guest
+    // viewer script loads from a stable, environment-correct URL instead of
+    // being inlined into the worker script bundle.
+    "APPS_BASE_URL": "https://local-mcp.perigon.io:5173",
   },
   "unsafe": {
     "bindings": [
@@ -114,6 +119,7 @@
         "VITE_TURNSTILE_SITE_KEY": "0x4AAAAAABihR9-NN72ssFjf",
         "VITE_USE_TURNSTILE": true,
         "POKEY_SIGNAL_INSIGHTS_BASE_URL": "https://api.perigon.io/pokey",
+        "APPS_BASE_URL": "https://mcp.perigon.io",
       },
       "unsafe": {
         "bindings": [
