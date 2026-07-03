@@ -197,11 +197,14 @@
         });
 
       // ─── Size reporting (per SEP-1865 §Container Dimensions) ──────────────────
+      // Report HEIGHT ONLY. Width is host-owned (the host sizes the iframe to
+      // its layout slot and we fill it). Reporting width made the host size the
+      // iframe to our measured content width, which with width:100% content
+      // collapses to 0 and never recovers.
       const sizeObs = new ResizeObserver((entries) => {
         const r = entries[0]?.contentRect;
         if (r)
           notify("ui/notifications/size-changed", {
-            width: Math.round(r.width),
             height: Math.round(r.height),
           });
       });
@@ -209,7 +212,7 @@
 
       function collapse() {
         document.body.classList.add("collapsed");
-        notify("ui/notifications/size-changed", { width: 0, height: 0 });
+        notify("ui/notifications/size-changed", { height: 0 });
       }
 
       // ─── Theming (per SEP-1865 §Theming) ──────────────────────────────────────
@@ -232,21 +235,14 @@
         }
       }
 
-      // Fallback width (px) when the host provides no width hint. Without a
-      // concrete width the view's width:100% content collapses to 0 and the
-      // host (flexible-width mode) sizes the iframe to 0px.
-      var DEFAULT_VIEW_WIDTH = 640;
-
       function applyContainerDimensions(dim) {
         const root = document.documentElement;
 
-        if (dim && "width" in dim) {
-          root.style.width = dim.width + "px";
-        } else if (dim && "maxWidth" in dim && dim.maxWidth) {
-          root.style.width = dim.maxWidth + "px";
+        // Width is host-owned: fill the iframe the host gives us, optionally
+        // capped to maxWidth. Never set a fixed pixel width or report width.
+        root.style.width = "100%";
+        if (dim && "maxWidth" in dim && dim.maxWidth) {
           root.style.maxWidth = dim.maxWidth + "px";
-        } else {
-          root.style.width = DEFAULT_VIEW_WIDTH + "px";
         }
 
         if (dim && "height" in dim) {

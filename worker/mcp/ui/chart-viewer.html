@@ -163,11 +163,15 @@
         });
 
       // ─── Size reporting (per SEP-1865 §Container Dimensions) ──────────────────
+      // Report HEIGHT ONLY. Width is host-owned: the host sizes the iframe to
+      // its layout slot and we fill it. Reporting width made the host size the
+      // iframe to our measured content width — which, with width:100% content,
+      // collapses to 0 and stays there (the view can never report a nonzero
+      // width it doesn't already have). Never reporting width avoids that trap.
       const sizeObs = new ResizeObserver((entries) => {
         const r = entries[0]?.contentRect;
         if (r)
           notify("ui/notifications/size-changed", {
-            width: Math.round(r.width),
             height: Math.round(r.height),
           });
       });
@@ -175,7 +179,7 @@
 
       function collapse() {
         document.body.classList.add("collapsed");
-        notify("ui/notifications/size-changed", { width: 0, height: 0 });
+        notify("ui/notifications/size-changed", { height: 0 });
       }
 
       // ─── Theming (per SEP-1865 §Theming) ──────────────────────────────────────
@@ -202,24 +206,16 @@
         reRenderAll();
       }
 
-      // Fallback width (px) when the host provides no width hint. Without a
-      // concrete width the view's width:100% content collapses to 0 and the
-      // host (flexible-width mode) sizes the iframe to 0px — charts render but
-      // are invisible.
-      var DEFAULT_VIEW_WIDTH = 640;
-
       function applyContainerDimensions(dim) {
         const root = document.documentElement;
 
-        // Width: always resolve to a concrete value so chart layout has a
-        // definite width to fill.
-        if (dim && "width" in dim) {
-          root.style.width = dim.width + "px";
-        } else if (dim && "maxWidth" in dim && dim.maxWidth) {
-          root.style.width = dim.maxWidth + "px";
+        // Width is host-owned: fill the iframe the host gives us, optionally
+        // capped to maxWidth. We never set a fixed pixel width or report width
+        // back — that lets the host own width layout and avoids the 0-width
+        // feedback loop.
+        root.style.width = "100%";
+        if (dim && "maxWidth" in dim && dim.maxWidth) {
           root.style.maxWidth = dim.maxWidth + "px";
-        } else {
-          root.style.width = DEFAULT_VIEW_WIDTH + "px";
         }
 
         // Height stays content-driven unless the host fixes it.
