@@ -34,6 +34,15 @@ if (!entryName || !ENTRIES[entryName]) {
 }
 
 export default defineConfig({
+  // CRITICAL: replace `process.env.NODE_ENV` at build time. Deps like ECharts
+  // guard dev-only code with `process.env.NODE_ENV !== "production"`. Vite's
+  // DEV server auto-defines this, but `build.lib` does NOT — so without this
+  // the production IIFE ships raw `process.env.NODE_ENV`, and since `process`
+  // doesn't exist in the sandboxed iframe the guest throws
+  // `ReferenceError: process is not defined` on load and renders nothing.
+  define: {
+    "process.env.NODE_ENV": JSON.stringify("production"),
+  },
   build: {
     outDir: "dist/client/apps",
     emptyOutDir: false,
