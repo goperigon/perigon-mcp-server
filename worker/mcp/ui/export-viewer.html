@@ -123,6 +123,15 @@
       // ─── State ────────────────────────────────────────────────────────────────
       let hostContext = null;
 
+      // The host derives the iframe width from the width we report, so we report
+      // a stable width taken from the host-provided container bounds — NOT the
+      // measured content width (circular; collapses to 0).
+      const DEFAULT_VIEW_WIDTH = 640;
+      let containerWidth = DEFAULT_VIEW_WIDTH;
+
+      // Once the table has rendered, a later empty tool-result must not wipe it.
+      let hasTable = false;
+
       // ─── JSON-RPC transport (per SEP-1865 §Communication Protocol) ────────────
       const pending = new Map();
       let nextId = 0;
@@ -164,9 +173,10 @@
         if (msg.method === "ui/notifications/tool-result") {
           const sc = msg.params?.structuredContent;
           if (sc?.export) {
+            hasTable = true;
             document.body.classList.remove("collapsed");
             renderTable(sc.export);
-          } else {
+          } else if (!hasTable) {
             collapse();
           }
           return;
@@ -176,6 +186,8 @@
 
         if (msg.method === "ui/notifications/host-context-changed") {
           applyHostContext(msg.params);
+          if (msg.params?.containerDimensions)
+            applyContainerDimensions(msg.params.containerDimensions);
           return;
         }
       });
@@ -197,22 +209,21 @@
         });
 
       // ─── Size reporting (per SEP-1865 §Container Dimensions) ──────────────────
-      // Report HEIGHT ONLY. Width is host-owned (the host sizes the iframe to
-      // its layout slot and we fill it). Reporting width made the host size the
-      // iframe to our measured content width, which with width:100% content
-      // collapses to 0 and never recovers.
-      const sizeObs = new ResizeObserver((entries) => {
-        const r = entries[0]?.contentRect;
-        if (r)
-          notify("ui/notifications/size-changed", {
-            height: Math.round(r.height),
-          });
-      });
+      // Width = the host-provided container width (stable, non-circular).
+      // Height = measured content height (content-driven).
+      function reportSize() {
+        notify("ui/notifications/size-changed", {
+          width: containerWidth,
+          height: Math.round(document.body.getBoundingClientRect().height),
+        });
+      }
+
+      const sizeObs = new ResizeObserver(() => reportSize());
       sizeObs.observe(document.body);
 
       function collapse() {
         document.body.classList.add("collapsed");
-        notify("ui/notifications/size-changed", { height: 0 });
+        notify("ui/notifications/size-changed", { width: 0, height: 0 });
       }
 
       // ─── Theming (per SEP-1865 §Theming) ──────────────────────────────────────
@@ -238,18 +249,21 @@
       function applyContainerDimensions(dim) {
         const root = document.documentElement;
 
-        // Width is host-owned: fill the iframe the host gives us, optionally
-        // capped to maxWidth. Never set a fixed pixel width or report width.
-        root.style.width = "100%";
-        if (dim && "maxWidth" in dim && dim.maxWidth) {
-          root.style.maxWidth = dim.maxWidth + "px";
-        }
+        // Resolve a concrete width from the host bounds and report it back so
+        // the host sizes the iframe to match.
+        if (dim && "width" in dim) containerWidth = dim.width;
+        else if (dim && "maxWidth" in dim && dim.maxWidth)
+          containerWidth = dim.maxWidth;
+        else containerWidth = DEFAULT_VIEW_WIDTH;
+        root.style.width = containerWidth + "px";
 
         if (dim && "height" in dim) {
           root.style.height = "100vh";
         } else if (dim && "maxHeight" in dim && dim.maxHeight) {
           root.style.maxHeight = dim.maxHeight + "px";
         }
+
+        reportSize();
       }
 
       // ─── Rendering ────────────────────────────────────────────────────────────
