@@ -232,15 +232,28 @@
         }
       }
 
+      // Fallback width (px) when the host provides no width hint. Without a
+      // concrete width the view's width:100% content collapses to 0 and the
+      // host (flexible-width mode) sizes the iframe to 0px.
+      var DEFAULT_VIEW_WIDTH = 640;
+
       function applyContainerDimensions(dim) {
-        if (!dim) return;
         const root = document.documentElement;
-        if ("height" in dim) root.style.height = "100vh";
-        else if ("maxHeight" in dim && dim.maxHeight)
-          root.style.maxHeight = dim.maxHeight + "px";
-        if ("width" in dim) root.style.width = "100vw";
-        else if ("maxWidth" in dim && dim.maxWidth)
+
+        if (dim && "width" in dim) {
+          root.style.width = dim.width + "px";
+        } else if (dim && "maxWidth" in dim && dim.maxWidth) {
+          root.style.width = dim.maxWidth + "px";
           root.style.maxWidth = dim.maxWidth + "px";
+        } else {
+          root.style.width = DEFAULT_VIEW_WIDTH + "px";
+        }
+
+        if (dim && "height" in dim) {
+          root.style.height = "100vh";
+        } else if (dim && "maxHeight" in dim && dim.maxHeight) {
+          root.style.maxHeight = dim.maxHeight + "px";
+        }
       }
 
       // ─── Rendering ────────────────────────────────────────────────────────────
