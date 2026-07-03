@@ -58,15 +58,6 @@ function buildDevHtml(template: string, devScriptTag: string): string {
   return template.replace(scriptTagPattern, devScriptTag);
 }
 
-const FALLBACK_WIDTH = 400;
-
-/** The width a well-behaved host commits to up front (see mount()'s note). */
-function resolveInitialWidth(dim: McpUiHostContext["containerDimensions"]): number {
-  if (dim && "width" in dim && dim.width) return dim.width;
-  if (dim && "maxWidth" in dim && dim.maxWidth) return dim.maxWidth;
-  return FALLBACK_WIDTH;
-}
-
 export function readContainerDimensions(
   modeSelect: HTMLSelectElement,
   valueInput: HTMLInputElement,
@@ -83,68 +74,83 @@ export function createHarness(
   getHostContext: () => McpUiHostContext,
 ): Harness {
   const { iframe, template, devScriptTag, appName, logEl } = opts;
-  let bridge!: AppBridge;
+  let bridge: AppBridge | null = null;
   let pendingResult: CallToolResult | null = null;
+  let mountToken = 0;
 
   function mount() {
-    // IMPORTANT: the ext-apps App class's built-in auto-resize reports
-    // `window.innerWidth` for width — i.e. an ECHO of the iframe's current
-    // CSS width, not a value it computes from content. A host that starts
-    // the iframe at width:0 and waits for the guest to "report" a width gets
-    // 0 forever (the guest has no way to discover a size the host never gave
-    // it). Width must be HOST-SEEDED before the guest connects; `sendSizeChanged`
-    // is a confirmation echo, not a discovery mechanism. Only height is
-    // genuinely content-driven and safe to start unset.
-    const ctx = getHostContext();
-    iframe.style.width = `${resolveInitialWidth(ctx.containerDimensions)}px`;
-    iframe.style.height = "0px";
-    iframe.srcdoc = buildDevHtml(template, devScriptTag);
+    const token = ++mountToken;
 
-    bridge = new AppBridge(
-      null,
-      { name: `${appName}-preview-harness`, version: "1.0.0" },
-      { openLinks: {}, logging: {} },
-      { hostContext: ctx },
+    // Tear down the previous bridge so its message listener stops responding.
+    // Without this, remounts accumulate stale bridges (each with a live
+    // window listener) that keep posting old host context — an artifact that
+    // does not exist in a real host (one bridge per view, no reuse).
+    bridge?.close().catch(() => {});
+    bridge = null;
+
+    // Faithfully mimic Claude Desktop: the iframe starts at 0×0 and the host
+    // grows BOTH dimensions from whatever the guest reports via
+    // `size-changed`. This is the crucial part of the harness — an earlier
+    // version pre-seeded a CSS width, which masked the real bug (a guest that
+    // reports width:0, e.g. via the SDK's innerWidth-echo autoResize, renders
+    // flat). The guest must report a real, host-advertised width for anything
+    // to show; if this harness shows a flat 0-wide widget, so will Claude.
+    const ctx = getHostContext();
+    iframe.style.width = "0px";
+    iframe.style.height = "0px";
+
+    // Wait for the srcdoc document to load before wiring the transport — the
+    // contentWindow is only stable/correct after the new document exists.
+    iframe.addEventListener(
+      "load",
+      () => {
+        if (token !== mountToken) return; // superseded by a newer mount
+        const win = iframe.contentWindow;
+        if (!win) {
+          log(logEl, "no contentWindow after load");
+          return;
+        }
+
+        const b = new AppBridge(
+          null,
+          { name: `${appName}-preview-harness`, version: "1.0.0" },
+          { openLinks: {}, logging: {} },
+          { hostContext: ctx },
+        );
+
+        b.onsizechange = ({ width, height }) => {
+          if (width != null) iframe.style.width = `${width}px`;
+          if (height != null) iframe.style.height = `${height}px`;
+          log(logEl, `size-changed → ${width ?? "?"}×${height ?? "?"}`);
+        };
+        b.onloggingmessage = ({ level, data }) => {
+          log(logEl, `guest ${level}: ${JSON.stringify(data)}`);
+        };
+        b.oninitialized = () => {
+          log(logEl, "view initialized");
+          if (pendingResult) b.sendToolResult(pendingResult);
+        };
+
+        bridge = b;
+        b.connect(new PostMessageTransport(win, win)).catch((err: unknown) => {
+          log(logEl, `connect failed: ${String(err)}`);
+        });
+      },
+      { once: true },
     );
 
-    // Width is deliberately NOT applied from this notification: the guest's
-    // built-in auto-resize reports `window.innerWidth`, i.e. an ECHO of
-    // whatever width the host already gave the iframe — never a value
-    // discovered from content. Applying it back is circular, and the first
-    // observer tick fires before layout settles (still reading the
-    // pre-seed 0), which would permanently stomp the seeded width. Width
-    // stays host-authoritative and static per mount; only height responds.
-    bridge.onsizechange = ({ width, height }) => {
-      if (height != null) iframe.style.height = `${height}px`;
-      log(logEl, `size-changed → width(echo)=${width ?? "?"} height=${height ?? "?"}`);
-    };
-
-    bridge.onloggingmessage = ({ level, data }) => {
-      log(logEl, `guest ${level}: ${JSON.stringify(data)}`);
-    };
-
-    bridge.oninitialized = () => {
-      log(logEl, "view initialized");
-      if (pendingResult) bridge.sendToolResult(pendingResult);
-    };
-
-    const win = iframe.contentWindow;
-    if (!win) throw new Error("iframe.contentWindow not available after setting srcdoc");
-    const transport = new PostMessageTransport(win, win);
-    bridge.connect(transport).catch((err: unknown) => {
-      log(logEl, `connect failed: ${String(err)}`);
-    });
+    iframe.srcdoc = buildDevHtml(template, devScriptTag);
   }
 
   mount();
 
   return {
     get bridge() {
-      return bridge;
+      return bridge as AppBridge;
     },
     sendResult(result) {
       pendingResult = result;
-      bridge.sendToolResult(result);
+      bridge?.sendToolResult(result);
     },
     remount: mount,
   } as Harness;

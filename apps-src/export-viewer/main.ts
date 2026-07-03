@@ -3,8 +3,8 @@
  *
  * Rendered in a sandboxed iframe after signal_insights_export_events runs.
  * Built with the official `@modelcontextprotocol/ext-apps` SDK: the `App`
- * class owns the `ui/initialize` handshake and auto-resize reporting, so
- * this file only implements table-specific rendering.
+ * class owns the `ui/initialize` handshake. We disable the SDK's autoResize
+ * and report size ourselves — see chart-viewer/main.ts's "Sizing" note.
  */
 import { App, PostMessageTransport, type McpUiHostContext } from "@modelcontextprotocol/ext-apps";
 
@@ -23,12 +23,15 @@ const DEFAULT_VIEW_WIDTH = 640;
 const COLLAPSED_ROWS = 10;
 
 let hasTable = false;
+let containerWidth = DEFAULT_VIEW_WIDTH;
+let connected = false;
 
 const body = document.body;
 const exportEl = document.getElementById("export")!;
 
 function collapse() {
   body.classList.add("collapsed");
+  reportSize(true);
 }
 
 function show() {
@@ -56,20 +59,33 @@ function applyHostContext(ctx: McpUiHostContext | undefined) {
   applyContainerWidth(ctx.containerDimensions);
 }
 
-// See chart-viewer/main.ts for why width is resolved to a concrete host
-// value rather than reported from measured (circular, width:100%) content.
+// See chart-viewer/main.ts's "Sizing" note for why we report the host's
+// advertised container width rather than the SDK's echoed innerWidth.
 function applyContainerWidth(dim: McpUiHostContext["containerDimensions"]) {
   const root = document.documentElement;
-  let width = DEFAULT_VIEW_WIDTH;
-  if (dim && "width" in dim && dim.width) width = dim.width;
-  else if (dim && "maxWidth" in dim && dim.maxWidth) width = dim.maxWidth;
-  root.style.width = `${width}px`;
+  containerWidth = DEFAULT_VIEW_WIDTH;
+  if (dim && "width" in dim && dim.width) containerWidth = dim.width;
+  else if (dim && "maxWidth" in dim && dim.maxWidth) containerWidth = dim.maxWidth;
+  root.style.width = `${containerWidth}px`;
 
   if (dim && "height" in dim && dim.height) {
     root.style.height = "100vh";
   } else if (dim && "maxHeight" in dim && dim.maxHeight) {
     root.style.maxHeight = `${dim.maxHeight}px`;
   }
+  reportSize();
+}
+
+function reportSize(collapsed = false) {
+  if (!connected) return;
+  app.sendSizeChanged(
+    collapsed
+      ? { width: 0, height: 0 }
+      : {
+          width: containerWidth,
+          height: Math.ceil(body.getBoundingClientRect().height),
+        },
+  );
 }
 
 // ─── Rendering ────────────────────────────────────────────────────────────
@@ -213,7 +229,7 @@ function renderTable(data: ExportData) {
 const app = new App(
   { name: "signal-insights-export-viewer", version: "1.0.0" },
   { availableDisplayModes: ["inline"] },
-  { autoResize: true },
+  { autoResize: false }, // we report size ourselves — see reportSize()
 );
 
 app.ontoolresult = (result) => {
@@ -222,6 +238,7 @@ app.ontoolresult = (result) => {
     hasTable = true;
     show();
     renderTable(sc.export);
+    reportSize();
   } else if (!hasTable) {
     collapse();
   }
@@ -236,7 +253,10 @@ app.onteardown = () => ({});
 app
   .connect(new PostMessageTransport(window.parent, window.parent))
   .then(() => {
+    connected = true;
     applyHostContext(app.getHostContext());
+    new ResizeObserver(() => reportSize()).observe(body);
+    reportSize();
   })
   .catch((err) => {
     console.error("[export-viewer] failed to connect to host", err);

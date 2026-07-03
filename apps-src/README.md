@@ -81,22 +81,46 @@ directly (`/chart-viewer/main.ts`) and transformed live by Vite — no build
 step needed while iterating.
 
 **Sizing controls matter.** The harness lets you simulate the host's
-`containerDimensions` mode (fixed width / flexible maxWidth / unbounded) —
-this is deliberate, because a static-width harness (the old one) can never
-reproduce host-driven sizing bugs. Two important, non-obvious findings from
-building this:
+`containerDimensions` mode (fixed width / flexible maxWidth / unbounded) with
+the iframe starting at 0×0 and growing purely from what the guest reports —
+faithfully mimicking Claude Desktop. This is deliberate: a static-width
+harness (the original one) gave the iframe a real width up front and could
+never reproduce the flat-widget bug.
 
-1. **Width must be host-seeded before the guest connects.** The `App`
-   class's built-in auto-resize reports `window.innerWidth` for width — an
-   ECHO of whatever width the host has already given the iframe, not a value
-   discovered from content. A host that starts the iframe at `width: 0` and
-   waits for the guest to "report" a width gets `0` forever. See
-   `harness.ts`'s `mount()` for the seeding logic real hosts must replicate.
-2. **Never apply the echoed width back to the iframe** in `onsizechange` —
-   only apply height. Applying the echo is circular, and the very first
-   observer tick can fire before layout settles (still reading the pre-seed
-   value), permanently stomping a correctly-seeded width.
+### Why we disable the SDK's `autoResize` (the core sizing fix)
 
-If Claude Desktop (or another host) ever shows a 0-width chart again, these
-two points are the first thing to check on the host side — it's very likely
-the host isn't seeding an initial width, not a bug in the guest.
+The `ext-apps` `App` class's built-in `autoResize` reports **`window.innerWidth`**
+for width — an ECHO of whatever width the host has already given the iframe,
+not a value derived from content. Claude Desktop starts the iframe at width 0
+and grows it from the width the guest reports. So with `autoResize: true`,
+the guest reports `innerWidth` = 0 → host keeps it at 0 → the widget renders
+flat ("flashes then gone"). It's a deadlock the guest can never escape by
+echoing.
+
+The fix (see `reportSize()` in each guest `main.ts`): construct the `App`
+with `{ autoResize: false }` and report size ourselves —
+
+- **width** = the concrete width the host advertised in
+  `hostContext.containerDimensions` (`width` → `maxWidth` → a `640` default),
+  never a measured/echoed value. The host can actually act on this to size
+  the iframe.
+- **height** = measured content height (`body.getBoundingClientRect().height`).
+
+If Claude Desktop ever shows a flat/0-width widget again, check that
+`hostContext.containerDimensions` still carries a usable width (or that our
+default is being applied) — not the SDK's `innerWidth` echo path.
+
+### Harness fidelity notes
+
+- The harness starts the iframe at 0×0 and applies BOTH reported width and
+  height (`onsizechange`) — i.e. it trusts the guest's reported width, like
+  Claude. If a change here shows a flat widget, so will Claude.
+- `remount()` closes the previous `AppBridge` and waits for the iframe
+  `load` event before wiring the transport. An earlier version did neither,
+  leaking stale bridges that kept posting old host context — a pure harness
+  artifact (a real host has one bridge per view) that produced very
+  confusing "stuck at the previous width" behavior.
+- Vite's dev server has not reliably hot-reloaded edits to these files in
+  this environment; if the browser seems to run stale code, fully restart
+  `bun run dev:apps` (and make sure no old instance is still holding the
+  port — `lsof -nP -iTCP:5174-5178 -sTCP:LISTEN`).
