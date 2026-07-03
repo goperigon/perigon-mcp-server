@@ -1,0 +1,526 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
+    <title>Signal Insights Charts</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@6.1.0/dist/echarts.min.js"></script>
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      html,
+      body {
+        background: transparent;
+        color: var(--color-text-primary, light-dark(#333, #e0e0e0));
+        font-family: var(
+          --font-sans,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          Roboto,
+          sans-serif
+        );
+        font-size: 13px;
+      }
+
+      body {
+        padding: 4px 0;
+      }
+      body.collapsed {
+        display: none !important;
+      }
+
+      #charts {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .chart-wrap {
+        border-radius: 8px;
+        overflow: hidden;
+      }
+
+      .chart-title {
+        padding: 6px 8px 2px;
+        font-size: 12px;
+        font-weight: 500;
+        opacity: 0.7;
+      }
+
+      .chart-echart {
+        width: 100%;
+        height: 300px;
+      }
+
+      .chart-img img {
+        width: 100%;
+        display: block;
+        border-radius: 6px;
+      }
+
+      .chart-unknown {
+        padding: 8px;
+        font-size: 11px;
+        opacity: 0.4;
+        font-family: var(--font-mono, monospace);
+        white-space: pre-wrap;
+        word-break: break-all;
+      }
+    </style>
+  </head>
+  <body class="collapsed">
+    <div id="charts"></div>
+
+    <script>
+      // ─── State ────────────────────────────────────────────────────────────────
+      let isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      let hostContext = null;
+
+      // ─── JSON-RPC transport (per SEP-1865 §Communication Protocol) ────────────
+      const pending = new Map();
+      let nextId = 0;
+
+      function send(msg) {
+        window.parent.postMessage(msg, "*");
+      }
+
+      function request(method, params) {
+        return new Promise((resolve, reject) => {
+          const id = ++nextId;
+          pending.set(id, { resolve, reject });
+          send({ jsonrpc: "2.0", id, method, params: params ?? {} });
+        });
+      }
+
+      function notify(method, params) {
+        send({ jsonrpc: "2.0", method, params: params ?? {} });
+      }
+
+      // ─── Message handler ──────────────────────────────────────────────────────
+      window.addEventListener("message", (ev) => {
+        const msg = ev.data;
+        if (!msg || msg.jsonrpc !== "2.0") return;
+
+        // JSON-RPC response to a request we sent
+        if (msg.id !== undefined && pending.has(msg.id)) {
+          const { resolve, reject } = pending.get(msg.id);
+          pending.delete(msg.id);
+          msg.error ? reject(msg.error) : resolve(msg.result);
+          return;
+        }
+
+        // Teardown (has id → needs response)
+        if (msg.method === "ui/resource-teardown") {
+          if (msg.id !== undefined)
+            send({ jsonrpc: "2.0", id: msg.id, result: {} });
+          return;
+        }
+
+        // Tool result → render charts from structuredContent
+        if (msg.method === "ui/notifications/tool-result") {
+          const sc = msg.params?.structuredContent;
+          if (sc?.charts?.length) {
+            document.body.classList.remove("collapsed");
+            renderCharts(sc.charts);
+          } else {
+            collapse();
+          }
+          return;
+        }
+
+        // Tool input → ignore (we render on result)
+        if (msg.method === "ui/notifications/tool-input") return;
+
+        // Host context changed (theme, display mode, etc.)
+        if (msg.method === "ui/notifications/host-context-changed") {
+          applyHostContext(msg.params);
+          return;
+        }
+      });
+
+      // ─── Lifecycle: ui/initialize → initialized (per SEP-1865 §Lifecycle) ─────
+      request("ui/initialize", {
+        protocolVersion: "2026-01-26",
+        appInfo: { name: "signal-insights-chart-viewer", version: "1.0.0" },
+        appCapabilities: { availableDisplayModes: ["inline"] },
+      })
+        .then((result) => {
+          hostContext = result?.hostContext;
+          if (hostContext) applyHostContext(hostContext);
+          applyContainerDimensions(hostContext?.containerDimensions);
+          notify("ui/notifications/initialized", {});
+        })
+        .catch(() => {
+          notify("ui/notifications/initialized", {});
+        });
+
+      // ─── Size reporting (per SEP-1865 §Container Dimensions) ──────────────────
+      const sizeObs = new ResizeObserver((entries) => {
+        const r = entries[0]?.contentRect;
+        if (r)
+          notify("ui/notifications/size-changed", {
+            width: Math.round(r.width),
+            height: Math.round(r.height),
+          });
+      });
+      sizeObs.observe(document.body);
+
+      function collapse() {
+        document.body.classList.add("collapsed");
+        notify("ui/notifications/size-changed", { width: 0, height: 0 });
+      }
+
+      // ─── Theming (per SEP-1865 §Theming) ──────────────────────────────────────
+      function applyHostContext(ctx) {
+        if (!ctx) return;
+        if (ctx.theme !== undefined) {
+          isDark = ctx.theme === "dark";
+        }
+        if (ctx.styles?.variables) {
+          const root = document.documentElement;
+          for (const [k, v] of Object.entries(ctx.styles.variables)) {
+            if (v != null) root.style.setProperty(k, v);
+          }
+        }
+        if (ctx.styles?.css?.fonts) {
+          let tag = document.getElementById("host-fonts");
+          if (!tag) {
+            tag = document.createElement("style");
+            tag.id = "host-fonts";
+            document.head.appendChild(tag);
+          }
+          tag.textContent = ctx.styles.css.fonts;
+        }
+        reRenderAll();
+      }
+
+      function applyContainerDimensions(dim) {
+        if (!dim) return;
+        const root = document.documentElement;
+        if ("height" in dim) root.style.height = "100vh";
+        else if ("maxHeight" in dim && dim.maxHeight)
+          root.style.maxHeight = dim.maxHeight + "px";
+        if ("width" in dim) root.style.width = "100vw";
+        else if ("maxWidth" in dim && dim.maxWidth)
+          root.style.maxWidth = dim.maxWidth + "px";
+      }
+
+      function reRenderAll() {
+        document.querySelectorAll(".chart-echart").forEach((el) => {
+          const inst = echarts.getInstanceByDom(el);
+          if (inst) echarts.dispose(el);
+          if (el.__chartData) {
+            const opts = buildOptions(el.__chartData);
+            if (opts) initEChart(el, opts);
+          }
+        });
+      }
+
+      // ─── ECharts buildOptions (ported from E2BChart.tsx) ──────────────────────
+      var LABEL_PADDING = 12; // fixed gap between y-axis name and tick labels
+      var NAME_WIDTH = 14; // approximate width of rotated name text
+
+      function sharedOpts() {
+        var textColor = isDark ? "#ccc" : "#555";
+        return {
+          backgroundColor: "transparent",
+          textStyle: { color: textColor, fontSize: 11 },
+        };
+      }
+
+      /** Estimate pixel width of a formatted number at font-size 11. */
+      function estimateLabelWidth(value) {
+        var text = Math.abs(value).toLocaleString();
+        var width = 0;
+        for (var i = 0; i < text.length; i++) {
+          var ch = text[i];
+          if (ch === "," || ch === ".") width += 3.5;
+          else if (ch === "-") width += 5;
+          else width += 6.5;
+        }
+        return width;
+      }
+
+      /** Compute nameGap and grid.left from data values. */
+      function yAxisLayout(values) {
+        var maxVal = 0;
+        for (var i = 0; i < values.length; i++) {
+          var v = Math.abs(values[i]);
+          if (v > maxVal) maxVal = v;
+        }
+        var labelWidth = estimateLabelWidth(maxVal);
+        var nameGap = Math.ceil(labelWidth + LABEL_PADDING);
+        var left = Math.ceil(nameGap + NAME_WIDTH + 4);
+        return { nameGap: nameGap, left: left };
+      }
+
+      /** Extract all numeric y-values from chart data. */
+      function extractYValues(chart) {
+        var values = [];
+        if (chart.type === "line" || chart.type === "scatter") {
+          for (var e of chart.elements || [])
+            for (var p of e.points || []) values.push(Number(p[1]));
+        } else if (chart.type === "bar") {
+          for (var e of chart.elements || []) values.push(Number(e.value));
+        } else if (chart.type === "box_and_whisker") {
+          for (var e of chart.elements || []) {
+            values.push(e.min);
+            values.push(e.max);
+          }
+        }
+        return values;
+      }
+
+      // Hide legend for single-series; show at bottom for multi-series.
+      // Returns { legend, grid } with adjusted bottom spacing.
+      function layoutOpts(seriesCount, left, hasXAxisName) {
+        var textColor = isDark ? "#ccc" : "#555";
+        var grid = { top: 40, right: 12, left: left, containLabel: false };
+        if (seriesCount <= 1) {
+          return {
+            legend: { show: false },
+            grid: Object.assign({}, grid, { bottom: hasXAxisName ? 45 : 30 }),
+          };
+        }
+        return {
+          legend: { bottom: 5, textStyle: { color: textColor, fontSize: 11 } },
+          grid: Object.assign({}, grid, { bottom: hasXAxisName ? 90 : 55 }),
+        };
+      }
+
+      function axisDefaults() {
+        var lineColor = isDark
+          ? "rgba(255,255,255,0.08)"
+          : "rgba(0,0,0,0.08)";
+        var labelColor = isDark ? "#aaa" : "#666";
+        return {
+          axisLine: { lineStyle: { color: lineColor } },
+          splitLine: { lineStyle: { color: lineColor } },
+          axisLabel: { color: labelColor, fontSize: 11 },
+          nameTextStyle: { color: labelColor, fontSize: 11 },
+        };
+      }
+
+      function buildOptions(chart) {
+        var shared = sharedOpts();
+        var axis = axisDefaults();
+
+        if (chart.type === "line" || chart.type === "scatter") {
+          var yl = yAxisLayout(extractYValues(chart));
+          var layout = layoutOpts((chart.elements || []).length, yl.left, !!chart.x_label);
+          return {
+            ...shared,
+            ...layout,
+            xAxis: {
+              type: "category",
+              name: chart.x_label,
+              nameLocation: "middle",
+              nameGap: 40,
+              axisLabel: { ...axis.axisLabel, rotate: 30 },
+              ...axis,
+            },
+            yAxis: {
+              name: chart.y_label,
+              nameLocation: "middle",
+              nameGap: yl.nameGap,
+              ...axis,
+            },
+            tooltip: { trigger: "axis" },
+            series: (chart.elements || []).map((e) => ({
+              name: e.label,
+              type: chart.type,
+              data: (e.points || []).map((p) => [p[0], p[1]]),
+              smooth: chart.type === "line",
+              symbolSize: chart.type === "scatter" ? 6 : 4,
+            })),
+          };
+        }
+
+        if (chart.type === "bar") {
+          var groups = {};
+          for (var e of chart.elements || []) {
+            (groups[e.group] ??= []).push(e);
+          }
+          var yl = yAxisLayout(extractYValues(chart));
+          var layout = layoutOpts(Object.keys(groups).length, yl.left, !!chart.x_label);
+          return {
+            ...shared,
+            ...layout,
+            xAxis: {
+              type: "category",
+              name: chart.x_label,
+              nameLocation: "middle",
+              nameGap: 40,
+              axisLabel: { ...axis.axisLabel, rotate: 30 },
+              ...axis,
+            },
+            yAxis: {
+              name: chart.y_label,
+              nameLocation: "middle",
+              nameGap: yl.nameGap,
+              ...axis,
+            },
+            tooltip: { trigger: "axis" },
+            series: Object.entries(groups).map(([group, elems]) => ({
+              name: group,
+              type: "bar",
+              data: elems.map((e) => [e.label, e.value]),
+              barMaxWidth: 40,
+            })),
+          };
+        }
+
+        if (chart.type === "pie") {
+          var textColor = isDark ? "#ccc" : "#555";
+          return {
+            ...shared,
+            grid: { top: 40, right: 12, left: 100, bottom: 90, containLabel: false },
+            legend: { bottom: 5, textStyle: { color: textColor, fontSize: 11 } },
+            tooltip: { trigger: "item", formatter: "{b}: {c} ({d}%)" },
+            series: [
+              {
+                type: "pie",
+                radius: ["30%", "60%"],
+                center: ["50%", "50%"],
+                data: (chart.elements || []).map((e) => ({
+                  value: e.angle,
+                  name: e.label,
+                })),
+                label: { color: isDark ? "#ccc" : "#333", fontSize: 11 },
+              },
+            ],
+          };
+        }
+
+        if (chart.type === "box_and_whisker") {
+          var yl = yAxisLayout(extractYValues(chart));
+          var layout = layoutOpts((chart.elements || []).length, yl.left, !!chart.x_label);
+          return {
+            ...shared,
+            ...layout,
+            xAxis: {
+              type: "category",
+              name: chart.x_label,
+              nameLocation: "middle",
+              nameGap: 40,
+              ...axis,
+            },
+            yAxis: {
+              name: chart.y_label,
+              nameLocation: "middle",
+              nameGap: yl.nameGap,
+              min: "dataMin",
+              max: "dataMax",
+              ...axis,
+            },
+            tooltip: { trigger: "item" },
+            series: (chart.elements || []).map((e) => ({
+              name: e.label,
+              type: "boxplot",
+              data: [
+                [e.min, e.first_quartile, e.median, e.third_quartile, e.max],
+              ],
+            })),
+          };
+        }
+
+        return null;
+      }
+
+      // ─── Rendering ────────────────────────────────────────────────────────────
+      function initEChart(el, options) {
+        var chart = echarts.init(el, null, { renderer: "canvas" });
+        chart.setOption(options);
+        new ResizeObserver(function () {
+          chart.resize();
+        }).observe(el);
+      }
+
+      function renderCharts(charts) {
+        var container = document.getElementById("charts");
+        container.innerHTML = "";
+
+        for (var i = 0; i < charts.length; i++) {
+          var c = charts[i];
+          var wrap = document.createElement("div");
+          wrap.className = "chart-wrap";
+
+          if (c.chart) {
+            if (
+              c.chart.type === "superchart" &&
+              Array.isArray(c.chart.elements)
+            ) {
+              if (c.chart.title) {
+                var t = document.createElement("div");
+                t.className = "chart-title";
+                t.textContent = c.chart.title;
+                wrap.appendChild(t);
+              }
+              for (var j = 0; j < c.chart.elements.length; j++) {
+                var sub = c.chart.elements[j];
+                var subOpts = buildOptions(sub);
+                if (subOpts) {
+                  if (sub.title) {
+                    var st = document.createElement("div");
+                    st.className = "chart-title";
+                    st.textContent = sub.title;
+                    wrap.appendChild(st);
+                  }
+                  var sel = document.createElement("div");
+                  sel.className = "chart-echart";
+                  sel.__chartData = sub;
+                  wrap.appendChild(sel);
+                  container.appendChild(wrap);
+                  initEChart(sel, subOpts);
+                }
+              }
+            } else {
+              var options = buildOptions(c.chart);
+              if (options) {
+                if (c.chart.title) {
+                  var ct = document.createElement("div");
+                  ct.className = "chart-title";
+                  ct.textContent = c.chart.title;
+                  wrap.appendChild(ct);
+                }
+                var cel = document.createElement("div");
+                cel.className = "chart-echart";
+                cel.__chartData = c.chart;
+                wrap.appendChild(cel);
+                container.appendChild(wrap);
+                initEChart(cel, options);
+                continue;
+              }
+              var uel = document.createElement("div");
+              uel.className = "chart-unknown";
+              uel.textContent = JSON.stringify(c.chart, null, 2);
+              wrap.appendChild(uel);
+            }
+          } else if (c.png) {
+            var div = document.createElement("div");
+            div.className = "chart-img";
+            var img = document.createElement("img");
+            img.src = "data:image/png;base64," + c.png;
+            img.alt = c.text || "Chart";
+            div.appendChild(img);
+            wrap.appendChild(div);
+          } else {
+            continue;
+          }
+
+          container.appendChild(wrap);
+        }
+
+        if (!container.children.length) collapse();
+      }
+    </script>
+  </body>
+</html>

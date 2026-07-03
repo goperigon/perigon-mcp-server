@@ -1,0 +1,415 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
+    <title>Signal Insights Export Viewer</title>
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      html,
+      body {
+        background: transparent;
+        color: var(--color-text-primary, light-dark(#333, #e0e0e0));
+        font-family: var(
+          --font-sans,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          Roboto,
+          sans-serif
+        );
+        font-size: var(--font-size-base, 14px);
+      }
+
+      body {
+        padding: 4px 0;
+      }
+      body.collapsed {
+        display: none !important;
+      }
+
+      .summary {
+        padding: 4px 8px 8px;
+        font-size: 12px;
+        opacity: 0.6;
+      }
+
+      .table-scroll {
+        overflow-x: auto;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: var(--font-size-sm, 13px);
+      }
+
+      thead th {
+        position: sticky;
+        top: 0;
+        background: light-dark(#f5f5f5, #2a2a2a);
+        font-weight: 600;
+        text-align: left;
+        padding: 6px 10px;
+        border-bottom: 2px solid light-dark(#ddd, #444);
+        white-space: nowrap;
+      }
+
+      tbody td {
+        padding: 5px 10px;
+        border-bottom: 1px solid light-dark(#eee, #333);
+        max-width: 300px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      tbody tr:hover {
+        background: light-dark(rgba(0, 0, 0, 0.03), rgba(255, 255, 255, 0.03));
+      }
+
+      .cell-null {
+        opacity: 0.3;
+        font-style: italic;
+      }
+
+      .cell-object {
+        font-family: var(--font-mono, monospace);
+        font-size: 11px;
+        opacity: 0.8;
+      }
+
+      .empty-state {
+        padding: 24px 8px;
+        text-align: center;
+        opacity: 0.4;
+        font-size: 13px;
+      }
+
+      .export-title {
+        padding: 6px 8px 2px;
+        font-size: inherit;
+        font-weight: 600;
+        line-height: 1.3;
+        word-break: break-word;
+      }
+
+      .expand-bar {
+        padding: 6px 8px;
+        text-align: center;
+        font-size: 12px;
+        cursor: pointer;
+        opacity: 0.6;
+        border-top: 1px solid light-dark(#eee, #333);
+      }
+      .expand-bar:hover {
+        opacity: 1;
+        background: light-dark(rgba(0, 0, 0, 0.03), rgba(255, 255, 255, 0.03));
+      }
+    </style>
+  </head>
+  <body class="collapsed">
+    <div id="export"></div>
+
+    <script>
+      // ─── State ────────────────────────────────────────────────────────────────
+      let hostContext = null;
+
+      // ─── JSON-RPC transport (per SEP-1865 §Communication Protocol) ────────────
+      const pending = new Map();
+      let nextId = 0;
+
+      function send(msg) {
+        window.parent.postMessage(msg, "*");
+      }
+
+      function request(method, params) {
+        return new Promise((resolve, reject) => {
+          const id = ++nextId;
+          pending.set(id, { resolve, reject });
+          send({ jsonrpc: "2.0", id, method, params: params ?? {} });
+        });
+      }
+
+      function notify(method, params) {
+        send({ jsonrpc: "2.0", method, params: params ?? {} });
+      }
+
+      // ─── Message handler ──────────────────────────────────────────────────────
+      window.addEventListener("message", (ev) => {
+        const msg = ev.data;
+        if (!msg || msg.jsonrpc !== "2.0") return;
+
+        if (msg.id !== undefined && pending.has(msg.id)) {
+          const { resolve, reject } = pending.get(msg.id);
+          pending.delete(msg.id);
+          msg.error ? reject(msg.error) : resolve(msg.result);
+          return;
+        }
+
+        if (msg.method === "ui/resource-teardown") {
+          if (msg.id !== undefined)
+            send({ jsonrpc: "2.0", id: msg.id, result: {} });
+          return;
+        }
+
+        if (msg.method === "ui/notifications/tool-result") {
+          const sc = msg.params?.structuredContent;
+          if (sc?.export) {
+            document.body.classList.remove("collapsed");
+            renderTable(sc.export);
+          } else {
+            collapse();
+          }
+          return;
+        }
+
+        if (msg.method === "ui/notifications/tool-input") return;
+
+        if (msg.method === "ui/notifications/host-context-changed") {
+          applyHostContext(msg.params);
+          return;
+        }
+      });
+
+      // ─── Lifecycle: ui/initialize → initialized (per SEP-1865 §Lifecycle) ─────
+      request("ui/initialize", {
+        protocolVersion: "2026-01-26",
+        appInfo: { name: "signal-insights-export-viewer", version: "1.0.0" },
+        appCapabilities: { availableDisplayModes: ["inline"] },
+      })
+        .then((result) => {
+          hostContext = result?.hostContext;
+          if (hostContext) applyHostContext(hostContext);
+          applyContainerDimensions(hostContext?.containerDimensions);
+          notify("ui/notifications/initialized", {});
+        })
+        .catch(() => {
+          notify("ui/notifications/initialized", {});
+        });
+
+      // ─── Size reporting (per SEP-1865 §Container Dimensions) ──────────────────
+      const sizeObs = new ResizeObserver((entries) => {
+        const r = entries[0]?.contentRect;
+        if (r)
+          notify("ui/notifications/size-changed", {
+            width: Math.round(r.width),
+            height: Math.round(r.height),
+          });
+      });
+      sizeObs.observe(document.body);
+
+      function collapse() {
+        document.body.classList.add("collapsed");
+        notify("ui/notifications/size-changed", { width: 0, height: 0 });
+      }
+
+      // ─── Theming (per SEP-1865 §Theming) ──────────────────────────────────────
+      function applyHostContext(ctx) {
+        if (!ctx) return;
+        if (ctx.styles?.variables) {
+          const root = document.documentElement;
+          for (const [k, v] of Object.entries(ctx.styles.variables)) {
+            if (v != null) root.style.setProperty(k, v);
+          }
+        }
+        if (ctx.styles?.css?.fonts) {
+          let tag = document.getElementById("host-fonts");
+          if (!tag) {
+            tag = document.createElement("style");
+            tag.id = "host-fonts";
+            document.head.appendChild(tag);
+          }
+          tag.textContent = ctx.styles.css.fonts;
+        }
+      }
+
+      function applyContainerDimensions(dim) {
+        if (!dim) return;
+        const root = document.documentElement;
+        if ("height" in dim) root.style.height = "100vh";
+        else if ("maxHeight" in dim && dim.maxHeight)
+          root.style.maxHeight = dim.maxHeight + "px";
+        if ("width" in dim) root.style.width = "100vw";
+        else if ("maxWidth" in dim && dim.maxWidth)
+          root.style.maxWidth = dim.maxWidth + "px";
+      }
+
+      // ─── Rendering ────────────────────────────────────────────────────────────
+      function formatCell(value) {
+        if (value === null || value === undefined) {
+          return '<span class="cell-null">null</span>';
+        }
+        if (typeof value === "object") {
+          var json = JSON.stringify(value);
+          var display = json.length > 200 ? json.slice(0, 200) + "…" : json;
+          return (
+            '<span class="cell-object" title="' +
+            escapeAttr(json) +
+            '">' +
+            escapeHtml(display) +
+            "</span>"
+          );
+        }
+        var str = String(value);
+        if (str.length > 200) {
+          return (
+            '<span title="' +
+            escapeAttr(str) +
+            '">' +
+            escapeHtml(str.slice(0, 200)) +
+            "…</span>"
+          );
+        }
+        return escapeHtml(str);
+      }
+
+      function escapeHtml(s) {
+        return s
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+      }
+
+      function escapeAttr(s) {
+        return s
+          .replace(/&/g, "&amp;")
+          .replace(/"/g, "&quot;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;");
+      }
+
+      var COLLAPSED_ROWS = 10;
+
+      function renderTable(data) {
+        var container = document.getElementById("export");
+        container.innerHTML = "";
+
+        var columns = data.columns || [];
+        var preview = data.preview || [];
+        var rowCount = data.rowCount || 0;
+
+        // Title
+        if (data.name) {
+          var title = document.createElement("div");
+          title.className = "export-title";
+          title.textContent = data.name;
+          container.appendChild(title);
+        }
+
+        // Summary line
+        var summary = document.createElement("div");
+        summary.className = "summary";
+        if (preview.length === 0) {
+          summary.textContent = "No rows exported";
+        } else if (preview.length >= rowCount) {
+          summary.textContent = rowCount + " row" + (rowCount !== 1 ? "s" : "");
+        } else {
+          summary.textContent =
+            "Showing " +
+            preview.length +
+            " of " +
+            rowCount.toLocaleString() +
+            " rows";
+        }
+        container.appendChild(summary);
+
+        if (preview.length === 0) {
+          var empty = document.createElement("div");
+          empty.className = "empty-state";
+          empty.textContent = "No data to display";
+          container.appendChild(empty);
+          return;
+        }
+
+        // Derive columns from data keys if not provided
+        if (columns.length === 0 && preview.length > 0) {
+          var seen = new Set();
+          for (var i = 0; i < preview.length; i++) {
+            Object.keys(preview[i]).forEach(function (k) {
+              seen.add(k);
+            });
+          }
+          columns = Array.from(seen);
+        }
+
+        var isExpanded = false;
+
+        function buildTable(expanded) {
+          var visibleRows = expanded
+            ? preview
+            : preview.slice(0, COLLAPSED_ROWS);
+          var canExpand = preview.length > COLLAPSED_ROWS;
+
+          var oldScroll = container.querySelector(".table-scroll");
+          if (oldScroll) oldScroll.remove();
+          var oldBar = container.querySelector(".expand-bar");
+          if (oldBar) oldBar.remove();
+
+          var scroll = document.createElement("div");
+          scroll.className = "table-scroll";
+
+          if (expanded) {
+            scroll.style.maxHeight = "400px";
+            scroll.style.overflowY = "auto";
+            scroll.style.overflowX = "auto";
+          } else {
+            scroll.style.overflow = "hidden";
+          }
+
+          var table = document.createElement("table");
+
+          var thead = document.createElement("thead");
+          var headerRow = document.createElement("tr");
+          for (var i = 0; i < columns.length; i++) {
+            var th = document.createElement("th");
+            th.textContent = columns[i];
+            headerRow.appendChild(th);
+          }
+          thead.appendChild(headerRow);
+          table.appendChild(thead);
+
+          var tbody = document.createElement("tbody");
+          for (var r = 0; r < visibleRows.length; r++) {
+            var row = visibleRows[r];
+            var tr = document.createElement("tr");
+            for (var c = 0; c < columns.length; c++) {
+              var td = document.createElement("td");
+              td.innerHTML = formatCell(row[columns[c]]);
+              tr.appendChild(td);
+            }
+            tbody.appendChild(tr);
+          }
+          table.appendChild(tbody);
+
+          scroll.appendChild(table);
+          container.appendChild(scroll);
+
+          if (canExpand) {
+            var bar = document.createElement("div");
+            bar.className = "expand-bar";
+            bar.textContent = expanded
+              ? "Collapse"
+              : "Show all " + preview.length + " preview rows";
+            bar.onclick = function () {
+              isExpanded = !isExpanded;
+              buildTable(isExpanded);
+            };
+            container.appendChild(bar);
+          }
+        }
+
+        buildTable(false);
+      }
+    </script>
+  </body>
+</html>

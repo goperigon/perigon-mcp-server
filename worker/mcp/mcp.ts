@@ -1,6 +1,5 @@
 import { McpAgent } from "agents/mcp";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { registerAppResource, registerAppTool } from "@modelcontextprotocol/ext-apps/server";
 import { Scopes } from "../types/types";
 import {
   newsArticlesTool,
@@ -26,28 +25,20 @@ import { resolveActiveTools, SIGNAL_TOOL_NAMES } from "./tools/selection";
 import { InsightsApiClient } from "../lib/insights-api-client";
 import { PokeyInsightsClient } from "../lib/pokey-insights-client";
 import {
-  buildChartViewerHtml,
+  CHART_VIEWER_HTML,
   CHART_VIEWER_MIME_TYPE,
   CHART_RESOURCE_URI,
-  buildChartResourceContentMeta,
+  CHART_RESOURCE_CONTENT_META,
 } from "./apps/chart-viewer-html";
 import {
-  buildExportViewerHtml,
+  EXPORT_VIEWER_HTML,
   EXPORT_VIEWER_MIME_TYPE,
   EXPORT_RESOURCE_URI,
-  buildExportResourceContentMeta,
+  EXPORT_RESOURCE_CONTENT_META,
 } from "./apps/export-viewer-html";
 import { SIGNAL_TOOL_DEFINITIONS } from "./tools/signals";
 import * as instructions from "./instructions";
 import { SignalToolDefinition } from "./tools/signals/types";
-
-/** Type guard: does this signal tool's `_meta` declare an MCP Apps UI resource? */
-function hasUiResource(
-  meta: Record<string, unknown> | undefined,
-): meta is { ui: { resourceUri: string } } {
-  const ui = (meta as { ui?: { resourceUri?: unknown } } | undefined)?.ui;
-  return typeof ui?.resourceUri === "string";
-}
 
 export type Props = {
   apiKey: string;
@@ -128,14 +119,11 @@ export class PerigonMCP extends McpAgent<Env, unknown, Props> {
 
     if (activeSignalTools.length === 0) return;
 
-    // Register the chart/table viewer UI resources (MCP Apps / SEP-1865) via
-    // the official ext-apps/server helpers. Hosts that support MCP Apps will
-    // render this HTML in a sandboxed iframe after the corresponding tool
-    // runs. Per SEP-1865: CSP belongs in resources/read content _meta.ui.csp.
-    const appsBaseUrl = this.env.APPS_BASE_URL;
-
-    registerAppResource(
-      this.server,
+    // Register the chart viewer UI resource (MCP Apps / SEP-1865).
+    // Hosts that support MCP Apps will render this HTML in a sandboxed iframe
+    // after signal_insights_preview_chart runs.
+    // Per SEP-1865: CSP belongs in resources/read content _meta.ui.csp.
+    this.server.registerResource(
       "signal-insights-chart-viewer",
       CHART_RESOURCE_URI,
       { mimeType: CHART_VIEWER_MIME_TYPE },
@@ -144,15 +132,14 @@ export class PerigonMCP extends McpAgent<Env, unknown, Props> {
           {
             uri: CHART_RESOURCE_URI,
             mimeType: CHART_VIEWER_MIME_TYPE,
-            text: buildChartViewerHtml(appsBaseUrl),
-            _meta: buildChartResourceContentMeta(appsBaseUrl),
+            text: CHART_VIEWER_HTML,
+            _meta: CHART_RESOURCE_CONTENT_META,
           },
         ],
       }),
     );
 
-    registerAppResource(
-      this.server,
+    this.server.registerResource(
       "signal-insights-export-viewer",
       EXPORT_RESOURCE_URI,
       { mimeType: EXPORT_VIEWER_MIME_TYPE },
@@ -161,8 +148,8 @@ export class PerigonMCP extends McpAgent<Env, unknown, Props> {
           {
             uri: EXPORT_RESOURCE_URI,
             mimeType: EXPORT_VIEWER_MIME_TYPE,
-            text: buildExportViewerHtml(appsBaseUrl),
-            _meta: buildExportResourceContentMeta(appsBaseUrl),
+            text: EXPORT_VIEWER_HTML,
+            _meta: EXPORT_RESOURCE_CONTENT_META,
           },
         ],
       }),
@@ -176,35 +163,15 @@ export class PerigonMCP extends McpAgent<Env, unknown, Props> {
 
     for (const toolName of activeSignalTools) {
       const def: SignalToolDefinition<any> = SIGNAL_TOOL_DEFINITIONS[toolName];
-      const handler = def.createHandler(insightsApi, pokeyClient);
-
-      // Tools that render an MCP Apps UI (preview_chart, export_events) go
-      // through registerAppTool so hosts get the resourceUri association;
-      // everything else is a plain tool.
-      if (hasUiResource(def._meta)) {
-        registerAppTool(
-          this.server,
-          def.name,
-          {
-            description: def.description,
-            inputSchema: def.parameters,
-            // Required for the host to forward structuredContent to the widget.
-            // registerTool expects the raw shape, not the ZodObject wrapper.
-            ...(def.outputSchema ? { outputSchema: def.outputSchema.shape } : {}),
-            _meta: def._meta,
-          },
-          handler,
-        );
-      } else {
-        this.server.registerTool(
-          def.name,
-          {
-            description: def.description,
-            inputSchema: def.parameters,
-          },
-          handler,
-        );
-      }
+      this.server.registerTool(
+        def.name,
+        {
+          description: def.description,
+          inputSchema: def.parameters,
+          _meta: def._meta,
+        },
+        def.createHandler(insightsApi, pokeyClient),
+      );
     }
   }
 }

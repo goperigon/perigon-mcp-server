@@ -37,10 +37,9 @@ interface ExportEventsResult {
  * how charts are surfaced:
  *
  * - chartViewer=true (preview_chart): drives the MCP Apps chart viewer.
- *   structuredContent.charts holds the interactive chart JSON (NOT the base64
- *   PNG — see the note where it's built) read by the viewer iframe (SEP-1865)
- *   from the ui/notifications/tool-result notification, and a PNG ImageContent
- *   fallback is included for non-Apps clients (Cursor etc.).
+ *   structuredContent.charts holds the full chart data (JSON + PNG) read by the
+ *   viewer iframe (SEP-1865) from the ui/notifications/tool-result notification,
+ *   and a PNG ImageContent fallback is included for non-Apps clients (Cursor etc.).
  * - chartViewer=false (execute_code): no chart UI. Any charts produced are
  *   dropped and replaced with a note nudging the model to re-run the plotting
  *   code via signal_insights_preview_chart to actually display them.
@@ -96,34 +95,9 @@ function buildExecuteCodeResult(
   }
 
   // structuredContent.charts is read by the MCP Apps chart viewer iframe.
-  //
-  // IMPORTANT: keep this payload SMALL. The base64 PNG of each figure is huge
-  // (100s of KB) and is ALREADY shipped as a separate image content block
-  // above — duplicating it here bloats structuredContent, which the host
-  // (Claude Desktop) then drops entirely (arrives as `structured_content:
-  // null`, so the widget renders nothing). PostHog's MCP UI apps keep
-  // structuredContent tiny for the same reason. So: send the interactive
-  // chart JSON (what the widget renders from), and only include the PNG for
-  // entries that have NO parsed chart (the widget's last-resort fallback).
-  const charts = (data._charts ?? []).map((c) =>
-    c.chart != null
-      ? { chart: c.chart, text: c.text ?? null }
-      : { png: c.png ?? null, text: c.text ?? null },
-  );
-  // Always return structuredContent for the chart viewer (even with 0 charts):
-  // preview_chart declares an outputSchema, and the MCP SDK errors if a tool
-  // with an outputSchema returns no structuredContent.
-  const structuredContent = chartViewer ? { charts } : undefined;
-
-  if (chartViewer) {
-    console.log("[preview_chart] result", {
-      chartCount,
-      contentBlocks: content.length,
-      structuredContentBytes: structuredContent
-        ? JSON.stringify(structuredContent).length
-        : 0,
-    });
-  }
+  // It is also included in model context, so the model can narrate chart types.
+  const structuredContent =
+    chartViewer && chartCount > 0 ? { charts: data._charts } : undefined;
 
   return {
     content,
@@ -163,12 +137,6 @@ function buildExportEventsResult(data: ExportEventsResult): CallToolResult {
       s3File: data.s3File,
     },
   };
-
-  console.log("[export_events] result", {
-    rows: data.preview.length,
-    contentBlocks: content.length,
-    structuredContentBytes: JSON.stringify(structuredContent).length,
-  });
 
   return {
     content,

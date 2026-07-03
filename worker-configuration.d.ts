@@ -11,8 +11,6 @@ declare namespace Cloudflare {
 		TURNSTILE_SECRET_KEY: string;
 		/** Base URL of the internal Pokey service for Signal Insights MCP tools. Set via `wrangler secret put`. */
 		POKEY_SIGNAL_INSIGHTS_BASE_URL: string;
-		/** Origin serving the built MCP Apps guest JS bundles (dist/client/apps/*.js). */
-		APPS_BASE_URL: string;
 		MCP_OBJECT: DurableObjectNamespace<import("./worker/index").PerigonMCP>;
 		MCP_RATE_LIMITER: RateLimit;
 		ASSETS: Fetcher;

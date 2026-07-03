@@ -1,13 +1,7 @@
-import { z } from "zod";
 import { DATA_DIR } from "../../constants";
 import { EXPORT_TOOL_META } from "../../apps/export-viewer-html";
 import { SignalToolDefinition } from "./types";
 import { exportEventsSchema } from "./schemas";
-
-// Declared so the host forwards structuredContent to the table widget.
-const exportEventsOutputSchema = z.object({
-  export: z.record(z.string(), z.unknown()),
-});
 
 export const exportEventsTool = {
   name: "signal_insights_export_events",
@@ -20,7 +14,6 @@ export const exportEventsTool = {
     "Group by / order by: use {index: N} (1-based) when select is provided, or {field: 'name'} when select is omitted. " +
     `Omit select to fetch all scalar event fields. Results are written to S3 and accessible in the sandbox at ${DATA_DIR}/<filename>.`,
   parameters: exportEventsSchema,
-  outputSchema: exportEventsOutputSchema,
   _meta: EXPORT_TOOL_META,
   createHandler: (_insightsApi, pokeyClient) => async (args) =>
     pokeyClient.executeTool("export_events", args),
