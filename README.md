@@ -166,11 +166,14 @@ Signal Insights tools use an explicit workspace handle (per [SEP-2567](https://m
 
 | Tool | Type | Description |
 |------|------|-------------|
-| `signal_insights_create_workspace` | Setup | Create a workspace for the conversation. Must be called first. |
-| `signal_insights_search_signals` | Read | Search signals by name or monitoring objective. |
-| `signal_insights_read_signal` | Read | Get signal metadata (schema, event types, counts). |
-| `signal_insights_export_events` | Data | Export signal events to S3 with optional filters/aggregations. Returns a preview and file path. |
+| `signal_insights_create_workspace` | Setup | Create a workspace for the conversation. Must be called first for sandbox tools. |
+| `signal_insights_search_signals` | Read | Search signals by name or objective; optional `classificationTypes` filter. |
+| `signal_insights_read_signal` | Read | Get signal metadata (classification, schema or newsletter counts). |
+| `signal_insights_list_newsletters` | Read | List newsletters for a TOPIC signal (title + excerpt). |
+| `signal_insights_read_newsletter` | Read | Fetch full newsletter content as markdown. |
+| `signal_insights_export_events` | Data | Export events to S3 (EVENT/MENTIONS only). Returns a preview and file path. |
 | `signal_insights_execute_code` | Sandbox | Execute Python in a persistent IPython kernel. pandas, numpy, matplotlib and more pre-installed. |
+| `signal_insights_preview_chart` | Sandbox | Render charts in the interactive chart viewer. |
 | `signal_insights_shell` | Sandbox | Run bash commands in the sandbox. |
 | `signal_insights_list_files` | Files | List files in the sandbox workspace. |
 | `signal_insights_read_file` | Files | Read a file from the workspace. |
@@ -184,7 +187,7 @@ Signal Insights tools use an explicit workspace handle (per [SEP-2567](https://m
 {
   "mcpServers": {
     "perigon": {
-      "url": "https://mcp.perigon.io/v1/mcp?tools=signal_insights_create_workspace,signal_insights_search_signals,signal_insights_read_signal,signal_insights_export_events,signal_insights_execute_code,signal_insights_shell,signal_insights_list_files,signal_insights_read_file,signal_insights_write_file,signal_insights_grep,signal_insights_str_replace",
+      "url": "https://mcp.perigon.io/v1/mcp?tools=signal_insights_create_workspace,signal_insights_search_signals,signal_insights_read_signal,signal_insights_list_newsletters,signal_insights_read_newsletter,signal_insights_export_events,signal_insights_execute_code,signal_insights_preview_chart,signal_insights_shell,signal_insights_list_files,signal_insights_read_file,signal_insights_write_file,signal_insights_grep,signal_insights_str_replace",
       "type": "http",
       "headers": {
         "Authorization": "Bearer YOUR_PERIGON_API_KEY"

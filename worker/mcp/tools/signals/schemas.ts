@@ -28,6 +28,13 @@ export const searchSignalsSchema = z.object({
       "Search term matched against signal name or monitoring objective. " +
         "Case-insensitive. Omit to list all available signals.",
     ),
+  classificationTypes: z
+    .array(z.enum(["EVENT", "MENTIONS", "TOPIC"]))
+    .optional()
+    .describe(
+      "Filter by signal classification. Omit for all types. " +
+        "EVENT/MENTIONS = structured events; TOPIC = briefings/newsletters.",
+    ),
   page: z.number().int().min(0).default(0).optional(),
   limit: z.number().int().min(1).max(50).default(10).optional(),
 });
@@ -37,6 +44,26 @@ export const readSignalSchema = z.object({
     .string()
     .uuid()
     .describe("UUID of the signal to read. Use search_signals to find UUIDs."),
+});
+
+export const listNewslettersSchema = z.object({
+  signalUuid: z
+    .string()
+    .uuid()
+    .describe(
+      "UUID of a TOPIC signal. Use search_signals / read_signal to confirm classificationType is TOPIC.",
+    ),
+  page: z.number().int().min(0).default(0).optional(),
+  limit: z.number().int().min(1).max(50).default(10).optional(),
+});
+
+export const readNewsletterSchema = z.object({
+  newsletterUuid: z
+    .string()
+    .uuid()
+    .describe(
+      "UUID of the newsletter. Use signal_insights_list_newsletters to find UUIDs.",
+    ),
 });
 
 // ── Export ───────────────────────────────────────────────────────────────────

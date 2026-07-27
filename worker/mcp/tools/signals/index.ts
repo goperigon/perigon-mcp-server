@@ -3,6 +3,8 @@ export type { SignalToolDefinition } from "./types";
 export { createWorkspaceTool } from "./create-workspace";
 export { searchSignalsTool } from "./search-signals";
 export { readSignalTool } from "./read-signal";
+export { listNewslettersTool } from "./list-newsletters";
+export { readNewsletterTool } from "./read-newsletter";
 export { exportEventsTool } from "./export-events";
 export { executeCodeTool } from "./execute-code";
 export { previewChartTool } from "./preview-chart";
@@ -17,6 +19,8 @@ import type { SignalToolDefinition } from "./types";
 import { createWorkspaceTool } from "./create-workspace";
 import { searchSignalsTool } from "./search-signals";
 import { readSignalTool } from "./read-signal";
+import { listNewslettersTool } from "./list-newsletters";
+import { readNewsletterTool } from "./read-newsletter";
 import { exportEventsTool } from "./export-events";
 import { executeCodeTool } from "./execute-code";
 import { previewChartTool } from "./preview-chart";
@@ -26,12 +30,13 @@ import { grepTool } from "./grep";
 import { readFileTool } from "./read-file";
 import { writeFileTool } from "./write-file";
 import { strReplaceTool } from "./str-replace";
-import z from "zod";
 
 export const SIGNAL_TOOL_DEFINITIONS = {
   [createWorkspaceTool.name]: createWorkspaceTool,
   [searchSignalsTool.name]: searchSignalsTool,
   [readSignalTool.name]: readSignalTool,
+  [listNewslettersTool.name]: listNewslettersTool,
+  [readNewsletterTool.name]: readNewsletterTool,
   [exportEventsTool.name]: exportEventsTool,
   [executeCodeTool.name]: executeCodeTool,
   [previewChartTool.name]: previewChartTool,

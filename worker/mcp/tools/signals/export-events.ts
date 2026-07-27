@@ -7,6 +7,7 @@ export const exportEventsTool = {
   name: "signal_insights_export_events",
   description:
     "Export signal events using a structured query API. No raw SQL — specify signals, fields, filters, aggregations, and ordering. " +
+    "EVENT and MENTIONS signals only — TOPIC (briefing) signals will error; use signal_insights_list_newsletters / signal_insights_read_newsletter instead. " +
     "Returns a preview of the first rows plus an S3 file path for the full dataset (JSONL). " +
     "Available fields: eventType, eventDate, createdAt, updatedAt, summary, uuid, data, articles, signalId, or data.<path> for JSONB subfields (e.g. data.companyName). " +
     "Filter options: eventTypes (list), date ranges (eventDateFrom/To, createdAtFrom/To), JSONB containment (data: [{op: CONTAINS, value: {key: val}}]). " +

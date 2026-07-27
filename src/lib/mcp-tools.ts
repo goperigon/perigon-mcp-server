@@ -173,14 +173,28 @@ export const MCP_TOOLS: McpToolMeta[] = [
     name: "signal_insights_read_signal",
     label: "Read Signal",
     description:
-      "Get full signal metadata including data schema, available event types, and event count. Use before exporting to understand available fields.",
+      "Get full signal metadata including classificationType, schema (EVENT/MENTIONS), or newsletterCount (TOPIC).",
+    category: "signal-insights",
+  },
+  {
+    name: "signal_insights_list_newsletters",
+    label: "List Newsletters",
+    description:
+      "List newsletters/briefings for a TOPIC signal with title and short excerpt. EVENT/MENTIONS signals will error.",
+    category: "signal-insights",
+  },
+  {
+    name: "signal_insights_read_newsletter",
+    label: "Read Newsletter",
+    description:
+      "Fetch a full newsletter by UUID as markdown (YAML frontmatter + body) for context or analysis.",
     category: "signal-insights",
   },
   {
     name: "signal_insights_export_events",
     label: "Export Signal Events",
     description:
-      "Export signal events using a structured query API with filters, aggregations, and ordering. Returns a data preview and an S3 file path.",
+      "Export signal events using a structured query API with filters, aggregations, and ordering. EVENT/MENTIONS only.",
     category: "signal-insights",
   },
   {

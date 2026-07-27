@@ -16,6 +16,8 @@ import { summarizeTool } from "./tools/search/summarize";
 import { createWorkspaceTool } from "./tools/signals/create-workspace";
 import { searchSignalsTool } from "./tools/signals/search-signals";
 import { readSignalTool } from "./tools/signals/read-signal";
+import { listNewslettersTool } from "./tools/signals/list-newsletters";
+import { readNewsletterTool } from "./tools/signals/read-newsletter";
 import { exportEventsTool } from "./tools/signals/export-events";
 import { executeCodeTool } from "./tools/signals/execute-code";
 import { previewChartTool } from "./tools/signals/preview-chart";
@@ -59,32 +61,43 @@ Tips:
 
 ## Signal Insights
 
-Analyze structured event data from Perigon's monitoring signals (funding rounds, layoffs, M&A, product launches, cybersecurity incidents, etc.). Requires a workspace.
+Analyze Perigon monitoring signals. Requires a workspace for sandbox tools (export, code, charts).
 
 ### What are signals?
-Signals are a way to monitor news media. Users can define arbitrary monitoring goals, and Perigon's processing pipeline uses them to produce a realtime stream of events, derived from news data and other sources.
-Each event in the stream has a structured schema, defined by the user.
+Signals monitor news media against a user-defined goal. Classification types:
 
-### Setup (required once per conversation)
-1. Call \`${createWorkspaceTool.name}\` — returns a workspace ID needed by all subsequent tools.
+| Type | Output | Data tools |
+|------|--------|------------|
+| EVENT | Structured realtime events with a user-defined schema | \`${readSignalTool.name}\` → \`${exportEventsTool.name}\` |
+| MENTIONS | Structured mention events | same as EVENT |
+| TOPIC | Scheduled briefings / newsletters (prose) | \`${readSignalTool.name}\` → \`${listNewslettersTool.name}\` → \`${readNewsletterTool.name}\` |
+
+Do not confuse signal classification TOPIC with \`${topicsTool.name}\` (Perigon news taxonomy).
+
+### Setup (required once per conversation for sandbox tools)
+1. Call \`${createWorkspaceTool.name}\` — returns a workspace ID needed by export/code/file tools.
 2. NEVER invent workspace IDs. Always use the one returned by \`${createWorkspaceTool.name}\`.
 
 ### Discovery
-3. \`${searchSignalsTool.name}\` — find signals by name or objective. Omit query to list all.
-4. \`${readSignalTool.name}\` — get a signal's full metadata, data schema, event types, and count. Always call this before \`${exportEventsTool.name}\` to understand available fields.
+3. \`${searchSignalsTool.name}\` — find signals by name or objective. Optional \`classificationTypes\` filter (EVENT, MENTIONS, TOPIC). Omit query to list all.
+4. \`${readSignalTool.name}\` — metadata including classificationType and type-specific fields (schema for EVENT/MENTIONS; newsletterCount for TOPIC).
 
-### Data Export
-5. \`${exportEventsTool.name}\` — structured query API (not SQL). Specify signals, fields, filters, aggregations, ordering. Results are saved as JSONL files in the sandbox at ${DATA_DIR}/.
+### EVENT / MENTIONS data
+5. \`${exportEventsTool.name}\` — structured query API (not SQL). EVENT/MENTIONS only — TOPIC UUIDs will error. Results saved as JSONL at ${DATA_DIR}/.
    - Start with aggregations (COUNT, date_trunc) to understand data shape before fetching raw records.
-   - For complex analysis (window functions, pivots, joins across signals), fetch raw data first, then use \`${executeCodeTool.name}\` with pandas.
+   - For complex analysis, fetch raw data first, then use \`${executeCodeTool.name}\` with pandas.
+
+### TOPIC (briefing) data
+6. \`${listNewslettersTool.name}\` — titles + excerpts for a TOPIC signal.
+7. \`${readNewsletterTool.name}\` — full newsletter as markdown. Use for context or further analysis (including sandbox if useful).
 
 ### Analysis & Visualization
-6. \`${executeCodeTool.name}\` — run Python for data prep and analysis in a persistent Jupyter kernel. State persists between calls. Pre-installed: pandas, numpy, matplotlib, seaborn, scipy, scikit-learn, openpyxl, jinja2.
+8. \`${executeCodeTool.name}\` — run Python for data prep and analysis in a persistent Jupyter kernel. State persists between calls. Pre-installed: pandas, numpy, matplotlib, seaborn, scipy, scikit-learn, openpyxl, jinja2.
    - Read exported data: \`pd.read_json("${DATA_DIR}/<file>.jsonl", lines=True)\`
    - The kernel is persistent — ALL state carries across calls: variables, imports, DataFrames, functions. Import once, reuse everywhere.
    - Charts produced here are NOT shown to the user. To display a chart, use \`${previewChartTool.name}\`.
    - No internet access in the sandbox except *.amazonaws.com.
-7. \`${previewChartTool.name}\` — render a chart to the user. This is the ONLY tool that drives the interactive chart viewer. It shares the same kernel/state as \`${executeCodeTool.name}\`, so do analysis there and pass only the plotting code here.
+9. \`${previewChartTool.name}\` — render a chart to the user. This is the ONLY tool that drives the interactive chart viewer. It shares the same kernel/state as \`${executeCodeTool.name}\`, so do analysis there and pass only the plotting code here.
 
 #### Chart Rules (CRITICAL)
 
@@ -108,20 +121,23 @@ To ensure charts render interactively:
    - **Always** render charts on a light background.
 
 ### File Management
-8. \`${shellTool.name}\` — run bash commands in the sandbox. Useful for installing packages, moving files, or quick shell operations.
-9. \`${listFilesTool.name}\`, \`${readFileTool.name}\`, \`${writeFileTool.name}\`, \`${grepTool.name}\`, \`${strReplaceTool.name}\` — file read/write/search in the sandbox.
+10. \`${shellTool.name}\` — run bash commands in the sandbox. Useful for installing packages, moving files, or quick shell operations.
+11. \`${listFilesTool.name}\`, \`${readFileTool.name}\`, \`${writeFileTool.name}\`, \`${grepTool.name}\`, \`${strReplaceTool.name}\` — file read/write/search in the sandbox.
 
 ### Output
-10. Save deliverables (reports, CSVs, charts) to ${OUTPUT_DIR}/ — files here appear in the user's Artifacts panel and are downloadable.
+12. Save deliverables (reports, CSVs, charts) to ${OUTPUT_DIR}/ — files here appear in the user's Artifacts panel and are downloadable.
 
-### Typical Workflow
-\`${searchSignalsTool.name}\` → \`${readSignalTool.name}\` → \`${createWorkspaceTool.name}\` → \`${exportEventsTool.name}\` → \`${executeCodeTool.name}\` (load + analyze) → \`${previewChartTool.name}\` (display charts)
+### Typical Workflows
+- Events: \`${searchSignalsTool.name}\` → \`${readSignalTool.name}\` → \`${createWorkspaceTool.name}\` → \`${exportEventsTool.name}\` → \`${executeCodeTool.name}\` → \`${previewChartTool.name}\`
+- Briefings: \`${searchSignalsTool.name}\` (classificationTypes: TOPIC) → \`${readSignalTool.name}\` → \`${listNewslettersTool.name}\` → \`${readNewsletterTool.name}\`
 
 ### Common Mistakes to Avoid
 - Calling \`${executeCodeTool.name}\` before \`${createWorkspaceTool.name}\`.
+- Using \`${exportEventsTool.name}\` on TOPIC signals — use newsletter tools instead.
+- Using \`${listNewslettersTool.name}\` on EVENT/MENTIONS signals.
 - Using \`${exportEventsTool.name}\` without first calling \`${readSignalTool.name}\` to understand the schema.
 - Using \`${executeCodeTool.name}\` to render charts — charts are only shown to the user via \`${previewChartTool.name}\`.
 - Using \`plt.subplots()\` or combining chart types — make separate \`${previewChartTool.name}\` calls instead.
 - Inventing workspace IDs instead of using the one from \`${createWorkspaceTool.name}\`.
-- Writing raw SQL — all data access goes through \`${exportEventsTool.name}\`.
+- Writing raw SQL — event data access goes through \`${exportEventsTool.name}\`.
 `;
