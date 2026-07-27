@@ -168,6 +168,8 @@ import { ToolDefinition } from "./types";
 import { createWorkspaceTool } from "./signals/create-workspace";
 import { searchSignalsTool } from "./signals/search-signals";
 import { readSignalTool } from "./signals/read-signal";
+import { listNewslettersTool } from "./signals/list-newsletters";
+import { readNewsletterTool } from "./signals/read-newsletter";
 import { exportEventsTool } from "./signals/export-events";
 import { executeCodeTool } from "./signals/execute-code";
 import { previewChartTool } from "./signals/preview-chart";
@@ -238,6 +240,8 @@ export const TOOL_DEFINITIONS: Record<string, ToolDefinition<any>> = {
   signal_insights_create_workspace: signalStub(createWorkspaceTool),
   signal_insights_search_signals: signalStub(searchSignalsTool),
   signal_insights_read_signal: signalStub(readSignalTool),
+  signal_insights_list_newsletters: signalStub(listNewslettersTool),
+  signal_insights_read_newsletter: signalStub(readNewsletterTool),
   signal_insights_export_events: signalStub(exportEventsTool),
   signal_insights_execute_code: signalStub(executeCodeTool),
   signal_insights_preview_chart: signalStub(previewChartTool),

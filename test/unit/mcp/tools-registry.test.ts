@@ -30,6 +30,8 @@ const EXPECTED_TOOL_NAMES = [
   "signal_insights_create_workspace",
   "signal_insights_search_signals",
   "signal_insights_read_signal",
+  "signal_insights_list_newsletters",
+  "signal_insights_read_newsletter",
   "signal_insights_export_events",
   "signal_insights_execute_code",
   "signal_insights_preview_chart",
@@ -46,7 +48,7 @@ describe("TOOL_DEFINITIONS", () => {
     const actual = Object.keys(TOOL_DEFINITIONS).sort();
     const expected = [...EXPECTED_TOOL_NAMES].sort();
     expect(actual).toEqual(expected);
-    expect(actual.length).toBe(32);
+    expect(actual.length).toBe(34);
   });
 
   test("each tool exposes name, description, parameters, and createHandler", () => {
