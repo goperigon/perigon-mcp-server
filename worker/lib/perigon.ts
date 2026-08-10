@@ -1,5 +1,19 @@
 import { Configuration, V1Api } from "@goperigon/perigon-ts";
 import { AuthIntrospectionResponse, HttpError } from "../types/types";
+import {
+  MonitorCreateRequest,
+  MonitorDto,
+  MonitorEventDto,
+  MonitorEventListParams,
+  MonitorListParams,
+  MonitorNewsletterDto,
+  MonitorNewsletterListParams,
+  MonitorOutputListParams,
+  MonitorSingleResult,
+  MonitorSummaryDto,
+  MonitorTableResult,
+  MonitorUpdateRequest,
+} from "../types/monitors";
 import { typedFetch } from "./typed-fetch";
 
 const BASE_URL = "https://api.perigon.io/v1";
@@ -215,6 +229,163 @@ export class Perigon extends V1Api {
         },
       },
     );
+  }
+
+  private async monitorFetch<T>(
+    path: string,
+    options: RequestInit = {},
+  ): Promise<T> {
+    const headers = new Headers(options.headers);
+    headers.set("Authorization", `Bearer ${this.apiKey}`);
+    if (options.body !== undefined) {
+      headers.set("Content-Type", "application/json");
+    }
+
+    return await typedFetch<T>(`${BASE_URL}/api/monitors${path}`, {
+      ...options,
+      headers,
+    });
+  }
+
+  private buildMonitorPagination(
+    params:
+      | MonitorListParams
+      | MonitorEventListParams
+      | MonitorNewsletterListParams
+      | MonitorOutputListParams,
+  ): URLSearchParams {
+    const searchParams = new URLSearchParams({
+      page: String(params.page),
+      size: String(params.size),
+      sortBy: params.sortBy,
+      sortOrder: params.sortOrder,
+    });
+    if (params.nulls) searchParams.set("nulls", params.nulls);
+    return searchParams;
+  }
+
+  async listMonitors(
+    params: MonitorListParams,
+  ): Promise<MonitorTableResult<MonitorDto>> {
+    const searchParams = this.buildMonitorPagination(params);
+    if (params.uuid) {
+      for (const uuid of params.uuid) searchParams.append("uuid", uuid);
+    }
+    if (params.name) searchParams.set("name", params.name);
+    if (params.status) {
+      for (const status of params.status) {
+        searchParams.append("status", status);
+      }
+    }
+    if (params.classificationType) {
+      for (const classificationType of params.classificationType) {
+        searchParams.append("classificationType", classificationType);
+      }
+    }
+
+    return await this.monitorFetch<MonitorTableResult<MonitorDto>>(
+      `?${searchParams.toString()}`,
+    );
+  }
+
+  async getMonitor(uuid: string): Promise<MonitorSingleResult<MonitorDto>> {
+    return await this.monitorFetch<MonitorSingleResult<MonitorDto>>(
+      `/${encodeURIComponent(uuid)}`,
+    );
+  }
+
+  async createMonitor(
+    body: MonitorCreateRequest,
+  ): Promise<MonitorSingleResult<MonitorDto>> {
+    return await this.monitorFetch<MonitorSingleResult<MonitorDto>>("", {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+  }
+
+  async updateMonitor(
+    uuid: string,
+    body: MonitorUpdateRequest,
+  ): Promise<MonitorSingleResult<MonitorDto>> {
+    return await this.monitorFetch<MonitorSingleResult<MonitorDto>>(
+      `/${encodeURIComponent(uuid)}`,
+      {
+        method: "PATCH",
+        body: JSON.stringify(body),
+      },
+    );
+  }
+
+  async activateMonitor(
+    uuid: string,
+  ): Promise<MonitorSingleResult<MonitorDto>> {
+    return await this.monitorFetch<MonitorSingleResult<MonitorDto>>(
+      `/${encodeURIComponent(uuid)}/activate`,
+      {
+        method: "POST",
+      },
+    );
+  }
+
+  async pauseMonitor(uuid: string): Promise<MonitorSingleResult<MonitorDto>> {
+    return await this.monitorFetch<MonitorSingleResult<MonitorDto>>(
+      `/${encodeURIComponent(uuid)}/pause`,
+      {
+        method: "POST",
+      },
+    );
+  }
+
+  async archiveMonitor(uuid: string): Promise<MonitorSingleResult<MonitorDto>> {
+    return await this.monitorFetch<MonitorSingleResult<MonitorDto>>(
+      `/${encodeURIComponent(uuid)}`,
+      {
+        method: "DELETE",
+      },
+    );
+  }
+
+  async getMonitorEvents(
+    uuid: string,
+    params: MonitorEventListParams,
+  ): Promise<MonitorTableResult<MonitorEventDto>> {
+    const searchParams = this.buildMonitorPagination(params);
+    if (params.eventType) searchParams.set("eventType", params.eventType);
+    this.applyMonitorDateRange(searchParams, params);
+    return await this.monitorFetch<MonitorTableResult<MonitorEventDto>>(
+      `/${encodeURIComponent(uuid)}/events?${searchParams.toString()}`,
+    );
+  }
+
+  async getMonitorNewsletters(
+    uuid: string,
+    params: MonitorNewsletterListParams,
+  ): Promise<MonitorTableResult<MonitorNewsletterDto>> {
+    const searchParams = this.buildMonitorPagination(params);
+    if (params.title) searchParams.set("title", params.title);
+    this.applyMonitorDateRange(searchParams, params);
+    return await this.monitorFetch<MonitorTableResult<MonitorNewsletterDto>>(
+      `/${encodeURIComponent(uuid)}/newsletters?${searchParams.toString()}`,
+    );
+  }
+
+  async getMonitorSummaries(
+    uuid: string,
+    params: MonitorOutputListParams,
+  ): Promise<MonitorTableResult<MonitorSummaryDto>> {
+    const searchParams = this.buildMonitorPagination(params);
+    this.applyMonitorDateRange(searchParams, params);
+    return await this.monitorFetch<MonitorTableResult<MonitorSummaryDto>>(
+      `/${encodeURIComponent(uuid)}/summary?${searchParams.toString()}`,
+    );
+  }
+
+  private applyMonitorDateRange(
+    searchParams: URLSearchParams,
+    params: MonitorOutputListParams,
+  ): void {
+    if (params.from) searchParams.set("from", params.from);
+    if (params.to) searchParams.set("to", params.to);
   }
 
   /** Build URLSearchParams from shared article filters used by all /v1/stats/* endpoints */

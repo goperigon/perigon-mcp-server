@@ -5,17 +5,26 @@ import { Perigon } from "../../lib/perigon";
 /**
  * Callback function type for MCP tools
  */
-export type ToolCallback<T extends z.ZodObject<any>> = (
+export type ToolCallback<T extends z.ZodObject<any> = z.ZodObject<any>> = (
   args: z.infer<T>,
 ) => Promise<CallToolResult>;
+
+export interface ToolAnnotations {
+  readOnlyHint?: boolean;
+  destructiveHint?: boolean;
+  idempotentHint?: boolean;
+  openWorldHint?: boolean;
+}
 
 /**
  * Tool definition interface for MCP tools
  */
-export interface ToolDefinition<T extends z.ZodObject<any>> {
+export interface ToolDefinition<T extends z.ZodObject<any> = z.ZodObject<any>> {
   name: string;
+  title?: string;
   description: string;
   parameters: T;
+  annotations?: ToolAnnotations;
   createHandler: (perigon: Perigon) => ToolCallback<T>;
 }
 

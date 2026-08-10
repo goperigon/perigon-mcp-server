@@ -28,6 +28,10 @@
  * - Company News: Get recent news about a specific company
  * - Person News: Get recent news about a specific person
  *
+ * Monitor Tools (Continuous EVENT, MENTIONS, and TOPIC tracking):
+ * - Create, inspect, update, activate, pause, and archive monitors
+ * - Retrieve structured events, scheduled newsletters, and summary history
+ *
  * Signal Insights Tools (AI signal data analysis):
  * These tools require MCP transport (/v1/mcp) and are registered dynamically
  * per session via PokeyInsightsClient / InsightsApiClient. They are listed
@@ -68,6 +72,15 @@ export { companyNewsTool } from "./use-cases/company-news";
 export { personNewsTool } from "./use-cases/person-news";
 export { locationNewsTool } from "./use-cases/location-news";
 
+export { listMonitorsTool } from "./monitors/list-monitors";
+export { getMonitorTool } from "./monitors/get-monitor";
+export { getMonitorEventsTool } from "./monitors/get-monitor-events";
+export { getMonitorNewslettersTool } from "./monitors/get-monitor-newsletters";
+export { getMonitorSummariesTool } from "./monitors/get-monitor-summaries";
+export { createMonitorTool } from "./monitors/create-monitor";
+export { updateMonitorTool } from "./monitors/update-monitor";
+export { setMonitorStatusTool } from "./monitors/set-monitor-status";
+
 // Export individual tool functions for direct use
 export { searchNewsArticles } from "./search/news-articles";
 export { searchNewsStories } from "./search/news-stories";
@@ -94,6 +107,15 @@ export { getCompanyNews } from "./use-cases/company-news";
 export { getPersonNews } from "./use-cases/person-news";
 export { getLocationNews } from "./use-cases/location-news";
 
+export { listMonitors } from "./monitors/list-monitors";
+export { getMonitor } from "./monitors/get-monitor";
+export { getMonitorEvents } from "./monitors/get-monitor-events";
+export { getMonitorNewsletters } from "./monitors/get-monitor-newsletters";
+export { getMonitorSummaries } from "./monitors/get-monitor-summaries";
+export { createMonitor } from "./monitors/create-monitor";
+export { updateMonitor } from "./monitors/update-monitor";
+export { setMonitorStatus } from "./monitors/set-monitor-status";
+
 // Export argument schemas for external use
 export { newsArticlesArgs } from "./search/news-articles";
 export { newsStoriesArgs } from "./search/news-stories";
@@ -119,6 +141,15 @@ export { topCompaniesArgs } from "./search/stats-top-companies";
 export { companyNewsArgs } from "./use-cases/company-news";
 export { personNewsArgs } from "./use-cases/person-news";
 export { locationNewsArgs } from "./use-cases/location-news";
+
+export { listMonitorsArgs } from "./monitors/list-monitors";
+export { getMonitorArgs } from "./monitors/get-monitor";
+export { getMonitorEventsArgs } from "./monitors/get-monitor-events";
+export { getMonitorNewslettersArgs } from "./monitors/get-monitor-newsletters";
+export { getMonitorSummariesArgs } from "./monitors/get-monitor-summaries";
+export { createMonitorArgs } from "./monitors/create-monitor";
+export { updateMonitorArgs } from "./monitors/update-monitor";
+export { setMonitorStatusArgs } from "./monitors/set-monitor-status";
 
 // Export shared types and utilities
 export type { ToolCallback, ToolDefinition } from "./types";
@@ -164,6 +195,14 @@ import { topCompaniesTool } from "./search/stats-top-companies";
 import { companyNewsTool } from "./use-cases/company-news";
 import { personNewsTool } from "./use-cases/person-news";
 import { locationNewsTool } from "./use-cases/location-news";
+import { listMonitorsTool } from "./monitors/list-monitors";
+import { getMonitorTool } from "./monitors/get-monitor";
+import { getMonitorEventsTool } from "./monitors/get-monitor-events";
+import { getMonitorNewslettersTool } from "./monitors/get-monitor-newsletters";
+import { getMonitorSummariesTool } from "./monitors/get-monitor-summaries";
+import { createMonitorTool } from "./monitors/create-monitor";
+import { updateMonitorTool } from "./monitors/update-monitor";
+import { setMonitorStatusTool } from "./monitors/set-monitor-status";
 import { ToolDefinition } from "./types";
 import { createWorkspaceTool } from "./signals/create-workspace";
 import { searchSignalsTool } from "./signals/search-signals";
@@ -234,6 +273,15 @@ export const TOOL_DEFINITIONS: Record<string, ToolDefinition<any>> = {
   get_company_news: companyNewsTool,
   get_person_news: personNewsTool,
   get_location_news: locationNewsTool,
+
+  list_monitors: listMonitorsTool,
+  get_monitor: getMonitorTool,
+  get_monitor_events: getMonitorEventsTool,
+  get_monitor_newsletters: getMonitorNewslettersTool,
+  get_monitor_summaries: getMonitorSummariesTool,
+  create_monitor: createMonitorTool,
+  update_monitor: updateMonitorTool,
+  set_monitor_status: setMonitorStatusTool,
 
   // Signal Insights tools — schemas listed for inspector/tool-selector discovery.
   // createHandler stubs return an error; actual execution requires MCP transport.
