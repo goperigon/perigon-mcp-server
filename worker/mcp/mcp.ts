@@ -62,12 +62,27 @@ const SCOPE_TO_TOOLS: Partial<Record<Scopes, ToolName[]>> = {
   [Scopes.VECTOR_SEARCH_WIKIPEDIA]: [wikipediaVectorTool.name],
 };
 
+const MONITOR_TOOL_NAMES = [
+  "list_monitors",
+  "get_monitor",
+  "get_monitor_events",
+  "get_monitor_newsletters",
+  "get_monitor_summaries",
+  "create_monitor",
+  "update_monitor",
+  "set_monitor_status",
+] as const satisfies readonly ToolName[];
+
 /**
  * Returns a deduplicated list of tool names permitted by the given API key
- * scopes. `search_news_articles` is always included regardless of scope.
+ * scopes. `search_news_articles` and monitor tools are always included
+ * regardless of scope.
  */
 function getAllowedToolsForScopes(scopes: Scopes[]): ToolName[] {
-  const seen = new Set<ToolName>([newsArticlesTool.name]);
+  const seen = new Set<ToolName>([
+    newsArticlesTool.name,
+    ...MONITOR_TOOL_NAMES,
+  ]);
   for (const scope of scopes) {
     if (!scope) continue;
     const toolNames = SCOPE_TO_TOOLS[scope];
@@ -89,6 +104,11 @@ export class PerigonMCP extends McpAgent<Env, unknown, Props> {
     { instructions: instructions.MCP_INSTRUCTIONS },
   );
 
+  // registerTool() throws if the same name is registered twice. Tracked
+  // separately so one misconfigured entry skips a duplicate instead of
+  // aborting init() and leaving the session with no tools at all.
+  private readonly registeredToolNames = new Set<ToolName>();
+
   async init() {
     const perigon = new Perigon(this.props!.apiKey);
     const { scopes, requestedTools } = this.props!;
@@ -101,15 +121,7 @@ export class PerigonMCP extends McpAgent<Env, unknown, Props> {
     );
 
     for (const toolName of activeNewsTools) {
-      const definition = TOOL_DEFINITIONS[toolName];
-      this.server.registerTool(
-        definition.name,
-        {
-          description: definition.description,
-          inputSchema: definition.parameters,
-        },
-        definition.createHandler(perigon),
-      );
+      this.registerNewsTool(toolName, perigon);
     }
 
     // ── Signal Insights tools (always available) ──────────────────────────
@@ -173,5 +185,22 @@ export class PerigonMCP extends McpAgent<Env, unknown, Props> {
         def.createHandler(insightsApi, pokeyClient),
       );
     }
+  }
+
+  private registerNewsTool(toolName: ToolName, perigon: Perigon): void {
+    if (this.registeredToolNames.has(toolName)) return;
+    this.registeredToolNames.add(toolName);
+
+    const definition = TOOL_DEFINITIONS[toolName];
+    this.server.registerTool(
+      definition.name,
+      {
+        title: definition.title,
+        description: definition.description,
+        inputSchema: definition.parameters,
+        annotations: definition.annotations,
+      },
+      definition.createHandler(perigon),
+    );
   }
 }

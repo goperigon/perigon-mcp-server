@@ -27,12 +27,20 @@ import { grepTool } from "./tools/signals/grep";
 import { readFileTool } from "./tools/signals/read-file";
 import { writeFileTool } from "./tools/signals/write-file";
 import { strReplaceTool } from "./tools/signals/str-replace";
+import { listMonitorsTool } from "./tools/monitors/list-monitors";
+import { getMonitorTool } from "./tools/monitors/get-monitor";
+import { getMonitorEventsTool } from "./tools/monitors/get-monitor-events";
+import { getMonitorNewslettersTool } from "./tools/monitors/get-monitor-newsletters";
+import { getMonitorSummariesTool } from "./tools/monitors/get-monitor-summaries";
+import { createMonitorTool } from "./tools/monitors/create-monitor";
+import { updateMonitorTool } from "./tools/monitors/update-monitor";
+import { setMonitorStatusTool } from "./tools/monitors/set-monitor-status";
 import { WORKSPACE_DIR, DATA_DIR, OUTPUT_DIR } from "./constants";
 
 export { WORKSPACE_DIR, DATA_DIR, OUTPUT_DIR };
 
 export const MCP_INSTRUCTIONS = `\
-Perigon is a news intelligence API with two tool groups: News Search and Signal Insights.
+Perigon is a news intelligence API with three tool groups: News Search, Monitors, and Signal Insights.
 
 ## News Search
 
@@ -58,6 +66,22 @@ Tips:
 - Use showReprints=false (default) to deduplicate wire-service copies.
 - \`${newsStoriesTool.name}\` returns clustered headlines — use this when the user wants "top stories" or "what happened with X" rather than individual articles.
 - For "what's happening in [place]?" use ${locationNewsTool.name} for simplicity, or ${newsArticlesTool.name} with city/state/country filters for more control.
+
+## Monitors
+
+Create, configure, and read output from Perigon monitors via the public \`/v1/api/monitors\` API. Monitor tools are always available and do not require a sandbox workspace.
+
+Tools:
+- \`${listMonitorsTool.name}\` / \`${getMonitorTool.name}\` — discover monitors and inspect their complete configuration before reading output or making changes.
+- \`${getMonitorEventsTool.name}\` — structured EVENT or MENTIONS output with extracted schema data, summaries, entities, and related articles.
+- \`${getMonitorNewslettersTool.name}\` — scheduled TOPIC briefings with markdown content and citations.
+- \`${getMonitorSummariesTool.name}\` — rolling AI-generated summary history.
+- \`${createMonitorTool.name}\` / \`${updateMonitorTool.name}\` / \`${setMonitorStatusTool.name}\` — lifecycle and configuration management. Only mutate a monitor when the user explicitly requests it. Create monitors as DRAFT unless the user explicitly asks to activate them, and warn that ARCHIVED cannot be reversed through the public API.
+
+Tips:
+- Use \`${listMonitorsTool.name}\` first to discover monitor UUIDs.
+- EVENT and MENTIONS monitors emit structured events; TOPIC monitors emit scheduled newsletters.
+- \`${updateMonitorTool.name}\` replaces query, schema, entity groups, and contact points wholesale when those fields are provided.
 
 ## Signal Insights
 
