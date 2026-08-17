@@ -172,8 +172,18 @@ export const newsArticlesArgs = createBaseSearchArgs().extend({
     .string()
     .optional()
     .describe("Filter by Google Content Category prefix (e.g. /Finance)."),
-  lat: z.number().min(-90).max(90).optional().describe("Geo radius search: center latitude."),
-  lon: z.number().min(-180).max(180).optional().describe("Geo radius search: center longitude."),
+  lat: z
+    .number()
+    .min(-90)
+    .max(90)
+    .optional()
+    .describe("Geo radius search: center latitude."),
+  lon: z
+    .number()
+    .min(-180)
+    .max(180)
+    .optional()
+    .describe("Geo radius search: center longitude."),
   maxDistance: z
     .number()
     .min(1)
@@ -207,7 +217,9 @@ export const newsArticlesArgs = createBaseSearchArgs().extend({
   reprintGroupId: z
     .string()
     .optional()
-    .describe("Return every article in one reprint group, original plus reprints."),
+    .describe(
+      "Return every article in one reprint group, original plus reprints.",
+    ),
   searchTranslation: z
     .boolean()
     .optional()
@@ -253,7 +265,9 @@ export const newsArticlesArgs = createBaseSearchArgs().extend({
   watchlist: z
     .array(z.string())
     .optional()
-    .describe("Filter to articles mentioning any entity from these watchlist IDs."),
+    .describe(
+      "Filter to articles mentioning any entity from these watchlist IDs.",
+    ),
   excludeWatchlist: z
     .array(z.string())
     .optional()
@@ -306,7 +320,9 @@ export const newsArticlesArgs = createBaseSearchArgs().extend({
   excludeCompanySymbol: z
     .array(z.string())
     .optional()
-    .describe("Exclude articles mentioning companies with these ticker symbols."),
+    .describe(
+      "Exclude articles mentioning companies with these ticker symbols.",
+    ),
   ...createLocationSchema(),
 });
 
@@ -490,41 +506,39 @@ export function searchNewsArticles(
 
       if (result.numResults === 0) return noResults;
 
-      const articles = result.articles.map((article: any) => {
+      const articles = result.articles.map((article) => {
         const journalistIds =
-          article.matchedAuthors?.map((a: any) => a.id).join(", ") ?? "";
+          article.matchedAuthors?.map((a) => a.id).join(", ") ?? "";
         const categories =
-          article.categories?.map((c: any) => c.name).join(", ") ?? "";
-        const topics = article.topics?.map((t: any) => t.name).join(", ") ?? "";
-        const labels = article.labels?.map((l: any) => l.name).join(", ") ?? "";
-        const keywords =
-          article.keywords?.map((k: any) => k.name).join(", ") ?? "";
+          article.categories?.map((c) => c.name).join(", ") ?? "";
+        const topics = article.topics?.map((t) => t.name).join(", ") ?? "";
+        const labels = article.labels?.map((l) => l.name).join(", ") ?? "";
+        const keywords = article.keywords?.map((k) => k.name).join(", ") ?? "";
         const taxonomies =
-          article.taxonomies?.map((t: any) => t.name).join(", ") ?? "";
-        const entities =
-          article.entities?.map((e: any) => e.name).join(", ") ?? "";
+          article.taxonomies?.map((t) => t.name).join(", ") ?? "";
+        const entities = article.entities?.map((e) => e.name).join(", ") ?? "";
         const eventTypes =
-          article.eventTypes?.map((e: any) => e.name).join(", ") ?? "";
+          article.eventTypes?.map((e) => e.name).join(", ") ?? "";
         const people =
           article.people
-            ?.map((p: any) => p.name)
+            ?.map((p) => p.name)
             .filter(Boolean)
             .join(", ") ?? "";
         const companies =
           article.companies
-            ?.map((c: any) => c.name)
+            ?.map((c) => c.name)
             .filter(Boolean)
             .join(", ") ?? "";
         const places =
           article.places
-            ?.map((p: any) =>
+            ?.map((p) =>
               [p.city, p.state, p.country].filter(Boolean).join(", "),
             )
             .filter(Boolean)
             .join("; ") ?? "";
         const locations =
           article.locations
-            ?.map((l: any) =>
+            ?.map((l) =>
               [l.city, l.state, l.country].filter(Boolean).join(", "),
             )
             .filter(Boolean)
@@ -534,7 +548,7 @@ export function searchNewsArticles(
         return `<article id="${article.articleId}" title="${article.title}">
 URL: ${article.url}
 Description: ${article.description ?? "N/A"}
-Content: ${summarize ? article.summary ?? article.shortSummary : article.content}
+Content: ${summarize ? (article.summary ?? article.shortSummary) : article.content}
 Word Count: ${article.enContentWordCount ?? "N/A"}
 Pub Date: ${article.pubDate} (utc)
 Add Date: ${article.addDate} (utc)

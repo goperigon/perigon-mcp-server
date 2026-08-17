@@ -40,16 +40,17 @@ const BASE_URL = "https://api.perigon.io/v1";
  * layer, since those objects are constructed specifically to be passed to
  * the API).
  */
-function buildQueryParams(
-  params: Record<string, unknown>,
-): URLSearchParams {
+function buildQueryParams(params: Record<string, unknown>): URLSearchParams {
   const sp = new URLSearchParams();
   for (const [key, value] of Object.entries(params)) {
     if (value === undefined || value === null) continue;
     if (Array.isArray(value)) {
       for (const item of value) {
         if (item === undefined || item === null) continue;
-        sp.append(key, item instanceof Date ? item.toISOString() : String(item));
+        sp.append(
+          key,
+          item instanceof Date ? item.toISOString() : String(item),
+        );
       }
     } else if (value instanceof Date) {
       sp.set(key, value.toISOString());
@@ -274,9 +275,87 @@ export interface StoryHistoryResult {
  */
 export type ArticlesFullParams = Record<string, unknown>;
 
-/** SDK's `Article` plus the one field it drops entirely: `enContentWordCount`. */
+/** A `{name}`-shaped taxonomy entry: categories, topics, taxonomies, entities, eventTypes, labels, keywords. */
+export interface ArticleNamedLabel {
+  name?: string | null;
+  [key: string]: unknown;
+}
+
+/** An entry in `Article.matchedAuthors` — the journalist IDs behind a byline. */
+export interface ArticleAuthorRef {
+  id?: string | null;
+  name?: string | null;
+  [key: string]: unknown;
+}
+
+/** An entry in `Article.people`. */
+export interface ArticlePersonRef {
+  name?: string | null;
+  wikidataId?: string | null;
+  [key: string]: unknown;
+}
+
+/** An entry in `Article.companies`. */
+export interface ArticleCompanyRef {
+  name?: string | null;
+  domain?: string | null;
+  symbol?: string | null;
+  [key: string]: unknown;
+}
+
+/** An entry in `Article.places` or `Article.locations`. */
+export interface ArticlePlaceRef {
+  city?: string | null;
+  state?: string | null;
+  country?: string | null;
+  [key: string]: unknown;
+}
+
+/**
+ * SDK's `Article` plus the one field it drops entirely: `enContentWordCount`.
+ * Nested collections used by the `search_news_articles` formatter are typed
+ * explicitly so a removed/renamed/reshaped upstream field fails type
+ * checking instead of silently formatting as `undefined`; any other field
+ * this raw endpoint returns still falls through the index signature.
+ */
 export interface ArticleFull {
+  articleId?: string | null;
+  title?: string | null;
+  url?: string | null;
+  description?: string | null;
+  summary?: string | null;
+  shortSummary?: string | null;
+  content?: string | null;
   enContentWordCount?: number | null;
+  pubDate?: string | null;
+  addDate?: string | null;
+  refreshDate?: string | null;
+  source?: { domain?: string | null; [key: string]: unknown } | null;
+  authorsByline?: string | null;
+  language?: string | null;
+  country?: string | null;
+  medium?: string | null;
+  imageUrl?: string | null;
+  score?: number | null;
+  reprint?: boolean | null;
+  reprintGroupId?: string | null;
+  claim?: string | null;
+  verdict?: string | null;
+  sentiment?: unknown;
+  clusterId?: string | null;
+  categories?: ArticleNamedLabel[] | null;
+  topics?: ArticleNamedLabel[] | null;
+  taxonomies?: ArticleNamedLabel[] | null;
+  entities?: ArticleNamedLabel[] | null;
+  eventTypes?: ArticleNamedLabel[] | null;
+  labels?: ArticleNamedLabel[] | null;
+  keywords?: ArticleNamedLabel[] | null;
+  people?: ArticlePersonRef[] | null;
+  companies?: ArticleCompanyRef[] | null;
+  places?: ArticlePlaceRef[] | null;
+  locations?: ArticlePlaceRef[] | null;
+  links?: string[] | null;
+  matchedAuthors?: ArticleAuthorRef[] | null;
   [key: string]: unknown;
 }
 
@@ -341,7 +420,11 @@ export interface SourceDetail {
   paywall?: boolean | null;
   altNames?: string[] | null;
   topTopics?: Array<{ name?: string | null; count?: number | null }> | null;
-  location?: { country?: string | null; state?: string | null; city?: string | null } | null;
+  location?: {
+    country?: string | null;
+    state?: string | null;
+    city?: string | null;
+  } | null;
   [key: string]: unknown;
 }
 
@@ -561,21 +644,34 @@ export class Perigon extends V1Api {
     if (params.from) sp.set("from", params.from.toISOString());
     if (params.to) sp.set("to", params.to.toISOString());
     if (params.source) for (const s of params.source) sp.append("source", s);
-    if (params.sourceGroup) for (const g of params.sourceGroup) sp.append("sourceGroup", g);
-    if (params.category) for (const c of params.category) sp.append("category", c);
+    if (params.sourceGroup)
+      for (const g of params.sourceGroup) sp.append("sourceGroup", g);
+    if (params.category)
+      for (const c of params.category) sp.append("category", c);
     if (params.topic) for (const t of params.topic) sp.append("topic", t);
-    if (params.language) for (const l of params.language) sp.append("language", l);
+    if (params.language)
+      for (const l of params.language) sp.append("language", l);
     if (params.country) for (const c of params.country) sp.append("country", c);
-    if (params.personName) for (const p of params.personName) sp.append("personName", p);
-    if (params.companyDomain) for (const d of params.companyDomain) sp.append("companyDomain", d);
-    if (params.companySymbol) for (const s of params.companySymbol) sp.append("companySymbol", s);
-    if (params.journalistId) for (const j of params.journalistId) sp.append("journalistId", j);
-    if (params.personWikidataId) for (const p of params.personWikidataId) sp.append("personWikidataId", p);
-    if (params.companyId) for (const c of params.companyId) sp.append("companyId", c);
-    if (params.taxonomy) for (const t of params.taxonomy) sp.append("taxonomy", t);
-    if (params.excludeSource) for (const s of params.excludeSource) sp.append("excludeSource", s);
-    if (params.excludeCategory) for (const c of params.excludeCategory) sp.append("excludeCategory", c);
-    if (params.excludeTopic) for (const t of params.excludeTopic) sp.append("excludeTopic", t);
+    if (params.personName)
+      for (const p of params.personName) sp.append("personName", p);
+    if (params.companyDomain)
+      for (const d of params.companyDomain) sp.append("companyDomain", d);
+    if (params.companySymbol)
+      for (const s of params.companySymbol) sp.append("companySymbol", s);
+    if (params.journalistId)
+      for (const j of params.journalistId) sp.append("journalistId", j);
+    if (params.personWikidataId)
+      for (const p of params.personWikidataId) sp.append("personWikidataId", p);
+    if (params.companyId)
+      for (const c of params.companyId) sp.append("companyId", c);
+    if (params.taxonomy)
+      for (const t of params.taxonomy) sp.append("taxonomy", t);
+    if (params.excludeSource)
+      for (const s of params.excludeSource) sp.append("excludeSource", s);
+    if (params.excludeCategory)
+      for (const c of params.excludeCategory) sp.append("excludeCategory", c);
+    if (params.excludeTopic)
+      for (const t of params.excludeTopic) sp.append("excludeTopic", t);
     return sp;
   }
 
@@ -635,15 +731,22 @@ export class Perigon extends V1Api {
   }
 
   private applySpikePrams(sp: URLSearchParams, params: TopSpikeParams) {
-    if (params.currentFrom) sp.set("currentFrom", params.currentFrom.toISOString());
+    if (params.currentFrom)
+      sp.set("currentFrom", params.currentFrom.toISOString());
     if (params.currentTo) sp.set("currentTo", params.currentTo.toISOString());
-    if (params.baselineFrom) sp.set("baselineFrom", params.baselineFrom.toISOString());
-    if (params.baselineTo) sp.set("baselineTo", params.baselineTo.toISOString());
-    if (params.normalizeByDay !== undefined) sp.set("normalizeByDay", String(params.normalizeByDay));
+    if (params.baselineFrom)
+      sp.set("baselineFrom", params.baselineFrom.toISOString());
+    if (params.baselineTo)
+      sp.set("baselineTo", params.baselineTo.toISOString());
+    if (params.normalizeByDay !== undefined)
+      sp.set("normalizeByDay", String(params.normalizeByDay));
     if (params.size !== undefined) sp.set("size", String(params.size));
-    if (params.minBaseline !== undefined) sp.set("minBaseline", String(params.minBaseline));
-    if (params.minCurrent !== undefined) sp.set("minCurrent", String(params.minCurrent));
-    if (params.smoothingAlpha !== undefined) sp.set("smoothingAlpha", String(params.smoothingAlpha));
+    if (params.minBaseline !== undefined)
+      sp.set("minBaseline", String(params.minBaseline));
+    if (params.minCurrent !== undefined)
+      sp.set("minCurrent", String(params.minCurrent));
+    if (params.smoothingAlpha !== undefined)
+      sp.set("smoothingAlpha", String(params.smoothingAlpha));
     if (params.sortByOverride) sp.set("sortByOverride", params.sortByOverride);
   }
 
@@ -709,7 +812,9 @@ export class Perigon extends V1Api {
   }
 
   /** `GET /v1/stories/stats` — story-level publication volume over time, requires CLUSTERS. */
-  async getStoryStats(params: StoryStatsParams): Promise<StatResult<CountStatDto>> {
+  async getStoryStats(
+    params: StoryStatsParams,
+  ): Promise<StatResult<CountStatDto>> {
     const sp = buildQueryParams({ ...params });
     return await fetchWithRetry<StatResult<CountStatDto>>(
       `${BASE_URL}/stories/stats?${sp.toString()}`,
@@ -787,10 +892,7 @@ export class Perigon extends V1Api {
     sortOrder: string;
   }): Promise<TableResult<WatchlistDto>> {
     const sp = buildQueryParams(params);
-    return await this.platformFetch(
-      "/api/watchlists",
-      `?${sp.toString()}`,
-    );
+    return await this.platformFetch("/api/watchlists", `?${sp.toString()}`);
   }
 
   async getWatchlist(id: number): Promise<SingleResult<WatchlistDto>> {
@@ -837,10 +939,7 @@ export class Perigon extends V1Api {
     sortOrder: string;
   }): Promise<TableResult<SourceGroupDto>> {
     const sp = buildQueryParams(params);
-    return await this.platformFetch(
-      "/api/sourceGroups",
-      `?${sp.toString()}`,
-    );
+    return await this.platformFetch("/api/sourceGroups", `?${sp.toString()}`);
   }
 
   async getSourceGroup(id: number): Promise<SingleResult<SourceGroupDto>> {
@@ -887,10 +986,7 @@ export class Perigon extends V1Api {
     sortOrder: string;
   }): Promise<TableResult<ContactPointDto>> {
     const sp = buildQueryParams(params);
-    return await this.platformFetch(
-      "/api/contactPoints",
-      `?${sp.toString()}`,
-    );
+    return await this.platformFetch("/api/contactPoints", `?${sp.toString()}`);
   }
 
   async getContactPoint(uuid: string): Promise<SingleResult<ContactPointDto>> {
