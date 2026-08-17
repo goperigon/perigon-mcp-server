@@ -84,10 +84,11 @@ export function searchTopics(
       if (result.total === 0) return noResults;
 
       const topics = result.data.map((topic) => {
-        return `<topic name="${topic.name}">
-Created At: ${topic.createdAt}
-Category: ${topic.labels?.category}
-Sub Category: ${topic.labels?.subcategory}
+        return `<topic id="${topic.id ?? ""}" name="${topic.name}">
+Created At: ${topic.createdAt ?? "N/A"}
+Updated At: ${topic.updatedAt ?? "N/A"}
+Category: ${topic.labels?.category ?? "N/A"}
+Sub Category: ${topic.labels?.subcategory ?? "N/A"}
 </topic>`;
       });
 

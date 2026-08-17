@@ -34,6 +34,13 @@ export function getArticleCounts(
         personName: args.personName,
         companyDomain: args.companyDomain,
         companySymbol: args.companySymbol,
+        journalistId: args.journalistId,
+        personWikidataId: args.personWikidataId,
+        companyId: args.companyId,
+        taxonomy: args.taxonomy,
+        excludeSource: args.excludeSource,
+        excludeCategory: args.excludeCategory,
+        excludeTopic: args.excludeTopic,
         splitBy: normalizeSplitBy(args.splitBy),
       });
 
@@ -66,7 +73,7 @@ export function getArticleCounts(
 export const articleCountsTool = {
   name: "get_article_counts",
   description:
-    "Get article publication volume bucketed over time for articles matching the given filters. Use this when the user asks about coverage trends, how much a topic was covered over time, or wants a chart/table of article counts — NOT just for finding the total number of articles (use search_news_articles with showNumResults for a simple total count). Returns one count per time bucket. Use splitBy to control the interval (HOUR, DAY, WEEK, MONTH, or NONE for a single total across the whole date range). Supports the same article filters as search_news_articles.",
+    "Get article publication volume bucketed over time for articles matching the given filters. Use this when the user asks about coverage trends, how much a topic was covered over time, or wants a chart/table of article counts — NOT just for finding the total number of articles (use search_news_articles with showNumResults for a simple total count). Returns one count per time bucket. Use splitBy to control the interval (HOUR, DAY, WEEK, MONTH, or NONE for a single total across the whole date range). Supports a curated subset of article filters: q, from/to, source(Group), category, topic, language, country, person/company identifiers, taxonomy, and exclude variants for source/category/topic — not the full search_news_articles filter set.",
   parameters: articleCountsArgs,
   createHandler: (perigon: Perigon) => getArticleCounts(perigon),
 } satisfies ToolDefinition<typeof articleCountsArgs>;

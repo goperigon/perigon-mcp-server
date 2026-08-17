@@ -1,7 +1,7 @@
 import { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 import { Perigon } from "../../../lib/perigon";
-import { ToolCallback, ToolDefinition, CONSTANTS } from "../types";
+import { ToolCallback, ToolDefinition } from "../types";
 import { paginationArgs, categories, topics } from "../schemas/base";
 import { createSearchField } from "../schemas/search";
 import {
@@ -56,14 +56,52 @@ export const journalistsArgs = z.object({
   countries: z
     .array(z.string())
     .optional()
-    .default(() => [...CONSTANTS.DEFAULT_COUNTRIES])
     .transform((countries) => {
       if (!countries) return undefined;
       return countries.map((country) => country.toLowerCase());
     })
     .describe(
-      "Filter journalists by countries they commonly cover. Two-letter codes in lowercase (e.g., us, gb, jp).",
+      "Reporting focus: countries this journalist commonly covers in their published articles (derived from topCountries), not where they are based. Two-letter codes, lowercase (e.g., us, gb, jp). For 'based in' use locationCountry instead. No default — omit for global results.",
     ),
+  locationCountry: z
+    .array(z.string())
+    .optional()
+    .transform((values) => values?.map((v) => v.toLowerCase()))
+    .describe(
+      "Profile location: country the journalist is personally based in (locations.country), distinct from `countries` (reporting focus). Exact match, lowercase ISO 3166-1 alpha-2 (e.g., us, gb, jp); 'uk' is accepted as an alias for 'gb'. Wrong casing returns zero results, not an error.",
+    ),
+  locationState: z
+    .array(z.string())
+    .optional()
+    .describe(
+      "Profile location: US state the journalist is based in (locations.state). Exact match, two-letter code, uppercase (e.g., NY, CA).",
+    ),
+  locationCounty: z
+    .array(z.string())
+    .optional()
+    .describe(
+      "Profile location: county the journalist is based in (locations.county). Exact match against the full stored name (e.g., 'Los Angeles County').",
+    ),
+  locationCity: z
+    .array(z.string())
+    .optional()
+    .describe(
+      "Profile location: city the journalist is based in (locations.city). Exact match, proper-cased (e.g., London, not london).",
+    ),
+  locationArea: z
+    .array(z.string())
+    .optional()
+    .describe(
+      "Profile location: neighborhood, borough, or district the journalist is based in (locations.area). Exact match against stored casing.",
+    ),
+  updatedAtFrom: z
+    .string()
+    .optional()
+    .describe("Filter for journalist profiles updated after this date (ISO 8601 or yyyy-mm-dd)."),
+  updatedAtTo: z
+    .string()
+    .optional()
+    .describe("Filter for journalist profiles updated before this date (ISO 8601 or yyyy-mm-dd)."),
 });
 
 /**
@@ -72,16 +110,22 @@ export const journalistsArgs = z.object({
  * This tool helps you find journalists and reporters by various criteria including:
  * - Name and title search
  * - Publication/source filtering
- * - Location-based filtering by countries they cover
+ * - Reporting-focus filtering by countries they cover (`countries`)
+ * - Profile-location filtering by where they are based (`locationCountry`/`locationState`/`locationCounty`/`locationCity`/`locationArea`)
  * - Activity level filtering (monthly posts)
  * - Content type filtering (opinion, news, etc.)
  * - Category and topic specialization
  *
  * Returns detailed journalist profiles including:
  * - Top sources they write for
- * - Geographic coverage areas
+ * - All five levels of their own profile location
+ * - Reporting-focus countries (topCountries), labelled distinctly from profile location
  * - Monthly posting activity
  * - Content categories and topics
+ *
+ * Uses the raw `/v1/journalists/all` fetch rather than the SDK, since
+ * `SearchJournalistsRequest` in `@goperigon/perigon-ts@1.1.2` does not declare
+ * the five `location*` parameters.
  *
  * @param perigon - The Perigon API client instance
  * @returns Tool callback function for MCP
@@ -95,6 +139,7 @@ export function searchJournalists(
     page,
     size,
     countries,
+    journalistIds,
     maxMonthlyPosts,
     minMonthlyPosts,
     sources,
@@ -102,9 +147,17 @@ export function searchJournalists(
     categories,
     topics,
     labels,
+    locationCountry,
+    locationState,
+    locationCounty,
+    locationCity,
+    locationArea,
+    updatedAtFrom,
+    updatedAtTo,
   }: z.infer<typeof journalistsArgs>): Promise<CallToolResult> => {
     try {
-      const result = await perigon.searchJournalists({
+      const result = await perigon.searchJournalistsFull({
+        id: journalistIds,
         q: query,
         name,
         page,
@@ -118,13 +171,37 @@ export function searchJournalists(
         label: labels,
         category: categories,
         topic: topics,
+        locationCountry,
+        locationState,
+        locationCounty,
+        locationCity,
+        locationArea,
+        updatedAtFrom,
+        updatedAtTo,
       });
 
       if (result.numResults === 0) return noResults;
 
       const journalists = result.results.map((journalist) => {
+        const locations = journalist.locations
+          ?.map((location) => {
+            const levels = [
+              location.area,
+              location.city,
+              location.county,
+              location.state,
+              location.country,
+            ].filter(Boolean);
+            return levels.length > 0 ? `<location>${levels.join(", ")}</location>` : null;
+          })
+          .filter(Boolean)
+          .join("\n  ");
+
         return `<journalist id="${journalist.id}" name="${journalist.name}">
 Headline: ${journalist.headline}
+Full Name: ${journalist.fullName ?? "N/A"}
+Title: ${journalist.title ?? "N/A"}
+Avg Monthly Posts: ${journalist.avgMonthlyPosts ?? "N/A"}
 Sources:
   ${journalist?.topSources
     ?.map(
@@ -132,12 +209,15 @@ Sources:
         `\t- Source: ${source.name}, Articles they wrote for Source: ${source.count}`,
     )
     .join("\n")}
-Locations: ${journalist?.locations
-          ?.map(
-            (location) =>
-              `Country: ${location.country}, City: ${location.city}`,
-          )
-          .join(", ")}
+Based in (profile location):
+  ${locations || "N/A"}
+Reporting focus (countries commonly covered, not necessarily where based): ${
+          journalist.topCountries?.map((c) => c.name).join(", ") || "N/A"
+        }
+Top Topics: ${journalist.topTopics?.map((t) => t.name).join(", ") || "N/A"}
+Top Categories: ${journalist.topCategories?.map((c) => c.name).join(", ") || "N/A"}
+Twitter: ${journalist.twitterHandle ?? "N/A"}
+LinkedIn: ${journalist.linkedinUrl ?? "N/A"}
 </journalist>`;
       });
 
@@ -167,7 +247,7 @@ Locations: ${journalist?.locations
 export const journalistsTool = {
   name: "search_journalists",
   description:
-    "Search 230k+ journalist and reporter profiles in the Perigon database. Use this to find who covers specific topics, publications, or regions. Filter by name, Twitter handle, publication, country, content category, topic, or posting activity. Returns journalist profiles with their top sources, geographic coverage areas, and monthly posting frequency.",
+    "Search 230k+ journalist and reporter profiles in the Perigon database. Use this to find who covers specific topics, publications, or regions — or who is personally based in a place. Two distinct location concepts: `countries` filters reporting focus (what they cover, derived from their published articles), while `locationCountry`/`locationState`/`locationCounty`/`locationCity`/`locationArea` filter their own profile location (where they are based) — these levels AND together, so pass only the narrowest level the user named. Also filter by name, Twitter handle, publication, content category, topic, or posting activity. Returns journalist profiles with their top sources, profile locations, reporting-focus countries, and monthly posting frequency. A location query returning nothing is usually a casing mismatch (exact-term matching), not an absence of journalists.",
   parameters: journalistsArgs,
   createHandler: (perigon: Perigon) => searchJournalists(perigon),
 } satisfies ToolDefinition<typeof journalistsArgs>;

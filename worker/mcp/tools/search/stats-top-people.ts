@@ -58,6 +58,18 @@ export const topPeopleArgs = statsFilterArgs.extend({
     .optional()
     .default(10)
     .describe("Number of top people to return (1–100). Default: 10."),
+  minBaseline: z
+    .number()
+    .optional()
+    .describe("Minimum baseline mentions required to be eligible for ranking."),
+  minCurrent: z
+    .number()
+    .optional()
+    .describe("Minimum current-window mentions required to be eligible for ranking."),
+  smoothingAlpha: z
+    .number()
+    .optional()
+    .describe("Smoothing factor applied to the baseline rate to reduce noise from small counts."),
 });
 
 export function getTopPeople(
@@ -80,12 +92,22 @@ export function getTopPeople(
         personName: args.personName,
         companyDomain: args.companyDomain,
         companySymbol: args.companySymbol,
+        journalistId: args.journalistId,
+        personWikidataId: args.personWikidataId,
+        companyId: args.companyId,
+        taxonomy: args.taxonomy,
+        excludeSource: args.excludeSource,
+        excludeCategory: args.excludeCategory,
+        excludeTopic: args.excludeTopic,
         currentFrom: args.currentFrom,
         currentTo: args.currentTo,
         baselineFrom: args.baselineFrom,
         baselineTo: args.baselineTo,
         normalizeByDay: args.normalizeByDay,
         size: args.size,
+        minBaseline: args.minBaseline,
+        minCurrent: args.minCurrent,
+        smoothingAlpha: args.smoothingAlpha,
       });
 
       if (!result.data || result.data.length === 0) return noResults;

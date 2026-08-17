@@ -170,11 +170,43 @@ export function searchNewsStories(
       if (result.numResults === 0) return noResults;
 
       const stories = result.results.map((story) => {
+        const keyPoints =
+          story.keyPoints
+            ?.map((kp) => kp.point)
+            .filter(Boolean)
+            .join("; ") || "N/A";
+        const topTopics =
+          story.topTopics?.map((t) => t.name).join(", ") || "N/A";
+        const topCategories =
+          story.topCategories?.map((c) => c.name).join(", ") || "N/A";
+        const topPeople =
+          story.topPeople?.map((p) => p.name).join(", ") || "N/A";
+        const topCompanies =
+          story.topCompanies?.map((c) => c.name).join(", ") || "N/A";
+        const topLocations =
+          story.topLocations
+            ?.map((l) => [l.city, l.state, l.country].filter(Boolean).join(", "))
+            .filter(Boolean)
+            .join("; ") || "N/A";
+        const topCountries = story.topCountries?.join(", ") || "N/A";
+
         return `<news_story id="${story.id}" title="${story.name}">
-Content: ${story.summary}
+Summary: ${story.summary}
+Short Summary: ${story.shortSummary ?? "N/A"}
+Key Points: ${keyPoints}
 Created At: ${story.createdAt} (utc)
 Updated At: ${story.updatedAt} (utc)
+Unique Article Count: ${story.uniqueCount ?? "N/A"}
+Total Article Count: ${story.totalCount ?? "N/A"}
+Unique Sources: ${story.uniqueSources?.join(", ") || "N/A"}
 Sentiment: ${JSON.stringify(story.sentiment)}
+Top Topics: ${topTopics}
+Top Categories: ${topCategories}
+Top People: ${topPeople}
+Top Companies: ${topCompanies}
+Top Locations: ${topLocations}
+Top Countries: ${topCountries}
+Image URL: ${story.imageUrl ?? "N/A"}
 </news_story>`;
       });
 
@@ -207,7 +239,7 @@ Sentiment: ${JSON.stringify(story.sentiment)}
 export const newsStoriesTool = {
   name: "search_news_stories",
   description:
-    "Search clustered news stories (headlines) that group related articles across multiple sources into a single narrative. Use this to understand major news events, trending headlines, and story arcs rather than finding individual articles. Filter by category, topic, source, location, person, company, or time range. Returns story summaries, sentiment analysis, article counts, and creation/update timestamps.",
+    "Search clustered news stories (headlines) that group related articles across multiple sources into a single narrative. Use this to understand major news events, trending headlines, and story arcs rather than finding individual articles. Filter by category, topic, source, location, person, company, or time range. Returns summaries, key points, unique/total article counts, sentiment, and top topics/categories/people/companies/locations for the cluster. Feed the id into search_story_history to see how the story evolved, or search_news_articles(newsStoryIds) to pull its member articles.",
   parameters: newsStoriesArgs,
   createHandler: (perigon: Perigon) => searchNewsStories(perigon),
 } satisfies ToolDefinition<typeof newsStoriesArgs>;

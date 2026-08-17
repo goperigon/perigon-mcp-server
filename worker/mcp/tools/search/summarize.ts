@@ -105,6 +105,12 @@ export const summarizeArgs = createBaseSearchArgs().extend({
     .array(z.string())
     .optional()
     .describe("Filter for articles mentioning companies by ticker symbol."),
+  showReprints: z
+    .boolean()
+    .default(false)
+    .describe(
+      "Include wire-service reprint copies among the articles fed into the summary. Defaults to false (deduplicated).",
+    ),
   sortBy: z
     .enum([
       AllEndpointSortBy.Date,
@@ -148,6 +154,7 @@ export function summarizeNews(
     personName,
     companyDomain,
     companySymbol,
+    showReprints,
     categories,
     topics,
   }: z.infer<typeof summarizeArgs>): Promise<CallToolResult> => {
@@ -183,7 +190,7 @@ export function summarizeNews(
         companySymbol,
         category: categories,
         topic: topics,
-        showReprints: false,
+        showReprints,
       });
 
       if (!result.summary && result.numResults === 0) return noResults;

@@ -18,7 +18,7 @@ const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000)
   .toISOString()
   .split("T")[0];
 
-const TOOL_ARGS_BY_NAME: Record<ToolName, Record<string, unknown>> = {
+const TOOL_ARGS_BY_NAME: Partial<Record<ToolName, Record<string, unknown>>> = {
   search_news_articles: { query: "AI", size: 1 },
   search_news_stories: { size: 1 },
   search_story_history: { size: 1 },
@@ -44,7 +44,25 @@ const TOOL_ARGS_BY_NAME: Record<ToolName, Record<string, unknown>> = {
   get_company_news: { companyName: "OpenAI", days: 7 },
   get_person_news: { personName: "Sam Altman", days: 30 },
   get_location_news: { location: "Austin", days: 7 },
+  get_api_access: {},
+  list_monitors: { page: 0, size: 1 },
 };
+
+/**
+ * Tools that are always-on but cannot be safely exercised by this generic
+ * e2e suite: the monitor sub-resource tools require a real monitor UUID
+ * this account may not have, and `set_monitor_status` mutates a monitor's
+ * lifecycle state, which is unsafe to call against a live account without
+ * knowing the monitor is disposable. Still asserted as registered in the
+ * "advertised tools" check, just not invoked.
+ */
+const SKIPPED_TOOL_NAMES: ToolName[] = [
+  "get_monitor",
+  "get_monitor_events",
+  "get_monitor_newsletters",
+  "get_monitor_summaries",
+  "set_monitor_status",
+];
 
 describe.skipIf(!apiKey)("e2e: MCP streamable HTTP all tools", () => {
   let server: DevServer | undefined;
@@ -59,7 +77,10 @@ describe.skipIf(!apiKey)("e2e: MCP streamable HTTP all tools", () => {
 
   test("registers every tool allowed for the key when no ?tool= filter is provided", async () => {
     const availableTools = await listToolNames(server!.url(MCP_PATH), apiKey!);
-    const coveredTools = sortToolNames(Object.keys(TOOL_ARGS_BY_NAME));
+    const coveredTools = sortToolNames([
+      ...Object.keys(TOOL_ARGS_BY_NAME),
+      ...SKIPPED_TOOL_NAMES,
+    ]);
 
     expect(coveredTools).toEqual([...EXPECTED_TOOL_NAMES]);
     expect(availableTools.length).toBeGreaterThan(0);
@@ -76,7 +97,8 @@ describe.skipIf(!apiKey)("e2e: MCP streamable HTTP all tools", () => {
 
       for (const toolName of availableTools) {
         const name = toolName as ToolName;
-        const args = TOOL_ARGS_BY_NAME[name];
+        if (SKIPPED_TOOL_NAMES.includes(name)) continue;
+        const args = TOOL_ARGS_BY_NAME[name] ?? {};
 
         try {
           const result = await callTool(

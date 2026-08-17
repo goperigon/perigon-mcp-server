@@ -29,6 +29,12 @@ export const peopleArgs = z.object({
     .describe(
       "Filter by Wikidata entity IDs (e.g., Q76 for Barack Obama). Precise identifiers from Wikidata.org to eliminate name ambiguity. Multiple values use OR logic.",
     ),
+  occupationId: z
+    .array(z.string())
+    .optional()
+    .describe(
+      "Filter by Wikidata occupation IDs (e.g., Q82955 politician, Q33999 actor) instead of free-text occupation.",
+    ),
 });
 
 /**
@@ -67,6 +73,7 @@ export function searchPeople(
     name,
     occupation,
     wikidataIds,
+    occupationId,
   }: z.infer<typeof peopleArgs>): Promise<CallToolResult> => {
     try {
       const result = await perigon.searchPeople({
@@ -75,17 +82,23 @@ export function searchPeople(
         size,
         wikidataId: wikidataIds,
         occupationLabel: occupation,
+        occupationId,
       });
 
       if (result.numResults === 0) return noResults;
 
       const people = result.results.map((person) => {
         return `<person wikidata_id="${person.wikidataId ?? ""}" name="${person.name ?? ""}">
+Aliases: ${person.aliases?.join(", ") || "N/A"}
 Occupation: ${formatLabelList(person.occupation)}
 Position: ${formatLabelList(person.position)}
+Political Party: ${formatLabelList(person.politicalParty)}
 Gender: ${formatLabel(person.gender)}
 Date Of Birth: ${formatWikidataDate(person.dateOfBirth)}
+Date Of Death: ${formatWikidataDate(person.dateOfDeath)}
+Image URL: ${person.image?.url ?? "N/A"}
 Description: ${person.description ?? "N/A"}
+Updated At: ${person.updatedAt ?? "N/A"}
 </person>`;
       });
 
@@ -115,7 +128,7 @@ Description: ${person.description ?? "N/A"}
 export const peopleTool = {
   name: "search_people",
   description:
-    "Search 650k+ public figures, politicians, celebrities, executives, and newsworthy individuals in the Perigon database. Use this to look up biographical information about specific people or find people by occupation. Filter by name, occupation, or Wikidata ID. Returns biographical profiles with name, occupation, position, gender, date of birth, and detailed descriptions.",
+    "Search 650k+ public figures, politicians, celebrities, executives, and newsworthy individuals in the Perigon database. Use this to look up biographical information about specific people or find people by occupation. Filter by name, occupation, or Wikidata ID. Returns biographical profiles with name, aliases, occupation, position, political party, gender, dates of birth/death, and description. Prefer wikidataId over personName on search_news_articles to avoid name ambiguity.",
   parameters: peopleArgs,
   createHandler: (perigon: Perigon) => searchPeople(perigon),
 } satisfies ToolDefinition<typeof peopleArgs>;

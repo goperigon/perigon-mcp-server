@@ -10,14 +10,14 @@ import { createMockPerigon, firstCallArgs } from "../../../helpers/mock-perigon"
 const text = (r: any) => r.content[0].text as string;
 
 describe("getTopCompanies", () => {
-  test("uses first domain and first symbol from the company arrays", async () => {
+  test("renders all domains and tickers from the company arrays", async () => {
     const perigon = createMockPerigon({
       getTopCompanies: async () => topCompaniesFixture,
     });
     const result = await getTopCompanies(perigon)(topCompaniesArgs.parse({}));
     const t = text(result);
-    expect(t).toContain('domain="acme.com"');
-    expect(t).toContain('ticker="ACM"');
+    expect(t).toContain('domains="acme.com"');
+    expect(t).toContain('tickers="ACM"');
     expect(t).toContain('industry="Tech"');
     expect(t).toContain('sector="IT"');
     expect(t).toContain('name="Acme &amp; sons"');

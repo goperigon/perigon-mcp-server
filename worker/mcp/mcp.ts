@@ -19,6 +19,12 @@ import {
   wikipediaVectorTool,
   locationNewsTool,
   newsVectorTool,
+  avgSentimentTool,
+  articleCountsTool,
+  topEntitiesTool,
+  topPeopleTool,
+  topCompaniesTool,
+  apiAccessTool,
 } from "./tools";
 import { Perigon } from "../lib/perigon";
 import { resolveActiveTools, SIGNAL_TOOL_NAMES } from "./tools/selection";
@@ -39,6 +45,18 @@ import {
 import { SIGNAL_TOOL_DEFINITIONS } from "./tools/signals";
 import * as instructions from "./instructions";
 import { SignalToolDefinition } from "./tools/signals/types";
+import { deriveCapabilities, entitlementNoteForTool } from "./capabilities";
+import {
+  FIELDS_RESOURCE_URI,
+  CHAINING_RESOURCE_URI,
+  ENTITLEMENTS_RESOURCE_URI,
+  CHARTS_RESOURCE_URI,
+  FIELDS_REFERENCE,
+  CHAINING_REFERENCE,
+  CHARTS_REFERENCE,
+  renderEntitlementsReference,
+} from "./reference-resources";
+import { registerResearchPrompts } from "./prompts";
 
 export type Props = {
   apiKey: string;
@@ -62,26 +80,42 @@ const SCOPE_TO_TOOLS: Partial<Record<Scopes, ToolName[]>> = {
   [Scopes.VECTOR_SEARCH_WIKIPEDIA]: [wikipediaVectorTool.name],
 };
 
-const MONITOR_TOOL_NAMES = [
+// Read-only monitor tools stay always-on. The two write tools cost about
+// 5,550 always-on tokens between them (large shared monitor query schema)
+// and most sessions never call them, so they move to the `monitoring`
+// profile instead (see tools/selection.ts) rather than the always-on seed set.
+const MONITOR_READ_TOOL_NAMES = [
   "list_monitors",
   "get_monitor",
   "get_monitor_events",
   "get_monitor_newsletters",
   "get_monitor_summaries",
-  "create_monitor",
-  "update_monitor",
   "set_monitor_status",
+] as const satisfies readonly ToolName[];
+
+// `StatsController` performs no permission check upstream — these five
+// endpoints need only a valid key plus quota, so they belong in the
+// always-on seed set rather than gated behind ENTITIES/SENTIMENTS.
+const STATS_TOOL_NAMES = [
+  avgSentimentTool.name,
+  articleCountsTool.name,
+  topEntitiesTool.name,
+  topPeopleTool.name,
+  topCompaniesTool.name,
 ] as const satisfies readonly ToolName[];
 
 /**
  * Returns a deduplicated list of tool names permitted by the given API key
- * scopes. `search_news_articles` and monitor tools are always included
+ * scopes. `search_news_articles`, the read-only monitor tools, the always-on
+ * stats tools, and the entitlement self-awareness tool are always included
  * regardless of scope.
  */
 function getAllowedToolsForScopes(scopes: Scopes[]): ToolName[] {
   const seen = new Set<ToolName>([
     newsArticlesTool.name,
-    ...MONITOR_TOOL_NAMES,
+    ...MONITOR_READ_TOOL_NAMES,
+    ...STATS_TOOL_NAMES,
+    apiAccessTool.name,
   ]);
   for (const scope of scopes) {
     if (!scope) continue;
@@ -120,9 +154,17 @@ export class PerigonMCP extends McpAgent<Env, unknown, Props> {
       requestedTools,
     );
 
+    // Computed once per session from the already-known scopes (no extra
+    // network call) and used to append session-specific entitlement notes
+    // to tool descriptions below.
+    const capabilityReport = deriveCapabilities(scopes);
+
     for (const toolName of activeNewsTools) {
-      this.registerNewsTool(toolName, perigon);
+      this.registerNewsTool(toolName, perigon, capabilityReport);
     }
+
+    this.registerReferenceResources(capabilityReport);
+    registerResearchPrompts(this.server);
 
     // ── Signal Insights tools (always available) ──────────────────────────
     const activeSignalTools = requestedTools
@@ -187,16 +229,54 @@ export class PerigonMCP extends McpAgent<Env, unknown, Props> {
     }
   }
 
-  private registerNewsTool(toolName: ToolName, perigon: Perigon): void {
+  /**
+   * Registers the four on-demand reference resources. `entitlements` is
+   * rendered per session from the already-derived capability report so it
+   * reflects this key's actual scopes; the other three are static content
+   * moved out of `MCP_INSTRUCTIONS` to keep the always-on router small.
+   */
+  private registerReferenceResources(
+    capabilityReport: ReturnType<typeof deriveCapabilities>,
+  ): void {
+    const registerText = (name: string, uri: string, text: string) => {
+      this.server.registerResource(name, uri, { mimeType: "text/markdown" }, () => ({
+        contents: [{ uri, mimeType: "text/markdown", text }],
+      }));
+    };
+
+    registerText("perigon-reference-fields", FIELDS_RESOURCE_URI, FIELDS_REFERENCE);
+    registerText(
+      "perigon-reference-chaining",
+      CHAINING_RESOURCE_URI,
+      CHAINING_REFERENCE,
+    );
+    registerText("perigon-reference-charts", CHARTS_RESOURCE_URI, CHARTS_REFERENCE);
+    registerText(
+      "perigon-reference-entitlements",
+      ENTITLEMENTS_RESOURCE_URI,
+      renderEntitlementsReference(capabilityReport),
+    );
+  }
+
+  private registerNewsTool(
+    toolName: ToolName,
+    perigon: Perigon,
+    capabilityReport: ReturnType<typeof deriveCapabilities>,
+  ): void {
     if (this.registeredToolNames.has(toolName)) return;
     this.registeredToolNames.add(toolName);
 
     const definition = TOOL_DEFINITIONS[toolName];
+    const entitlementNote = entitlementNoteForTool(toolName, capabilityReport);
+    const description = entitlementNote
+      ? `${definition.description} ${entitlementNote}`
+      : definition.description;
+
     this.server.registerTool(
       definition.name,
       {
         title: definition.title,
-        description: definition.description,
+        description,
         inputSchema: definition.parameters,
         annotations: definition.annotations,
       },

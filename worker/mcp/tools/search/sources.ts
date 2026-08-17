@@ -1,4 +1,4 @@
-import { SortBy } from "@goperigon/perigon-ts";
+import type { SortBy } from "@goperigon/perigon-ts";
 import { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 import { Perigon } from "../../../lib/perigon";
@@ -36,15 +36,12 @@ export const sourcesArgs = z.object({
     .optional()
     .describe("Filter by paywall status: true for paywalled, false for free."),
   sortBy: z
-    .enum([
-      SortBy.Count,
-      SortBy.CreatedAt,
-      SortBy.Relevance,
-      SortBy.TotalCount,
-      SortBy.UpdatedAt,
-    ])
-    .default(SortBy.CreatedAt)
-    .optional(),
+    .enum(["relevance", "globalRank", "monthlyVisits", "avgMonthlyPosts"])
+    .default("relevance")
+    .optional()
+    .describe(
+      "Sort order: relevance (best match), globalRank (traffic), monthlyVisits, or avgMonthlyPosts.",
+    ),
   minMonthlyVisits: z
     .number()
     .int()
@@ -104,6 +101,7 @@ export function searchSources(
     domains,
     sourceGroup,
     paywall,
+    sortBy,
   }: z.infer<typeof sourcesArgs>): Promise<CallToolResult> => {
     try {
       const result = await perigon.searchSources({
@@ -111,6 +109,11 @@ export function searchSources(
         domain: domains,
         sourceGroup,
         paywall,
+        // The SDK's `SortBy` type is the generic enum (createdAt/updatedAt/
+        // relevance/count/totalCount); the real endpoint accepts a distinct
+        // set (relevance/globalRank/monthlyVisits/avgMonthlyPosts), which is
+        // documented in the SDK's own JSDoc for this field but not its type.
+        sortBy: sortBy as SortBy | undefined,
         page,
         size,
         sourceCountry: countries,
@@ -128,8 +131,20 @@ export function searchSources(
       const sources = result.results.map((source) => {
         return `<source name="${source.name}">
 Domain: ${source.domain}
-Monthly Visits: ${source.monthlyVisits}
-Top Topics: ${source.topTopics?.map((topic) => topic.name).join(", ")}
+Description: ${source.description ?? "N/A"}
+Monthly Visits: ${source.monthlyVisits ?? "N/A"}
+Global Rank: ${source.globalRank ?? "N/A"}
+Avg Monthly Posts: ${source.avgMonthlyPosts ?? "N/A"}
+Paywall: ${source.paywall ?? "N/A"}
+Alt Names: ${source.altNames?.join(", ") || "N/A"}
+Location: ${
+          source.location
+            ? [source.location.city, source.location.state, source.location.country]
+                .filter(Boolean)
+                .join(", ")
+            : "N/A"
+        }
+Top Topics: ${source.topTopics?.map((topic) => topic.name).join(", ") || "N/A"}
 </source>`;
       });
 
