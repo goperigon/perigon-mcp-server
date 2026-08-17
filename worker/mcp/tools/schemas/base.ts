@@ -22,9 +22,7 @@ export const locationArgs = z.object({
     })
     .default(() => [...CONSTANTS.DEFAULT_COUNTRIES])
     .describe(
-      `This field filters the returned results based on the country associated with the event or news.
-      Only results tagged with one of these countries will be included.
-      The countries should each be listed by their 2 letter country code, ex "us", "ca", "mx".`
+      "Filter by country, 2-letter lowercase code (e.g. us, ca, mx).",
     ),
   states: z
     .array(z.string())
@@ -34,13 +32,13 @@ export const locationArgs = z.object({
       return states.map((state) => state.toUpperCase());
     })
     .describe(
-      "Filter results where a specified state plays a central role in the content, beyond mere mentions. States should be listed by their 2 character ISO code, Example: TX"
+      "Filter by US state where it plays a central role, 2-letter code (e.g. TX).",
     ),
   cities: z
     .array(z.string())
     .optional()
     .describe(
-      "Filter results where a specified city plays a central role in the content, beyond mere mentions. Example: Austin."
+      "Filter by city where it plays a central role, e.g. Austin.",
     ),
 });
 

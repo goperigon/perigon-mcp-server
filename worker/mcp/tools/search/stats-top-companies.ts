@@ -58,6 +58,18 @@ export const topCompaniesArgs = statsFilterArgs.extend({
     .optional()
     .default(10)
     .describe("Number of top companies to return (1–100). Default: 10."),
+  minBaseline: z
+    .number()
+    .optional()
+    .describe("Minimum baseline mentions required to be eligible for ranking."),
+  minCurrent: z
+    .number()
+    .optional()
+    .describe("Minimum current-window mentions required to be eligible for ranking."),
+  smoothingAlpha: z
+    .number()
+    .optional()
+    .describe("Smoothing factor applied to the baseline rate to reduce noise from small counts."),
 });
 
 export function getTopCompanies(
@@ -80,25 +92,40 @@ export function getTopCompanies(
         personName: args.personName,
         companyDomain: args.companyDomain,
         companySymbol: args.companySymbol,
+        journalistId: args.journalistId,
+        personWikidataId: args.personWikidataId,
+        companyId: args.companyId,
+        taxonomy: args.taxonomy,
+        excludeSource: args.excludeSource,
+        excludeCategory: args.excludeCategory,
+        excludeTopic: args.excludeTopic,
         currentFrom: args.currentFrom,
         currentTo: args.currentTo,
         baselineFrom: args.baselineFrom,
         baselineTo: args.baselineTo,
         normalizeByDay: args.normalizeByDay,
         size: args.size,
+        minBaseline: args.minBaseline,
+        minCurrent: args.minCurrent,
+        smoothingAlpha: args.smoothingAlpha,
       });
 
       if (!result.data || result.data.length === 0) return noResults;
 
       const rows = result.data.map((c, i) => {
         const name = escapeAttr(c.company?.name ?? c.wikidataId);
-        const domain = escapeAttr((c.company?.domains ?? [])[0] ?? "");
-        const ticker = escapeAttr((c.company?.symbols ?? [])[0]?.symbol ?? "");
+        const domains = escapeAttr((c.company?.domains ?? []).join(", "));
+        const tickers = escapeAttr(
+          (c.company?.symbols ?? [])
+            .map((s) => s.symbol)
+            .filter(Boolean)
+            .join(", "),
+        );
         const industry = escapeAttr(c.company?.industry ?? "");
         const sector = escapeAttr(c.company?.sector ?? "");
         return (
           `<company rank="${i + 1}" id="${c.wikidataId}" name="${name}" ` +
-          `domain="${domain}" ticker="${ticker}" industry="${industry}" sector="${sector}" ` +
+          `domains="${domains}" tickers="${tickers}" industry="${industry}" sector="${sector}" ` +
           `current_mentions="${c.currentMentions}" baseline_mentions="${c.baselineMentions}" ` +
           `current_rate_per_day="${c.currentRatePerDay.toFixed(2)}" baseline_rate_per_day="${c.baselineRatePerDay.toFixed(2)}" ` +
           `spike_score="${c.spikeScore.toFixed(2)}" />`

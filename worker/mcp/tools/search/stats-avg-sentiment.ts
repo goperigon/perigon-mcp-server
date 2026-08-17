@@ -35,6 +35,13 @@ export function getAvgSentiment(
           personName: args.personName,
           companyDomain: args.companyDomain,
           companySymbol: args.companySymbol,
+          journalistId: args.journalistId,
+          personWikidataId: args.personWikidataId,
+          companyId: args.companyId,
+          taxonomy: args.taxonomy,
+          excludeSource: args.excludeSource,
+          excludeCategory: args.excludeCategory,
+          excludeTopic: args.excludeTopic,
           splitBy: normalizeSplitBy(args.splitBy),
         });
 
@@ -67,7 +74,7 @@ export function getAvgSentiment(
 export const avgSentimentTool = {
   name: "get_avg_sentiment",
   description:
-    "Get average sentiment scores (positive, negative, neutral) bucketed over time for articles matching the given filters. Use this when the user asks about sentiment trends, how tone of coverage has shifted, or wants a chart/table of sentiment over a period — NOT for reading sentiment on individual articles (use search_news_articles for that). Returns one sentiment record per time bucket with averaged positive, negative, and neutral scores. Use splitBy to control the interval (HOUR, DAY, WEEK, MONTH, or NONE for a single aggregate across the whole date range). Supports the same article filters as search_news_articles.",
+    "Get average sentiment scores (positive, negative, neutral) bucketed over time for articles matching the given filters. Use this when the user asks about sentiment trends, how tone of coverage has shifted, or wants a chart/table of sentiment over a period — NOT for reading sentiment on individual articles (use search_news_articles for that). Returns one sentiment record per time bucket with averaged positive, negative, and neutral scores. Use splitBy to control the interval (HOUR, DAY, WEEK, MONTH, or NONE for a single aggregate across the whole date range). Supports a curated subset of article filters: q, from/to, source(Group), category, topic, language, country, person/company identifiers, taxonomy, and exclude variants for source/category/topic — not the full search_news_articles filter set. Pair with get_article_counts on identical filters for a complete trend view.",
   parameters: avgSentimentArgs,
   createHandler: (perigon: Perigon) => getAvgSentiment(perigon),
 } satisfies ToolDefinition<typeof avgSentimentArgs>;

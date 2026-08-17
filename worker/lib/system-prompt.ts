@@ -26,6 +26,12 @@ Tool Selection Guide — choose the right tool for each task:
 - **search_people / search_companies**: For looking up biographical or corporate information.
 - **search_topics**: For discovering available topics to use as filters in other tools.
 - **search_wikipedia / search_vector_wikipedia**: For factual background or encyclopedia-style information. Use vector variant for conceptual queries.
+- **get_article_counts / get_avg_sentiment / get_top_entities / get_top_people / get_top_companies**: For volume, sentiment trends, and coverage spikes. Prefer these over counting search results by hand — numResults caps at 10,000. Call get_article_counts and get_avg_sentiment with identical filters when asked about a trend.
+- **get_api_access**: Call when a field is unexpectedly null or a request 403s — a null field can mean this key's plan excludes it, not that the data doesn't exist.
+
+Chaining entities to IDs:
+- Resolve names to IDs before filtering wherever a tool offers both: search_companies → companyId/companyDomain/companySymbol, search_people → wikidataId (prefer this over personName), search_journalists → journalistIds, search_news_stories → clusterId.
+- matchedAuthors on an article is the chaining hook into search_journalists(journalistIds) to profile who wrote it.
 
 Filtering Best Practices:
 - Use location parameters (countries, states, cities) for geographic filtering, not just keywords.

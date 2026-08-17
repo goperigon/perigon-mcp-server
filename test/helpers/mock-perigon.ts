@@ -12,7 +12,7 @@ import type { Perigon } from "../../worker/lib/perigon";
 type AnyAsyncFn = (...args: any[]) => Promise<any>;
 
 export interface MockPerigonOverrides {
-  // V1Api search methods
+  // V1Api search methods (from the SDK base class)
   searchArticles?: AnyAsyncFn;
   searchStories?: AnyAsyncFn;
   searchJournalists?: AnyAsyncFn;
@@ -26,13 +26,44 @@ export interface MockPerigonOverrides {
   searchSummarizer?: AnyAsyncFn;
 
   // Perigon-extended methods
-  searchStoriesHistory?: AnyAsyncFn;
+  introspection?: AnyAsyncFn;
+  listMonitors?: AnyAsyncFn;
+  getMonitor?: AnyAsyncFn;
+  createMonitor?: AnyAsyncFn;
+  updateMonitor?: AnyAsyncFn;
+  activateMonitor?: AnyAsyncFn;
+  pauseMonitor?: AnyAsyncFn;
+  archiveMonitor?: AnyAsyncFn;
+  getMonitorEvents?: AnyAsyncFn;
+  getMonitorNewsletters?: AnyAsyncFn;
+  getMonitorSummaries?: AnyAsyncFn;
   getAvgSentiment?: AnyAsyncFn;
   getArticleCounts?: AnyAsyncFn;
   getTopEntities?: AnyAsyncFn;
   getTopPeople?: AnyAsyncFn;
   getTopCompanies?: AnyAsyncFn;
-  introspection?: AnyAsyncFn;
+  searchStoriesHistory?: AnyAsyncFn;
+  getLimits?: AnyAsyncFn;
+  getSourceById?: AnyAsyncFn;
+  getTopTopics?: AnyAsyncFn;
+  getStoryStats?: AnyAsyncFn;
+  getStoryVelocity?: AnyAsyncFn;
+  searchArticlesFull?: AnyAsyncFn;
+  searchJournalistsFull?: AnyAsyncFn;
+  listWatchlists?: AnyAsyncFn;
+  getWatchlist?: AnyAsyncFn;
+  resolveWatchlists?: AnyAsyncFn;
+  createWatchlist?: AnyAsyncFn;
+  updateWatchlist?: AnyAsyncFn;
+  listSourceGroups?: AnyAsyncFn;
+  getSourceGroup?: AnyAsyncFn;
+  resolveSourceGroups?: AnyAsyncFn;
+  createSourceGroup?: AnyAsyncFn;
+  updateSourceGroup?: AnyAsyncFn;
+  listContactPoints?: AnyAsyncFn;
+  getContactPoint?: AnyAsyncFn;
+  getArticleRefreshJob?: AnyAsyncFn;
+  peekArticleRefresh?: AnyAsyncFn;
 }
 
 const ALL_METHODS = [
@@ -47,13 +78,44 @@ const ALL_METHODS = [
   "vectorSearchArticles",
   "vectorSearchWikipedia",
   "searchSummarizer",
-  "searchStoriesHistory",
+  "introspection",
+  "listMonitors",
+  "getMonitor",
+  "createMonitor",
+  "updateMonitor",
+  "activateMonitor",
+  "pauseMonitor",
+  "archiveMonitor",
+  "getMonitorEvents",
+  "getMonitorNewsletters",
+  "getMonitorSummaries",
   "getAvgSentiment",
   "getArticleCounts",
   "getTopEntities",
   "getTopPeople",
   "getTopCompanies",
-  "introspection",
+  "searchStoriesHistory",
+  "getLimits",
+  "getSourceById",
+  "getTopTopics",
+  "getStoryStats",
+  "getStoryVelocity",
+  "searchArticlesFull",
+  "searchJournalistsFull",
+  "listWatchlists",
+  "getWatchlist",
+  "resolveWatchlists",
+  "createWatchlist",
+  "updateWatchlist",
+  "listSourceGroups",
+  "getSourceGroup",
+  "resolveSourceGroups",
+  "createSourceGroup",
+  "updateSourceGroup",
+  "listContactPoints",
+  "getContactPoint",
+  "getArticleRefreshJob",
+  "peekArticleRefresh",
 ] as const;
 
 export type MockPerigon = Perigon & {

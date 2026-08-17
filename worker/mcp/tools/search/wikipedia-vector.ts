@@ -48,10 +48,6 @@ export const wikipediaVectorArgs = z.object({
     .array(z.string())
     .optional()
     .describe("Filter by Wikipedia categories."),
-  withPageviews: z
-    .boolean()
-    .optional()
-    .describe("Only return pages that have viewership statistics."),
   pageviewsFrom: z
     .number()
     .optional()
@@ -88,7 +84,6 @@ export function searchVectorWikipedia(
     wikidataInstanceOfId,
     wikidataInstanceOfLabel,
     category,
-    withPageviews,
     pageviewsFrom,
     pageviewsTo,
     wikiRevisionFrom,
@@ -157,7 +152,7 @@ Similarity Score: ${scored.score || "N/A"}
 export const wikipediaVectorTool = {
   name: "search_vector_wikipedia",
   description:
-    "Semantic search over Wikipedia pages using natural language and vector embeddings. Use this instead of search_wikipedia when the query is conceptual or conversational rather than keyword-based. Finds pages related by meaning even without exact keyword matches. Returns page summaries, content excerpts, Wikidata IDs, categories, and similarity scores.",
+    "Semantic search over Wikipedia pages using natural language and vector embeddings. Use this instead of search_wikipedia when the query is conceptual or conversational rather than keyword-based. Finds pages related by meaning even without exact keyword matches. Returns page summaries, Wikidata IDs, categories, and similarity scores. Filter by viewership with pageviewsFrom/pageviewsTo — there is no boolean has-pageviews filter on this endpoint (unlike search_wikipedia).",
   parameters: wikipediaVectorArgs,
   createHandler: (perigon: Perigon) => searchVectorWikipedia(perigon),
 } satisfies ToolDefinition<typeof wikipediaVectorArgs>;

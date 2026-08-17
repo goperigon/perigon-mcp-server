@@ -1,27 +1,10 @@
 import { McpAgent } from "agents/mcp";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { Scopes } from "../types/types";
-import {
-  newsArticlesTool,
-  journalistsTool,
-  newsStoriesTool,
-  storyHistoryTool,
-  summarizeTool,
-  TOOL_DEFINITIONS,
-  type ToolName,
-  sourcesTool,
-  peopleTool,
-  personNewsTool,
-  companiesTool,
-  companyNewsTool,
-  topicsTool,
-  wikipediaTool,
-  wikipediaVectorTool,
-  locationNewsTool,
-  newsVectorTool,
-} from "./tools";
+import { TOOL_DEFINITIONS, type ToolName } from "./tools";
 import { Perigon } from "../lib/perigon";
-import { resolveActiveTools, SIGNAL_TOOL_NAMES } from "./tools/selection";
+import { SIGNAL_TOOL_NAMES } from "./tools/selection";
+import { resolveNewsToolsForSession } from "./tool-registration";
 import { InsightsApiClient } from "../lib/insights-api-client";
 import { PokeyInsightsClient } from "../lib/pokey-insights-client";
 import {
@@ -39,6 +22,18 @@ import {
 import { SIGNAL_TOOL_DEFINITIONS } from "./tools/signals";
 import * as instructions from "./instructions";
 import { SignalToolDefinition } from "./tools/signals/types";
+import { deriveCapabilities, entitlementNoteForTool } from "./capabilities";
+import {
+  FIELDS_RESOURCE_URI,
+  CHAINING_RESOURCE_URI,
+  ENTITLEMENTS_RESOURCE_URI,
+  CHARTS_RESOURCE_URI,
+  FIELDS_REFERENCE,
+  CHAINING_REFERENCE,
+  CHARTS_REFERENCE,
+  renderEntitlementsReference,
+} from "./reference-resources";
+import { registerResearchPrompts } from "./prompts";
 
 export type Props = {
   apiKey: string;
@@ -46,53 +41,6 @@ export type Props = {
   requestedTools: string[] | null;
   organizationId: number;
 };
-
-// Map scopes to tool names
-const SCOPE_TO_TOOLS: Partial<Record<Scopes, ToolName[]>> = {
-  [Scopes.CLUSTERS]: [newsStoriesTool.name, storyHistoryTool.name],
-  [Scopes.SEARCH_SUMMARY]: [summarizeTool.name],
-  [Scopes.JOURNALISTS]: [journalistsTool.name],
-  [Scopes.SOURCES]: [sourcesTool.name],
-  [Scopes.PEOPLE]: [peopleTool.name, personNewsTool.name],
-  [Scopes.COMPANIES]: [companiesTool.name, companyNewsTool.name],
-  [Scopes.TOPICS]: [topicsTool.name],
-  [Scopes.LOCATIONS]: [locationNewsTool.name],
-  [Scopes.WIKIPEDIA]: [wikipediaTool.name],
-  [Scopes.VECTOR_SEARCH_NEWS]: [newsVectorTool.name],
-  [Scopes.VECTOR_SEARCH_WIKIPEDIA]: [wikipediaVectorTool.name],
-};
-
-const MONITOR_TOOL_NAMES = [
-  "list_monitors",
-  "get_monitor",
-  "get_monitor_events",
-  "get_monitor_newsletters",
-  "get_monitor_summaries",
-  "create_monitor",
-  "update_monitor",
-  "set_monitor_status",
-] as const satisfies readonly ToolName[];
-
-/**
- * Returns a deduplicated list of tool names permitted by the given API key
- * scopes. `search_news_articles` and monitor tools are always included
- * regardless of scope.
- */
-function getAllowedToolsForScopes(scopes: Scopes[]): ToolName[] {
-  const seen = new Set<ToolName>([
-    newsArticlesTool.name,
-    ...MONITOR_TOOL_NAMES,
-  ]);
-  for (const scope of scopes) {
-    if (!scope) continue;
-    const toolNames = SCOPE_TO_TOOLS[scope];
-    if (!toolNames) continue;
-    for (const name of toolNames) {
-      seen.add(name);
-    }
-  }
-  return [...seen];
-}
 
 export class PerigonMCP extends McpAgent<Env, unknown, Props> {
   // Type assertion needed: agents bundles its own @modelcontextprotocol/sdk copy
@@ -114,15 +62,19 @@ export class PerigonMCP extends McpAgent<Env, unknown, Props> {
     const { scopes, requestedTools } = this.props!;
 
     // ── News tools (existing) ──────────────────────────────────────────────
-    const allowedNewsTools = getAllowedToolsForScopes(scopes);
-    const activeNewsTools = resolveActiveTools(
-      allowedNewsTools,
-      requestedTools,
-    );
+    const activeNewsTools = resolveNewsToolsForSession(scopes, requestedTools);
+
+    // Computed once per session from the already-known scopes (no extra
+    // network call) and used to append session-specific entitlement notes
+    // to tool descriptions below.
+    const capabilityReport = deriveCapabilities(scopes);
 
     for (const toolName of activeNewsTools) {
-      this.registerNewsTool(toolName, perigon);
+      this.registerNewsTool(toolName, perigon, capabilityReport);
     }
+
+    this.registerReferenceResources(capabilityReport);
+    registerResearchPrompts(this.server);
 
     // ── Signal Insights tools (always available) ──────────────────────────
     const activeSignalTools = requestedTools
@@ -187,16 +139,67 @@ export class PerigonMCP extends McpAgent<Env, unknown, Props> {
     }
   }
 
-  private registerNewsTool(toolName: ToolName, perigon: Perigon): void {
+  /**
+   * Registers the four on-demand reference resources. `entitlements` is
+   * rendered per session from the already-derived capability report so it
+   * reflects this key's actual scopes; the other three are static content
+   * moved out of `MCP_INSTRUCTIONS` to keep the always-on router small.
+   */
+  private registerReferenceResources(
+    capabilityReport: ReturnType<typeof deriveCapabilities>,
+  ): void {
+    const registerText = (name: string, uri: string, text: string) => {
+      this.server.registerResource(
+        name,
+        uri,
+        { mimeType: "text/markdown" },
+        () => ({
+          contents: [{ uri, mimeType: "text/markdown", text }],
+        }),
+      );
+    };
+
+    registerText(
+      "perigon-reference-fields",
+      FIELDS_RESOURCE_URI,
+      FIELDS_REFERENCE,
+    );
+    registerText(
+      "perigon-reference-chaining",
+      CHAINING_RESOURCE_URI,
+      CHAINING_REFERENCE,
+    );
+    registerText(
+      "perigon-reference-charts",
+      CHARTS_RESOURCE_URI,
+      CHARTS_REFERENCE,
+    );
+    registerText(
+      "perigon-reference-entitlements",
+      ENTITLEMENTS_RESOURCE_URI,
+      renderEntitlementsReference(capabilityReport),
+    );
+  }
+
+  private registerNewsTool(
+    toolName: ToolName,
+    perigon: Perigon,
+    capabilityReport: ReturnType<typeof deriveCapabilities>,
+  ): void {
     if (this.registeredToolNames.has(toolName)) return;
     this.registeredToolNames.add(toolName);
 
     const definition = TOOL_DEFINITIONS[toolName];
+    const entitlementNote = entitlementNoteForTool(toolName, capabilityReport);
+    const description = entitlementNote
+      ? `${definition.description} ${entitlementNote}`
+      : definition.description;
+
     this.server.registerTool(
       definition.name,
       {
         title: definition.title,
-        description: definition.description,
+        description,
         inputSchema: definition.parameters,
         annotations: definition.annotations,
       },

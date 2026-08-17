@@ -24,6 +24,10 @@ export const topEntitiesArgs = statsFilterArgs.extend({
     .describe(
       "Which entity types to return. Options: topics, people, companies, cities, journalists, sources. Defaults to topics, people, and companies.",
     ),
+  expandEntities: z
+    .boolean()
+    .optional()
+    .describe("Return a larger, less-deduplicated entity set per type."),
 });
 
 const TOTAL_KEY: Record<EntityType, keyof TopEntitiesDto> = {
@@ -57,7 +61,15 @@ export function getTopEntities(
         personName: args.personName,
         companyDomain: args.companyDomain,
         companySymbol: args.companySymbol,
+        journalistId: args.journalistId,
+        personWikidataId: args.personWikidataId,
+        companyId: args.companyId,
+        taxonomy: args.taxonomy,
+        excludeSource: args.excludeSource,
+        excludeCategory: args.excludeCategory,
+        excludeTopic: args.excludeTopic,
         entity: requested,
+        expandEntities: args.expandEntities,
       });
 
       const hasResults = requested.some((t) => {

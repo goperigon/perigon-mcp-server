@@ -43,6 +43,26 @@ export const companiesArgs = z.object({
     .array(z.string())
     .optional()
     .describe("Filter by stock exchange (e.g., NASDAQ, NYSE)."),
+  numEmployeesFrom: z
+    .number()
+    .int()
+    .optional()
+    .describe("Minimum employee count."),
+  numEmployeesTo: z
+    .number()
+    .int()
+    .optional()
+    .describe("Maximum employee count."),
+  ipoFrom: z
+    .string()
+    .transform((str) => (str === "" ? undefined : new Date(str)))
+    .optional()
+    .describe("Filter for companies that went public on or after this date."),
+  ipoTo: z
+    .string()
+    .transform((str) => (str === "" ? undefined : new Date(str)))
+    .optional()
+    .describe("Filter for companies that went public on or before this date."),
 });
 
 /**
@@ -89,6 +109,10 @@ export function searchCompanies(
     exchange,
     industry,
     sector,
+    numEmployeesFrom,
+    numEmployeesTo,
+    ipoFrom,
+    ipoTo,
   }: z.infer<typeof companiesArgs>): Promise<CallToolResult> => {
     try {
       const result = await perigon.searchCompanies({
@@ -103,17 +127,29 @@ export function searchCompanies(
         exchange,
         industry,
         sector,
+        numEmployeesFrom,
+        numEmployeesTo,
+        ipoFrom,
+        ipoTo,
       });
 
       if (result.numResults === 0) return noResults;
 
       const companies = result.results.map((company) => {
-        return `<company name="${company.name}">
-CEO: ${company.ceo}
-Description: ${company.description}
-Full Time Employees: ${company.fullTimeEmployees}
-Industry: ${company.industry}
-Country: ${company.country}
+        const tickers =
+          company.symbols?.map((s) => s.symbol).filter(Boolean).join(", ") ||
+          "N/A";
+        return `<company id="${company.id ?? ""}" name="${company.name}">
+Alt Names: ${company.altNames?.join(", ") || "N/A"}
+Domains: ${company.domains?.join(", ") || "N/A"}
+Tickers: ${tickers}
+CEO: ${company.ceo ?? "N/A"}
+Description: ${company.description ?? "N/A"}
+Full Time Employees: ${company.fullTimeEmployees ?? "N/A"}
+Industry: ${company.industry ?? "N/A"}
+Sector: ${company.sector ?? "N/A"}
+Country: ${company.country ?? "N/A"}
+Headquarters: ${[company.city, company.state].filter(Boolean).join(", ") || "N/A"}
 </company>`;
       });
 
@@ -143,7 +179,7 @@ Country: ${company.country}
 export const companiesTool = {
   name: "search_companies",
   description:
-    "Search corporations and businesses in the Perigon database. Use this to look up company information, find companies by industry/sector, or identify companies by stock ticker or domain. Filter by name, domain, ticker symbol, industry, sector, country, or stock exchange. Returns company profiles with CEO, employee count, industry classification, country, and business descriptions.",
+    "Search corporations and businesses in the Perigon database. Use this to look up company information, find companies by industry/sector, or identify companies by stock ticker or domain. Filter by name, domain, ticker symbol, industry, sector, country, or stock exchange. Returns company profiles with id, domains, tickers, CEO, employee count, industry/sector classification, headquarters, and description. Feed id/domains/symbol into search_news_articles(companyId|companyDomain|companySymbol) to find coverage.",
   parameters: companiesArgs,
   createHandler: (perigon: Perigon) => searchCompanies(perigon),
 } satisfies ToolDefinition<typeof companiesArgs>;

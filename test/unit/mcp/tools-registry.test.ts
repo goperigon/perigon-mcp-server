@@ -26,6 +26,29 @@ const EXPECTED_TOOL_NAMES = [
   "get_company_news",
   "get_person_news",
   "get_location_news",
+  // Monitor tools
+  "list_monitors",
+  "get_monitor",
+  "get_monitor_events",
+  "get_monitor_newsletters",
+  "get_monitor_summaries",
+  "create_monitor",
+  "update_monitor",
+  "set_monitor_status",
+  // Entitlement/access tools
+  "get_api_access",
+  // Platform tools
+  "get_source_by_id",
+  "get_top_topics",
+  "get_story_stats",
+  "watchlists",
+  "create_watchlist",
+  "update_watchlist",
+  "source_groups",
+  "create_source_group",
+  "update_source_group",
+  "contact_points",
+  "article_refresh",
   // Signal Insights tools
   "signal_insights_create_workspace",
   "signal_insights_search_signals",
@@ -48,7 +71,7 @@ describe("TOOL_DEFINITIONS", () => {
     const actual = Object.keys(TOOL_DEFINITIONS).sort();
     const expected = [...EXPECTED_TOOL_NAMES].sort();
     expect(actual).toEqual(expected);
-    expect(actual.length).toBe(34);
+    expect(actual.length).toBe(54);
   });
 
   test("each tool exposes name, description, parameters, and createHandler", () => {

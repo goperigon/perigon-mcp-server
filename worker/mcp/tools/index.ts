@@ -81,6 +81,22 @@ export { createMonitorTool } from "./monitors/create-monitor";
 export { updateMonitorTool } from "./monitors/update-monitor";
 export { setMonitorStatusTool } from "./monitors/set-monitor-status";
 
+// Export entitlement/access tools
+export { apiAccessTool } from "./access/api-access";
+
+// Export platform (watchlists, source groups, contact points, article refresh) tools
+export { sourceByIdTool } from "./platform/source-by-id";
+export { topTopicsTool } from "./platform/top-topics";
+export { storyStatsTool } from "./platform/story-stats";
+export { watchlistsTool } from "./platform/watchlists";
+export { createWatchlistTool } from "./platform/create-watchlist";
+export { updateWatchlistTool } from "./platform/update-watchlist";
+export { sourceGroupsTool } from "./platform/source-groups";
+export { createSourceGroupTool } from "./platform/create-source-group";
+export { updateSourceGroupTool } from "./platform/update-source-group";
+export { contactPointsTool } from "./platform/contact-points";
+export { articleRefreshTool } from "./platform/article-refresh";
+
 // Export individual tool functions for direct use
 export { searchNewsArticles } from "./search/news-articles";
 export { searchNewsStories } from "./search/news-stories";
@@ -203,6 +219,18 @@ import { getMonitorSummariesTool } from "./monitors/get-monitor-summaries";
 import { createMonitorTool } from "./monitors/create-monitor";
 import { updateMonitorTool } from "./monitors/update-monitor";
 import { setMonitorStatusTool } from "./monitors/set-monitor-status";
+import { apiAccessTool } from "./access/api-access";
+import { sourceByIdTool } from "./platform/source-by-id";
+import { topTopicsTool } from "./platform/top-topics";
+import { storyStatsTool } from "./platform/story-stats";
+import { watchlistsTool } from "./platform/watchlists";
+import { createWatchlistTool } from "./platform/create-watchlist";
+import { updateWatchlistTool } from "./platform/update-watchlist";
+import { sourceGroupsTool } from "./platform/source-groups";
+import { createSourceGroupTool } from "./platform/create-source-group";
+import { updateSourceGroupTool } from "./platform/update-source-group";
+import { contactPointsTool } from "./platform/contact-points";
+import { articleRefreshTool } from "./platform/article-refresh";
 import { ToolDefinition } from "./types";
 import { createWorkspaceTool } from "./signals/create-workspace";
 import { searchSignalsTool } from "./signals/search-signals";
@@ -282,6 +310,22 @@ export const TOOL_DEFINITIONS: Record<string, ToolDefinition<any>> = {
   create_monitor: createMonitorTool,
   update_monitor: updateMonitorTool,
   set_monitor_status: setMonitorStatusTool,
+
+  // Entitlement/access tools
+  get_api_access: apiAccessTool,
+
+  // Platform tools (watchlists, source groups, contact points, article refresh, extra stats/lookup)
+  get_source_by_id: sourceByIdTool,
+  get_top_topics: topTopicsTool,
+  get_story_stats: storyStatsTool,
+  watchlists: watchlistsTool,
+  create_watchlist: createWatchlistTool,
+  update_watchlist: updateWatchlistTool,
+  source_groups: sourceGroupsTool,
+  create_source_group: createSourceGroupTool,
+  update_source_group: updateSourceGroupTool,
+  contact_points: contactPointsTool,
+  article_refresh: articleRefreshTool,
 
   // Signal Insights tools — schemas listed for inspector/tool-selector discovery.
   // createHandler stubs return an error; actual execution requires MCP transport.

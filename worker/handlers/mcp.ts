@@ -1,4 +1,4 @@
-import { HttpError } from "../types/types";
+import { AuthIntrospectionResponse, HttpError } from "../types/types";
 import { Perigon } from "../lib/perigon";
 import { handleError } from "../lib/handle-error";
 import { hashKey } from "../lib/hash";
@@ -8,6 +8,35 @@ import { parseRequestedTools, resolveToolParam } from "../mcp/tools/selection";
 
 const SSE_PATHS = ["/v1/sse", "/v1/sse/message"] as const;
 const STREAMABLE_PATH = "/v1/mcp";
+
+/**
+ * `introspection()` was previously called on every single MCP request. This
+ * caches the result per API key for the isolate's lifetime (bounded by TTL),
+ * so a session sending many requests in quick succession pays for one
+ * introspection call rather than one per request.
+ */
+const INTROSPECTION_CACHE_TTL_MS = 5 * 60 * 1000;
+const introspectionCache = new Map<
+  string,
+  { result: AuthIntrospectionResponse; expiresAt: number }
+>();
+
+async function getCachedIntrospection(
+  perigon: Perigon,
+  apiKey: string
+): Promise<AuthIntrospectionResponse> {
+  const cacheKey = await hashKey(apiKey);
+  const cached = introspectionCache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.result;
+  }
+  const result = await perigon.introspection();
+  introspectionCache.set(cacheKey, {
+    result,
+    expiresAt: Date.now() + INTROSPECTION_CACHE_TTL_MS,
+  });
+  return result;
+}
 
 /**
  * Authenticates the MCP request via the `Authorization: Bearer <key>` header
@@ -63,7 +92,7 @@ async function enforceRateLimit(
 
 async function loadMcpProps(request: Request, apiKey: string): Promise<Props> {
   const perigon = new Perigon(apiKey);
-  const apiKeyDetails = await perigon.introspection();
+  const apiKeyDetails = await getCachedIntrospection(perigon, apiKey);
   const requestedTools = parseRequestedTools(
     resolveToolParam(new URL(request.url))
   );

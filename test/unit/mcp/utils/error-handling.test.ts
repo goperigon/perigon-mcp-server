@@ -25,7 +25,7 @@ describe("createErrorMessage", () => {
 
   test("HttpError with plain text body surfaces text + status", async () => {
     const msg = await createErrorMessage(
-      new HttpError(503, "internal error; reference = abc123")
+      new HttpError(503, "internal error; reference = abc123"),
     );
     expect(msg).toContain("internal error; reference = abc123");
     expect(msg).toContain("status 503");
@@ -72,5 +72,78 @@ describe("createErrorMessage", () => {
     const b = await createErrorMessage(undefined as any);
     expect(a.length).toBeGreaterThan(0);
     expect(b.length).toBeGreaterThan(0);
+  });
+});
+
+describe("createErrorMessage classification guidance", () => {
+  test("403 with plan-restriction phrasing appends plan guidance, no retry", async () => {
+    const body = JSON.stringify({
+      status: 403,
+      message: "This parameter is not supported by your plan",
+    });
+    const msg = await createErrorMessage(new HttpError(403, body));
+    expect(msg).toContain("do not retry");
+    expect(msg).toContain("get_api_access");
+    expect(msg).toContain("plan");
+  });
+
+  test("403 with quota phrasing appends quota guidance instead of plan guidance", async () => {
+    const body = JSON.stringify({
+      status: 403,
+      message: "You have exceeded your usage quota for this period",
+    });
+    const msg = await createErrorMessage(new HttpError(403, body));
+    expect(msg).toContain("exhausted its usage quota");
+    expect(msg).toContain("get_api_access");
+  });
+
+  test("403 with unrecognized phrasing falls back to plan-restriction guidance", async () => {
+    const msg = await createErrorMessage(new HttpError(403, "Forbidden"));
+    expect(msg).toContain("plan does not include");
+  });
+
+  test("429 appends rate-limit guidance with retryAfterMillis when present", async () => {
+    const err = new HttpError(429, "Too many requests");
+    err.retryAfterMillis = 2500;
+    const msg = await createErrorMessage(err);
+    expect(msg).toContain("Rate limited");
+    expect(msg).toContain("2500ms");
+  });
+
+  test("429 appends generic rate-limit guidance without retryAfterMillis", async () => {
+    const msg = await createErrorMessage(
+      new HttpError(429, "Too many requests"),
+    );
+    expect(msg).toContain("Rate limited");
+    expect(msg).not.toContain("undefined");
+  });
+
+  test("404 appends not-found guidance", async () => {
+    const msg = await createErrorMessage(new HttpError(404, "Not found"));
+    expect(msg).toContain("was not found");
+    expect(msg).toContain("do not retry");
+  });
+
+  test("400 with pagination phrasing appends pagination guidance", async () => {
+    const body = "Requested page exceeds pagination limit for this plan";
+    const msg = await createErrorMessage(new HttpError(400, body));
+    expect(msg).toContain("pagination limit");
+    expect(msg).toContain("reduce page or size");
+  });
+
+  test("400 without pagination phrasing gets no extra guidance appended", async () => {
+    const msg = await createErrorMessage(
+      new HttpError(400, "Invalid request body"),
+    );
+    expect(msg).not.toContain("do not retry");
+    expect(msg).not.toContain("reduce page or size");
+  });
+
+  test("500 gets no classification guidance appended", async () => {
+    const msg = await createErrorMessage(
+      new HttpError(500, "internal failure"),
+    );
+    expect(msg).not.toContain("do not retry");
+    expect(msg).not.toContain("Rate limited");
   });
 });

@@ -3,14 +3,14 @@ import { z } from "zod";
 import { Perigon } from "../../../lib/perigon";
 import { ToolCallback, ToolDefinition } from "../types";
 import { paginationArgs } from "../schemas/base";
-import { createSearchField, sortByEnum } from "../schemas/search";
+import { createSearchField } from "../schemas/search";
 import {
   toolResult,
   noResults,
   createPaginationHeader,
 } from "../utils/formatting";
 import { createErrorMessage } from "../utils/error-handling";
-import { SortBy } from "@goperigon/perigon-ts";
+import type { SortBy } from "@goperigon/perigon-ts";
 
 /**
  * Schema for Wikipedia search arguments
@@ -93,7 +93,21 @@ export const wikipediaArgs = z.object({
     .describe(
       "Pages scraped/indexed by Perigon before this date. ISO 8601 or yyyy-mm-dd.",
     ),
-  sortBy: sortByEnum.default(SortBy.Relevance).optional(),
+  sortBy: z
+    .enum([
+      "relevance",
+      "revisionTsDesc",
+      "revisionTsAsc",
+      "pageViewsDesc",
+      "pageViewsAsc",
+      "scrapedAtDesc",
+      "scrapedAtAsc",
+    ])
+    .default("relevance")
+    .optional()
+    .describe(
+      "Sort order: relevance, revisionTsDesc/Asc (edit recency), pageViewsDesc/Asc, or scrapedAtDesc/Asc.",
+    ),
 });
 
 /**
@@ -174,7 +188,10 @@ export function searchWikipedia(
         wikiRevisionTo,
         scrapedAtFrom,
         scrapedAtTo,
-        sortBy,
+        // The SDK's `SortBy` type is the generic enum; the real endpoint
+        // accepts a distinct Wikipedia-specific set documented in its own
+        // JSDoc above but not reflected in the type.
+        sortBy: sortBy as SortBy | undefined,
         showNumResults: true,
       });
 
