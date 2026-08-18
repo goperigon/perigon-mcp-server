@@ -154,4 +154,33 @@ describe("searchNewsArticles", () => {
       newsArticlesArgs.parse({ negativeSentimentTo: -0.1 })
     ).toThrow();
   });
+
+  test("every date param rejects an unparseable value", () => {
+    for (const field of [
+      "from",
+      "to",
+      "addDateFrom",
+      "addDateTo",
+      "refreshDateFrom",
+      "refreshDateTo",
+    ]) {
+      expect(() => newsArticlesArgs.parse({ [field]: "last week" })).toThrow();
+    }
+  });
+
+  test("an unparseable date never reaches the API client", async () => {
+    // Previously the schema accepted it, handed the client an Invalid Date,
+    // and the query-string builder threw `RangeError: Invalid Date` — which
+    // reached the model as a bare "Invalid Date" naming neither the
+    // parameter nor the expected format.
+    const perigon = createMockPerigon({
+      searchArticlesFull: async () => articlesFixture,
+    });
+    const parsed = newsArticlesArgs.safeParse({
+      query: "AI",
+      from: "last week",
+    });
+    expect(parsed.success).toBe(false);
+    expect(perigon.searchArticlesFull).not.toHaveBeenCalled();
+  });
 });

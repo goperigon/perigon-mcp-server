@@ -2,7 +2,7 @@ import { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 import { Perigon } from "../../../lib/perigon";
 import { ToolCallback, ToolDefinition } from "../types";
-import { paginationArgs } from "../schemas/base";
+import { paginationArgs, parseDateParam } from "../schemas/base";
 import { createSearchField } from "../schemas/search";
 import {
   toolResult,
@@ -55,12 +55,12 @@ export const companiesArgs = z.object({
     .describe("Maximum employee count."),
   ipoFrom: z
     .string()
-    .transform((str) => (str === "" ? undefined : new Date(str)))
+    .transform(parseDateParam)
     .optional()
     .describe("Filter for companies that went public on or after this date."),
   ipoTo: z
     .string()
-    .transform((str) => (str === "" ? undefined : new Date(str)))
+    .transform(parseDateParam)
     .optional()
     .describe("Filter for companies that went public on or before this date."),
 });
