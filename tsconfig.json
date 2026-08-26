@@ -37,7 +37,6 @@
     /* Skip type checking all .d.ts files. */
     "skipLibCheck": true,
     "types": ["node"],
-    "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]
     }
