@@ -8,11 +8,7 @@ import {
   createPaginationHeader,
 } from "../utils/formatting";
 import { createErrorMessage } from "../utils/error-handling";
-
-function parseTime(str: string) {
-  if (str === "") return undefined;
-  return new Date(str);
-}
+import { parseDateParam } from "../schemas/base";
 
 export const storyHistoryArgs = z.object({
   clusterIds: z
@@ -23,14 +19,14 @@ export const storyHistoryArgs = z.object({
     ),
   from: z
     .string()
-    .transform(parseTime)
+    .transform(parseDateParam)
     .optional()
     .describe(
       "Filter stories created after this date. Accepts ISO 8601 format (e.g., 2023-03-01T00:00:00) or yyyy-mm-dd format.",
     ),
   to: z
     .string()
-    .transform(parseTime)
+    .transform(parseDateParam)
     .optional()
     .describe(
       "Filter stories created before this date. Accepts ISO 8601 format (e.g., 2023-03-01T23:59:59) or yyyy-mm-dd format.",
