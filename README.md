@@ -1,3 +1,5 @@
+[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/goperigon-perigon-mcp-server-badge.png)](https://mseep.ai/app/goperigon-perigon-mcp-server)
+
 <p align="center">
   <img src="https://marketing.perigon.io/_next/image?url=%2Flogos%2FLogo-Perigon-Dark.png&w=256&q=75" width="120" alt="Perigon logo" />
 </p>
