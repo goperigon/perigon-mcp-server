@@ -17,6 +17,10 @@ Lead Developer: Islem Maboud, responsible for the architecture, implementation, 
 
 ## Usage
 
+### MCP Registry
+
+The official MCP Registry name for this server is `io.github.goperigon/perigon-mcp-server`. [`server.json`](./server.json) is the source of truth for that listing. A published registry version is immutable, so any change to the listing requires bumping `version` in `server.json` and publishing again.
+
 ### Playground
 
 You can try out the Perigon MCP server in our [playground](https://mcp.perigon.io).

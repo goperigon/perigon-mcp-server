@@ -1,0 +1,35 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.goperigon/perigon-mcp-server",
+  "title": "Perigon",
+  "description": "Official Perigon news API: articles, stories, companies, journalists, monitors, and stats.",
+  "version": "1.0.0",
+  "websiteUrl": "https://dev.perigon.io/docs/mcp",
+  "repository": {
+    "url": "https://github.com/goperigon/perigon-mcp-server",
+    "source": "github",
+    "id": "979470227"
+  },
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://mcp.perigon.io/v1/mcp",
+      "headers": [
+        {
+          "name": "Authorization",
+          "description": "Perigon API key, sent as a Bearer token",
+          "isRequired": true,
+          "isSecret": true,
+          "value": "Bearer {api_key}",
+          "variables": {
+            "api_key": {
+              "description": "Perigon API key from the Perigon dashboard",
+              "isRequired": true,
+              "isSecret": true
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
