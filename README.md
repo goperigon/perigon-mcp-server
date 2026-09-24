@@ -2,9 +2,13 @@
   <img src="https://marketing.perigon.io/_next/image?url=%2Flogos%2FLogo-Perigon-Dark.png&w=256&q=75" width="120" alt="Perigon logo" />
 </p>
 
-<h1 align="center">Perigon&nbsp;MCP&nbsp;Server</h1>
+<div align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/mcp-banner-terminal-dark.png" />
+  </picture>
+</div>
 
-This is the official MCP server for the Perigon news API.
+<h1 align="center">The official Perigon MCP server.</h1>
 
 ## Documentation
 
@@ -16,6 +20,10 @@ The Perigon MCP Server is developed and maintained by the Perigon engineering te
 Lead Developer: Islem Maboud, responsible for the architecture, implementation, and ongoing development of this MCP server, including the remote transport layer, authentication handling, deployment configuration, and the MCP playground.
 
 ## Usage
+
+### MCP Registry
+
+The official MCP Registry name for this server is `io.github.goperigon/perigon-mcp-server`. [`server.json`](./server.json) is the source of truth for that listing. A published registry version is immutable, so any change to the listing requires bumping `version` in `server.json` and publishing again.
 
 ### Playground
 
@@ -94,7 +102,7 @@ claude mcp add --transport http perigon_news_api https://mcp.perigon.io/v1/mcp \
 
 ### Selecting specific tools
 
-By default all tools permitted by your API key are available. You can restrict a session to a smaller set by appending a `?tools=` query parameter to the server URL. This is useful for reducing context size and keeping the model focused.
+With no `?tools=` filter, a session gets `search_news_articles`, the five stats tools, the monitor read tools (including `set_monitor_status`), `get_api_access`, every Signal Insights tool, and the search tools your API key's scopes allow. Several large tools stay off that default and must be requested by name or profile: `create_monitor`, `update_monitor`, `get_source_by_id`, `get_top_topics`, `get_story_stats`, and the watchlist, source-group, contact-point, and article-refresh tools. You can also restrict a session to a smaller set with `?tools=`. This is useful for reducing context size and keeping the model focused.
 
 ```
 https://mcp.perigon.io/v1/mcp?tools=search_news_articles,search_news_stories
@@ -125,7 +133,7 @@ Instead of listing individual tool names, `?tools=` also accepts curated profile
 
 | Profile | Includes |
 |---------|----------|
-| `research` | Core search, stats, and lookup tools for news research (articles, stories, journalists, sources, people, companies, topics, stats, `get_source_by_id`, `get_api_access`). |
+| `research` | `search_news_articles`, `search_news_stories`, `search_story_history`, `search_vector_news`, `summarize_news`, journalists, sources, people, companies, topics, the five always-on stats tools, `get_top_topics`, `get_source_by_id`, and `get_api_access`. Wikipedia search and the company, person, and location shortcuts are not in this profile. |
 | `monitoring` | All monitor tools (including `create_monitor`/`update_monitor`) plus every Signal Insights tool. |
 | `platform` | Watchlists, source groups, contact points, article refresh status, and `get_api_access`. |
 | `minimal` | `search_news_articles` plus the five stats tools and `get_api_access` — the smallest useful research set. |
@@ -166,7 +174,36 @@ When prompting your agent we recommend providing the current date (or a tool to 
 
 ## Supported tools
 
-The full list of available tools — including names, descriptions, and parameter schemas — is visible in the [MCP playground](https://mcp.perigon.io). The tools available to you depend on the scopes granted to your API key.
+The full list of available tools — including names, descriptions, and parameter schemas — is visible in the [MCP playground](https://mcp.perigon.io). Search tools other than `search_news_articles` appear only when the API key has the matching scope. Opt-in tools appear only when requested.
+
+### Search tools
+
+`search_news_articles` is always available. The rest of this list is registered only when the key has the corresponding scope.
+
+| Tool | Description |
+|------|-------------|
+| `search_news_articles` | Keyword and filter search over individual articles from global sources, including Boolean queries. |
+| `search_news_stories` | Clustered headlines that group related articles into one narrative. Requires the clusters scope. |
+| `search_story_history` | Timestamped snapshots of how a story cluster changed. Requires the clusters scope. |
+| `search_vector_news` | Semantic search over recent articles. Requires the news vector-search scope. |
+| `summarize_news` | AI summary of articles matching a filter set, with citations. Requires the search-summary scope. |
+| `search_journalists` | Journalist and reporter profiles. Requires the journalists scope. |
+| `search_sources` | News publications and outlets. Requires the sources scope. |
+| `search_people` | Public-figure profiles. Requires the people scope. |
+| `search_companies` | Company profiles, including domain, ticker, and industry. Requires the companies scope. |
+| `search_topics` | The Perigon topic taxonomy, for exact topic filters used by other tools. Requires the topics scope. |
+| `search_wikipedia` | Keyword search of Wikipedia pages. Requires the Wikipedia scope. |
+| `search_vector_wikipedia` | Semantic search of Wikipedia pages. Requires the Wikipedia vector-search scope. |
+
+### Shortcut tools
+
+These wrap a lookup plus a recent-article search. Each one is registered with the scope of the entity it looks up.
+
+| Tool | Description |
+|------|-------------|
+| `get_company_news` | Recent articles about a company looked up by name. Requires the companies scope. |
+| `get_person_news` | Recent articles about a person looked up by name. Requires the people scope. |
+| `get_location_news` | Recent articles for a city, state, or country. Requires the locations scope. |
 
 ### Stats tools
 
@@ -233,9 +270,9 @@ API keys with the **Signal Insights** scope unlock an additional set of tools fo
 
 Signal Insights tools use an explicit workspace handle (per [SEP-2567](https://modelcontextprotocol.io/seps/2567-sessionless-mcp)):
 
-1. Call `create_insights_workspace` **once at the start of a conversation**.
+1. Call `signal_insights_create_workspace` **once at the start of a conversation**.
 2. Pass the returned workspace ID to every subsequent analysis tool call.
-3. Files written in `execute_code` or `shell` persist across calls within the same workspace. Exported data is accessible at `/home/user/workspace/artifacts/` inside the sandbox.
+3. Files written in `signal_insights_execute_code` or `signal_insights_shell` persist across calls within the same workspace. Exported data is accessible at `/home/user/workspace/artifacts/` inside the sandbox.
 4. If you resume a chat after a restart, the workspace UUID from the prior conversation is still valid — the sandbox kernel will be fresh but your exported S3 artifacts are preserved.
 
 #### Signal Insights tool list
@@ -289,7 +326,7 @@ Signal Insights tools use an explicit workspace handle (per [SEP-2567](https://m
 }
 ```
 
-With no `?tools=` filter, all tools permitted by your API key's scopes are active.
+With no `?tools=` filter, Signal Insights tools are registered alongside the default news set described above. Opt-in monitor and platform tools stay out until requested.
 
 ## Issues / Contributing
 
