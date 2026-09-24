@@ -8,6 +8,8 @@ import { parseRequestedTools, resolveToolParam } from "../mcp/tools/selection";
 
 const SSE_PATHS = ["/v1/sse", "/v1/sse/message"] as const;
 const STREAMABLE_PATH = "/v1/mcp";
+const API_KEY_HELP =
+  "A valid Perigon API key is required. Create a free account and copy a key from https://perigon.io/dev/keys, then send it as Authorization: Bearer <key>.";
 
 /**
  * `introspection()` was previously called on every single MCP request. This
@@ -51,7 +53,7 @@ export async function handleMCP(
   try {
     const apiKey = extractBearerKey(request);
     if (!apiKey) {
-      return handleError("Unauthorized", 401);
+      return handleError("Unauthorized", 401, API_KEY_HELP);
     }
 
     const rateLimitResponse = await enforceRateLimit(apiKey, env);
@@ -132,7 +134,7 @@ function handleMcpError(error: unknown): Response {
     return handleError(
       "Failed to process MCP request",
       error.statusCode,
-      error.responseBody
+      error.statusCode === 401 ? API_KEY_HELP : error.responseBody
     );
   }
   return handleError(
