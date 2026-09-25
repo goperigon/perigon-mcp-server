@@ -108,9 +108,9 @@ https://mcp.perigon.io/v1/mcp?tools=research,create_monitor
 | `platform` | `watchlists`, `create_watchlist`, `update_watchlist`, `source_groups`, `create_source_group`, `update_source_group`, `contact_points`, `article_refresh`, `get_api_access`. |
 | `minimal` | `search_news_articles`, the five stats tools, `get_api_access`. |
 
-`get_story_stats` is not in any profile. Request it by name.
+`get_story_stats` is not in any profile. Request it by name. It still requires `CLUSTERS` at call time; a key without that scope can select the tool and then get a permission error.
 
-Opt-in tools need no extra scope. Any valid key can request them.
+Other opt-in tools need no extra scope. Any valid key can request them.
 
 ---
 
@@ -120,7 +120,7 @@ Availability:
 
 - **Default** — registered when `?tools=` is omitted (and the key has the listed scope, if any).
 - **Scope** — registered only when the key has that permission.
-- **Opt-in** — omitted from the default set. Request by name or profile. Any valid key may use them.
+- **Opt-in** — omitted from the default set. Request by name or profile. Registration is not the same as API access.
 
 #### Search
 
@@ -190,7 +190,7 @@ All of these are opt-in. `get_source_by_id` and `get_top_topics` are also in `re
 |------|--------------|-------------|
 | `get_source_by_id` | Opt-in | One news source by exact ID or domain. |
 | `get_top_topics` | Opt-in | Topics whose coverage is spiking versus a baseline. |
-| `get_story_stats` | Opt-in | Story-level publication volume or velocity over time. |
+| `get_story_stats` | Opt-in; Scope: `CLUSTERS` | Story-level publication volume or velocity over time. |
 | `watchlists` | Opt-in | List, get, or resolve organization watchlists. |
 | `create_watchlist` / `update_watchlist` | Opt-in | Create or partially update a watchlist. |
 | `source_groups` | Opt-in | List, get, or resolve custom source-group bundles. |
