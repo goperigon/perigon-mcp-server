@@ -2,18 +2,13 @@ import { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 import { Perigon } from "../../../lib/perigon";
 import { ToolCallback, ToolDefinition } from "../types";
-import { paginationArgs } from "../schemas/base";
+import { paginationArgs, parseDateParam } from "../schemas/base";
 import {
   toolResult,
   noResults,
   createCurrentPageHeader,
 } from "../utils/formatting";
 import { createErrorMessage } from "../utils/error-handling";
-
-function parseTime(str: string) {
-  if (str === "") return undefined;
-  return new Date(str);
-}
 
 export const newsVectorArgs = z.object({
   ...paginationArgs.shape,
@@ -24,14 +19,14 @@ export const newsVectorArgs = z.object({
     ),
   pubDateFrom: z
     .string()
-    .transform(parseTime)
+    .transform(parseDateParam)
     .optional()
     .describe(
       "Only return articles published after this date. ISO 8601 or yyyy-mm-dd. Default: last 30 days.",
     ),
   pubDateTo: z
     .string()
-    .transform(parseTime)
+    .transform(parseDateParam)
     .optional()
     .describe(
       "Only return articles published before this date. ISO 8601 or yyyy-mm-dd.",

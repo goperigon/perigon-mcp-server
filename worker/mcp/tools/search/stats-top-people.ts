@@ -5,11 +5,7 @@ import { ToolCallback, ToolDefinition } from "../types";
 import { statsFilterArgs } from "../schemas/stats";
 import { toolResult, noResults } from "../utils/formatting";
 import { createErrorMessage } from "../utils/error-handling";
-
-function parseTime(str: string) {
-  if (str === "") return undefined;
-  return new Date(str);
-}
+import { parseDateParam } from "../schemas/base";
 
 function escapeAttr(value: string): string {
   return value.replace(/&/g, "&amp;").replace(/"/g, "&quot;");
@@ -18,28 +14,28 @@ function escapeAttr(value: string): string {
 export const topPeopleArgs = statsFilterArgs.extend({
   currentFrom: z
     .string()
-    .transform(parseTime)
+    .transform(parseDateParam)
     .optional()
     .describe(
       "Start of the current window for spike detection. Default: 3 days ago. ISO 8601 or yyyy-mm-dd.",
     ),
   currentTo: z
     .string()
-    .transform(parseTime)
+    .transform(parseDateParam)
     .optional()
     .describe(
       "End of the current window for spike detection. Default: now. ISO 8601 or yyyy-mm-dd.",
     ),
   baselineFrom: z
     .string()
-    .transform(parseTime)
+    .transform(parseDateParam)
     .optional()
     .describe(
       "Start of the baseline window for spike detection. Default: 30 days ago. ISO 8601 or yyyy-mm-dd.",
     ),
   baselineTo: z
     .string()
-    .transform(parseTime)
+    .transform(parseDateParam)
     .optional()
     .describe(
       "End of the baseline window for spike detection. Default: 3 days ago. ISO 8601 or yyyy-mm-dd.",

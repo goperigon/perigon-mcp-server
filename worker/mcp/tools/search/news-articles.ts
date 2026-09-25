@@ -3,7 +3,7 @@ import { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 import { Perigon } from "../../../lib/perigon";
 import { ToolCallback, ToolDefinition } from "../types";
-import { createBaseSearchArgs } from "../schemas/base";
+import { createBaseSearchArgs, parseDateParam } from "../schemas/base";
 import { createSearchField } from "../schemas/search";
 import {
   toolResult,
@@ -114,14 +114,14 @@ export const newsArticlesArgs = createBaseSearchArgs().extend({
     ),
   addDateFrom: z
     .string()
-    .transform((str) => (str === "" ? undefined : new Date(str)))
+    .transform(parseDateParam)
     .optional()
     .describe(
       "Filter for articles added/ingested to Perigon after this date. ISO 8601 or yyyy-mm-dd.",
     ),
   addDateTo: z
     .string()
-    .transform((str) => (str === "" ? undefined : new Date(str)))
+    .transform(parseDateParam)
     .optional()
     .describe(
       "Filter for articles added/ingested to Perigon before this date. ISO 8601 or yyyy-mm-dd.",
@@ -240,12 +240,12 @@ export const newsArticlesArgs = createBaseSearchArgs().extend({
     .describe("Maximum neutral sentiment score (0.0 to 1.0)."),
   refreshDateFrom: z
     .string()
-    .transform((str) => (str === "" ? undefined : new Date(str)))
+    .transform(parseDateParam)
     .optional()
     .describe("Filter for articles refreshed in Perigon after this date."),
   refreshDateTo: z
     .string()
-    .transform((str) => (str === "" ? undefined : new Date(str)))
+    .transform(parseDateParam)
     .optional()
     .describe("Filter for articles refreshed in Perigon before this date."),
   personWikidataId: z

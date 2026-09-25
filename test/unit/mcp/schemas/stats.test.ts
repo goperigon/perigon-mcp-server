@@ -21,6 +21,11 @@ describe("statsFilterArgs", () => {
     expect(result.to).toBeUndefined();
   });
 
+  test("rejects unparseable from/to instead of producing an Invalid Date", () => {
+    expect(() => statsFilterArgs.parse({ from: "last week" })).toThrow();
+    expect(() => statsFilterArgs.parse({ to: "yesterday" })).toThrow();
+  });
+
   test("all array filters are optional", () => {
     const result = statsFilterArgs.parse({});
     expect(result.source).toBeUndefined();
