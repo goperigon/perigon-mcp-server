@@ -45,7 +45,7 @@ The recommended transport is **Streamable HTTP** (`/v1/mcp`). SSE (`/v1/sse`) is
 ```json
 {
   "mcpServers": {
-    "perigon_news_api": {
+    "perigon": {
       "url": "https://mcp.perigon.io/v1/mcp",
       "type": "http",
       "headers": {
@@ -60,7 +60,7 @@ The recommended transport is **Streamable HTTP** (`/v1/mcp`). SSE (`/v1/sse`) is
 ```json
 {
   "mcpServers": {
-    "perigon_news_api": {
+    "perigon": {
       "command": "npx",
       "args": [
         "-y",
@@ -79,7 +79,7 @@ The recommended transport is **Streamable HTTP** (`/v1/mcp`). SSE (`/v1/sse`) is
 
 **For Claude Code (CLI):**
 ```bash
-claude mcp add --transport http perigon_news_api https://mcp.perigon.io/v1/mcp \
+claude mcp add --transport http perigon https://mcp.perigon.io/v1/mcp \
   --header "Authorization: Bearer YOUR_PERIGON_API_KEY"
 ```
 
@@ -87,7 +87,7 @@ claude mcp add --transport http perigon_news_api https://mcp.perigon.io/v1/mcp \
 ```json
 {
   "mcpServers": {
-    "perigon_news_api": {
+    "perigon": {
       "url": "https://mcp.perigon.io/v1/sse",
       "type": "sse",
       "headers": {
@@ -116,7 +116,7 @@ https://mcp.perigon.io/v1/mcp?tools=search_news_articles,search_news_stories
 ```json
 {
   "mcpServers": {
-    "perigon_news_api": {
+    "perigon": {
       "url": "https://mcp.perigon.io/v1/mcp?tools=search_news_articles,search_news_stories",
       "type": "http",
       "headers": {

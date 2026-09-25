@@ -46,7 +46,7 @@ export const createSourceGroupTool = {
     readOnlyHint: false,
     destructiveHint: false,
     idempotentHint: false,
-    openWorldHint: true,
+    openWorldHint: false,
   },
   createHandler: (perigon: Perigon) => createSourceGroup(perigon),
 } satisfies ToolDefinition<typeof createSourceGroupArgs>;

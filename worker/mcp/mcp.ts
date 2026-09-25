@@ -46,7 +46,7 @@ export class PerigonMCP extends McpAgent<Env, unknown, Props> {
   // Type assertion needed: agents bundles its own @modelcontextprotocol/sdk copy
   server = new McpServer(
     {
-      name: "Perigon News API",
+      name: "Perigon",
       version: "1.0.0",
     },
     { instructions: instructions.MCP_INSTRUCTIONS },
@@ -132,6 +132,7 @@ export class PerigonMCP extends McpAgent<Env, unknown, Props> {
         {
           description: def.description,
           inputSchema: def.parameters,
+          annotations: def.annotations,
           _meta: def._meta,
         },
         def.createHandler(insightsApi, pokeyClient),

@@ -65,9 +65,9 @@ export const updateWatchlistTool = {
   parameters: updateWatchlistArgs,
   annotations: {
     readOnlyHint: false,
-    destructiveHint: false,
+    destructiveHint: true,
     idempotentHint: true,
-    openWorldHint: true,
+    openWorldHint: false,
   },
   createHandler: (perigon: Perigon) => updateWatchlist(perigon),
 } satisfies ToolDefinition<typeof updateWatchlistArgs>;

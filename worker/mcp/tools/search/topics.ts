@@ -115,5 +115,10 @@ export const topicsTool = {
   description:
     "Browse and search the Perigon topic taxonomy. Use this to discover available topics for use as filters in other search tools (articles, stories, journalists). Topics are more granular than categories. Filter by name, category, or subcategory. Returns topic names with their category/subcategory classification.",
   parameters: topicsArgs,
+  annotations: {
+    readOnlyHint: true,
+    openWorldHint: false,
+    destructiveHint: false,
+  },
   createHandler: (perigon: Perigon) => searchTopics(perigon),
 } satisfies ToolDefinition<typeof topicsArgs>;

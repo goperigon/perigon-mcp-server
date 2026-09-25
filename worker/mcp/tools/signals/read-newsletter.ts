@@ -9,6 +9,11 @@ export const readNewsletterTool = {
     `Use after ${listNewslettersTool.name} to get complete briefing content for context or analysis. ` +
     "Only works for newsletters belonging to TOPIC signals.",
   parameters: readNewsletterSchema,
+  annotations: {
+    readOnlyHint: true,
+    openWorldHint: false,
+    destructiveHint: false,
+  },
   createHandler:
     (insightsApi) =>
     async ({ newsletterUuid }) =>

@@ -231,7 +231,7 @@ import { createSourceGroupTool } from "./platform/create-source-group";
 import { updateSourceGroupTool } from "./platform/update-source-group";
 import { contactPointsTool } from "./platform/contact-points";
 import { articleRefreshTool } from "./platform/article-refresh";
-import { ToolDefinition } from "./types";
+import { ToolAnnotations, ToolDefinition } from "./types";
 import { createWorkspaceTool } from "./signals/create-workspace";
 import { searchSignalsTool } from "./signals/search-signals";
 import { readSignalTool } from "./signals/read-signal";
@@ -251,11 +251,13 @@ function signalStub(tool: {
   name: string;
   description: string;
   parameters: any;
+  annotations: ToolAnnotations;
 }): ToolDefinition<any> {
   return {
     name: tool.name,
     description: tool.description,
     parameters: tool.parameters,
+    annotations: tool.annotations,
     createHandler: () => async () => ({
       content: [
         {

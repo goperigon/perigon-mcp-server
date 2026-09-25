@@ -62,7 +62,7 @@ export const listMonitorsTool = {
     readOnlyHint: true,
     destructiveHint: false,
     idempotentHint: true,
-    openWorldHint: true
+    openWorldHint: false
   },
   createHandler: (perigon: Perigon) => listMonitors(perigon),
 } satisfies ToolDefinition<typeof listMonitorsArgs>;

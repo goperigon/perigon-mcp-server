@@ -9,6 +9,11 @@ export const readFileTool = {
     "Internally, this reads the full file into memory. " +
     `Use on files up to a few MB; for larger files, use ${executeCodeTool.name} directly instead.`,
   parameters: readFileSchema,
+  annotations: {
+    readOnlyHint: true,
+    openWorldHint: false,
+    destructiveHint: false,
+  },
   createHandler: (_insightsApi, pokeyClient) => async (args) =>
     pokeyClient.executeTool("read", args),
 } as const satisfies SignalToolDefinition<typeof readFileSchema>;

@@ -207,5 +207,10 @@ export const newsVectorTool = {
   description:
     "Semantic search over recent news articles using natural language and vector embeddings. Use this instead of search_news_articles when the query is conversational, conceptual, or intent-based rather than keyword-based (e.g., 'how is AI transforming drug discovery' vs 'AI drug discovery'). Defaults to the last 30 days; override with pubDateFrom/pubDateTo for older coverage. Returns articles ranked by relevance score with content, metadata, and similarity scores.",
   parameters: newsVectorArgs,
+  annotations: {
+    readOnlyHint: true,
+    openWorldHint: true,
+    destructiveHint: false,
+  },
   createHandler: (perigon: Perigon) => searchVectorNews(perigon),
 } satisfies ToolDefinition<typeof newsVectorArgs>;

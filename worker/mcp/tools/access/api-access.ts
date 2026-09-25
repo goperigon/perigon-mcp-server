@@ -70,7 +70,7 @@ export const apiAccessTool = {
     readOnlyHint: true,
     destructiveHint: false,
     idempotentHint: true,
-    openWorldHint: true,
+    openWorldHint: false,
   },
   createHandler: (perigon: Perigon) => getApiAccess(perigon),
 } satisfies ToolDefinition<typeof apiAccessArgs>;

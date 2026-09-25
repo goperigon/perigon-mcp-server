@@ -17,6 +17,11 @@ export const executeCodeTool = {
     "Before groupby/value_counts/top-N charts, drop rows with missing category values (dropna / notna on the label column) — null categories often dominate and mislead. " +
     "No outbound internet access except *.amazonaws.com.",
   parameters: executeCodeSchema,
+  annotations: {
+    readOnlyHint: false,
+    openWorldHint: true,
+    destructiveHint: true,
+  },
   createHandler: (_insightsApi, pokeyClient) => async (args) =>
     pokeyClient.executeTool("execute_code", args),
 } as const satisfies SignalToolDefinition<typeof executeCodeSchema>;

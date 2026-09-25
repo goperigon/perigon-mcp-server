@@ -45,7 +45,7 @@
 <p><strong>Streamable HTTP — native support (recommended):</strong></p>
 <pre><code class="language-json">{
   &quot;mcpServers&quot;: {
-    &quot;perigon_news_api&quot;: {
+    &quot;perigon&quot;: {
       &quot;url&quot;: &quot;https://mcp.perigon.io/v1/mcp&quot;,
       &quot;type&quot;: &quot;http&quot;,
       &quot;headers&quot;: {
@@ -58,7 +58,7 @@
 <p><strong>Streamable HTTP — via <code>mcp-remote</code> (for clients without native HTTP support):</strong></p>
 <pre><code class="language-json">{
   &quot;mcpServers&quot;: {
-    &quot;perigon_news_api&quot;: {
+    &quot;perigon&quot;: {
       &quot;command&quot;: &quot;npx&quot;,
       &quot;args&quot;: [
         &quot;-y&quot;,
@@ -75,13 +75,13 @@
 }
 </code></pre>
 <p><strong>For Claude Code (CLI):</strong></p>
-<pre><code class="language-bash">claude mcp add --transport http perigon_news_api https://mcp.perigon.io/v1/mcp \
+<pre><code class="language-bash">claude mcp add --transport http perigon https://mcp.perigon.io/v1/mcp \
   --header &quot;Authorization: Bearer YOUR_PERIGON_API_KEY&quot;
 </code></pre>
 <p><strong>SSE (legacy clients only):</strong></p>
 <pre><code class="language-json">{
   &quot;mcpServers&quot;: {
-    &quot;perigon_news_api&quot;: {
+    &quot;perigon&quot;: {
       &quot;url&quot;: &quot;https://mcp.perigon.io/v1/sse&quot;,
       &quot;type&quot;: &quot;sse&quot;,
       &quot;headers&quot;: {
@@ -104,7 +104,7 @@
 <p><strong>Example — Cursor config scoped to article and story search:</strong></p>
 <pre><code class="language-json">{
   &quot;mcpServers&quot;: {
-    &quot;perigon_news_api&quot;: {
+    &quot;perigon&quot;: {
       &quot;url&quot;: &quot;https://mcp.perigon.io/v1/mcp?tools=search_news_articles,search_news_stories&quot;,
       &quot;type&quot;: &quot;http&quot;,
       &quot;headers&quot;: {

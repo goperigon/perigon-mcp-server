@@ -126,5 +126,10 @@ export const topTopicsTool = {
   description:
     "Get the topics whose news coverage is spiking — mentioned significantly more in a recent window than a prior baseline period. Use this alongside get_top_people and get_top_companies when the user asks 'what topics are trending?' The comparison window defaults to last 3 days vs. last 30 days; override with currentFrom/To and baselineFrom/To. Supports the same curated article filters as the other stats tools.",
   parameters: topTopicsArgs,
+  annotations: {
+    readOnlyHint: true,
+    openWorldHint: true,
+    destructiveHint: false,
+  },
   createHandler: (perigon: Perigon) => getTopTopics(perigon),
 } satisfies ToolDefinition<typeof topTopicsArgs>;

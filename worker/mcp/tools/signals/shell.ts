@@ -9,6 +9,11 @@ export const shellTool = {
     `Working directory is ${WORKSPACE_DIR}. ` +
     `Query data files are accessible at ${DATA_DIR}. No internet access except *.amazonaws.com.`,
   parameters: shellSchema,
+  annotations: {
+    readOnlyHint: false,
+    openWorldHint: true,
+    destructiveHint: true,
+  },
   createHandler: (_insightsApi, pokeyClient) => async (args) =>
     pokeyClient.executeTool("shell", args),
 } as const satisfies SignalToolDefinition<typeof shellSchema>;

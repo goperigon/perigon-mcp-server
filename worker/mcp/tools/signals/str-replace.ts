@@ -9,6 +9,11 @@ export const strReplaceTool = {
     "Internally, this reads the full file into memory. " +
     `Use on files up to a few MB; for larger files, use ${executeCodeTool.name} directly instead.`,
   parameters: strReplaceSchema,
+  annotations: {
+    readOnlyHint: false,
+    openWorldHint: false,
+    destructiveHint: true,
+  },
   createHandler: (_insightsApi, pokeyClient) => async (args) =>
     pokeyClient.executeTool("str_replace", args),
 } as const satisfies SignalToolDefinition<typeof strReplaceSchema>;

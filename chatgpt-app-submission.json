@@ -1,0 +1,728 @@
+{
+  "$schema": "https://developers.openai.com/apps-sdk/schemas/chatgpt-app-submission.v1.json",
+  "schema_version": 1,
+  "app_info": {
+    "display_name": "Perigon",
+    "subtitle": "Research and monitor news",
+    "description": "Perigon helps users find and summarize news, research people, companies, journalists, and publishers, and compare coverage trends. Users can manage news monitors, watchlists, and publisher groups, read signal briefings, and export and analyze signal events with charts in an analysis workspace. Available data and tools depend on account permissions and the connected tool selection.",
+    "category": "NEWS"
+  },
+  "tools": {
+    "search_news_articles": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": true,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Retrieves matching news articles and their metadata without modifying user records or files.",
+        "open_world_justification": "Queries public news or reference information about an open-ended set of external people, organizations, publications, and events.",
+        "destructive_justification": "Does not delete or overwrite existing records or files, revoke access, or directly send irreversible messages."
+      }
+    },
+    "get_top_people": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": true,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Retrieves people with increased news coverage relative to a baseline without modifying user records or files.",
+        "open_world_justification": "Queries public news or reference information about an open-ended set of external people, organizations, publications, and events.",
+        "destructive_justification": "Does not delete or overwrite existing records or files, revoke access, or directly send irreversible messages."
+      }
+    },
+    "search_wikipedia": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": true,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Retrieves matching Wikipedia page records without modifying user records or files.",
+        "open_world_justification": "Queries public news or reference information about an open-ended set of external people, organizations, publications, and events.",
+        "destructive_justification": "Does not delete or overwrite existing records or files, revoke access, or directly send irreversible messages."
+      }
+    },
+    "get_top_entities": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": true,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Retrieves ranked entity mentions in news coverage without modifying user records or files.",
+        "open_world_justification": "Queries public news or reference information about an open-ended set of external people, organizations, publications, and events.",
+        "destructive_justification": "Does not delete or overwrite existing records or files, revoke access, or directly send irreversible messages."
+      }
+    },
+    "search_companies": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": true,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Retrieves company profiles without modifying user records or files.",
+        "open_world_justification": "Queries public news or reference information about an open-ended set of external people, organizations, publications, and events.",
+        "destructive_justification": "Does not delete or overwrite existing records or files, revoke access, or directly send irreversible messages."
+      }
+    },
+    "search_story_history": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": true,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Retrieves historical snapshots of a news story without modifying user records or files.",
+        "open_world_justification": "Queries public news or reference information about an open-ended set of external people, organizations, publications, and events.",
+        "destructive_justification": "Does not delete or overwrite existing records or files, revoke access, or directly send irreversible messages."
+      }
+    },
+    "search_vector_wikipedia": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": true,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Retrieves Wikipedia records matching a semantic query without modifying user records or files.",
+        "open_world_justification": "Queries public news or reference information about an open-ended set of external people, organizations, publications, and events.",
+        "destructive_justification": "Does not delete or overwrite existing records or files, revoke access, or directly send irreversible messages."
+      }
+    },
+    "get_article_counts": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": true,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Retrieves article counts grouped by time without modifying user records or files.",
+        "open_world_justification": "Queries public news or reference information about an open-ended set of external people, organizations, publications, and events.",
+        "destructive_justification": "Does not delete or overwrite existing records or files, revoke access, or directly send irreversible messages."
+      }
+    },
+    "search_topics": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Retrieves entries in the Perigon topic taxonomy without modifying user records or files.",
+        "open_world_justification": "Only searches Perigon’s predefined topic taxonomy.",
+        "destructive_justification": "Does not delete or overwrite existing records or files, revoke access, or directly send irreversible messages."
+      }
+    },
+    "search_sources": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": true,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Retrieves news publisher profiles without modifying user records or files.",
+        "open_world_justification": "Queries public news or reference information about an open-ended set of external people, organizations, publications, and events.",
+        "destructive_justification": "Does not delete or overwrite existing records or files, revoke access, or directly send irreversible messages."
+      }
+    },
+    "search_people": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": true,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Retrieves profiles of newsworthy people without modifying user records or files.",
+        "open_world_justification": "Queries public news or reference information about an open-ended set of external people, organizations, publications, and events.",
+        "destructive_justification": "Does not delete or overwrite existing records or files, revoke access, or directly send irreversible messages."
+      }
+    },
+    "search_vector_news": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": true,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Retrieves news articles matching a semantic query without modifying user records or files.",
+        "open_world_justification": "Queries public news or reference information about an open-ended set of external people, organizations, publications, and events.",
+        "destructive_justification": "Does not delete or overwrite existing records or files, revoke access, or directly send irreversible messages."
+      }
+    },
+    "summarize_news": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": true,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Computes a cited summary of matching news coverage without modifying user records or files.",
+        "open_world_justification": "Queries public news or reference information about an open-ended set of external people, organizations, publications, and events.",
+        "destructive_justification": "Does not delete or overwrite existing records or files, revoke access, or directly send irreversible messages."
+      }
+    },
+    "search_journalists": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": true,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Retrieves journalist profiles, professional locations, and publication activity without modifying user records or files.",
+        "open_world_justification": "Queries public news or reference information about an open-ended set of external people, organizations, publications, and events.",
+        "destructive_justification": "Does not delete or overwrite existing records or files, revoke access, or directly send irreversible messages."
+      }
+    },
+    "search_news_stories": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": true,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Retrieves clustered news stories without modifying user records or files.",
+        "open_world_justification": "Queries public news or reference information about an open-ended set of external people, organizations, publications, and events.",
+        "destructive_justification": "Does not delete or overwrite existing records or files, revoke access, or directly send irreversible messages."
+      }
+    },
+    "get_avg_sentiment": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": true,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Retrieves average news sentiment over time without modifying user records or files.",
+        "open_world_justification": "Queries public news or reference information about an open-ended set of external people, organizations, publications, and events.",
+        "destructive_justification": "Does not delete or overwrite existing records or files, revoke access, or directly send irreversible messages."
+      }
+    },
+    "get_top_companies": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": true,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Retrieves companies with increased news coverage relative to a baseline without modifying user records or files.",
+        "open_world_justification": "Queries public news or reference information about an open-ended set of external people, organizations, publications, and events.",
+        "destructive_justification": "Does not delete or overwrite existing records or files, revoke access, or directly send irreversible messages."
+      }
+    },
+    "get_location_news": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": true,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Retrieves recent news matching geographic filters without modifying user records or files.",
+        "open_world_justification": "Queries public news or reference information about an open-ended set of external people, organizations, publications, and events.",
+        "destructive_justification": "Does not delete or overwrite existing records or files, revoke access, or directly send irreversible messages."
+      }
+    },
+    "get_company_news": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": true,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Looks up a company and retrieves its recent news coverage without modifying user records or files.",
+        "open_world_justification": "Queries public news or reference information about an open-ended set of external people, organizations, publications, and events.",
+        "destructive_justification": "Does not delete or overwrite existing records or files, revoke access, or directly send irreversible messages."
+      }
+    },
+    "get_person_news": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": true,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Looks up a person and retrieves their recent news coverage without modifying user records or files.",
+        "open_world_justification": "Queries public news or reference information about an open-ended set of external people, organizations, publications, and events.",
+        "destructive_justification": "Does not delete or overwrite existing records or files, revoke access, or directly send irreversible messages."
+      }
+    },
+    "get_monitor_newsletters": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Retrieves stored monitor briefings without modifying user records or files.",
+        "open_world_justification": "Operates only on the account’s records or analysis workspace without contacting user-selected external entities.",
+        "destructive_justification": "Does not delete or overwrite existing records or files, revoke access, or directly send irreversible messages."
+      }
+    },
+    "set_monitor_status": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": true
+      },
+      "justifications": {
+        "read_only_justification": "Activates, pauses, or archives an organization monitor.",
+        "open_world_justification": "Can activate ongoing monitoring of public news with configured external notification delivery.",
+        "destructive_justification": "Can archive a monitor, which cannot be restored through the public API."
+      }
+    },
+    "get_monitor": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Retrieves one monitor’s configuration without modifying user records or files.",
+        "open_world_justification": "Operates only on the account’s records or analysis workspace without contacting user-selected external entities.",
+        "destructive_justification": "Does not delete or overwrite existing records or files, revoke access, or directly send irreversible messages."
+      }
+    },
+    "list_monitors": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Lists the organization’s monitors without modifying user records or files.",
+        "open_world_justification": "Operates only on the account’s records or analysis workspace without contacting user-selected external entities.",
+        "destructive_justification": "Does not delete or overwrite existing records or files, revoke access, or directly send irreversible messages."
+      }
+    },
+    "create_monitor": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Creates an organization monitor and can start recurring processing when ACTIVE is requested.",
+        "open_world_justification": "Can start ongoing monitoring of public news and configure delivery to external email or webhook destinations.",
+        "destructive_justification": "Does not delete or overwrite existing records or files, revoke access, or directly send irreversible messages."
+      }
+    },
+    "update_monitor": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": true
+      },
+      "justifications": {
+        "read_only_justification": "Updates an organization monitor’s configuration, including replacement queries, schedules, and notification destinations.",
+        "open_world_justification": "Changes monitoring of public news and can replace external email or webhook notification destinations.",
+        "destructive_justification": "Replaces supplied monitor configuration fields and can clear existing schedules, queries, and contact points."
+      }
+    },
+    "get_monitor_events": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Retrieves recorded events from a monitor without modifying user records or files.",
+        "open_world_justification": "Operates only on the account’s records or analysis workspace without contacting user-selected external entities.",
+        "destructive_justification": "Does not delete or overwrite existing records or files, revoke access, or directly send irreversible messages."
+      }
+    },
+    "get_monitor_summaries": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Retrieves stored monitor summary history without modifying user records or files.",
+        "open_world_justification": "Operates only on the account’s records or analysis workspace without contacting user-selected external entities.",
+        "destructive_justification": "Does not delete or overwrite existing records or files, revoke access, or directly send irreversible messages."
+      }
+    },
+    "update_source_group": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": true
+      },
+      "justifications": {
+        "read_only_justification": "Updates an organization publisher group and replaces its domain list when supplied.",
+        "open_world_justification": "Operates only on the account’s records or analysis workspace without contacting user-selected external entities.",
+        "destructive_justification": "Overwrites the full publisher-domain list when supplied."
+      }
+    },
+    "get_source_by_id": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": true,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Retrieves a publisher profile by ID or domain without modifying user records or files.",
+        "open_world_justification": "Queries public news or reference information about an open-ended set of external people, organizations, publications, and events.",
+        "destructive_justification": "Does not delete or overwrite existing records or files, revoke access, or directly send irreversible messages."
+      }
+    },
+    "source_groups": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": true,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Retrieves accessible private or public publisher groups without modifying user records or files.",
+        "open_world_justification": "Can retrieve public publisher groups as well as the organization’s private groups.",
+        "destructive_justification": "Does not delete or overwrite existing records or files, revoke access, or directly send irreversible messages."
+      }
+    },
+    "get_top_topics": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": true,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Retrieves topics with increased news coverage relative to a baseline without modifying user records or files.",
+        "open_world_justification": "Queries public news or reference information about an open-ended set of external people, organizations, publications, and events.",
+        "destructive_justification": "Does not delete or overwrite existing records or files, revoke access, or directly send irreversible messages."
+      }
+    },
+    "create_source_group": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Creates an organization publisher group.",
+        "open_world_justification": "Operates only on the account’s records or analysis workspace without contacting user-selected external entities.",
+        "destructive_justification": "Does not delete or overwrite existing records or files, revoke access, or directly send irreversible messages."
+      }
+    },
+    "contact_points": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Retrieves the organization’s notification channels, including email addresses and webhook URLs without modifying user records or files.",
+        "open_world_justification": "Operates only on the account’s records or analysis workspace without contacting user-selected external entities.",
+        "destructive_justification": "Does not delete or overwrite existing records or files, revoke access, or directly send irreversible messages."
+      }
+    },
+    "get_story_stats": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": true,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Retrieves story publication volume or mention velocity without modifying user records or files.",
+        "open_world_justification": "Queries public news or reference information about an open-ended set of external people, organizations, publications, and events.",
+        "destructive_justification": "Does not delete or overwrite existing records or files, revoke access, or directly send irreversible messages."
+      }
+    },
+    "update_watchlist": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": true
+      },
+      "justifications": {
+        "read_only_justification": "Updates an organization watchlist and replaces supplied people or company lists.",
+        "open_world_justification": "Operates only on the account’s records or analysis workspace without contacting user-selected external entities.",
+        "destructive_justification": "Overwrites the full people or company list when the corresponding array is supplied."
+      }
+    },
+    "create_watchlist": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Creates a people and company watchlist in the organization.",
+        "open_world_justification": "Operates only on the account’s records or analysis workspace without contacting user-selected external entities.",
+        "destructive_justification": "Does not delete or overwrite existing records or files, revoke access, or directly send irreversible messages."
+      }
+    },
+    "watchlists": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": true,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Retrieves accessible private or public watchlists without modifying user records or files.",
+        "open_world_justification": "Can retrieve public watchlists as well as the organization’s private watchlists.",
+        "destructive_justification": "Does not delete or overwrite existing records or files, revoke access, or directly send irreversible messages."
+      }
+    },
+    "article_refresh": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": true,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Retrieves existing refresh-job status or cached article refresh results without scheduling processing without modifying user records or files.",
+        "open_world_justification": "Retrieves refresh information about public news articles from external publishers.",
+        "destructive_justification": "Does not delete or overwrite existing records or files, revoke access, or directly send irreversible messages."
+      }
+    },
+    "get_api_access": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Retrieves account scopes, quota, and access limitations without modifying user records or files.",
+        "open_world_justification": "Operates only on the account’s records or analysis workspace without contacting user-selected external entities.",
+        "destructive_justification": "Does not delete or overwrite existing records or files, revoke access, or directly send irreversible messages."
+      }
+    },
+    "signal_insights_read_signal": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Retrieves signal metadata and classification without modifying user records or files.",
+        "open_world_justification": "Operates only on the account’s records or analysis workspace without contacting user-selected external entities.",
+        "destructive_justification": "Does not delete or overwrite existing records or files, revoke access, or directly send irreversible messages."
+      }
+    },
+    "signal_insights_read_newsletter": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Retrieves a stored briefing as Markdown without modifying user records or files.",
+        "open_world_justification": "Operates only on the account’s records or analysis workspace without contacting user-selected external entities.",
+        "destructive_justification": "Does not delete or overwrite existing records or files, revoke access, or directly send irreversible messages."
+      }
+    },
+    "signal_insights_write_file": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": true
+      },
+      "justifications": {
+        "read_only_justification": "Writes content to a sandbox file, creating directories as needed.",
+        "open_world_justification": "Operates only on the account’s records or analysis workspace without contacting user-selected external entities.",
+        "destructive_justification": "Overwrites the contents of an existing file at the supplied path."
+      }
+    },
+    "signal_insights_search_signals": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Searches the account’s available signals without modifying user records or files.",
+        "open_world_justification": "Operates only on the account’s records or analysis workspace without contacting user-selected external entities.",
+        "destructive_justification": "Does not delete or overwrite existing records or files, revoke access, or directly send irreversible messages."
+      }
+    },
+    "signal_insights_read_file": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Reads text from a sandbox file without modifying user records or files.",
+        "open_world_justification": "Operates only on the account’s records or analysis workspace without contacting user-selected external entities.",
+        "destructive_justification": "Does not delete or overwrite existing records or files, revoke access, or directly send irreversible messages."
+      }
+    },
+    "signal_insights_execute_code": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": true
+      },
+      "justifications": {
+        "read_only_justification": "Executes Python in a persistent kernel and can modify workspace state and files.",
+        "open_world_justification": "User-supplied code can contact arbitrary endpoints allowed by the sandbox’s amazonaws.com wildcard network rule.",
+        "destructive_justification": "Arbitrary Python can overwrite or delete files and perform irreversible external requests."
+      }
+    },
+    "signal_insights_grep": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Reads a sandbox file and finds lines matching a regular expression without modifying user records or files.",
+        "open_world_justification": "Operates only on the account’s records or analysis workspace without contacting user-selected external entities.",
+        "destructive_justification": "Does not delete or overwrite existing records or files, revoke access, or directly send irreversible messages."
+      }
+    },
+    "signal_insights_shell": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": true
+      },
+      "justifications": {
+        "read_only_justification": "Executes shell commands that can modify sandbox state and files.",
+        "open_world_justification": "User-supplied code can contact arbitrary endpoints allowed by the sandbox’s amazonaws.com wildcard network rule.",
+        "destructive_justification": "Arbitrary shell commands can overwrite or delete files and perform irreversible external requests."
+      }
+    },
+    "signal_insights_list_files": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Lists sandbox files without modifying user records or files.",
+        "open_world_justification": "Operates only on the account’s records or analysis workspace without contacting user-selected external entities.",
+        "destructive_justification": "Does not delete or overwrite existing records or files, revoke access, or directly send irreversible messages."
+      }
+    },
+    "signal_insights_list_newsletters": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Lists stored briefings for a topic signal without modifying user records or files.",
+        "open_world_justification": "Operates only on the account’s records or analysis workspace without contacting user-selected external entities.",
+        "destructive_justification": "Does not delete or overwrite existing records or files, revoke access, or directly send irreversible messages."
+      }
+    },
+    "signal_insights_str_replace": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": true
+      },
+      "justifications": {
+        "read_only_justification": "Replaces matching text in an existing sandbox file.",
+        "open_world_justification": "Operates only on the account’s records or analysis workspace without contacting user-selected external entities.",
+        "destructive_justification": "Overwrites file contents with the requested text replacement."
+      }
+    },
+    "signal_insights_preview_chart": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": true
+      },
+      "justifications": {
+        "read_only_justification": "Executes Python in a persistent kernel to render charts and can modify state and files.",
+        "open_world_justification": "User-supplied code can contact arbitrary endpoints allowed by the sandbox’s amazonaws.com wildcard network rule.",
+        "destructive_justification": "The plotting input runs arbitrary Python that can overwrite or delete files and perform irreversible external requests."
+      }
+    },
+    "signal_insights_export_events": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": true
+      },
+      "justifications": {
+        "read_only_justification": "Writes queried signal events to a workspace export file.",
+        "open_world_justification": "Operates only on the account’s records or analysis workspace without contacting user-selected external entities.",
+        "destructive_justification": "Can overwrite an existing export when the same output filename is supplied."
+      }
+    },
+    "signal_insights_create_workspace": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Creates a persistent analysis workspace for the organization.",
+        "open_world_justification": "Operates only on the account’s records or analysis workspace without contacting user-selected external entities.",
+        "destructive_justification": "Does not delete or overwrite existing records or files, revoke access, or directly send irreversible messages."
+      }
+    }
+  },
+  "test_cases": [
+    {
+      "description": "Search recent news and handle empty results.",
+      "user_prompt": "Find English-language articles about semiconductor export controls from the past seven days. If there are no matches, say so.",
+      "file_attachment_urls": null,
+      "tools_triggered": "search_news_articles",
+      "expected_output": "Returns matching articles with titles, dates, sources, and links, or clearly reports no matches without inventing coverage.",
+      "expected_output_url": null
+    },
+    {
+      "description": "Compare news volume and sentiment over the same period.",
+      "user_prompt": "Show daily article counts and average sentiment for electric vehicles over the past month.",
+      "file_attachment_urls": null,
+      "tools_triggered": "get_article_counts, get_avg_sentiment",
+      "expected_output": "Returns daily counts and sentiment using matching filters and dates, with any unavailable data clearly identified.",
+      "expected_output_url": null
+    },
+    {
+      "description": "Create a draft monitor without starting processing.",
+      "user_prompt": "Create a draft EVENT monitor called Semiconductor executive departures to track executive departures at semiconductor companies. Extract company, executive, and role. Do not activate it or configure notifications.",
+      "file_attachment_urls": null,
+      "tools_triggered": "create_monitor",
+      "expected_output": "Creates a DRAFT monitor with the requested objective, article filters, and extraction schema, and confirms that processing has not started.",
+      "expected_output_url": null
+    },
+    {
+      "description": "Exercise explicit watchlist replacement.",
+      "user_prompt": "Find my watchlist named EV competitors and replace its company list with Tesla and Rivian. Keep its other settings.",
+      "file_attachment_urls": null,
+      "tools_triggered": "watchlists, update_watchlist",
+      "expected_output": "Resolves the intended watchlist, asks for clarification if ambiguous, and replaces only its company list as requested.",
+      "expected_output_url": null
+    },
+    {
+      "description": "Export and chart signal data in an analysis workspace.",
+      "user_prompt": "Find my Product recalls signal, check its type, and, if it is EVENT or MENTIONS, export this month’s events to a new file and show a chart of counts by day. If it is TOPIC, explain that event export is unavailable.",
+      "file_attachment_urls": null,
+      "tools_triggered": "signal_insights_search_signals, signal_insights_read_signal, signal_insights_create_workspace, signal_insights_export_events, signal_insights_execute_code, signal_insights_preview_chart",
+      "expected_output": "Checks the signal classification; for EVENT or MENTIONS, creates a workspace, exports to a fresh filename, and displays a daily-count chart, while TOPIC or empty results receive an accurate explanation.",
+      "expected_output_url": null
+    }
+  ],
+  "negative_test_cases": [
+    {
+      "description": "Do not trigger for personal calendar management.",
+      "user_prompt": "Move my dentist appointment to next Tuesday.",
+      "file_attachment_urls": null,
+      "tools_triggered": null,
+      "expected_output": "The app should not be invoked because it cannot access or edit personal calendars.",
+      "expected_output_url": null
+    },
+    {
+      "description": "Do not trigger for direct journalist outreach.",
+      "user_prompt": "Email a pitch to this journalist at the address I provide.",
+      "file_attachment_urls": null,
+      "tools_triggered": null,
+      "expected_output": "The app should not be invoked because it does not send ad hoc outreach emails.",
+      "expected_output_url": null
+    },
+    {
+      "description": "Do not trigger for editing publisher content.",
+      "user_prompt": "Replace the headline on this newspaper’s website with my new headline.",
+      "file_attachment_urls": null,
+      "tools_triggered": null,
+      "expected_output": "The app should not be invoked because it cannot edit or publish articles on external news websites.",
+      "expected_output_url": null
+    }
+  ]
+}

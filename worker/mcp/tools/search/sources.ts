@@ -176,5 +176,10 @@ export const sourcesTool = {
   description:
     "Search 200k+ news publications and media outlets in the Perigon database. Use this to discover or compare news sources by name, domain, location, audience size, or publishing volume. Filter by curated bundles (top10, top100), paywall status, or geographic location. Returns source profiles with domain, monthly visits, top topics covered, and publishing frequency.",
   parameters: sourcesArgs,
+  annotations: {
+    readOnlyHint: true,
+    openWorldHint: true,
+    destructiveHint: false,
+  },
   createHandler: (perigon: Perigon) => searchSources(perigon),
 } satisfies ToolDefinition<typeof sourcesArgs>;

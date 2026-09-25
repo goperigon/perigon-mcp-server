@@ -146,5 +146,10 @@ export const topPeopleTool = {
   description:
     "Get the people whose news coverage is spiking — mentioned significantly more in a recent window than a prior baseline period. Use this when the user asks 'who is trending?', 'who suddenly got a lot of coverage?', or 'which people are in the news more than usual?' — NOT for simple most-mentioned frequency (use get_top_entities for that). Returns a ranked list with current mention count, baseline count, and a spike score (higher = bigger relative increase). The comparison window defaults to last 3 days vs. last 30 days; override with currentFrom/To and baselineFrom/To. Supports all standard article filters to scope the analysis to a specific topic, source, or date range.",
   parameters: topPeopleArgs,
+  annotations: {
+    readOnlyHint: true,
+    openWorldHint: true,
+    destructiveHint: false,
+  },
   createHandler: (perigon: Perigon) => getTopPeople(perigon),
 } satisfies ToolDefinition<typeof topPeopleArgs>;
