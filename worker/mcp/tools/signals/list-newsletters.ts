@@ -10,6 +10,11 @@ export const listNewslettersTool = {
     "Use after signal_insights_read_signal confirms classificationType is TOPIC, " +
     "then call signal_insights_read_newsletter for full content.",
   parameters: listNewslettersSchema,
+  annotations: {
+    readOnlyHint: true,
+    openWorldHint: false,
+    destructiveHint: false,
+  },
   createHandler: (insightsApi) => async (args) =>
     insightsApi.listNewsletters(args),
 } as const satisfies SignalToolDefinition<typeof listNewslettersSchema>;

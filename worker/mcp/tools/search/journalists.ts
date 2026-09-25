@@ -249,5 +249,10 @@ export const journalistsTool = {
   description:
     "Search 230k+ journalist and reporter profiles in the Perigon database. Use this to find who covers specific topics, publications, or regions — or who is personally based in a place. Two distinct location concepts: `countries` filters reporting focus (what they cover, derived from their published articles), while `locationCountry`/`locationState`/`locationCounty`/`locationCity`/`locationArea` filter their own profile location (where they are based) — these levels AND together, so pass only the narrowest level the user named. Also filter by name, Twitter handle, publication, content category, topic, or posting activity. Returns journalist profiles with their top sources, profile locations, reporting-focus countries, and monthly posting frequency. A location query returning nothing is usually a casing mismatch (exact-term matching), not an absence of journalists.",
   parameters: journalistsArgs,
+  annotations: {
+    readOnlyHint: true,
+    openWorldHint: true,
+    destructiveHint: false,
+  },
   createHandler: (perigon: Perigon) => searchJournalists(perigon),
 } satisfies ToolDefinition<typeof journalistsArgs>;

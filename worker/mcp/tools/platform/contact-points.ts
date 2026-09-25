@@ -81,7 +81,7 @@ export const contactPointsTool = {
     readOnlyHint: true,
     destructiveHint: false,
     idempotentHint: true,
-    openWorldHint: true,
+    openWorldHint: false,
   },
   createHandler: (perigon: Perigon) => getContactPoints(perigon),
 } satisfies ToolDefinition<typeof contactPointsArgs>;

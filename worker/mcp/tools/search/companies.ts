@@ -181,5 +181,10 @@ export const companiesTool = {
   description:
     "Search corporations and businesses in the Perigon database. Use this to look up company information, find companies by industry/sector, or identify companies by stock ticker or domain. Filter by name, domain, ticker symbol, industry, sector, country, or stock exchange. Returns company profiles with id, domains, tickers, CEO, employee count, industry/sector classification, headquarters, and description. Feed id/domains/symbol into search_news_articles(companyId|companyDomain|companySymbol) to find coverage.",
   parameters: companiesArgs,
+  annotations: {
+    readOnlyHint: true,
+    openWorldHint: true,
+    destructiveHint: false,
+  },
   createHandler: (perigon: Perigon) => searchCompanies(perigon),
 } satisfies ToolDefinition<typeof companiesArgs>;

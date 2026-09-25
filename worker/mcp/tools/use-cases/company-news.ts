@@ -150,5 +150,10 @@ export const companyNewsTool = {
   description:
     "Quick shortcut to get recent news about a specific company by name. Automatically looks up company details for context, then finds recent articles mentioning that company within a configurable time window. Use this for simple 'what's the latest news about [company]?' queries. For advanced filtering, use search_news_articles with companyDomain or companySymbol instead.",
   parameters: companyNewsArgs,
+  annotations: {
+    readOnlyHint: true,
+    openWorldHint: true,
+    destructiveHint: false,
+  },
   createHandler: (perigon: Perigon) => getCompanyNews(perigon),
 } satisfies ToolDefinition<typeof companyNewsArgs>;

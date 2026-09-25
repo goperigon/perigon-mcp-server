@@ -16,6 +16,11 @@ export const exportEventsTool = {
     `Omit select to fetch all scalar event fields. Results are written to S3 and accessible in the sandbox at ${DATA_DIR}/<filename>.`,
   parameters: exportEventsSchema,
   _meta: EXPORT_TOOL_META,
+  annotations: {
+    readOnlyHint: false,
+    openWorldHint: false,
+    destructiveHint: true,
+  },
   createHandler: (_insightsApi, pokeyClient) => async (args) =>
     pokeyClient.executeTool("export_events", args),
 } as const satisfies SignalToolDefinition<typeof exportEventsSchema>;

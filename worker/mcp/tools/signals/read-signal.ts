@@ -8,6 +8,11 @@ export const readSignalTool = {
     "EVENT/MENTIONS: data schema, event types, event count — use before export_events. " +
     "TOPIC: newsletterCount and date range — use list_newsletters / read_newsletter.",
   parameters: readSignalSchema,
+  annotations: {
+    readOnlyHint: true,
+    openWorldHint: false,
+    destructiveHint: false,
+  },
   createHandler:
     (insightsApi) =>
     async ({ signalUuid }) =>

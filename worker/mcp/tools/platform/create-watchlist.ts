@@ -67,7 +67,7 @@ export const createWatchlistTool = {
     readOnlyHint: false,
     destructiveHint: false,
     idempotentHint: false,
-    openWorldHint: true,
+    openWorldHint: false,
   },
   createHandler: (perigon: Perigon) => createWatchlist(perigon),
 } satisfies ToolDefinition<typeof createWatchlistArgs>;

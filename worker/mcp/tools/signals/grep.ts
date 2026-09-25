@@ -9,6 +9,11 @@ export const grepTool = {
     "Reads the file via the SDK (no shell injection risk). Returns matching lines with line numbers. " +
     `Use on files up to a few MB; for larger files, use ${executeCodeTool.name} directly instead.`,
   parameters: grepSchema,
+  annotations: {
+    readOnlyHint: true,
+    openWorldHint: false,
+    destructiveHint: false,
+  },
   createHandler: (_insightsApi, pokeyClient) => async (args) =>
     pokeyClient.executeTool("grep", args),
 } as const satisfies SignalToolDefinition<typeof grepSchema>;

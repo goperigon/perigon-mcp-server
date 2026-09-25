@@ -150,5 +150,10 @@ export const personNewsTool = {
   description:
     "Quick shortcut to get recent news about a specific person by name. Automatically looks up the person's profile for context, then finds recent articles mentioning them within a configurable time window. Use this for simple 'what's the latest news about [person]?' queries. For advanced filtering, use search_news_articles with personName instead.",
   parameters: personNewsArgs,
+  annotations: {
+    readOnlyHint: true,
+    openWorldHint: true,
+    destructiveHint: false,
+  },
   createHandler: (perigon: Perigon) => getPersonNews(perigon),
 } satisfies ToolDefinition<typeof personNewsArgs>;

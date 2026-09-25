@@ -47,9 +47,9 @@ export const updateSourceGroupTool = {
   parameters: updateSourceGroupArgs,
   annotations: {
     readOnlyHint: false,
-    destructiveHint: false,
+    destructiveHint: true,
     idempotentHint: true,
-    openWorldHint: true,
+    openWorldHint: false,
   },
   createHandler: (perigon: Perigon) => updateSourceGroup(perigon),
 } satisfies ToolDefinition<typeof updateSourceGroupArgs>;

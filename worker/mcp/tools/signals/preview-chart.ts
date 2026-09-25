@@ -15,6 +15,11 @@ export const previewChartTool = {
     "No outbound internet access except *.amazonaws.com.",
   parameters: executeCodeSchema,
   _meta: CHART_TOOL_META,
+  annotations: {
+    readOnlyHint: false,
+    openWorldHint: true,
+    destructiveHint: true,
+  },
   createHandler: (_insightsApi, pokeyClient) => async (args) =>
     pokeyClient.executeTool("execute_code", args, { chartViewer: true }),
 } as const satisfies SignalToolDefinition<typeof executeCodeSchema>;

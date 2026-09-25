@@ -130,5 +130,10 @@ export const peopleTool = {
   description:
     "Search 650k+ public figures, politicians, celebrities, executives, and newsworthy individuals in the Perigon database. Use this to look up biographical information about specific people or find people by occupation. Filter by name, occupation, or Wikidata ID. Returns biographical profiles with name, aliases, occupation, position, political party, gender, dates of birth/death, and description. Prefer wikidataId over personName on search_news_articles to avoid name ambiguity.",
   parameters: peopleArgs,
+  annotations: {
+    readOnlyHint: true,
+    openWorldHint: true,
+    destructiveHint: false,
+  },
   createHandler: (perigon: Perigon) => searchPeople(perigon),
 } satisfies ToolDefinition<typeof peopleArgs>;

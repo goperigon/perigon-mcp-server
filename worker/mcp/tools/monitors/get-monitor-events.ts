@@ -59,7 +59,7 @@ export const getMonitorEventsTool = {
     readOnlyHint: true,
     destructiveHint: false,
     idempotentHint: true,
-    openWorldHint: true
+    openWorldHint: false
   },
   createHandler: (perigon: Perigon) => getMonitorEvents(perigon)
 } satisfies ToolDefinition<typeof getMonitorEventsArgs>;

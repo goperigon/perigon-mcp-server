@@ -243,5 +243,10 @@ export const locationNewsTool = {
   description:
     "Quick shortcut to get recent news for a geographic location (city, state, or country). Automatically detects the location type and applies appropriate geographic filters. Use this for simple 'what's happening in [location]?' queries. For advanced filtering, use search_news_articles with explicit city/state/country parameters instead.",
   parameters: locationNewsArgs,
+  annotations: {
+    readOnlyHint: true,
+    openWorldHint: true,
+    destructiveHint: false,
+  },
   createHandler: (perigon: Perigon) => getLocationNews(perigon),
 } satisfies ToolDefinition<typeof locationNewsArgs>;

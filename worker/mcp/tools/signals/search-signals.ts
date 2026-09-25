@@ -10,6 +10,11 @@ export const searchSignalsTool = {
     "Use this to find relevant signals before fetching data. " +
     "If the search query is not present, this can be used to list all available signals.",
   parameters: searchSignalsSchema,
+  annotations: {
+    readOnlyHint: true,
+    openWorldHint: false,
+    destructiveHint: false,
+  },
   createHandler: (insightsApi) => async (args) =>
     insightsApi.searchSignals(args),
 } as const satisfies SignalToolDefinition<typeof searchSignalsSchema>;

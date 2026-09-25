@@ -236,5 +236,10 @@ export const wikipediaTool = {
   description:
     "Search Wikipedia pages using keyword-based queries with advanced filtering. Use this for factual background information, encyclopedia-style lookups, or when you need structured Wikipedia data. Filter by title, summary, content, Wikidata entity IDs, categories, page views, and revision dates. Returns page summaries, URLs, Wikidata IDs, categories, page view statistics, and last modification dates.",
   parameters: wikipediaArgs,
+  annotations: {
+    readOnlyHint: true,
+    openWorldHint: true,
+    destructiveHint: false,
+  },
   createHandler: (perigon: Perigon) => searchWikipedia(perigon),
 } satisfies ToolDefinition<typeof wikipediaArgs>;
