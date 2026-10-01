@@ -200,7 +200,7 @@ All of these are opt-in. `get_source_by_id` and `get_top_topics` are also in `re
 
 #### Signal Insights
 
-Registered for every session unless `?tools=` excludes them. The Insights API and Pokey backend reject calls when the key lacks Signal Insights access.
+Registered for every session unless `?tools=` excludes them.
 
 The `monitoring` profile includes this set. There is no Signal Insights-only profile; pass the tool names if you want only these.
 
@@ -288,7 +288,6 @@ This repo uses [Bun](https://bun.sh/). Put secrets in `.dev.vars`.
 |----------|----------|-------------|
 | `ANTHROPIC_API_KEY` | Yes | Required for every route, including `/v1/mcp`. Also used by the playground chat. |
 | `PERIGON_API_KEY` | Playground | Playground default key. |
-| `POKEY_SIGNAL_INSIGHTS_BASE_URL` | No | Pokey base URL for Signal Insights. Defaults to `https://api.perigon.io/pokey` in Wrangler. Use `http://localhost:3001` to hit a local Pokey. |
 
 To use Perigon dashboard cookies with the playground, add this to `/etc/hosts`:
 
