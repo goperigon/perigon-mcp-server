@@ -6,6 +6,10 @@ declare namespace Cloudflare {
 		AUTH_KV: KVNamespace;
 		VITE_TURNSTILE_SITE_KEY: "0x4AAAAAABihR9-NN72ssFjf";
 		VITE_USE_TURNSTILE: false | true;
+		MCP_PUBLIC_URL: string;
+		PERIGON_API_URL: string;
+		PERIGON_APP_URL: string;
+		PERIGON_SHARED_SECRET: string;
 		ANTHROPIC_API_KEY: string;
 		PERIGON_API_KEY: string;
 		TURNSTILE_SECRET_KEY: string;

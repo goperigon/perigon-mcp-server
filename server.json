@@ -3,7 +3,7 @@
   "name": "io.github.goperigon/perigon-mcp-server",
   "title": "Perigon",
   "description": "Official Perigon news API: articles, stories, companies, journalists, monitors, and stats.",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "websiteUrl": "https://dev.perigon.io/docs/mcp",
   "repository": {
     "url": "https://github.com/goperigon/perigon-mcp-server",
@@ -17,14 +17,14 @@
       "headers": [
         {
           "name": "Authorization",
-          "description": "Perigon API key, sent as a Bearer token",
-          "isRequired": true,
+          "description": "OAuth access token from Perigon sign-in (recommended) or a Perigon API key as Bearer token",
+          "isRequired": false,
           "isSecret": true,
-          "value": "Bearer {api_key}",
+          "value": "Bearer {token}",
           "variables": {
-            "api_key": {
-              "description": "Perigon API key from the Perigon dashboard",
-              "isRequired": true,
+            "token": {
+              "description": "OAuth token from MCP authorization or API key from https://perigon.io/dev/keys",
+              "isRequired": false,
               "isSecret": true
             }
           }
