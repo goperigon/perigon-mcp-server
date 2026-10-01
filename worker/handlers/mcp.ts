@@ -13,7 +13,7 @@ import { parseRequestedTools, resolveToolParam } from "../mcp/tools/selection";
 const SSE_PATHS = ["/v1/sse", "/v1/sse/message"] as const;
 const STREAMABLE_PATH = "/v1/mcp";
 const API_KEY_HELP =
-  "Sign in with OAuth or provide a Perigon API key as Authorization: Bearer <key>.";
+  "Sign in with your Perigon account via OAuth, or create a free account and copy a key from https://perigon.io/dev/keys, then send it as Authorization: Bearer <key>.";
 
 /**
  * `introspection()` was previously called on every single MCP request. This
@@ -57,7 +57,7 @@ export async function handleMCP(
   try {
     const bearerToken = extractBearerKey(request);
     if (!bearerToken) {
-      return unauthorizedResponse(env, API_KEY_HELP);
+      return unauthorizedResponse(env, "Unauthorized", API_KEY_HELP);
     }
 
     const apiKey = await resolveApiKey(bearerToken, env);
@@ -65,7 +65,7 @@ export async function handleMCP(
     const rateLimitResponse = await enforceRateLimit(apiKey, env);
     if (rateLimitResponse) return rateLimitResponse;
 
-    const props = await loadMcpProps(request, apiKey);
+    const props = await loadMcpProps(request, apiKey, env);
     ctx.props = props;
 
     return dispatchMcp(request, env, ctx);
@@ -115,8 +115,12 @@ async function enforceRateLimit(
   );
 }
 
-async function loadMcpProps(request: Request, apiKey: string): Promise<Props> {
-  const perigon = new Perigon(apiKey);
+async function loadMcpProps(
+  request: Request,
+  apiKey: string,
+  env: Env,
+): Promise<Props> {
+  const perigon = new Perigon(apiKey, env.PERIGON_API_URL);
   const apiKeyDetails = await getCachedIntrospection(perigon, apiKey);
   const requestedTools = parseRequestedTools(
     resolveToolParam(new URL(request.url)),
@@ -151,13 +155,14 @@ function dispatchMcp(
   return new Response("Not found", { status: 404 });
 }
 
-function unauthorizedResponse(env: Env, details?: string): Response {
+function unauthorizedResponse(
+  env: Env,
+  error: string,
+  details: string,
+): Response {
   const resourceMetadata = `${env.MCP_PUBLIC_URL.replace(/\/$/, "")}/.well-known/oauth-protected-resource`;
   return Response.json(
-    {
-      error: "Unauthorized",
-      ...(details ? { details } : {}),
-    },
+    { error, details },
     {
       status: 401,
       headers: {
@@ -171,7 +176,11 @@ function unauthorizedResponse(env: Env, details?: string): Response {
 function handleMcpError(error: unknown, env: Env): Response {
   if (error instanceof HttpError) {
     if (error.statusCode === 401) {
-      return unauthorizedResponse(env, API_KEY_HELP);
+      return unauthorizedResponse(
+        env,
+        "Failed to process MCP request",
+        API_KEY_HELP,
+      );
     }
     return handleError(
       "Failed to process MCP request",

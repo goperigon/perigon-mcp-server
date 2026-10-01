@@ -16,6 +16,12 @@ const handlerSpies = {
   handleValidateUser: mock(
     async () => new Response("validate-user", { status: 200 }),
   ),
+  handleOAuthMetadata: mock(
+    () => new Response("oauth-metadata", { status: 200 }),
+  ),
+  isOAuthMetadataPath: mock((pathname: string) =>
+    pathname.startsWith("/.well-known/oauth-"),
+  ),
 };
 
 await mock.module("../../../worker/handlers", () => handlerSpies);

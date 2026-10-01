@@ -26,6 +26,7 @@ const { handleMCP } = await import("../../../worker/handlers/mcp");
 const KEYS_URL = "https://perigon.io/dev/keys";
 
 const env = {
+  MCP_PUBLIC_URL: "https://mcp.perigon.io",
   MCP_RATE_LIMITER: {
     limit: async () => ({ success: true }),
   },
