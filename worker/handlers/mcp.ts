@@ -2,10 +2,6 @@ import { AuthIntrospectionResponse, HttpError } from "../types/types";
 import { Perigon } from "../lib/perigon";
 import { handleError } from "../lib/handle-error";
 import { hashKey } from "../lib/hash";
-import {
-  exchangeMcpAccessTokenForApiKey,
-  McpTokenExchangeError,
-} from "../lib/mcp-token-exchange";
 import { McpAgent } from "agents/mcp";
 import { PerigonMCP, type Props } from "../mcp/mcp";
 import { parseRequestedTools, resolveToolParam } from "../mcp/tools/selection";
@@ -78,21 +74,8 @@ function extractBearerKey(request: Request): string | undefined {
   return request.headers.get("Authorization")?.split(" ")[1];
 }
 
-async function resolveApiKey(bearerToken: string, env: Env): Promise<string> {
-  try {
-    return await exchangeMcpAccessTokenForApiKey(bearerToken, env);
-  } catch (error) {
-    if (error instanceof McpTokenExchangeError) {
-      if (error.status === 403) {
-        throw new HttpError(
-          403,
-          "MCP access is disabled for this organization",
-        );
-      }
-      throw new HttpError(401, "Invalid or expired MCP access token");
-    }
-    throw error;
-  }
+async function resolveApiKey(bearerToken: string, _env: Env): Promise<string> {
+  return bearerToken;
 }
 
 /**
@@ -120,7 +103,11 @@ async function loadMcpProps(
   apiKey: string,
   env: Env,
 ): Promise<Props> {
-  const perigon = new Perigon(apiKey, env.PERIGON_API_URL);
+  const perigon = new Perigon(
+    apiKey,
+    env.PERIGON_API_URL,
+    env.PERIGON_SHARED_SECRET,
+  );
   const apiKeyDetails = await getCachedIntrospection(perigon, apiKey);
   const requestedTools = parseRequestedTools(
     resolveToolParam(new URL(request.url)),
@@ -155,12 +142,16 @@ function dispatchMcp(
   return new Response("Not found", { status: 404 });
 }
 
+function mcpPublicOrigin(env: Env): string {
+  return (env.MCP_PUBLIC_URL ?? "https://mcp.perigon.io").replace(/\/$/, "");
+}
+
 function unauthorizedResponse(
   env: Env,
   error: string,
   details: string,
 ): Response {
-  const resourceMetadata = `${env.MCP_PUBLIC_URL.replace(/\/$/, "")}/.well-known/oauth-protected-resource`;
+  const resourceMetadata = `${mcpPublicOrigin(env)}/.well-known/oauth-protected-resource`;
   return Response.json(
     { error, details },
     {
@@ -189,7 +180,7 @@ function handleMcpError(error: unknown, env: Env): Response {
     );
   }
 
-  console.error("Failed to process MCP request");
+  console.error("Failed to process MCP request", error);
   return handleError(
     "Failed to process MCP request",
     500,

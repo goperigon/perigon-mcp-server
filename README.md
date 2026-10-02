@@ -17,6 +17,7 @@
 </p>
 
 - [**🚀 Quick start**](#quick-start)
+- [**🔐 Authentication**](#authentication)
 - [**🔧 Choosing tools**](#choosing-tools)
 - [**🛠️ Tools**](#tools)
 - [**📚 Prompts and resources**](#prompts-and-resources)
@@ -33,11 +34,13 @@
 
 Endpoint: `https://mcp.perigon.io/v1/mcp`
 
-Auth: `Authorization: Bearer <key>` — create a key at [perigon.io/dev/keys](https://perigon.io/dev/keys).
+Try it in the [playground](https://mcp.perigon.io) (requires a signed-in [Perigon dashboard](https://perigon.io) session). Step-by-step client setup (OAuth and API keys): [dev.perigon.io/docs/mcp](https://dev.perigon.io/docs/mcp).
 
-Try it in the [playground](https://mcp.perigon.io) (requires a signed-in [Perigon dashboard](https://perigon.io) session). Client-specific setup: [dev.perigon.io/docs/mcp](https://dev.perigon.io/docs/mcp).
+**OAuth (recommended for MCP clients)** — Connect with your Perigon account when the client prompts you to sign in. No API key in config. See [Authentication](#authentication).
 
-**Native Streamable HTTP (recommended):**
+**API key (manual config)** — `Authorization: Bearer <key>` with a key from [perigon.io/dev/keys](https://perigon.io/dev/keys).
+
+**Native Streamable HTTP (API key):**
 
 ```json
 {
@@ -86,6 +89,36 @@ SSE at `/v1/sse` exists for legacy clients. Use Streamable HTTP for new integrat
 
 ---
 
+### Authentication
+
+The MCP endpoint accepts **`Authorization: Bearer`** credentials in two forms:
+
+| Method | Bearer value | Best for |
+|--------|----------------|----------|
+| **OAuth** | MCP access token from the Perigon authorization flow | Desktop and IDE MCP clients; access follows your org membership |
+| **API key** | Perigon API key from the developer dashboard | Scripts, `mcp-remote`, or configs that pin a key |
+
+#### OAuth
+
+Hosted discovery (production):
+
+- Protected resource: `https://mcp.perigon.io/.well-known/oauth-protected-resource`
+- Authorization server metadata: `https://mcp.perigon.io/.well-known/oauth-authorization-server`
+
+The client registers (or uses a known client id), runs PKCE, and opens the Perigon consent UI. After approval, the client receives a short-lived authorization code and exchanges it for an MCP access token at the Perigon API token endpoint. The client then sends that token on every MCP request.
+
+- Sign-in requires a verified Perigon user with at least **User** role in the organization.
+- Usage is billed against your organization’s dedicated **MCP** API key on the server; you do not paste that key into the client.
+- Revoking MCP access or removing a member takes effect on the next API call (membership is checked when the token is used).
+
+Unauthenticated requests receive `401` with a `WWW-Authenticate` header pointing at the protected-resource metadata URL.
+
+#### API key
+
+Create or copy a key at [perigon.io/dev/keys](https://perigon.io/dev/keys) and set it in the client’s `Authorization` header (see Quick start examples). Scopes and quotas follow that key.
+
+---
+
 ### Choosing tools
 
 Append `?tools=` to the MCP URL to limit the session. `?tool=` is an alias and wins if both are present.
@@ -97,7 +130,7 @@ https://mcp.perigon.io/v1/mcp?tools=research,create_monitor
 ```
 
 - Comma-separated tool names, profile aliases, or a mix.
-- The filter intersects with what the key's scopes already allow. It cannot expand access.
+- The filter intersects with what your credentials allow (API key scopes or your org’s MCP access for OAuth). It cannot expand access.
 - Omit the parameter, pass an empty value, or pass `all` → default set (opt-in tools stay off).
 - Unknown names are dropped. If every name is unknown, the default set is used.
 
@@ -282,12 +315,16 @@ Registry name: `io.github.goperigon/perigon-mcp-server`.
 
 ### Local development
 
-This repo uses [Bun](https://bun.sh/). Put secrets in `.dev.vars`.
+This repo uses [Bun](https://bun.sh/). Copy [`.dev.vars.example`](./.dev.vars.example) to `.dev.vars` (gitignored) and fill in values.
 
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `ANTHROPIC_API_KEY` | Yes | Required for every route, including `/v1/mcp`. Also used by the playground chat. |
-| `PERIGON_API_KEY` | Playground | Playground default key. |
+| `PERIGON_API_KEY` | Playground | Playground default key when testing with a manual API key. |
+| `PERIGON_SHARED_SECRET` | Local OAuth | Server-side only (Worker env). Must match the Perigon API internal secret when `PERIGON_API_URL` validates MCP OAuth tokens. **Never** put this in MCP client config. |
+| `PERIGON_API_URL` | Optional | Perigon API base URL (OAuth token/revoke/register). Defaults in [`wrangler.jsonc`](./wrangler.jsonc) for local dev. |
+| `PERIGON_APP_URL` | Optional | App base URL for the OAuth consent page linked from discovery metadata. |
+| `MCP_PUBLIC_URL` | Optional | Public MCP origin used in OAuth metadata (defaults to local dev URL). |
 
 To use Perigon dashboard cookies with the playground, add this to `/etc/hosts`:
 

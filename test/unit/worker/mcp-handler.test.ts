@@ -1,5 +1,6 @@
-import { describe, expect, mock, test } from "bun:test";
+import { afterEach, describe, expect, mock, test } from "bun:test";
 import { HttpError } from "../../../worker/types/types";
+import { restoreFetch } from "../../helpers/mock-fetch";
 
 let introspectionError = new HttpError(401, "invalid api key");
 
@@ -27,10 +28,25 @@ const KEYS_URL = "https://perigon.io/dev/keys";
 
 const env = {
   MCP_PUBLIC_URL: "https://mcp.perigon.io",
+  PERIGON_API_URL: "https://api.test.local",
+  PERIGON_SHARED_SECRET: "shared-secret",
   MCP_RATE_LIMITER: {
     limit: async () => ({ success: true }),
   },
 } as unknown as Env;
+
+afterEach(() => {
+  restoreFetch();
+});
+
+function testJwt(payload: Record<string, unknown>): string {
+  const encode = (value: unknown): string =>
+    btoa(JSON.stringify(value))
+      .replace(/=/g, "")
+      .replace(/\+/g, "-")
+      .replace(/\//g, "_");
+  return `${encode({ alg: "none" })}.${encode(payload)}.sig`;
+}
 
 const ctx = {} as ExecutionContext;
 

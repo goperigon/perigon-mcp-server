@@ -19,12 +19,19 @@ export class InsightsApiClient {
     private readonly apiKey: string,
     private readonly timeoutMs: number = 60_000,
     apiUrl: string = DEFAULT_PERIGON_API_URL,
+    private readonly sharedSecret?: string,
   ) {
     this.baseUrl = `${apiUrl.replace(/\/+$/, "")}${INSIGHTS_MCP_PATH}`;
   }
 
   private get headers(): HeadersInit {
-    return { Authorization: `Bearer ${this.apiKey}` };
+    const headers: Record<string, string> = {
+      Authorization: `Bearer ${this.apiKey}`,
+    };
+    if (this.sharedSecret) {
+      headers["x-perigon-shared-secret"] = this.sharedSecret;
+    }
+    return headers;
   }
 
   async searchSignals(args: {

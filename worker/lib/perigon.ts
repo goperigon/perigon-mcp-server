@@ -32,6 +32,13 @@ import { typedFetch } from "./typed-fetch";
 
 export const DEFAULT_PERIGON_API_URL = "https://api.perigon.io";
 
+/** Host-only API origin (no trailing slash or `/v1` suffix). */
+export function normalizePerigonApiHost(
+  apiUrl: string = DEFAULT_PERIGON_API_URL,
+): string {
+  return apiUrl.replace(/\/+$/, "").replace(/\/v1$/, "");
+}
+
 /**
  * Serialize a plain params object into URLSearchParams for raw-fetch calls:
  * arrays repeat the key (`?a=1&a=2`), Dates become ISO 8601 strings, and
@@ -464,21 +471,34 @@ export interface StoryVelocityEntry {
 export class Perigon extends V1Api {
   private apiKey: string;
   private baseUrl: string;
+  private readonly sharedSecret?: string;
 
-  constructor(apiKey: string, apiUrl: string = DEFAULT_PERIGON_API_URL) {
-    const basePath = apiUrl.replace(/\/+$/, "");
-    super(new Configuration({ apiKey, basePath }));
+  constructor(
+    apiKey: string,
+    apiUrl: string = DEFAULT_PERIGON_API_URL,
+    sharedSecret?: string,
+  ) {
+    const apiHost = normalizePerigonApiHost(apiUrl);
+    const configurationHeaders = sharedSecret
+      ? { "x-perigon-shared-secret": sharedSecret }
+      : undefined;
+    super(
+      new Configuration({
+        apiKey,
+        basePath: apiHost,
+        headers: configurationHeaders,
+      }),
+    );
     this.apiKey = apiKey;
-    this.baseUrl = `${basePath}/v1`;
+    this.baseUrl = `${apiHost}/v1`;
+    this.sharedSecret = sharedSecret;
   }
 
   async introspection(): Promise<AuthIntrospectionResponse> {
     return await typedFetch<AuthIntrospectionResponse>(
       `${this.baseUrl}/auth/introspect`,
       {
-        headers: {
-          Authorization: `Bearer ${this.apiKey}`,
-        },
+        headers: this.authHeaders(),
       },
     );
   }
@@ -488,7 +508,7 @@ export class Perigon extends V1Api {
     options: RequestInit = {},
   ): Promise<T> {
     const headers = new Headers(options.headers);
-    headers.set("Authorization", `Bearer ${this.apiKey}`);
+    this.applyAuthHeaders(headers);
     if (options.body !== undefined) {
       headers.set("Content-Type", "application/json");
     }
@@ -685,7 +705,7 @@ export class Perigon extends V1Api {
     if (params.splitBy) sp.set("splitBy", params.splitBy);
     return await fetchWithRetry<StatResult<AvgSentimentStatDto>>(
       `${this.baseUrl}/stats/avgSentiment?${sp.toString()}`,
-      { headers: { Authorization: `Bearer ${this.apiKey}` } },
+      { headers: this.authHeaders() },
     );
   }
 
@@ -696,7 +716,7 @@ export class Perigon extends V1Api {
     if (params.splitBy) sp.set("splitBy", params.splitBy);
     return await fetchWithRetry<StatResult<CountStatDto>>(
       `${this.baseUrl}/stats/intervalArticleCounts?${sp.toString()}`,
-      { headers: { Authorization: `Bearer ${this.apiKey}` } },
+      { headers: this.authHeaders() },
     );
   }
 
@@ -707,7 +727,7 @@ export class Perigon extends V1Api {
       sp.set("expandEntities", String(params.expandEntities));
     return await fetchWithRetry<TopEntitiesDto>(
       `${this.baseUrl}/stats/topEntities?${sp.toString()}`,
-      { headers: { Authorization: `Bearer ${this.apiKey}` } },
+      { headers: this.authHeaders() },
     );
   }
 
@@ -718,7 +738,7 @@ export class Perigon extends V1Api {
     this.applySpikePrams(sp, params);
     return await fetchWithRetry<SpikeResult<PersonSpike>>(
       `${this.baseUrl}/stats/topPeople?${sp.toString()}`,
-      { headers: { Authorization: `Bearer ${this.apiKey}` } },
+      { headers: this.authHeaders() },
     );
   }
 
@@ -729,7 +749,7 @@ export class Perigon extends V1Api {
     this.applySpikePrams(sp, params);
     return await fetchWithRetry<SpikeResult<CompanySpike>>(
       `${this.baseUrl}/stats/topCompanies?${sp.toString()}`,
-      { headers: { Authorization: `Bearer ${this.apiKey}` } },
+      { headers: this.authHeaders() },
     );
   }
 
@@ -776,15 +796,26 @@ export class Perigon extends V1Api {
     return await typedFetch<StoryHistoryResult>(
       `${this.baseUrl}/stories/history?${searchParams.toString()}`,
       {
-        headers: {
-          Authorization: `Bearer ${this.apiKey}`,
-        },
+        headers: this.authHeaders(),
       },
     );
   }
 
   private authHeaders(): HeadersInit {
-    return { Authorization: `Bearer ${this.apiKey}` };
+    const headers: Record<string, string> = {
+      Authorization: `Bearer ${this.apiKey}`,
+    };
+    if (this.sharedSecret) {
+      headers["x-perigon-shared-secret"] = this.sharedSecret;
+    }
+    return headers;
+  }
+
+  private applyAuthHeaders(headers: Headers): void {
+    headers.set("Authorization", `Bearer ${this.apiKey}`);
+    if (this.sharedSecret) {
+      headers.set("x-perigon-shared-secret", this.sharedSecret);
+    }
   }
 
   /** `GET /v1/limits` — quota-exempt; does not count against the account's request quota. */
@@ -877,7 +908,7 @@ export class Perigon extends V1Api {
     options: RequestInit = {},
   ): Promise<T> {
     const headers = new Headers(options.headers);
-    headers.set("Authorization", `Bearer ${this.apiKey}`);
+    this.applyAuthHeaders(headers);
     if (options.body !== undefined) {
       headers.set("Content-Type", "application/json");
     }
