@@ -332,8 +332,8 @@ MCP Apps viewers (registered when any Signal Insights tool is active):
 
 1. Call `signal_insights_create_workspace` once at the start of a conversation.
 2. Pass the returned workspace ID to every later analysis tool.
-3. Files created by analysis tools persist in that workspace.
-4. After a restart, the workspace ID stays valid. In-memory state resets; saved files remain.
+3. Durable files live under `artifacts/` (exports and query results go there automatically). Put user-facing deliverables in `artifacts/output/`. File and shell tools can write elsewhere in the workspace, but only `artifacts/` is backed by persistent storage.
+4. After a sandbox restart, the workspace ID stays valid. The Jupyter kernel and in-memory Python state reset; files under `artifacts/` remain. Other workspace paths may be empty on a fresh sandbox.
 
 ---
 
