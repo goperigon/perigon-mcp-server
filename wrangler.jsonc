@@ -39,7 +39,7 @@
     "directory": "./dist/",
     "not_found_handling": "single-page-application",
     "binding": "ASSETS",
-    "run_worker_first": ["/v1/*", "/.well-known/*"],
+    "run_worker_first": ["/v1/*"],
   },
   "observability": {
     "enabled": true,
@@ -50,9 +50,6 @@
     "VITE_TURNSTILE_SITE_KEY": "0x4AAAAAABihR9-NN72ssFjf",
     "VITE_USE_TURNSTILE": false,
     "POKEY_SIGNAL_INSIGHTS_BASE_URL": "https://api.perigon.io/pokey",
-    "MCP_PUBLIC_URL": "http://127.0.0.1:8787",
-    "PERIGON_API_URL": "http://localhost:8080",
-    "PERIGON_APP_URL": "http://localhost:3000",
   },
   "unsafe": {
     "bindings": [
@@ -109,7 +106,7 @@
         "directory": "./dist/",
         "not_found_handling": "single-page-application",
         "binding": "ASSETS",
-        "run_worker_first": ["/v1/*", "/.well-known/*"],
+        "run_worker_first": ["/v1/*"],
       },
       "vars": {
         "ENVIRONMENT": "production",
@@ -117,9 +114,6 @@
         "VITE_TURNSTILE_SITE_KEY": "0x4AAAAAABihR9-NN72ssFjf",
         "VITE_USE_TURNSTILE": true,
         "POKEY_SIGNAL_INSIGHTS_BASE_URL": "https://api.perigon.io/pokey",
-        "MCP_PUBLIC_URL": "https://mcp.perigon.io",
-        "PERIGON_API_URL": "https://api.perigon.io",
-        "PERIGON_APP_URL": "https://www.perigon.io",
       },
       "unsafe": {
         "bindings": [

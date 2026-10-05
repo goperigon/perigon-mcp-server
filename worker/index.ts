@@ -2,12 +2,10 @@ import { PerigonMCP } from "./mcp/mcp";
 import {
   handleChat,
   handleMCP,
-  handleOAuthMetadata,
   handlePerigonApiKeys,
   handleTools,
   handleTurnstileAuth,
   handleValidateUser,
-  isOAuthMetadataPath,
 } from "./handlers";
 import { createCorsPreflightResponse, withCorsHeaders } from "./lib/cors";
 
@@ -59,12 +57,6 @@ export default {
     if (missingKey) return withCorsHeaders(request, missingKey, env);
 
     const { pathname } = new URL(request.url);
-
-    if (isOAuthMetadataPath(pathname)) {
-      const metadataResponse = handleOAuthMetadata(request, env);
-      return withCorsHeaders(request, metadataResponse, env);
-    }
-
     const handler = ROUTES[pathname];
     if (!handler) {
       return withCorsHeaders(

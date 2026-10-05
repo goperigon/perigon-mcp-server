@@ -35,13 +35,6 @@ const server = Bun.serve({
     // Create a mock environment for the worker
     const env = {
       PERIGON_API_KEY: apiKey,
-      MCP_PUBLIC_URL:
-        process.env.MCP_PUBLIC_URL || "http://localhost:3000",
-      PERIGON_API_URL:
-        process.env.PERIGON_API_URL || "https://api.perigon.io",
-      PERIGON_APP_URL:
-        process.env.PERIGON_APP_URL || "https://www.perigon.io",
-      PERIGON_SHARED_SECRET: process.env.PERIGON_SHARED_SECRET || "",
       ANTHROPIC_API_KEY:
         process.env.ANTHROPIC_API_KEY || "mock-key-for-mcp-only",
       AUTH_KV: {

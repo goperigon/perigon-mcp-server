@@ -16,12 +16,6 @@ const handlerSpies = {
   handleValidateUser: mock(
     async () => new Response("validate-user", { status: 200 }),
   ),
-  handleOAuthMetadata: mock(
-    () => new Response("oauth-metadata", { status: 200 }),
-  ),
-  isOAuthMetadataPath: mock((pathname: string) =>
-    pathname.startsWith("/.well-known/oauth-"),
-  ),
 };
 
 await mock.module("../../../worker/handlers", () => handlerSpies);
@@ -266,18 +260,4 @@ describe("worker/index ROUTES", () => {
       expect(handlerSpies.handleMCP).toHaveBeenCalledTimes(1);
     },
   );
-
-  test.each([
-    "/.well-known/oauth-protected-resource",
-    "/.well-known/oauth-authorization-server",
-  ])("%s → handleOAuthMetadata", async (path) => {
-    handlerSpies.handleOAuthMetadata.mockClear();
-    const res = await worker.fetch(
-      new Request(`https://localhost${path}`),
-      fakeEnv,
-      fakeCtx,
-    );
-    expect(res.status).toBe(200);
-    expect(handlerSpies.handleOAuthMetadata).toHaveBeenCalledTimes(1);
-  });
 });
