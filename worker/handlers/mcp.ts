@@ -5,7 +5,7 @@ import { hashKey } from "../lib/hash";
 import { McpAgent } from "agents/mcp";
 import { PerigonMCP, type Props } from "../mcp/mcp";
 import { introspectionCacheTtlMs } from "../lib/mcp-access-token";
-import { mcpPublicOrigin } from "../lib/mcp-env";
+import { mcpPublicOrigin, perigonApiOrigin } from "../lib/mcp-env";
 import { parseRequestedTools, resolveToolParam } from "../mcp/tools/selection";
 
 const SSE_PATHS = ["/v1/sse", "/v1/sse/message"] as const;
@@ -64,7 +64,7 @@ export async function handleMCP(
   try {
     const bearerToken = extractBearerKey(request);
     if (!bearerToken) {
-      return unauthorizedResponse(env, "Unauthorized", API_KEY_HELP);
+      return unauthorizedResponse(request, env, "Unauthorized", API_KEY_HELP);
     }
 
     const apiKey = await resolveApiKey(bearerToken, env);
@@ -77,7 +77,7 @@ export async function handleMCP(
 
     return dispatchMcp(request, env, ctx);
   } catch (error) {
-    return handleMcpError(error, env);
+    return handleMcpError(error, request, env);
   }
 }
 
@@ -114,13 +114,15 @@ async function loadMcpProps(
   apiKey: string,
   env: Env,
 ): Promise<Props> {
-  const perigon = new Perigon(apiKey, env.PERIGON_API_URL);
+  const perigonApiUrl = perigonApiOrigin(env, request);
+  const perigon = new Perigon(apiKey, perigonApiUrl);
   const apiKeyDetails = await getCachedIntrospection(perigon, apiKey);
   const requestedTools = parseRequestedTools(
     resolveToolParam(new URL(request.url)),
   );
   return {
     apiKey,
+    perigonApiUrl,
     scopes: apiKeyDetails.scopes,
     organizationId: apiKeyDetails.organizationId,
     requestedTools,
@@ -150,11 +152,12 @@ function dispatchMcp(
 }
 
 function unauthorizedResponse(
+  request: Request,
   env: Env,
   error: string,
   details: string,
 ): Response {
-  const resourceMetadata = `${mcpPublicOrigin(env)}/.well-known/oauth-protected-resource`;
+  const resourceMetadata = `${mcpPublicOrigin(env, request)}/.well-known/oauth-protected-resource`;
   return Response.json(
     { error, details },
     {
@@ -167,10 +170,15 @@ function unauthorizedResponse(
   );
 }
 
-function handleMcpError(error: unknown, env: Env): Response {
+function handleMcpError(
+  error: unknown,
+  request: Request,
+  env: Env,
+): Response {
   if (error instanceof HttpError) {
     if (error.statusCode === 401) {
       return unauthorizedResponse(
+        request,
         env,
         "Failed to process MCP request",
         API_KEY_HELP,

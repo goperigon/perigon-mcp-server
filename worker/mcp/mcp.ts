@@ -37,6 +37,8 @@ import { registerResearchPrompts } from "./prompts";
 
 export type Props = {
   apiKey: string;
+  /** Resolved Perigon API base URL (may differ from env when prod host has dev vars). */
+  perigonApiUrl: string;
   scopes: Scopes[];
   requestedTools: string[] | null;
   organizationId: number;
@@ -58,7 +60,7 @@ export class PerigonMCP extends McpAgent<Env, unknown, Props> {
   private readonly registeredToolNames = new Set<ToolName>();
 
   async init() {
-    const perigon = new Perigon(this.props!.apiKey, this.env.PERIGON_API_URL);
+    const perigon = new Perigon(this.props!.apiKey, this.props!.perigonApiUrl);
     const { scopes, requestedTools } = this.props!;
 
     // ── News tools (existing) ──────────────────────────────────────────────
@@ -122,7 +124,7 @@ export class PerigonMCP extends McpAgent<Env, unknown, Props> {
     const insightsApi = new InsightsApiClient(
       this.props!.apiKey,
       undefined,
-      this.env.PERIGON_API_URL,
+      this.props!.perigonApiUrl,
     );
     const pokeyClient = new PokeyInsightsClient(
       this.env.POKEY_SIGNAL_INSIGHTS_BASE_URL,
