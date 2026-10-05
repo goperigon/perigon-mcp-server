@@ -4,11 +4,7 @@ import { Perigon } from "../../../lib/perigon";
 import { ToolCallback, ToolDefinition } from "../types";
 import { toolResult, noResults } from "../utils/formatting";
 import { createErrorMessage } from "../utils/error-handling";
-
-function parseTime(str: string) {
-  if (str === "") return undefined;
-  return new Date(str);
-}
+import { parseDateParam } from "../schemas/base";
 
 export const storyStatsArgs = z.object({
   metric: z
@@ -20,8 +16,8 @@ export const storyStatsArgs = z.object({
     .array(z.string())
     .optional()
     .describe("Cluster IDs to scope the metric to. Required for velocity (max 100)."),
-  from: z.string().transform(parseTime).optional().describe("Start of the date range."),
-  to: z.string().transform(parseTime).optional().describe("End of the date range."),
+  from: z.string().transform(parseDateParam).optional().describe("Start of the date range."),
+  to: z.string().transform(parseDateParam).optional().describe("End of the date range."),
   splitBy: z
     .enum(["hour", "day", "week", "month", "none"])
     .optional()

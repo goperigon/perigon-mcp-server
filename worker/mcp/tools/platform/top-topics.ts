@@ -5,31 +5,27 @@ import { ToolCallback, ToolDefinition } from "../types";
 import { statsFilterArgs } from "../schemas/stats";
 import { toolResult, noResults } from "../utils/formatting";
 import { createErrorMessage } from "../utils/error-handling";
-
-function parseTime(str: string) {
-  if (str === "") return undefined;
-  return new Date(str);
-}
+import { parseDateParam } from "../schemas/base";
 
 export const topTopicsArgs = statsFilterArgs.extend({
   currentFrom: z
     .string()
-    .transform(parseTime)
+    .transform(parseDateParam)
     .optional()
     .describe("Start of the current window. Default: 3 days ago."),
   currentTo: z
     .string()
-    .transform(parseTime)
+    .transform(parseDateParam)
     .optional()
     .describe("End of the current window. Default: now."),
   baselineFrom: z
     .string()
-    .transform(parseTime)
+    .transform(parseDateParam)
     .optional()
     .describe("Start of the baseline window. Default: 30 days ago."),
   baselineTo: z
     .string()
-    .transform(parseTime)
+    .transform(parseDateParam)
     .optional()
     .describe("End of the baseline window. Default: 3 days ago."),
   normalizeByDay: z

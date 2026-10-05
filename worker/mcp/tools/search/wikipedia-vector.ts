@@ -2,18 +2,13 @@ import { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 import { Perigon } from "../../../lib/perigon";
 import { ToolCallback, ToolDefinition } from "../types";
-import { paginationArgs } from "../schemas/base";
+import { paginationArgs, parseDateParam } from "../schemas/base";
 import {
   toolResult,
   noResults,
   createCurrentPageHeader,
 } from "../utils/formatting";
 import { createErrorMessage } from "../utils/error-handling";
-
-function parseTime(str: string) {
-  if (str === "") return undefined;
-  return new Date(str);
-}
 
 export const wikipediaVectorArgs = z.object({
   ...paginationArgs.shape,
@@ -58,14 +53,14 @@ export const wikipediaVectorArgs = z.object({
     .describe("Maximum average daily page views."),
   wikiRevisionFrom: z
     .string()
-    .transform(parseTime)
+    .transform(parseDateParam)
     .optional()
     .describe(
       "Pages modified on Wikipedia after this date. ISO 8601 or yyyy-mm-dd.",
     ),
   wikiRevisionTo: z
     .string()
-    .transform(parseTime)
+    .transform(parseDateParam)
     .optional()
     .describe(
       "Pages modified on Wikipedia before this date. ISO 8601 or yyyy-mm-dd.",
