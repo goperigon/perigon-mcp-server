@@ -22,6 +22,14 @@ const handlerSpies = {
   isOAuthMetadataPath: mock((pathname: string) =>
     pathname.startsWith("/.well-known/oauth-"),
   ),
+  handleOAuthAuthorizeRedirect: mock(
+    () => new Response(null, { status: 302, headers: { Location: "/app" } }),
+  ),
+  isOAuthAuthorizePath: mock((pathname: string) => pathname === "/oauth/authorize"),
+  isOAuthApiProxyPath: mock((pathname: string) =>
+    pathname.startsWith("/v1/mcp/oauth/"),
+  ),
+  proxyOAuthApiRequest: mock(async () => new Response("oauth-proxy", { status: 200 })),
 };
 
 await mock.module("../../../worker/handlers", () => handlerSpies);

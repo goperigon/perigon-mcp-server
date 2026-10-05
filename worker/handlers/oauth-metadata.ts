@@ -1,8 +1,4 @@
-import {
-  mcpPublicOrigin,
-  perigonApiOrigin,
-  perigonAppOrigin,
-} from "../lib/mcp-env";
+import { mcpPublicOrigin } from "../lib/mcp-env";
 
 const PROTECTED_RESOURCE_PATHS = new Set([
   "/.well-known/oauth-protected-resource",
@@ -29,22 +25,22 @@ export function handleOAuthMetadata(request: Request, env: Env): Response {
       resource: mcpPublicUrl,
       authorization_servers: [mcpPublicUrl],
       bearer_methods_supported: ["header"],
+      resource_documentation: "https://perigon.io/docs/api/mcp",
     });
   }
 
   if (pathname === "/.well-known/oauth-authorization-server") {
-    const perigonApiUrl = perigonApiOrigin(env, request);
-    const perigonAppUrl = perigonAppOrigin(env, request);
     return Response.json({
       issuer: mcpPublicUrl,
-      authorization_endpoint: `${perigonAppUrl}/oauth/authorize`,
-      token_endpoint: `${perigonApiUrl}/v1/mcp/oauth/token`,
-      registration_endpoint: `${perigonApiUrl}/v1/mcp/oauth/register`,
-      revocation_endpoint: `${perigonApiUrl}/v1/mcp/oauth/revoke`,
+      authorization_endpoint: `${mcpPublicUrl}/oauth/authorize`,
+      token_endpoint: `${mcpPublicUrl}/v1/mcp/oauth/token`,
+      registration_endpoint: `${mcpPublicUrl}/v1/mcp/oauth/register`,
+      revocation_endpoint: `${mcpPublicUrl}/v1/mcp/oauth/revoke`,
       response_types_supported: ["code"],
       grant_types_supported: ["authorization_code"],
       code_challenge_methods_supported: ["S256"],
       token_endpoint_auth_methods_supported: ["none"],
+      registration_endpoint_auth_methods_supported: ["none"],
     });
   }
 
