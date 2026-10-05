@@ -4,14 +4,12 @@ import { handleError } from "../lib/handle-error";
 import { hashKey } from "../lib/hash";
 import { McpAgent } from "agents/mcp";
 import { PerigonMCP, type Props } from "../mcp/mcp";
-import { introspectionCacheTtlMs } from "../lib/mcp-access-token";
-import { mcpPublicOrigin } from "../lib/mcp-env";
 import { parseRequestedTools, resolveToolParam } from "../mcp/tools/selection";
 
 const SSE_PATHS = ["/v1/sse", "/v1/sse/message"] as const;
 const STREAMABLE_PATH = "/v1/mcp";
 const API_KEY_HELP =
-  "Sign in with your Perigon account via OAuth, or create a free account and copy a key from https://perigon.io/dev/keys, then send it as Authorization: Bearer <key>.";
+  "A valid Perigon API key is required. Create a free account and copy a key from https://perigon.io/dev/keys, then send it as Authorization: Bearer <key>.";
 
 /**
  * `introspection()` was previously called on every single MCP request. This
@@ -27,66 +25,51 @@ const introspectionCache = new Map<
 
 async function getCachedIntrospection(
   perigon: Perigon,
-  apiKey: string,
+  apiKey: string
 ): Promise<AuthIntrospectionResponse> {
   const cacheKey = await hashKey(apiKey);
   const cached = introspectionCache.get(cacheKey);
   if (cached && cached.expiresAt > Date.now()) {
     return cached.result;
   }
-
-  try {
-    const result = await perigon.introspection();
-    const ttlMs = introspectionCacheTtlMs(apiKey, INTROSPECTION_CACHE_TTL_MS);
-    if (ttlMs > 0) {
-      introspectionCache.set(cacheKey, {
-        result,
-        expiresAt: Date.now() + ttlMs,
-      });
-    }
-    return result;
-  } catch (error) {
-    introspectionCache.delete(cacheKey);
-    throw error;
-  }
+  const result = await perigon.introspection();
+  introspectionCache.set(cacheKey, {
+    result,
+    expiresAt: Date.now() + INTROSPECTION_CACHE_TTL_MS,
+  });
+  return result;
 }
 
 /**
  * Authenticates the MCP request via the `Authorization: Bearer <key>` header
- * (a Perigon API key or MCP OAuth JWT), enforces a per-key rate limit, and
- * dispatches to the MCP transport (SSE or streamable HTTP).
+ * (a Perigon API key), enforces a per-key rate limit, and dispatches to the
+ * MCP transport (SSE or streamable HTTP).
  */
 export async function handleMCP(
   request: Request,
   env: Env,
-  ctx: ExecutionContext,
+  ctx: ExecutionContext
 ): Promise<Response> {
   try {
-    const bearerToken = extractBearerKey(request);
-    if (!bearerToken) {
-      return unauthorizedResponse(env, "Unauthorized", API_KEY_HELP);
+    const apiKey = extractBearerKey(request);
+    if (!apiKey) {
+      return handleError("Unauthorized", 401, API_KEY_HELP);
     }
-
-    const apiKey = await resolveApiKey(bearerToken, env);
 
     const rateLimitResponse = await enforceRateLimit(apiKey, env);
     if (rateLimitResponse) return rateLimitResponse;
 
-    const props = await loadMcpProps(request, apiKey, env);
+    const props = await loadMcpProps(request, apiKey);
     ctx.props = props;
 
     return dispatchMcp(request, env, ctx);
   } catch (error) {
-    return handleMcpError(error, env);
+    return handleMcpError(error);
   }
 }
 
 function extractBearerKey(request: Request): string | undefined {
   return request.headers.get("Authorization")?.split(" ")[1];
-}
-
-async function resolveApiKey(bearerToken: string, _env: Env): Promise<string> {
-  return bearerToken;
 }
 
 /**
@@ -96,7 +79,7 @@ async function resolveApiKey(bearerToken: string, _env: Env): Promise<string> {
  */
 async function enforceRateLimit(
   apiKey: string,
-  env: Env,
+  env: Env
 ): Promise<Response | null> {
   const key = await hashKey(apiKey);
   const { success } = await env.MCP_RATE_LIMITER.limit({ key });
@@ -105,23 +88,15 @@ async function enforceRateLimit(
   return handleError(
     "Rate limit exceeded",
     429,
-    "You have exceeded allowed number of mcp related requests for this period",
+    "You have exceeded allowed number of mcp related requests for this period"
   );
 }
 
-async function loadMcpProps(
-  request: Request,
-  apiKey: string,
-  env: Env,
-): Promise<Props> {
-  const perigon = new Perigon(
-    apiKey,
-    env.PERIGON_API_URL,
-    env.PERIGON_SHARED_SECRET,
-  );
+async function loadMcpProps(request: Request, apiKey: string): Promise<Props> {
+  const perigon = new Perigon(apiKey);
   const apiKeyDetails = await getCachedIntrospection(perigon, apiKey);
   const requestedTools = parseRequestedTools(
-    resolveToolParam(new URL(request.url)),
+    resolveToolParam(new URL(request.url))
   );
   return {
     apiKey,
@@ -134,7 +109,7 @@ async function loadMcpProps(
 function dispatchMcp(
   request: Request,
   env: Env,
-  ctx: ExecutionContext,
+  ctx: ExecutionContext
 ): Promise<Response> | Response {
   const { pathname } = new URL(request.url);
 
@@ -153,44 +128,18 @@ function dispatchMcp(
   return new Response("Not found", { status: 404 });
 }
 
-function unauthorizedResponse(
-  env: Env,
-  error: string,
-  details: string,
-): Response {
-  const resourceMetadata = `${mcpPublicOrigin(env)}/.well-known/oauth-protected-resource`;
-  return Response.json(
-    { error, details },
-    {
-      status: 401,
-      headers: {
-        "content-type": "application/json",
-        "WWW-Authenticate": `Bearer resource_metadata="${resourceMetadata}"`,
-      },
-    },
-  );
-}
-
-function handleMcpError(error: unknown, env: Env): Response {
+function handleMcpError(error: unknown): Response {
+  console.error("Failed to process MCP request:", error);
   if (error instanceof HttpError) {
-    if (error.statusCode === 401) {
-      return unauthorizedResponse(
-        env,
-        "Failed to process MCP request",
-        API_KEY_HELP,
-      );
-    }
     return handleError(
       "Failed to process MCP request",
       error.statusCode,
-      error.responseBody,
+      error.statusCode === 401 ? API_KEY_HELP : error.responseBody
     );
   }
-
-  console.error("Failed to process MCP request", error);
   return handleError(
     "Failed to process MCP request",
     500,
-    error instanceof Error ? error.message : "Unknown error",
+    "Error: " + (error instanceof Error ? error.message : String(error))
   );
 }

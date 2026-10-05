@@ -1,9 +1,7 @@
 import { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { formatNewsletterMarkdown } from "./format-newsletter";
 
-import { DEFAULT_PERIGON_API_URL, normalizePerigonApiHost } from "./perigon";
-
-const INSIGHTS_MCP_PATH = "/v1/signal/insights/mcp";
+const BASE_URL = "https://api.perigon.io/v1/signal/insights/mcp";
 
 /**
  * Thin HTTP client for the Signal Insights read-only endpoints on
@@ -13,25 +11,13 @@ const INSIGHTS_MCP_PATH = "/v1/signal/insights/mcp";
  * business-api-server and require the SIGNAL_INSIGHTS permission scope.
  */
 export class InsightsApiClient {
-  private readonly baseUrl: string;
-
   constructor(
     private readonly apiKey: string,
     private readonly timeoutMs: number = 60_000,
-    apiUrl: string = DEFAULT_PERIGON_API_URL,
-    private readonly sharedSecret?: string,
-  ) {
-    this.baseUrl = `${normalizePerigonApiHost(apiUrl)}${INSIGHTS_MCP_PATH}`;
-  }
+  ) {}
 
   private get headers(): HeadersInit {
-    const headers: Record<string, string> = {
-      Authorization: `Bearer ${this.apiKey}`,
-    };
-    if (this.sharedSecret) {
-      headers["x-perigon-shared-secret"] = this.sharedSecret;
-    }
-    return headers;
+    return { Authorization: `Bearer ${this.apiKey}` };
   }
 
   async searchSignals(args: {
@@ -40,7 +26,7 @@ export class InsightsApiClient {
     limit?: number;
     classificationTypes?: Array<"EVENT" | "MENTIONS" | "TOPIC">;
   }): Promise<CallToolResult> {
-    const url = new URL(`${this.baseUrl}/search`);
+    const url = new URL(`${BASE_URL}/search`);
     if (args.query) url.searchParams.set("query", args.query);
     if (args.page !== undefined)
       url.searchParams.set("page", String(args.page));
@@ -74,7 +60,7 @@ export class InsightsApiClient {
   }
 
   async readSignal(signalUuid: string): Promise<CallToolResult> {
-    const res = await fetch(`${this.baseUrl}/${signalUuid}/metadata`, {
+    const res = await fetch(`${BASE_URL}/${signalUuid}/metadata`, {
       headers: this.headers,
       signal: AbortSignal.timeout(this.timeoutMs),
     });
@@ -97,7 +83,7 @@ export class InsightsApiClient {
     page?: number;
     limit?: number;
   }): Promise<CallToolResult> {
-    const url = new URL(`${this.baseUrl}/${args.signalUuid}/newsletters`);
+    const url = new URL(`${BASE_URL}/${args.signalUuid}/newsletters`);
     if (args.page !== undefined)
       url.searchParams.set("page", String(args.page));
     if (args.limit !== undefined)
@@ -125,7 +111,7 @@ export class InsightsApiClient {
   }
 
   async readNewsletter(newsletterUuid: string): Promise<CallToolResult> {
-    const res = await fetch(`${this.baseUrl}/newsletters/${newsletterUuid}`, {
+    const res = await fetch(`${BASE_URL}/newsletters/${newsletterUuid}`, {
       headers: this.headers,
       signal: AbortSignal.timeout(this.timeoutMs),
     });

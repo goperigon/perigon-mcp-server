@@ -58,11 +58,7 @@ export class PerigonMCP extends McpAgent<Env, unknown, Props> {
   private readonly registeredToolNames = new Set<ToolName>();
 
   async init() {
-    const perigon = new Perigon(
-      this.props!.apiKey,
-      this.env.PERIGON_API_URL,
-      this.env.PERIGON_SHARED_SECRET,
-    );
+    const perigon = new Perigon(this.props!.apiKey);
     const { scopes, requestedTools } = this.props!;
 
     // ── News tools (existing) ──────────────────────────────────────────────
@@ -123,12 +119,7 @@ export class PerigonMCP extends McpAgent<Env, unknown, Props> {
       }),
     );
 
-    const insightsApi = new InsightsApiClient(
-      this.props!.apiKey,
-      undefined,
-      this.env.PERIGON_API_URL,
-      this.env.PERIGON_SHARED_SECRET,
-    );
+    const insightsApi = new InsightsApiClient(this.props!.apiKey);
     const pokeyClient = new PokeyInsightsClient(
       this.env.POKEY_SIGNAL_INSIGHTS_BASE_URL,
       this.props!.apiKey,
