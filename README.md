@@ -372,13 +372,19 @@ This repo uses [Bun](https://bun.sh/). Copy [`.dev.vars.example`](./.dev.vars.ex
 | `PERIGON_APP_URL` | Optional | App base URL for the OAuth consent page linked from discovery metadata. |
 | `MCP_PUBLIC_URL` | Optional | Public MCP origin used in OAuth metadata (defaults to local dev URL). |
 
+The dev server binds to `local-mcp.perigon.io` (see [`vite.config.ts`](./vite.config.ts)). Add this line to `/etc/hosts` so that hostname resolves on your machine:
+
+```txt
+127.0.0.1 local-mcp.perigon.io
+```
+
 ```zsh
 bun i
 bun dev
 bun test
 ```
 
-`bun dev` serves the MCP worker and the playground.
+`bun dev` serves the MCP worker and the playground at `https://local-mcp.perigon.io:5173`.
 
 ---
 
