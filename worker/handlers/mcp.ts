@@ -5,7 +5,7 @@ import { hashKey } from "../lib/hash";
 import { McpAgent } from "agents/mcp";
 import { PerigonMCP, type Props } from "../mcp/mcp";
 import { introspectionCacheTtlMs } from "../lib/mcp-access-token";
-import { mcpPublicOrigin } from "../lib/mcp-env";
+import { mcpPublicOrigin, perigonApiOrigin } from "../lib/mcp-env";
 import { parseRequestedTools, resolveToolParam } from "../mcp/tools/selection";
 
 const SSE_PATHS = ["/v1/sse", "/v1/sse/message"] as const;
@@ -114,13 +114,15 @@ async function loadMcpProps(
   apiKey: string,
   env: Env,
 ): Promise<Props> {
-  const perigon = new Perigon(apiKey, env.PERIGON_API_URL);
+  const perigonApiUrl = perigonApiOrigin(env, request);
+  const perigon = new Perigon(apiKey, perigonApiUrl);
   const apiKeyDetails = await getCachedIntrospection(perigon, apiKey);
   const requestedTools = parseRequestedTools(
     resolveToolParam(new URL(request.url)),
   );
   return {
     apiKey,
+    perigonApiUrl,
     scopes: apiKeyDetails.scopes,
     organizationId: apiKeyDetails.organizationId,
     requestedTools,

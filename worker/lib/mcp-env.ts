@@ -2,7 +2,7 @@ export const DEFAULT_MCP_PUBLIC_URL = "https://mcp.perigon.io";
 export const DEFAULT_PERIGON_API_URL = "https://api.perigon.io";
 export const DEFAULT_PERIGON_APP_URL = "https://www.perigon.io";
 
-const LOCAL_DEV_HOSTNAMES = new Set(["localhost", "127.0.0.1", "::1"]);
+const LOCAL_DEV_HOSTNAMES = new Set(["localhost", "127.0.0.1", "[::1]"]);
 
 function stripTrailingSlash(origin: string): string {
   return origin.replace(/\/$/, "");

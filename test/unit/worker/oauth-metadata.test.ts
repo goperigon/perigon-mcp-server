@@ -60,6 +60,23 @@ describe("oauth metadata", () => {
     );
   });
 
+  test("public MCP host ignores IPv6 loopback in MCP_PUBLIC_URL", async () => {
+    const devEnv = {
+      MCP_PUBLIC_URL: "http://[::1]:8787",
+      PERIGON_API_URL: "http://localhost:8080",
+      PERIGON_APP_URL: "http://localhost:3000",
+    } as unknown as Env;
+
+    const response = handleOAuthMetadata(
+      new Request(
+        "https://mcp.perigon.io/.well-known/oauth-protected-resource",
+      ),
+      devEnv,
+    );
+    const body = (await response.json()) as { resource: string };
+    expect(body.resource).toBe("https://mcp.perigon.io");
+  });
+
   test("public MCP host ignores accidentally deployed local dev env vars", async () => {
     const devEnv = {
       MCP_PUBLIC_URL: "http://127.0.0.1:8787",
