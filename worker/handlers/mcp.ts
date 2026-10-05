@@ -64,7 +64,7 @@ export async function handleMCP(
   try {
     const bearerToken = extractBearerKey(request);
     if (!bearerToken) {
-      return unauthorizedResponse(env, "Unauthorized", API_KEY_HELP);
+      return unauthorizedResponse(request, env, "Unauthorized", API_KEY_HELP);
     }
 
     const apiKey = await resolveApiKey(bearerToken, env);
@@ -77,7 +77,7 @@ export async function handleMCP(
 
     return dispatchMcp(request, env, ctx);
   } catch (error) {
-    return handleMcpError(error, env);
+    return handleMcpError(error, request, env);
   }
 }
 
@@ -150,11 +150,12 @@ function dispatchMcp(
 }
 
 function unauthorizedResponse(
+  request: Request,
   env: Env,
   error: string,
   details: string,
 ): Response {
-  const resourceMetadata = `${mcpPublicOrigin(env)}/.well-known/oauth-protected-resource`;
+  const resourceMetadata = `${mcpPublicOrigin(env, request)}/.well-known/oauth-protected-resource`;
   return Response.json(
     { error, details },
     {
@@ -167,10 +168,15 @@ function unauthorizedResponse(
   );
 }
 
-function handleMcpError(error: unknown, env: Env): Response {
+function handleMcpError(
+  error: unknown,
+  request: Request,
+  env: Env,
+): Response {
   if (error instanceof HttpError) {
     if (error.statusCode === 401) {
       return unauthorizedResponse(
+        request,
         env,
         "Failed to process MCP request",
         API_KEY_HELP,
