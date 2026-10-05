@@ -100,4 +100,32 @@ describe("handleMCP auth errors", () => {
     const body = (await response.json()) as { error: string; details: string };
     expect(body.details).toBe("plan does not include this");
   });
+
+  test("returns 503 for transient introspection failures without OAuth challenge", async () => {
+    introspectionError = new HttpError(503, "upstream unavailable");
+
+    const response = await handleMCP(
+      mcpRequest("Bearer some-other-key"),
+      env,
+      ctx,
+    );
+
+    expect(response.status).toBe(503);
+    expect(response.headers.get("WWW-Authenticate")).toBeNull();
+    const body = (await response.json()) as { details: string };
+    expect(body.details).toBe("upstream unavailable");
+  });
+
+  test("uses default MCP public URL in OAuth challenge when env is unset", async () => {
+    const response = await handleMCP(
+      mcpRequest(),
+      {} as Env,
+      ctx,
+    );
+
+    expect(response.status).toBe(401);
+    expect(response.headers.get("WWW-Authenticate")).toContain(
+      "https://mcp.perigon.io/.well-known/oauth-protected-resource",
+    );
+  });
 });

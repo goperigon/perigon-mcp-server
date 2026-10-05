@@ -1,7 +1,7 @@
 import { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { formatNewsletterMarkdown } from "./format-newsletter";
 
-import { DEFAULT_PERIGON_API_URL } from "./perigon";
+import { DEFAULT_PERIGON_API_URL, normalizePerigonApiHost } from "./perigon";
 
 const INSIGHTS_MCP_PATH = "/v1/signal/insights/mcp";
 
@@ -21,7 +21,7 @@ export class InsightsApiClient {
     apiUrl: string = DEFAULT_PERIGON_API_URL,
     private readonly sharedSecret?: string,
   ) {
-    this.baseUrl = `${apiUrl.replace(/\/+$/, "")}${INSIGHTS_MCP_PATH}`;
+    this.baseUrl = `${normalizePerigonApiHost(apiUrl)}${INSIGHTS_MCP_PATH}`;
   }
 
   private get headers(): HeadersInit {

@@ -1,3 +1,9 @@
+import {
+  mcpPublicOrigin,
+  perigonApiOrigin,
+  perigonAppOrigin,
+} from "../lib/mcp-env";
+
 const PROTECTED_RESOURCE_PATHS = new Set([
   "/.well-known/oauth-protected-resource",
   "/.well-known/oauth-protected-resource/v1/mcp",
@@ -16,7 +22,7 @@ export function handleOAuthMetadata(request: Request, env: Env): Response {
   }
 
   const { pathname } = new URL(request.url);
-  const mcpPublicUrl = env.MCP_PUBLIC_URL.replace(/\/$/, "");
+  const mcpPublicUrl = mcpPublicOrigin(env);
 
   if (PROTECTED_RESOURCE_PATHS.has(pathname)) {
     return Response.json({
@@ -27,8 +33,8 @@ export function handleOAuthMetadata(request: Request, env: Env): Response {
   }
 
   if (pathname === "/.well-known/oauth-authorization-server") {
-    const perigonApiUrl = env.PERIGON_API_URL.replace(/\/$/, "");
-    const perigonAppUrl = env.PERIGON_APP_URL.replace(/\/$/, "");
+    const perigonApiUrl = perigonApiOrigin(env);
+    const perigonAppUrl = perigonAppOrigin(env);
     return Response.json({
       issuer: mcpPublicUrl,
       authorization_endpoint: `${perigonAppUrl}/oauth/authorize`,

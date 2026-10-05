@@ -39,6 +39,27 @@ describe("oauth metadata", () => {
     expect(body.authorization_servers).toEqual(["https://mcp.test.local"]);
   });
 
+  test("metadata uses production defaults when env URLs are missing", async () => {
+    const response = handleOAuthMetadata(
+      new Request(
+        "https://mcp.test.local/.well-known/oauth-authorization-server",
+      ),
+      {} as Env,
+    );
+
+    expect(response.status).toBe(200);
+    const body = (await response.json()) as {
+      token_endpoint: string;
+      authorization_endpoint: string;
+    };
+    expect(body.authorization_endpoint).toBe(
+      "https://www.perigon.io/oauth/authorize",
+    );
+    expect(body.token_endpoint).toBe(
+      "https://api.perigon.io/v1/mcp/oauth/token",
+    );
+  });
+
   test("authorization server metadata exposes Perigon OAuth endpoints", async () => {
     const response = handleOAuthMetadata(
       new Request(

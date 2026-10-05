@@ -4,6 +4,8 @@ import { handleError } from "../lib/handle-error";
 import { hashKey } from "../lib/hash";
 import { McpAgent } from "agents/mcp";
 import { PerigonMCP, type Props } from "../mcp/mcp";
+import { introspectionCacheTtlMs } from "../lib/mcp-access-token";
+import { mcpPublicOrigin } from "../lib/mcp-env";
 import { parseRequestedTools, resolveToolParam } from "../mcp/tools/selection";
 
 const SSE_PATHS = ["/v1/sse", "/v1/sse/message"] as const;
@@ -32,12 +34,21 @@ async function getCachedIntrospection(
   if (cached && cached.expiresAt > Date.now()) {
     return cached.result;
   }
-  const result = await perigon.introspection();
-  introspectionCache.set(cacheKey, {
-    result,
-    expiresAt: Date.now() + INTROSPECTION_CACHE_TTL_MS,
-  });
-  return result;
+
+  try {
+    const result = await perigon.introspection();
+    const ttlMs = introspectionCacheTtlMs(apiKey, INTROSPECTION_CACHE_TTL_MS);
+    if (ttlMs > 0) {
+      introspectionCache.set(cacheKey, {
+        result,
+        expiresAt: Date.now() + ttlMs,
+      });
+    }
+    return result;
+  } catch (error) {
+    introspectionCache.delete(cacheKey);
+    throw error;
+  }
 }
 
 /**
@@ -140,10 +151,6 @@ function dispatchMcp(
   }
 
   return new Response("Not found", { status: 404 });
-}
-
-function mcpPublicOrigin(env: Env): string {
-  return (env.MCP_PUBLIC_URL ?? "https://mcp.perigon.io").replace(/\/$/, "");
 }
 
 function unauthorizedResponse(
