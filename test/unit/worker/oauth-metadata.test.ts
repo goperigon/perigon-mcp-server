@@ -60,6 +60,45 @@ describe("oauth metadata", () => {
     );
   });
 
+  test("public MCP host ignores accidentally deployed local dev env vars", async () => {
+    const devEnv = {
+      MCP_PUBLIC_URL: "http://127.0.0.1:8787",
+      PERIGON_API_URL: "http://localhost:8080",
+      PERIGON_APP_URL: "http://localhost:3000",
+    } as unknown as Env;
+
+    const protectedResource = handleOAuthMetadata(
+      new Request(
+        "https://mcp.perigon.io/.well-known/oauth-protected-resource",
+      ),
+      devEnv,
+    );
+    expect((await protectedResource.json()) as { resource: string }).toEqual({
+      resource: "https://mcp.perigon.io",
+      authorization_servers: ["https://mcp.perigon.io"],
+      bearer_methods_supported: ["header"],
+    });
+
+    const authServer = handleOAuthMetadata(
+      new Request(
+        "https://mcp.perigon.io/.well-known/oauth-authorization-server",
+      ),
+      devEnv,
+    );
+    const body = (await authServer.json()) as {
+      issuer: string;
+      authorization_endpoint: string;
+      token_endpoint: string;
+    };
+    expect(body.issuer).toBe("https://mcp.perigon.io");
+    expect(body.authorization_endpoint).toBe(
+      "https://www.perigon.io/oauth/authorize",
+    );
+    expect(body.token_endpoint).toBe(
+      "https://api.perigon.io/v1/mcp/oauth/token",
+    );
+  });
+
   test("authorization server metadata exposes Perigon OAuth endpoints", async () => {
     const response = handleOAuthMetadata(
       new Request(

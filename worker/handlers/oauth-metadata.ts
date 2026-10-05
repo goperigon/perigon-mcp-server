@@ -22,7 +22,7 @@ export function handleOAuthMetadata(request: Request, env: Env): Response {
   }
 
   const { pathname } = new URL(request.url);
-  const mcpPublicUrl = mcpPublicOrigin(env);
+  const mcpPublicUrl = mcpPublicOrigin(env, request);
 
   if (PROTECTED_RESOURCE_PATHS.has(pathname)) {
     return Response.json({
@@ -33,8 +33,8 @@ export function handleOAuthMetadata(request: Request, env: Env): Response {
   }
 
   if (pathname === "/.well-known/oauth-authorization-server") {
-    const perigonApiUrl = perigonApiOrigin(env);
-    const perigonAppUrl = perigonAppOrigin(env);
+    const perigonApiUrl = perigonApiOrigin(env, request);
+    const perigonAppUrl = perigonAppOrigin(env, request);
     return Response.json({
       issuer: mcpPublicUrl,
       authorization_endpoint: `${perigonAppUrl}/oauth/authorize`,
