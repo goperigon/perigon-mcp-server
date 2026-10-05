@@ -30,7 +30,14 @@ import {
 } from "../types/platform";
 import { typedFetch } from "./typed-fetch";
 
-const BASE_URL = "https://api.perigon.io/v1";
+export const DEFAULT_PERIGON_API_URL = "https://api.perigon.io";
+
+/** Host-only API origin (no trailing slash or `/v1` suffix). */
+export function normalizePerigonApiHost(
+  apiUrl: string = DEFAULT_PERIGON_API_URL,
+): string {
+  return apiUrl.replace(/\/+$/, "").replace(/\/v1$/, "");
+}
 
 /**
  * Serialize a plain params object into URLSearchParams for raw-fetch calls:
@@ -463,19 +470,25 @@ export interface StoryVelocityEntry {
 
 export class Perigon extends V1Api {
   private apiKey: string;
+  private baseUrl: string;
 
-  constructor(apiKey: string) {
-    super(new Configuration({ apiKey }));
+  constructor(apiKey: string, apiUrl: string = DEFAULT_PERIGON_API_URL) {
+    const apiHost = normalizePerigonApiHost(apiUrl);
+    super(
+      new Configuration({
+        apiKey,
+        basePath: apiHost,
+      }),
+    );
     this.apiKey = apiKey;
+    this.baseUrl = `${apiHost}/v1`;
   }
 
   async introspection(): Promise<AuthIntrospectionResponse> {
     return await typedFetch<AuthIntrospectionResponse>(
-      `${BASE_URL}/auth/introspect`,
+      `${this.baseUrl}/auth/introspect`,
       {
-        headers: {
-          Authorization: `Bearer ${this.apiKey}`,
-        },
+        headers: this.authHeaders(),
       },
     );
   }
@@ -485,12 +498,12 @@ export class Perigon extends V1Api {
     options: RequestInit = {},
   ): Promise<T> {
     const headers = new Headers(options.headers);
-    headers.set("Authorization", `Bearer ${this.apiKey}`);
+    this.applyAuthHeaders(headers);
     if (options.body !== undefined) {
       headers.set("Content-Type", "application/json");
     }
 
-    return await typedFetch<T>(`${BASE_URL}/api/monitors${path}`, {
+    return await typedFetch<T>(`${this.baseUrl}/api/monitors${path}`, {
       ...options,
       headers,
     });
@@ -681,8 +694,8 @@ export class Perigon extends V1Api {
     const sp = this.buildStatsFilters(params);
     if (params.splitBy) sp.set("splitBy", params.splitBy);
     return await fetchWithRetry<StatResult<AvgSentimentStatDto>>(
-      `${BASE_URL}/stats/avgSentiment?${sp.toString()}`,
-      { headers: { Authorization: `Bearer ${this.apiKey}` } },
+      `${this.baseUrl}/stats/avgSentiment?${sp.toString()}`,
+      { headers: this.authHeaders() },
     );
   }
 
@@ -692,8 +705,8 @@ export class Perigon extends V1Api {
     const sp = this.buildStatsFilters(params);
     if (params.splitBy) sp.set("splitBy", params.splitBy);
     return await fetchWithRetry<StatResult<CountStatDto>>(
-      `${BASE_URL}/stats/intervalArticleCounts?${sp.toString()}`,
-      { headers: { Authorization: `Bearer ${this.apiKey}` } },
+      `${this.baseUrl}/stats/intervalArticleCounts?${sp.toString()}`,
+      { headers: this.authHeaders() },
     );
   }
 
@@ -703,8 +716,8 @@ export class Perigon extends V1Api {
     if (params.expandEntities !== undefined)
       sp.set("expandEntities", String(params.expandEntities));
     return await fetchWithRetry<TopEntitiesDto>(
-      `${BASE_URL}/stats/topEntities?${sp.toString()}`,
-      { headers: { Authorization: `Bearer ${this.apiKey}` } },
+      `${this.baseUrl}/stats/topEntities?${sp.toString()}`,
+      { headers: this.authHeaders() },
     );
   }
 
@@ -714,8 +727,8 @@ export class Perigon extends V1Api {
     const sp = this.buildStatsFilters(params);
     this.applySpikePrams(sp, params);
     return await fetchWithRetry<SpikeResult<PersonSpike>>(
-      `${BASE_URL}/stats/topPeople?${sp.toString()}`,
-      { headers: { Authorization: `Bearer ${this.apiKey}` } },
+      `${this.baseUrl}/stats/topPeople?${sp.toString()}`,
+      { headers: this.authHeaders() },
     );
   }
 
@@ -725,8 +738,8 @@ export class Perigon extends V1Api {
     const sp = this.buildStatsFilters(params);
     this.applySpikePrams(sp, params);
     return await fetchWithRetry<SpikeResult<CompanySpike>>(
-      `${BASE_URL}/stats/topCompanies?${sp.toString()}`,
-      { headers: { Authorization: `Bearer ${this.apiKey}` } },
+      `${this.baseUrl}/stats/topCompanies?${sp.toString()}`,
+      { headers: this.authHeaders() },
     );
   }
 
@@ -771,24 +784,28 @@ export class Perigon extends V1Api {
       searchParams.set("changelogExists", String(params.changelogExists));
 
     return await typedFetch<StoryHistoryResult>(
-      `${BASE_URL}/stories/history?${searchParams.toString()}`,
+      `${this.baseUrl}/stories/history?${searchParams.toString()}`,
       {
-        headers: {
-          Authorization: `Bearer ${this.apiKey}`,
-        },
+        headers: this.authHeaders(),
       },
     );
   }
 
   private authHeaders(): HeadersInit {
-    return { Authorization: `Bearer ${this.apiKey}` };
+    return {
+      Authorization: `Bearer ${this.apiKey}`,
+    };
+  }
+
+  private applyAuthHeaders(headers: Headers): void {
+    headers.set("Authorization", `Bearer ${this.apiKey}`);
   }
 
   /** `GET /v1/limits` — quota-exempt; does not count against the account's request quota. */
   async getLimits(apiKeys?: string[]): Promise<SingleResult<ApiLimitsDto>> {
     const sp = buildQueryParams({ apiKeys });
     return await typedFetch<SingleResult<ApiLimitsDto>>(
-      `${BASE_URL}/limits?${sp.toString()}`,
+      `${this.baseUrl}/limits?${sp.toString()}`,
       { headers: this.authHeaders() },
     );
   }
@@ -796,7 +813,7 @@ export class Perigon extends V1Api {
   /** `GET /v1/sources/{id}` — the only route to a source by ID; `SourcesSearchParams.id` is `@InternalParameter`. */
   async getSourceById(id: string): Promise<SourceDetail> {
     return await typedFetch<SourceDetail>(
-      `${BASE_URL}/sources/${encodeURIComponent(id)}`,
+      `${this.baseUrl}/sources/${encodeURIComponent(id)}`,
       { headers: this.authHeaders() },
     );
   }
@@ -806,7 +823,7 @@ export class Perigon extends V1Api {
     const sp = this.buildStatsFilters(params);
     this.applySpikePrams(sp, params);
     return await fetchWithRetry<SpikeResult<TopicSpike>>(
-      `${BASE_URL}/stats/topTopics?${sp.toString()}`,
+      `${this.baseUrl}/stats/topTopics?${sp.toString()}`,
       { headers: this.authHeaders() },
     );
   }
@@ -817,7 +834,7 @@ export class Perigon extends V1Api {
   ): Promise<StatResult<CountStatDto>> {
     const sp = buildQueryParams({ ...params });
     return await fetchWithRetry<StatResult<CountStatDto>>(
-      `${BASE_URL}/stories/stats?${sp.toString()}`,
+      `${this.baseUrl}/stories/stats?${sp.toString()}`,
       { headers: this.authHeaders() },
     );
   }
@@ -828,7 +845,7 @@ export class Perigon extends V1Api {
   ): Promise<StatResult<StoryVelocityEntry>> {
     const sp = buildQueryParams({ ...params });
     return await fetchWithRetry<StatResult<StoryVelocityEntry>>(
-      `${BASE_URL}/stories/stats/velocity?${sp.toString()}`,
+      `${this.baseUrl}/stories/stats/velocity?${sp.toString()}`,
       { headers: this.authHeaders() },
     );
   }
@@ -844,7 +861,7 @@ export class Perigon extends V1Api {
   ): Promise<ArticlesFullResult> {
     const sp = buildQueryParams(params);
     return await typedFetch<ArticlesFullResult>(
-      `${BASE_URL}/articles/all?${sp.toString()}`,
+      `${this.baseUrl}/articles/all?${sp.toString()}`,
       { headers: this.authHeaders() },
     );
   }
@@ -861,7 +878,7 @@ export class Perigon extends V1Api {
   ): Promise<JournalistsFullResult> {
     const sp = buildQueryParams(params);
     return await typedFetch<JournalistsFullResult>(
-      `${BASE_URL}/journalists/all?${sp.toString()}`,
+      `${this.baseUrl}/journalists/all?${sp.toString()}`,
       { headers: this.authHeaders() },
     );
   }
@@ -874,11 +891,11 @@ export class Perigon extends V1Api {
     options: RequestInit = {},
   ): Promise<T> {
     const headers = new Headers(options.headers);
-    headers.set("Authorization", `Bearer ${this.apiKey}`);
+    this.applyAuthHeaders(headers);
     if (options.body !== undefined) {
       headers.set("Content-Type", "application/json");
     }
-    return await typedFetch<T>(`${BASE_URL}${basePath}${path}`, {
+    return await typedFetch<T>(`${this.baseUrl}${basePath}${path}`, {
       ...options,
       headers,
     });
@@ -1002,7 +1019,7 @@ export class Perigon extends V1Api {
     jobId: string,
   ): Promise<ArticleRefreshJobResponse> {
     return await typedFetch<ArticleRefreshJobResponse>(
-      `${BASE_URL}/articles/refresh/jobs/${encodeURIComponent(jobId)}`,
+      `${this.baseUrl}/articles/refresh/jobs/${encodeURIComponent(jobId)}`,
       { headers: this.authHeaders() },
     );
   }
@@ -1011,7 +1028,7 @@ export class Perigon extends V1Api {
     articleIds: string[],
   ): Promise<ArticleRefreshPeekResponse> {
     return await typedFetch<ArticleRefreshPeekResponse>(
-      `${BASE_URL}/articles/refresh/peek`,
+      `${this.baseUrl}/articles/refresh/peek`,
       {
         method: "POST",
         headers: {

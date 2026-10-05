@@ -1,5 +1,6 @@
-import { describe, expect, mock, test } from "bun:test";
+import { afterEach, describe, expect, mock, test } from "bun:test";
 import { HttpError } from "../../../worker/types/types";
+import { restoreFetch } from "../../helpers/mock-fetch";
 
 let introspectionError = new HttpError(401, "invalid api key");
 
@@ -26,10 +27,25 @@ const { handleMCP } = await import("../../../worker/handlers/mcp");
 const KEYS_URL = "https://perigon.io/dev/keys";
 
 const env = {
+  MCP_PUBLIC_URL: "https://mcp.perigon.io",
+  PERIGON_API_URL: "https://api.test.local",
   MCP_RATE_LIMITER: {
     limit: async () => ({ success: true }),
   },
 } as unknown as Env;
+
+afterEach(() => {
+  restoreFetch();
+});
+
+function testJwt(payload: Record<string, unknown>): string {
+  const encode = (value: unknown): string =>
+    btoa(JSON.stringify(value))
+      .replace(/=/g, "")
+      .replace(/\+/g, "-")
+      .replace(/\//g, "_");
+  return `${encode({ alg: "none" })}.${encode(payload)}.sig`;
+}
 
 const ctx = {} as ExecutionContext;
 
@@ -82,5 +98,33 @@ describe("handleMCP auth errors", () => {
     expect(response.status).toBe(403);
     const body = (await response.json()) as { error: string; details: string };
     expect(body.details).toBe("plan does not include this");
+  });
+
+  test("returns 503 for transient introspection failures without OAuth challenge", async () => {
+    introspectionError = new HttpError(503, "upstream unavailable");
+
+    const response = await handleMCP(
+      mcpRequest("Bearer some-other-key"),
+      env,
+      ctx,
+    );
+
+    expect(response.status).toBe(503);
+    expect(response.headers.get("WWW-Authenticate")).toBeNull();
+    const body = (await response.json()) as { details: string };
+    expect(body.details).toBe("upstream unavailable");
+  });
+
+  test("uses default MCP public URL in OAuth challenge when env is unset", async () => {
+    const response = await handleMCP(
+      mcpRequest(),
+      {} as Env,
+      ctx,
+    );
+
+    expect(response.status).toBe(401);
+    expect(response.headers.get("WWW-Authenticate")).toContain(
+      "https://mcp.perigon.io/.well-known/oauth-protected-resource",
+    );
   });
 });
