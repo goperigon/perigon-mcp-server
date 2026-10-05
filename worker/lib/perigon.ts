@@ -471,27 +471,17 @@ export interface StoryVelocityEntry {
 export class Perigon extends V1Api {
   private apiKey: string;
   private baseUrl: string;
-  private readonly sharedSecret?: string;
 
-  constructor(
-    apiKey: string,
-    apiUrl: string = DEFAULT_PERIGON_API_URL,
-    sharedSecret?: string,
-  ) {
+  constructor(apiKey: string, apiUrl: string = DEFAULT_PERIGON_API_URL) {
     const apiHost = normalizePerigonApiHost(apiUrl);
-    const configurationHeaders = sharedSecret
-      ? { "x-perigon-shared-secret": sharedSecret }
-      : undefined;
     super(
       new Configuration({
         apiKey,
         basePath: apiHost,
-        headers: configurationHeaders,
       }),
     );
     this.apiKey = apiKey;
     this.baseUrl = `${apiHost}/v1`;
-    this.sharedSecret = sharedSecret;
   }
 
   async introspection(): Promise<AuthIntrospectionResponse> {
@@ -802,20 +792,13 @@ export class Perigon extends V1Api {
   }
 
   private authHeaders(): HeadersInit {
-    const headers: Record<string, string> = {
+    return {
       Authorization: `Bearer ${this.apiKey}`,
     };
-    if (this.sharedSecret) {
-      headers["x-perigon-shared-secret"] = this.sharedSecret;
-    }
-    return headers;
   }
 
   private applyAuthHeaders(headers: Headers): void {
     headers.set("Authorization", `Bearer ${this.apiKey}`);
-    if (this.sharedSecret) {
-      headers.set("x-perigon-shared-secret", this.sharedSecret);
-    }
   }
 
   /** `GET /v1/limits` — quota-exempt; does not count against the account's request quota. */

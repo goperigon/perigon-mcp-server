@@ -321,7 +321,6 @@ This repo uses [Bun](https://bun.sh/). Copy [`.dev.vars.example`](./.dev.vars.ex
 |----------|----------|-------------|
 | `ANTHROPIC_API_KEY` | Yes | Required for every route, including `/v1/mcp`. Also used by the playground chat. |
 | `PERIGON_API_KEY` | Playground | Playground default key when testing with a manual API key. |
-| `PERIGON_SHARED_SECRET` | Local OAuth | Server-side only (Worker env). Must match the Perigon API internal secret when `PERIGON_API_URL` validates MCP OAuth tokens. **Never** put this in MCP client config. |
 | `PERIGON_API_URL` | Optional | Perigon API base URL (OAuth token/revoke/register). Defaults in [`wrangler.jsonc`](./wrangler.jsonc) for local dev. |
 | `PERIGON_APP_URL` | Optional | App base URL for the OAuth consent page linked from discovery metadata. |
 | `MCP_PUBLIC_URL` | Optional | Public MCP origin used in OAuth metadata (defaults to local dev URL). |

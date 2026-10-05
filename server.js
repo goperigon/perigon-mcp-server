@@ -61,7 +61,6 @@ const server = Bun.serve({
         process.env.PERIGON_API_URL || "https://api.perigon.io",
       PERIGON_APP_URL:
         process.env.PERIGON_APP_URL || "https://www.perigon.io",
-      PERIGON_SHARED_SECRET: process.env.PERIGON_SHARED_SECRET || "",
       ANTHROPIC_API_KEY:
         process.env.ANTHROPIC_API_KEY || "mock-key-for-mcp-only",
       AUTH_KV: {

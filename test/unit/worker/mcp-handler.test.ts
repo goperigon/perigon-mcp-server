@@ -29,7 +29,6 @@ const KEYS_URL = "https://perigon.io/dev/keys";
 const env = {
   MCP_PUBLIC_URL: "https://mcp.perigon.io",
   PERIGON_API_URL: "https://api.test.local",
-  PERIGON_SHARED_SECRET: "shared-secret",
   MCP_RATE_LIMITER: {
     limit: async () => ({ success: true }),
   },

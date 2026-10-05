@@ -114,11 +114,7 @@ async function loadMcpProps(
   apiKey: string,
   env: Env,
 ): Promise<Props> {
-  const perigon = new Perigon(
-    apiKey,
-    env.PERIGON_API_URL,
-    env.PERIGON_SHARED_SECRET,
-  );
+  const perigon = new Perigon(apiKey, env.PERIGON_API_URL);
   const apiKeyDetails = await getCachedIntrospection(perigon, apiKey);
   const requestedTools = parseRequestedTools(
     resolveToolParam(new URL(request.url)),
