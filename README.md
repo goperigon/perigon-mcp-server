@@ -152,19 +152,13 @@ Hosted discovery (production):
 - Protected resource: `https://mcp.perigon.io/.well-known/oauth-protected-resource` (alias: `https://mcp.perigon.io/.well-known/oauth-protected-resource/v1/mcp`)
 - Authorization server metadata: `https://mcp.perigon.io/.well-known/oauth-authorization-server`
 
-From authorization server metadata:
+Clients discover the authorization, token, and registration endpoints from the authorization server metadata (PKCE required).
 
-- Consent UI: `https://www.perigon.io/oauth/authorize`
-- Token: `https://api.perigon.io/v1/mcp/oauth/token`
-- Dynamic client registration: `https://api.perigon.io/v1/mcp/oauth/register`
-- Revocation: `https://api.perigon.io/v1/mcp/oauth/revoke`
-- PKCE: `S256` (`code_challenge_methods_supported`)
-
-The client registers (or uses a known client id), runs PKCE, and opens the Perigon consent UI. After approval, the client receives a short-lived authorization code and exchanges it for an MCP access token at the token endpoint. The client then sends that token on every MCP request.
+The client completes the standard authorization-code flow with PKCE, then sends the resulting access token on every MCP request.
 
 - Sign-in requires a verified Perigon user with at least **User** role in the organization.
-- Usage is billed against your organization’s dedicated **MCP** API key on the server; you do not paste that key into the client.
-- Revoking MCP access or removing a member takes effect on the next API call (membership is checked when the token is used).
+- Usage is billed to your organization. No API key is needed in the client.
+- Revoking MCP access or removing a member takes effect on the next request.
 
 Unauthenticated requests receive `401` with a `WWW-Authenticate` header pointing at the protected-resource metadata URL.
 
@@ -196,9 +190,7 @@ https://mcp.perigon.io/v1/mcp?tools=research,create_monitor
 | `platform` | `watchlists`, `create_watchlist`, `update_watchlist`, `source_groups`, `create_source_group`, `update_source_group`, `contact_points`, `article_refresh`, `get_api_access`. |
 | `minimal` | `search_news_articles`, the five stats tools, `get_api_access`. |
 
-`get_story_stats` is not in any profile. Request it by name. It still requires `CLUSTERS` at call time; a key without that scope can select the tool and then get a permission error.
-
-Other opt-in tools need no extra scope. Any valid key can request them.
+`get_story_stats` is not in any profile. Request it by name. Requires the `CLUSTERS` scope.
 
 ---
 
@@ -299,10 +291,10 @@ The `monitoring` profile includes this set. There is no Signal Insights-only pro
 | `signal_insights_read_signal` | Default | Signal metadata (classification, schema or newsletter counts). |
 | `signal_insights_list_newsletters` | Default | Newsletter titles and excerpts for a TOPIC signal. |
 | `signal_insights_read_newsletter` | Default | Full newsletter content as markdown. |
-| `signal_insights_export_events` | Default | Export EVENT / MENTIONS events to S3. Returns a preview and file path. |
-| `signal_insights_execute_code` | Default | Python in a persistent IPython kernel (pandas, numpy, matplotlib). |
+| `signal_insights_export_events` | Default | Export EVENT / MENTIONS events into your workspace. Returns a preview and file path. |
+| `signal_insights_execute_code` | Default | Run Python analysis in your workspace (pandas, numpy, matplotlib). |
 | `signal_insights_preview_chart` | Default | Render charts in the interactive chart viewer. |
-| `signal_insights_shell` | Default | Bash in the sandbox. |
+| `signal_insights_shell` | Default | Run shell commands in your workspace. |
 | `signal_insights_list_files` | Default | List files in the workspace. |
 | `signal_insights_read_file` | Default | Read a workspace file. |
 | `signal_insights_write_file` | Default | Write a workspace file. |
@@ -340,8 +332,8 @@ MCP Apps viewers (registered when any Signal Insights tool is active):
 
 1. Call `signal_insights_create_workspace` once at the start of a conversation.
 2. Pass the returned workspace ID to every later analysis tool.
-3. Files from `signal_insights_execute_code` and `signal_insights_shell` persist in that workspace. Exports land at `/home/user/workspace/artifacts/` inside the sandbox.
-4. After a restart, the prior workspace UUID is still valid. The kernel is fresh; exported S3 artifacts remain.
+3. Files created by analysis tools persist in that workspace.
+4. After a restart, the workspace ID stays valid. In-memory state resets; saved files remain.
 
 ---
 
@@ -374,17 +366,11 @@ This repo uses [Bun](https://bun.sh/). Copy [`.dev.vars.example`](./.dev.vars.ex
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `ANTHROPIC_API_KEY` | Yes | Required for every route, including `/v1/mcp`. Also used by the playground chat. |
+| `ANTHROPIC_API_KEY` | Yes | Must be set for the worker to start; any non-empty value works. A real key is only needed for playground chat (`/v1/api/chat`). |
 | `PERIGON_API_KEY` | Playground | Playground default key when testing with a manual API key. |
-| `PERIGON_API_URL` | Optional | Perigon API base URL (OAuth token/revoke/register). Defaults in [`wrangler.jsonc`](./wrangler.jsonc) for local dev. |
+| `PERIGON_API_URL` | Optional | Perigon API base URL. Defaults in [`wrangler.jsonc`](./wrangler.jsonc) for local dev. |
 | `PERIGON_APP_URL` | Optional | App base URL for the OAuth consent page linked from discovery metadata. |
 | `MCP_PUBLIC_URL` | Optional | Public MCP origin used in OAuth metadata (defaults to local dev URL). |
-
-To use Perigon dashboard cookies with the playground, add this to `/etc/hosts`:
-
-```txt
-127.0.0.1 local-mcp.perigon.io
-```
 
 ```zsh
 bun i
@@ -399,6 +385,8 @@ bun test
 ### Contributing and maintainers
 
 Open a GitHub issue or pull request for bugs, missing tools, or use cases. Someone at Perigon will review it.
+
+Report security issues privately. See [SECURITY.md](./SECURITY.md). Do not open a public issue.
 
 Maintained by the Perigon team:
 
