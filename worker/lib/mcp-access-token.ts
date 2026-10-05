@@ -1,5 +1,4 @@
 const JWT_SEGMENT_COUNT = 3;
-const JWT_EXPIRY_SKEW_MS = 30_000;
 
 /** MCP OAuth access tokens are JWTs (three base64url segments). */
 export function looksLikeMcpAccessToken(token: string): boolean {
@@ -25,26 +24,16 @@ export function mcpAccessTokenExpiryMs(token: string): number | null {
 
 /**
  * Introspection cache TTL for bearer credentials. API keys may reuse cached
- * introspection briefly; MCP JWTs are capped by remaining token lifetime so
- * revocation/expiry is not masked by a fixed five-minute window.
+ * introspection briefly. MCP OAuth JWTs are not cached so revocation and scope
+ * changes are visible on the next request.
  */
 export function introspectionCacheTtlMs(
   bearerToken: string,
   maxTtlMs: number,
 ): number {
-  if (!looksLikeMcpAccessToken(bearerToken)) {
-    return maxTtlMs;
-  }
-
-  const expMs = mcpAccessTokenExpiryMs(bearerToken);
-  if (expMs === null) {
+  if (looksLikeMcpAccessToken(bearerToken)) {
     return 0;
   }
 
-  const remainingMs = expMs - Date.now() - JWT_EXPIRY_SKEW_MS;
-  if (remainingMs <= 0) {
-    return 0;
-  }
-
-  return Math.min(maxTtlMs, remainingMs);
+  return maxTtlMs;
 }

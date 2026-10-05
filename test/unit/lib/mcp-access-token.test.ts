@@ -25,16 +25,8 @@ describe("mcp access token helpers", () => {
     expect(mcpAccessTokenExpiryMs(testJwt({ exp }))).toBe(exp * 1000);
   });
 
-  test("introspectionCacheTtlMs caps JWT cache by remaining lifetime", () => {
-    const exp = Math.floor(Date.now() / 1000) + 120;
-    const token = testJwt({ exp });
-    const ttl = introspectionCacheTtlMs(token, 5 * 60 * 1000);
-    expect(ttl).toBeGreaterThan(0);
-    expect(ttl).toBeLessThanOrEqual(120 * 1000);
-  });
-
-  test("introspectionCacheTtlMs skips cache for expired JWT", () => {
-    const exp = Math.floor(Date.now() / 1000) - 10;
+  test("introspectionCacheTtlMs does not cache MCP OAuth JWT introspection", () => {
+    const exp = Math.floor(Date.now() / 1000) + 3600;
     const token = testJwt({ exp });
     expect(introspectionCacheTtlMs(token, 5 * 60 * 1000)).toBe(0);
   });

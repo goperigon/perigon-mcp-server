@@ -1,6 +1,11 @@
-import { describe, expect, test } from "bun:test";
+import { afterEach, describe, expect, test } from "bun:test";
 import { Configuration, V1Api } from "@goperigon/perigon-ts";
 import { normalizePerigonApiHost } from "../../../worker/lib/perigon";
+import { restoreFetch } from "../../helpers/mock-fetch";
+
+afterEach(() => {
+  restoreFetch();
+});
 
 describe("normalizePerigonApiHost", () => {
   test("strips trailing slash and /v1 suffix", () => {
