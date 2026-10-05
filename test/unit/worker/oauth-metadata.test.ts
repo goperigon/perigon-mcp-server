@@ -53,10 +53,10 @@ describe("oauth metadata", () => {
       authorization_endpoint: string;
     };
     expect(body.authorization_endpoint).toBe(
-      "https://www.perigon.io/oauth/authorize",
+      "https://mcp.perigon.io/oauth/authorize",
     );
     expect(body.token_endpoint).toBe(
-      "https://api.perigon.io/v1/mcp/oauth/token",
+      "https://mcp.perigon.io/v1/mcp/oauth/token",
     );
   });
 
@@ -94,6 +94,7 @@ describe("oauth metadata", () => {
       resource: "https://mcp.perigon.io",
       authorization_servers: ["https://mcp.perigon.io"],
       bearer_methods_supported: ["header"],
+      resource_documentation: "https://perigon.io/docs/api/mcp",
     });
 
     const authServer = handleOAuthMetadata(
@@ -109,10 +110,10 @@ describe("oauth metadata", () => {
     };
     expect(body.issuer).toBe("https://mcp.perigon.io");
     expect(body.authorization_endpoint).toBe(
-      "https://www.perigon.io/oauth/authorize",
+      "https://mcp.perigon.io/oauth/authorize",
     );
     expect(body.token_endpoint).toBe(
-      "https://api.perigon.io/v1/mcp/oauth/token",
+      "https://mcp.perigon.io/v1/mcp/oauth/token",
     );
   });
 
@@ -131,13 +132,13 @@ describe("oauth metadata", () => {
       registration_endpoint: string;
     };
     expect(body.authorization_endpoint).toBe(
-      "https://app.test.local/oauth/authorize",
+      "https://mcp.test.local/oauth/authorize",
     );
     expect(body.token_endpoint).toBe(
-      "https://api.test.local/v1/mcp/oauth/token",
+      "https://mcp.test.local/v1/mcp/oauth/token",
     );
     expect(body.registration_endpoint).toBe(
-      "https://api.test.local/v1/mcp/oauth/register",
+      "https://mcp.test.local/v1/mcp/oauth/register",
     );
   });
 });

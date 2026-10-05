@@ -39,7 +39,7 @@
     "directory": "./dist/",
     "not_found_handling": "single-page-application",
     "binding": "ASSETS",
-    "run_worker_first": ["/v1/*", "/.well-known/*"],
+    "run_worker_first": ["/v1/*", "/.well-known/*", "/oauth/*"],
   },
   "observability": {
     "enabled": true,
@@ -109,7 +109,7 @@
         "directory": "./dist/",
         "not_found_handling": "single-page-application",
         "binding": "ASSETS",
-        "run_worker_first": ["/v1/*", "/.well-known/*"],
+        "run_worker_first": ["/v1/*", "/.well-known/*", "/oauth/*"],
       },
       "vars": {
         "ENVIRONMENT": "production",

@@ -3,7 +3,11 @@ import {
   handleChat,
   handleMCP,
   handleOAuthMetadata,
+  handleOAuthAuthorizeRedirect,
   handlePerigonApiKeys,
+  isOAuthApiProxyPath,
+  isOAuthAuthorizePath,
+  proxyOAuthApiRequest,
   handleTools,
   handleTurnstileAuth,
   handleValidateUser,
@@ -63,6 +67,16 @@ export default {
     if (isOAuthMetadataPath(pathname)) {
       const metadataResponse = handleOAuthMetadata(request, env);
       return withCorsHeaders(request, metadataResponse, env);
+    }
+
+    if (isOAuthAuthorizePath(pathname)) {
+      const authorizeResponse = handleOAuthAuthorizeRedirect(request, env);
+      return withCorsHeaders(request, authorizeResponse, env);
+    }
+
+    if (isOAuthApiProxyPath(pathname)) {
+      const proxyResponse = await proxyOAuthApiRequest(request, env);
+      return withCorsHeaders(request, proxyResponse, env);
     }
 
     const handler = ROUTES[pathname];
