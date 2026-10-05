@@ -12,7 +12,7 @@
   <a href="#mcp-registry"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fregistry.modelcontextprotocol.io%2Fv0%2Fservers%2Fio.github.goperigon%252Fperigon-mcp-server%2Fversions%2Flatest&query=%24.server.version&label=MCP%20Registry&color=227C9D" height="18" alt="MCP Registry version" /></a>
   <a href="https://smithery.ai/server/goperigon/perigon-mcp-server"><img src="https://img.shields.io/badge/Smithery-listed-227C9D" height="18" alt="Listed on Smithery" /></a>
   <a href="#quick-start"><img src="https://img.shields.io/badge/transport-Streamable%20HTTP-227C9D" height="18" alt="Transport: Streamable HTTP" /></a>
-  <a href="https://dev.perigon.io/docs/mcp"><img src="https://img.shields.io/badge/docs-dev.perigon.io-227C9D" height="18" alt="Documentation" /></a>
+  <a href="https://perigon.io/docs/api/mcp"><img src="https://img.shields.io/badge/docs-perigon.io-227C9D" height="18" alt="Documentation" /></a>
   <a href="https://mcp.perigon.io"><img src="https://img.shields.io/badge/try%20it-playground%20%E2%86%92-F9C035" height="18" alt="Try it in the playground" /></a>
 </p>
 
@@ -34,13 +34,60 @@
 
 Endpoint: `https://mcp.perigon.io/v1/mcp`
 
-Try it in the [playground](https://mcp.perigon.io) (requires a signed-in [Perigon dashboard](https://perigon.io) session). Step-by-step client setup (OAuth and API keys): [dev.perigon.io/docs/mcp](https://dev.perigon.io/docs/mcp).
+Try it in the [playground](https://mcp.perigon.io) (requires a signed-in [Perigon dashboard](https://perigon.io) session). Human-oriented setup: [perigon.io/docs/api/mcp](https://perigon.io/docs/api/mcp). **Install with an agent:** pass [perigon.io/mcp.md](https://perigon.io/mcp.md) to your AI client and follow the steps (OAuth sign-in, no API key in chat).
 
-**OAuth (recommended for MCP clients)** — Connect with your Perigon account when the client prompts you to sign in. No API key in config. See [Authentication](#authentication).
+#### OAuth (recommended)
 
-**API key (manual config)** — `Authorization: Bearer <key>` with a key from [perigon.io/dev/keys](https://perigon.io/dev/keys).
+Add the server URL only. On first connect, the client discovers OAuth metadata and opens [Perigon sign-in](https://www.perigon.io/oauth/authorize). See [Authentication](#authentication).
 
-**Native Streamable HTTP (API key):**
+**Native Streamable HTTP:**
+
+```json
+{
+  "mcpServers": {
+    "perigon": {
+      "url": "https://mcp.perigon.io/v1/mcp",
+      "type": "http"
+    }
+  }
+}
+```
+
+**`mcp-remote` (clients without native HTTP):**
+
+```json
+{
+  "mcpServers": {
+    "perigon": {
+      "command": "npx",
+      "args": ["-y", "mcp-remote@latest", "https://mcp.perigon.io/v1/mcp"]
+    }
+  }
+}
+```
+
+**Claude Code:**
+
+```bash
+claude mcp add --transport http perigon https://mcp.perigon.io/v1/mcp
+```
+
+Then run `/mcp` in Claude Code and choose **Authenticate** when prompted.
+
+**Codex CLI** — add to `~/.codex/config.toml`:
+
+```toml
+[mcp_servers.perigon]
+url = "https://mcp.perigon.io/v1/mcp"
+```
+
+Then run `codex mcp login perigon`.
+
+#### API key (scripts and pinned keys)
+
+Use when the client cannot complete OAuth or you need a fixed key in config. Keys from [perigon.io/dev/keys](https://perigon.io/dev/keys).
+
+**Native Streamable HTTP:**
 
 ```json
 {
@@ -56,7 +103,7 @@ Try it in the [playground](https://mcp.perigon.io) (requires a signed-in [Perigo
 }
 ```
 
-**`mcp-remote` (clients without native HTTP):**
+**`mcp-remote`:**
 
 ```json
 {
@@ -102,10 +149,18 @@ The MCP endpoint accepts **`Authorization: Bearer`** credentials in two forms:
 
 Hosted discovery (production):
 
-- Protected resource: `https://mcp.perigon.io/.well-known/oauth-protected-resource`
+- Protected resource: `https://mcp.perigon.io/.well-known/oauth-protected-resource` (alias: `https://mcp.perigon.io/.well-known/oauth-protected-resource/v1/mcp`)
 - Authorization server metadata: `https://mcp.perigon.io/.well-known/oauth-authorization-server`
 
-The client registers (or uses a known client id), runs PKCE, and opens the Perigon consent UI. After approval, the client receives a short-lived authorization code and exchanges it for an MCP access token at the Perigon API token endpoint. The client then sends that token on every MCP request.
+From authorization server metadata:
+
+- Consent UI: `https://www.perigon.io/oauth/authorize`
+- Token: `https://api.perigon.io/v1/mcp/oauth/token`
+- Dynamic client registration: `https://api.perigon.io/v1/mcp/oauth/register`
+- Revocation: `https://api.perigon.io/v1/mcp/oauth/revoke`
+- PKCE: `S256` (`code_challenge_methods_supported`)
+
+The client registers (or uses a known client id), runs PKCE, and opens the Perigon consent UI. After approval, the client receives a short-lived authorization code and exchanges it for an MCP access token at the token endpoint. The client then sends that token on every MCP request.
 
 - Sign-in requires a verified Perigon user with at least **User** role in the organization.
 - Usage is billed against your organization’s dedicated **MCP** API key on the server; you do not paste that key into the client.
