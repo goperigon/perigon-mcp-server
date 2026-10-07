@@ -130,8 +130,12 @@ function getAllowedToolsForScopes(scopes: Scopes[]): ToolName[] {
 export function resolveNewsToolsForSession(
   scopes: Scopes[],
   requestedTools: string[] | null,
+  explicitAllTools = false,
 ): ToolName[] {
   const allowedNewsTools = getAllowedToolsForScopes(scopes);
+  if (explicitAllTools) {
+    return [...new Set([...allowedNewsTools, ...OPT_IN_TOOL_NAMES])];
+  }
   if (!requestedTools || requestedTools.length === 0) return allowedNewsTools;
   // Opt-in tools are never part of the unfiltered default, but an explicit
   // request must still be able to select them since they carry no scope

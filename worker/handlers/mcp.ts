@@ -6,7 +6,11 @@ import { McpAgent } from "agents/mcp";
 import { PerigonMCP, type Props } from "../mcp/mcp";
 import { introspectionCacheTtlMs } from "../lib/mcp-access-token";
 import { mcpPublicOrigin, perigonApiOrigin } from "../lib/mcp-env";
-import { parseRequestedTools, resolveToolParam } from "../mcp/tools/selection";
+import {
+  isExplicitAllToolsRequest,
+  parseRequestedTools,
+  resolveToolParam,
+} from "../mcp/tools/selection";
 
 const SSE_PATHS = ["/v1/sse", "/v1/sse/message"] as const;
 const STREAMABLE_PATH = "/v1/mcp";
@@ -117,15 +121,18 @@ async function loadMcpProps(
   const perigonApiUrl = perigonApiOrigin(env, request);
   const perigon = new Perigon(apiKey, perigonApiUrl);
   const apiKeyDetails = await getCachedIntrospection(perigon, apiKey);
-  const requestedTools = parseRequestedTools(
-    resolveToolParam(new URL(request.url)),
-  );
+  const toolParam = resolveToolParam(new URL(request.url));
+  const explicitAllTools = isExplicitAllToolsRequest(toolParam);
+  const requestedTools = explicitAllTools
+    ? null
+    : parseRequestedTools(toolParam);
   return {
     apiKey,
     perigonApiUrl,
     scopes: apiKeyDetails.scopes,
     organizationId: apiKeyDetails.organizationId,
     requestedTools,
+    explicitAllTools,
   };
 }
 

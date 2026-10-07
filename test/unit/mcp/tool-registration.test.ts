@@ -25,6 +25,14 @@ describe("resolveNewsToolsForSession", () => {
     expect(new Set(withEmpty)).toEqual(new Set(withNull));
   });
 
+  test("explicitAllTools activates opt-in tools including create_monitor", () => {
+    const active = resolveNewsToolsForSession(NO_SCOPES, null, true);
+    expect(active).toContain("create_monitor");
+    expect(active).toContain("update_monitor");
+    expect(active).toContain("watchlists");
+    expect(active).toContain("get_top_topics");
+  });
+
   test("`monitoring` profile activates create_monitor and update_monitor", () => {
     const active = resolveNewsToolsForSession(
       NO_SCOPES,

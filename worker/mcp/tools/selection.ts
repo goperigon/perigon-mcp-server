@@ -88,6 +88,11 @@ export function resolveToolParam(url: URL): string | null {
   return url.searchParams.get("tool") ?? url.searchParams.get("tools");
 }
 
+/** True when the client explicitly requested the full tool catalogue via `?tools=all`. */
+export function isExplicitAllToolsRequest(param: string | null): boolean {
+  return param?.trim().toLowerCase() === "all";
+}
+
 /**
  * Parses the raw `?tool=` (or `?tools=`) query parameter value into a
  * validated list of known tool names (news tools and signal tools).
@@ -95,11 +100,10 @@ export function resolveToolParam(url: URL): string | null {
  * `monitoring`, `platform`, `minimal`), or a mix of both — profile aliases
  * expand to their underlying tool list before validation.
  *
- * Returns `null` in four cases (all meaning "no filter — use all permitted tools"):
- *   - the parameter is absent (`null` input)
- *   - the parameter is an empty string
- *   - the parameter value is `"all"` (explicit alias for all tools)
- *   - all provided names are unknown (prevents accidental total lockout)
+ * Returns `null` when the parameter is absent, empty, or `"all"` (callers that
+ * need opt-in write/platform tools must use `isExplicitAllToolsRequest` on the
+ * raw param before parsing). Also returns `null` when all provided names are
+ * unknown (prevents accidental total lockout).
  *
  * Unknown names mixed with valid names are silently dropped, so callers
  * receive only the subset they can actually use.
