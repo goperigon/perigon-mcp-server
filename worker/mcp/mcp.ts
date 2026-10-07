@@ -41,6 +41,8 @@ export type Props = {
   perigonApiUrl: string;
   scopes: Scopes[];
   requestedTools: string[] | null;
+  /** When true, `?tools=all` — default scope tools plus opt-in catalogue tools. */
+  explicitAllTools: boolean;
   organizationId: number;
 };
 
@@ -61,10 +63,14 @@ export class PerigonMCP extends McpAgent<Env, unknown, Props> {
 
   async init() {
     const perigon = new Perigon(this.props!.apiKey, this.props!.perigonApiUrl);
-    const { scopes, requestedTools } = this.props!;
+    const { scopes, requestedTools, explicitAllTools } = this.props!;
 
     // ── News tools (existing) ──────────────────────────────────────────────
-    const activeNewsTools = resolveNewsToolsForSession(scopes, requestedTools);
+    const activeNewsTools = resolveNewsToolsForSession(
+      scopes,
+      requestedTools,
+      explicitAllTools,
+    );
 
     // Computed once per session from the already-known scopes (no extra
     // network call) and used to append session-specific entitlement notes

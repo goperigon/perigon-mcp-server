@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import {
+  isExplicitAllToolsRequest,
   parseRequestedTools,
   resolveActiveTools,
   resolveToolParam,
@@ -53,6 +54,24 @@ describe("resolveToolParam", () => {
 
   test("returns empty string (falsy) for ?tool= with no value", () => {
     expect(resolveToolParam(u("?tool="))).toBe("");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// isExplicitAllToolsRequest
+// ---------------------------------------------------------------------------
+
+describe("isExplicitAllToolsRequest", () => {
+  test('returns true only for "all"', () => {
+    expect(isExplicitAllToolsRequest("all")).toBe(true);
+    expect(isExplicitAllToolsRequest("ALL")).toBe(true);
+    expect(isExplicitAllToolsRequest("  all  ")).toBe(true);
+  });
+
+  test("returns false when absent or a concrete filter", () => {
+    expect(isExplicitAllToolsRequest(null)).toBe(false);
+    expect(isExplicitAllToolsRequest("monitoring")).toBe(false);
+    expect(isExplicitAllToolsRequest("create_monitor")).toBe(false);
   });
 });
 
