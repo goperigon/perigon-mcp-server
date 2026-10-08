@@ -176,11 +176,13 @@ Append `?tools=` to the MCP URL to limit the session. `?tool=` is an alias and w
 https://mcp.perigon.io/v1/mcp?tools=search_news_articles,search_news_stories
 https://mcp.perigon.io/v1/mcp?tools=research
 https://mcp.perigon.io/v1/mcp?tools=research,create_monitor
+https://mcp.perigon.io/v1/mcp?tools=all
 ```
 
 - Comma-separated tool names, profile aliases, or a mix.
 - The filter intersects with what your credentials allow (API key scopes or your org’s MCP access for OAuth). It cannot expand access.
-- Omit the parameter, pass an empty value, or pass `all` → default set (opt-in tools stay off).
+- Omit the parameter or pass an empty value → default set (opt-in tools stay off; smaller tool list for token savings).
+- Pass `all` → scope-allowed default tools plus every opt-in catalogue tool (monitor write, platform helpers, `get_source_by_id`, `get_top_topics`, `get_story_stats`, and the rest). Scope-gated search tools still require the matching permission.
 - Unknown names are dropped. If every name is unknown, the default set is used.
 
 | Profile | Tools |
@@ -200,7 +202,7 @@ Availability:
 
 - **Default** — registered when `?tools=` is omitted (and the key has the listed scope, if any).
 - **Scope** — registered only when the key has that permission.
-- **Opt-in** — omitted from the default set. Request by name or profile. Registration is not the same as API access.
+- **Opt-in** — omitted from the default set. Request by name, profile, or `?tools=all`. Registration is not the same as API access.
 
 #### Search
 
