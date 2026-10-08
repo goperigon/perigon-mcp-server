@@ -147,6 +147,7 @@ Journalist Ids: ${journalistIds}
  */
 export const companyNewsTool = {
   name: "get_company_news",
+  title: "Company news",
   description:
     "Quick shortcut to get recent news about a specific company by name. Automatically looks up company details for context, then finds recent articles mentioning that company within a configurable time window. Use this for simple 'what's the latest news about [company]?' queries. For advanced filtering, use search_news_articles with companyDomain or companySymbol instead.",
   parameters: companyNewsArgs,

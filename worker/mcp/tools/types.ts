@@ -10,6 +10,8 @@ export type ToolCallback<T extends z.ZodObject<any> = z.ZodObject<any>> = (
 ) => Promise<CallToolResult>;
 
 export interface ToolAnnotations {
+  /** Human-readable label for MCP host tool directories (e.g. Claude connector review). */
+  title?: string;
   readOnlyHint?: boolean;
   destructiveHint?: boolean;
   idempotentHint?: boolean;
@@ -21,7 +23,7 @@ export interface ToolAnnotations {
  */
 export interface ToolDefinition<T extends z.ZodObject<any> = z.ZodObject<any>> {
   name: string;
-  title?: string;
+  title: string;
   description: string;
   parameters: T;
   annotations?: ToolAnnotations;

@@ -142,6 +142,7 @@ export class PerigonMCP extends McpAgent<Env, unknown, Props> {
       this.server.registerTool(
         def.name,
         {
+          title: def.annotations.title,
           description: def.description,
           inputSchema: def.parameters,
           annotations: def.annotations,
@@ -214,7 +215,10 @@ export class PerigonMCP extends McpAgent<Env, unknown, Props> {
         title: definition.title,
         description,
         inputSchema: definition.parameters,
-        annotations: definition.annotations,
+        annotations: {
+          title: definition.title,
+          ...definition.annotations,
+        },
       },
       definition.createHandler(perigon),
     );

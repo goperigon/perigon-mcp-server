@@ -151,6 +151,7 @@ Similarity Score: ${scored.score || "N/A"}
 
 export const wikipediaVectorTool = {
   name: "search_vector_wikipedia",
+  title: "Vector Wikipedia",
   description:
     "Semantic search over Wikipedia pages using natural language and vector embeddings. Use this instead of search_wikipedia when the query is conceptual or conversational rather than keyword-based. Finds pages related by meaning even without exact keyword matches. Returns page summaries, Wikidata IDs, categories, and similarity scores. Filter by viewership with pageviewsFrom/pageviewsTo — there is no boolean has-pageviews filter on this endpoint (unlike search_wikipedia).",
   parameters: wikipediaVectorArgs,

@@ -17,6 +17,7 @@ export const exportEventsTool = {
   parameters: exportEventsSchema,
   _meta: EXPORT_TOOL_META,
   annotations: {
+    title: "Export monitor events",
     readOnlyHint: false,
     openWorldHint: false,
     destructiveHint: true,

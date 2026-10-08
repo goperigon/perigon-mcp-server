@@ -7,6 +7,7 @@ export const writeFileTool = {
     "Write content to a file in the sandbox workspace. Creates directories as needed.",
   parameters: writeFileSchema,
   annotations: {
+    title: "Write Insights file",
     readOnlyHint: false,
     openWorldHint: false,
     destructiveHint: true,

@@ -10,6 +10,7 @@ export const readFileTool = {
     `Use on files up to a few MB; for larger files, use ${executeCodeTool.name} directly instead.`,
   parameters: readFileSchema,
   annotations: {
+    title: "Read Insights file",
     readOnlyHint: true,
     openWorldHint: false,
     destructiveHint: false,

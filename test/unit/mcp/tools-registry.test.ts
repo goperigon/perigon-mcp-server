@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { z } from "zod";
 import { TOOL_DEFINITIONS } from "../../../worker/mcp/tools";
+import { SIGNAL_TOOL_DEFINITIONS } from "../../../worker/mcp/tools/signals";
 
 const EXPECTED_TOOL_NAMES = [
   // Search tools
@@ -82,6 +83,23 @@ describe("TOOL_DEFINITIONS", () => {
       // parameters should be a zod object
       expect(def.parameters).toBeInstanceOf(z.ZodObject);
       expect(typeof def.createHandler).toBe("function");
+    }
+  });
+
+  test("each news tool has a non-empty display title", () => {
+    for (const [key, def] of Object.entries(TOOL_DEFINITIONS)) {
+      expect(typeof def.title, `${key}.title`).toBe("string");
+      expect(def.title.trim().length, `${key}.title`).toBeGreaterThan(0);
+    }
+  });
+
+  test("each signal tool has annotations.title for MCP host directories", () => {
+    for (const [key, def] of Object.entries(SIGNAL_TOOL_DEFINITIONS)) {
+      expect(def.annotations.title, `${key}.annotations.title`).toBeDefined();
+      expect(
+        def.annotations.title?.trim().length,
+        `${key}.annotations.title`,
+      ).toBeGreaterThan(0);
     }
   });
 

@@ -9,6 +9,7 @@ export const readSignalTool = {
     "TOPIC: newsletterCount and date range — use list_newsletters / read_newsletter.",
   parameters: readSignalSchema,
   annotations: {
+    title: "Read monitor details",
     readOnlyHint: true,
     openWorldHint: false,
     destructiveHint: false,

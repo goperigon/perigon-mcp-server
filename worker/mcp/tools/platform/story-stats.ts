@@ -93,6 +93,7 @@ export function getStoryStats(
 
 export const storyStatsTool = {
   name: "get_story_stats",
+  title: "Story volume",
   description:
     "Get story-level (clustered headline) volume or velocity over time — the story equivalent of get_article_counts. Use metric='volume' for publication counts bucketed by time, or metric='velocity' for how fast specific clusters are accumulating mentions (requires clusterId from search_news_stories). Requires the CLUSTERS permission.",
   parameters: storyStatsArgs,

@@ -16,6 +16,7 @@ export const previewChartTool = {
   parameters: executeCodeSchema,
   _meta: CHART_TOOL_META,
   annotations: {
+    title: "Preview Insights chart",
     readOnlyHint: false,
     openWorldHint: true,
     destructiveHint: true,

@@ -10,6 +10,7 @@ export const strReplaceTool = {
     `Use on files up to a few MB; for larger files, use ${executeCodeTool.name} directly instead.`,
   parameters: strReplaceSchema,
   annotations: {
+    title: "Edit Insights file",
     readOnlyHint: false,
     openWorldHint: false,
     destructiveHint: true,
