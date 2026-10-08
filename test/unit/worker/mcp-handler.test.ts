@@ -1,27 +1,46 @@
 import { afterEach, describe, expect, mock, test } from "bun:test";
+import type { Props } from "../../../worker/mcp/mcp";
 import { HttpError } from "../../../worker/types/types";
 import { restoreFetch } from "../../helpers/mock-fetch";
 
 let introspectionError = new HttpError(401, "invalid api key");
+let introspectionSucceeds = false;
+const introspectionSuccess = {
+  scopes: [],
+  organizationId: 1,
+};
+
+let sessionPropsFromDispatch: Props | undefined;
 
 await mock.module("agents/mcp", () => ({
   McpAgent: class {},
 }));
 await mock.module("../../../worker/mcp/mcp", () => ({
-  PerigonMCP: class {},
+  PerigonMCP: class {
+    static serve(_path: string) {
+      return {
+        fetch: (
+          _request: Request,
+          _env: Env,
+          ctx: ExecutionContext & { props?: Props },
+        ) => {
+          sessionPropsFromDispatch = ctx.props;
+          return Promise.resolve(new Response("ok", { status: 200 }));
+        },
+      };
+    }
+  },
 }));
 await mock.module("../../../worker/lib/perigon", () => ({
   Perigon: class {
     introspection() {
+      if (introspectionSucceeds) {
+        return Promise.resolve(introspectionSuccess);
+      }
       return Promise.reject(introspectionError);
     }
   },
 }));
-await mock.module("../../../worker/mcp/tools/selection", () => ({
-  parseRequestedTools: () => undefined,
-  resolveToolParam: () => null,
-}));
-
 const { handleMCP } = await import("../../../worker/handlers/mcp");
 
 const KEYS_URL = "https://perigon.io/dev/keys";
@@ -36,6 +55,8 @@ const env = {
 
 afterEach(() => {
   restoreFetch();
+  introspectionSucceeds = false;
+  sessionPropsFromDispatch = undefined;
 });
 
 function testJwt(payload: Record<string, unknown>): string {
@@ -49,12 +70,12 @@ function testJwt(payload: Record<string, unknown>): string {
 
 const ctx = {} as ExecutionContext;
 
-function mcpRequest(authorization?: string): Request {
+function mcpRequest(authorization?: string, url?: string): Request {
   const headers = new Headers();
   if (authorization !== undefined) {
     headers.set("Authorization", authorization);
   }
-  return new Request("https://mcp.perigon.io/v1/mcp", {
+  return new Request(url ?? "https://mcp.perigon.io/v1/mcp", {
     method: "POST",
     headers,
   });
@@ -125,6 +146,29 @@ describe("handleMCP auth errors", () => {
     expect(response.status).toBe(401);
     expect(response.headers.get("WWW-Authenticate")).toContain(
       "https://mcp.perigon.io/.well-known/oauth-protected-resource",
+    );
+  });
+});
+
+describe("handleMCP tool filter forwarding", () => {
+  test("?tools=all forwards explicitAllTools and null requestedTools to the session", async () => {
+    introspectionSucceeds = true;
+
+    const response = await handleMCP(
+      mcpRequest(
+        "Bearer test-key-tools-all",
+        "https://mcp.perigon.io/v1/mcp?tools=all",
+      ),
+      env,
+      ctx,
+    );
+
+    expect(response.status).toBe(200);
+    expect(sessionPropsFromDispatch).toEqual(
+      expect.objectContaining({
+        requestedTools: null,
+        explicitAllTools: true,
+      }),
     );
   });
 });
