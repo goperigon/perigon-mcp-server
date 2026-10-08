@@ -13,6 +13,7 @@ export const createWorkspaceTool = {
     "Do NOT invent workspace IDs — always use the one returned here.",
   parameters: createWorkspaceSchema,
   annotations: {
+    title: "Initialize Insights analysis",
     readOnlyHint: false,
     openWorldHint: false,
     destructiveHint: false,

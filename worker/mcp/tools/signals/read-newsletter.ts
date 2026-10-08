@@ -10,6 +10,7 @@ export const readNewsletterTool = {
     "Only works for newsletters belonging to TOPIC signals.",
   parameters: readNewsletterSchema,
   annotations: {
+    title: "Read monitor briefing",
     readOnlyHint: true,
     openWorldHint: false,
     destructiveHint: false,

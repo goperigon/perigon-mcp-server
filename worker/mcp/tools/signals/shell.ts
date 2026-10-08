@@ -10,6 +10,7 @@ export const shellTool = {
     `Query data files are accessible at ${DATA_DIR}. No internet access except *.amazonaws.com.`,
   parameters: shellSchema,
   annotations: {
+    title: "Insights shell",
     readOnlyHint: false,
     openWorldHint: true,
     destructiveHint: true,

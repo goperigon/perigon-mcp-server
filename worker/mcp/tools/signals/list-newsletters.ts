@@ -11,6 +11,7 @@ export const listNewslettersTool = {
     "then call signal_insights_read_newsletter for full content.",
   parameters: listNewslettersSchema,
   annotations: {
+    title: "List monitor briefings",
     readOnlyHint: true,
     openWorldHint: false,
     destructiveHint: false,

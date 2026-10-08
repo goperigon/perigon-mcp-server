@@ -253,8 +253,10 @@ function signalStub(tool: {
   parameters: any;
   annotations: ToolAnnotations;
 }): ToolDefinition<any> {
+  const displayTitle = tool.annotations.title ?? tool.name;
   return {
     name: tool.name,
+    title: displayTitle,
     description: tool.description,
     parameters: tool.parameters,
     annotations: tool.annotations,

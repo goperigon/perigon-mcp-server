@@ -18,6 +18,7 @@ export const executeCodeTool = {
     "No outbound internet access except *.amazonaws.com.",
   parameters: executeCodeSchema,
   annotations: {
+    title: "Run Insights code",
     readOnlyHint: false,
     openWorldHint: true,
     destructiveHint: true,

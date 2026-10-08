@@ -112,6 +112,7 @@ Sub Category: ${topic.labels?.subcategory ?? "N/A"}
  */
 export const topicsTool = {
   name: "search_topics",
+  title: "Topics",
   description:
     "Browse and search the Perigon topic taxonomy. Use this to discover available topics for use as filters in other search tools (articles, stories, journalists). Topics are more granular than categories. Filter by name, category, or subcategory. Returns topic names with their category/subcategory classification.",
   parameters: topicsArgs,

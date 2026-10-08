@@ -34,6 +34,10 @@ import {
   renderEntitlementsReference,
 } from "./reference-resources";
 import { registerResearchPrompts } from "./prompts";
+import {
+  buildNewsToolRegisterConfig,
+  buildSignalToolRegisterConfig,
+} from "./register-tool-config";
 
 export type Props = {
   apiKey: string;
@@ -141,12 +145,7 @@ export class PerigonMCP extends McpAgent<Env, unknown, Props> {
       const def: SignalToolDefinition<any> = SIGNAL_TOOL_DEFINITIONS[toolName];
       this.server.registerTool(
         def.name,
-        {
-          description: def.description,
-          inputSchema: def.parameters,
-          annotations: def.annotations,
-          _meta: def._meta,
-        },
+        buildSignalToolRegisterConfig(def),
         def.createHandler(insightsApi, pokeyClient),
       );
     }
@@ -210,12 +209,7 @@ export class PerigonMCP extends McpAgent<Env, unknown, Props> {
 
     this.server.registerTool(
       definition.name,
-      {
-        title: definition.title,
-        description,
-        inputSchema: definition.parameters,
-        annotations: definition.annotations,
-      },
+      buildNewsToolRegisterConfig(definition, description),
       definition.createHandler(perigon),
     );
   }

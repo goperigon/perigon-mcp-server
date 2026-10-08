@@ -138,6 +138,7 @@ export function searchStoryHistory(
 
 export const storyHistoryTool = {
   name: "search_story_history",
+  title: "Story History",
   description:
     "Search story history to track how news stories evolve over time. Returns timestamped snapshots of story clusters including summaries, short summaries, key points, and changelogs. Use this to understand how a story has developed, what changed between updates, and to review the timeline of a news event. Filter by cluster ID, date range, sort order, or changelog presence. Only use this tool instead of search_news_stories tool when you need to understand the history of a story.",
   parameters: storyHistoryArgs,

@@ -123,6 +123,7 @@ export function getTopTopics(
 
 export const topTopicsTool = {
   name: "get_top_topics",
+  title: "Top topics",
   description:
     "Get the topics whose news coverage is spiking — mentioned significantly more in a recent window than a prior baseline period. Use this alongside get_top_people and get_top_companies when the user asks 'what topics are trending?' The comparison window defaults to last 3 days vs. last 30 days; override with currentFrom/To and baselineFrom/To. Supports the same curated article filters as the other stats tools.",
   parameters: topTopicsArgs,

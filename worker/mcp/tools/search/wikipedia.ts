@@ -233,6 +233,7 @@ Last Modified: ${page.wikiRevisionTs}
  */
 export const wikipediaTool = {
   name: "search_wikipedia",
+  title: "Wikipedia",
   description:
     "Search Wikipedia pages using keyword-based queries with advanced filtering. Use this for factual background information, encyclopedia-style lookups, or when you need structured Wikipedia data. Filter by title, summary, content, Wikidata entity IDs, categories, page views, and revision dates. Returns page summaries, URLs, Wikidata IDs, categories, page view statistics, and last modification dates.",
   parameters: wikipediaArgs,

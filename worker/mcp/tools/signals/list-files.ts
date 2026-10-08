@@ -9,6 +9,7 @@ export const listFilesTool = {
     `Default directory is the workspace root (${WORKSPACE_DIR}).`,
   parameters: listFilesSchema,
   annotations: {
+    title: "List Insights files",
     readOnlyHint: true,
     openWorldHint: false,
     destructiveHint: false,

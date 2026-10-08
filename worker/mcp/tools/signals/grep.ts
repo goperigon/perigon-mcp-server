@@ -10,6 +10,7 @@ export const grepTool = {
     `Use on files up to a few MB; for larger files, use ${executeCodeTool.name} directly instead.`,
   parameters: grepSchema,
   annotations: {
+    title: "Search Insights files",
     readOnlyHint: true,
     openWorldHint: false,
     destructiveHint: false,

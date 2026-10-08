@@ -11,6 +11,7 @@ export const searchSignalsTool = {
     "If the search query is not present, this can be used to list all available signals.",
   parameters: searchSignalsSchema,
   annotations: {
+    title: "Search monitors",
     readOnlyHint: true,
     openWorldHint: false,
     destructiveHint: false,
