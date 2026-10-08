@@ -17,11 +17,6 @@ await mock.module("../../../worker/lib/perigon", () => ({
     }
   },
 }));
-await mock.module("../../../worker/mcp/tools/selection", () => ({
-  parseRequestedTools: () => undefined,
-  resolveToolParam: () => null,
-}));
-
 const { handleMCP } = await import("../../../worker/handlers/mcp");
 
 const KEYS_URL = "https://perigon.io/dev/keys";
