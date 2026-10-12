@@ -330,7 +330,7 @@ MCP Apps viewers (registered when any Signal Insights tool is active):
 
 ---
 
-### Signal Insights workflow
+### Monitors Insights workflow
 
 1. Call `signal_insights_create_workspace` once at the start of a conversation.
 2. Pass the returned workspace ID to every later analysis tool.
@@ -396,11 +396,7 @@ Open a GitHub issue or pull request for bugs, missing tools, or use cases. Someo
 
 Report security issues privately. See [SECURITY.md](./SECURITY.md). Do not open a public issue.
 
-Maintained by the Perigon team:
-
-- Lead developer: Vasyl Teliman (feature development, security, server)
-- Lead designer: Galen Rutledge (feature development, continued maintenance)
-- Initial development: Islem Maboud (transport, auth, deploy, playground)
+Maintained by the Perigon team.
 
 ---
 
