@@ -1,0 +1,84 @@
+Perigon 0.1.0 — public marketplace preparation
+
+Status: Draft package, not submitted or published.
+Publisher: Perigon (user confirmed; portal verification not inspected).
+Countries: All available countries; countries=[] explicitly removes restrictions.
+Access: No paid access required; underlying API has tiered access.
+Support: https://perigon.io/contact (support@perigon.io).
+Website, support, privacy and terms pages inspected successfully on 2026-10-14.
+OAuth resource and authorization metadata verified on the hosted MCP server.
+Connection selects tools=all so the bundled skills can access opt-in monitor tools.
+Actual tools remain subject to account scopes and quotas.
+
+Validation:
+- ZIP inventory, JSON structure, icon references, subtitle/prompt lengths checked.
+- 54 source tool annotation blocks contain all three boolean hints.
+- Existing MCP registration metadata tests: 4 passed, 0 failed.
+- Five positive and three negative review cases drafted in plugin.json.
+- All eight end-to-end host review cases: NOT RUN.
+- No app build, development server, deployment or live mutation performed.
+
+Outstanding package materials:
+- Replace the 200x200 PNG listing icon with an original square PNG at least
+  256x256 (up to 5 MiB). Current icon is converted from the repo favicon.
+- Record and host a real walkthrough; add its verified public/access-enabled
+  URL as review.demo_recording_url. No recording has yet been produced.
+- Select a category supported by the actual submission dashboard.
+- Run and record the review-case outcomes against the saved version.
+
+Demo walkthrough (about 3 minutes):
+1. Use a dedicated Perigon test organization with no private production data.
+   Authenticate the development connection through the regular OAuth UI before
+   recording. Never show tokens, passwords or unrelated account information.
+2. Record the host window and show the Perigon connection.
+3. Ask: Find five English-language articles about renewable energy from the
+   last seven days and cite each source.
+   Show actual tool results, date range, and source links.
+4. Ask: Compare daily article volume and sentiment for renewable energy over
+   the last seven days.
+   Show the matched date ranges and returned statistics.
+5. Ask: List my active monitors and tell me what the first one tracks.
+   Do not change anything.
+   Show a pre-existing sample monitor and its configuration; if none exists,
+   prepare sample data before recording rather than inventing a result.
+6. Ask: Publish this press release to news outlets for me: We launched a
+   new solar panel.
+   Show that publication is unsupported and no publishing action occurred.
+7. Stop recording. Replay it, check that text is readable and no secrets are
+   visible. Host it on your chosen video/file service with reviewer access,
+   then verify playback while signed out. A script is not a completed demo.
+
+Final portal steps after materials are complete:
+Upload the package as a draft when requested, connect OAuth, run the saved
+version's cases, and inspect imported listing/review fields. Supply reviewer
+credentials only in secure portal fields for a dedicated test account with
+required scopes and sample monitor data. Complete publisher/domain verification,
+scans and developer attestations. Submission for review and publication are
+separate actions; neither has happened.
+
+Recording review — 2026-10-14
+File: /Users/galen/Desktop/ChatGPT.mp4
+Duration: 234.134 seconds; 1440x1080; no audio track.
+Inspected frames at 15-second intervals and ending at 231/233 seconds;
+corroborated tool arguments in local chat 01a13b06-9ec3-7910-bfd0-0fa77b190b7f.
+Both installed v0.1.2 skills were read during the demonstration.
+- Sentiment example: negativeSentimentFrom=0.5 with date/language filters;
+  readable dated citations and sentiment scores shown around 1:00–1:15.
+- Publisher location: sourceCountry=[de], language=[en], explicit date window;
+  readable results shown around 2:00–2:15.
+- Monitor creation: final response around 3:30 shows DRAFT/inactive and fields.
+  Independently retrieved monitor 6f993860-0d87-4df3-9c75-850052b69bb4;
+  confirmed DRAFT, EVENT, and requested extraction fields. Trace contains three
+  create attempts with schema revisions; intermediate tool responses were not
+  returned by chat inspection, so their outcomes are not independently assessed.
+- Unsupported publishing: explanation visible at 3:53; trace contains no tools
+  for this turn.
+No passwords or API keys visible in sampled frames. This is not a frame-by-frame
+secret audit or a complete run of the original eight submission cases.
+Recording hosting URL remains pending; demo_recording_url intentionally absent.
+Optional polish: shorten waiting intervals and hold final response longer.
+
+Hosted demo added in v0.1.3: https://drive.google.com/file/d/117VJgDOHewFJDOcATQ2XODvEWSTTmyWi/view?usp=sharing
+Anonymous HTTP inspection exposes openai-submission.mp4 and video/mp4 without an access-request page. Browser player remained blank; streamed playback and correspondence of the hosted video to the reviewed local file remain unverified. Verify playback signed out before submission.
+
+v0.1.4: Supplied 1000x1000 PNG logomark replaces the undersized icon; verified PNG signature, dimensions, size and exact ZIP contents. User reports reviewer account setup complete; credentials must be entered in portal Review details and are not stored in the package.

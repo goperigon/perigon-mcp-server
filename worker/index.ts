@@ -56,13 +56,30 @@ export default {
     env: Env,
     ctx: ExecutionContext,
   ): Promise<Response> {
+    const { pathname } = new URL(request.url);
+
+    // Public proof of domain ownership for the OpenAI plugin submission.
+    // This endpoint must work without authentication or an AI provider key.
+    if (pathname === "/.well-known/openai-apps-challenge") {
+      if (request.method !== "GET" && request.method !== "HEAD") {
+        return new Response("Method not allowed", {
+          status: 405,
+          headers: { Allow: "GET, HEAD" },
+        });
+      }
+      return new Response(
+        request.method === "HEAD"
+          ? null
+          : "k1tdjijKlL-kd7aPBhSQZWttWmO5fVdKcdMkW_m6k5U",
+        { headers: { "Content-Type": "text/plain; charset=utf-8" } },
+      );
+    }
+
     const preflightResponse = createCorsPreflightResponse(request, env);
     if (preflightResponse) return preflightResponse;
 
     const missingKey = ensureAnthropicKey(env);
     if (missingKey) return withCorsHeaders(request, missingKey, env);
-
-    const { pathname } = new URL(request.url);
 
     if (isOAuthMetadataPath(pathname)) {
       const metadataResponse = handleOAuthMetadata(request, env);

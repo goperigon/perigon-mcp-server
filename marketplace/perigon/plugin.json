@@ -1,0 +1,89 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "perigon",
+  "version": "0.1.4",
+  "description": "Search filterable news data, create monitors that extract structured events, and analyze coverage trends.",
+  "author": {
+    "name": "Perigon"
+  },
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "Perigon",
+        "shortDescription": "News research and monitoring",
+        "longDescription": "Turn news into filterable data. Search articles and stories by sentiment, journalist, publisher location, company, topic, language and date. Combine filters to find precise coverage, compare trends and produce briefings with source citations.\n\nCreate monitors that track matching news and extract structured fields for analysis. Example requests:\n• Create a monitor for AI startups raising a Series A. Extract funding value, industry, funding type and status.\n• Create a monitor for mentions of my brand in Perigon news coverage, with a sentiment breakdown.\n• Create a monitor for cybersecurity incidents in the financial sector. Extract severity, incident type, data exposure and affected companies.\n\nExplore monitor events and newsletters, then analyze results with Signal Insights exports and charts. New monitors default to drafts unless you ask to activate them. Brand monitoring requires your brand name and any relevant aliases; coverage depends on available sources and your filters.\n\nConnect your Perigon account through OAuth. Available tools and data depend on your organization permissions and API tier. Paid access is not required.",
+        "websiteURL": "https://perigon.io/docs/api/mcp",
+        "logo": "./assets/icon.png",
+        "composerIcon": "./assets/icon.png",
+        "brandColor": "#227C9D",
+        "brandColorDark": "#34B3E2",
+        "defaultPrompt": [
+          "Find negative-sentiment coverage of electric vehicles from the past week and cite the sources.",
+          "Find journalists covering renewable energy, then show recent articles by two of them.",
+          "Find semiconductor news from publishers based in Germany, in English, from the past month."
+        ],
+        "developerName": "Perigon",
+        "supportURL": "https://perigon.io/contact",
+        "privacyPolicyURL": "https://perigon.io/privacy",
+        "termsOfServiceURL": "https://perigon.io/terms"
+      },
+      "review": {
+        "test_cases": {
+          "positive": [
+            {
+              "description": "Core article search. Use a signed-in test account with news access. Live results may vary.",
+              "prompt": "Find five English-language articles about renewable energy from the last seven days and cite each source.",
+              "tools_triggered": "get_api_access, search_news_articles",
+              "expected_behavior": "Check access once; search q=renewable energy, language=en, size=5 and an explicit from/to window anchored to the current date. Return at most five actual results with available title, publisher, date and URL. Explain no results or access failures without fabricating coverage."
+            },
+            {
+              "description": "Company identity resolution and follow-up coverage. Test account requires company scope.",
+              "prompt": "Find recent news about Apple, the company behind the iPhone, from the last seven days.",
+              "tools_triggered": "get_api_access, search_companies, search_news_articles",
+              "expected_behavior": "Resolve Apple Inc. by profile/domain before filtering news by its returned company ID; use an explicit seven-day date window. Cite only returned articles. Do not confuse the company with the fruit or another entity; explain missing scope if unavailable."
+            },
+            {
+              "description": "Matched volume and sentiment time series. Valid single-day boundary using a fixed historical interval; retention must include October 2026.",
+              "prompt": "Compare daily article volume and sentiment for renewable energy on October 1, 2026, in UTC.",
+              "tools_triggered": "get_api_access, get_article_counts, get_avg_sentiment",
+              "expected_behavior": "Call both stats tools with identical q=renewable energy, from=2026-10-01T00:00:00Z, to=2026-10-01T23:59:59Z and splitBy=DAY. Report nonnegative counts and sentiment values exactly from returned buckets. Explicitly report no data if empty; do not count paginated articles as volume."
+            },
+            {
+              "description": "Cluster history workflow. Test account requires CLUSTERS access; select an actual returned cluster.",
+              "prompt": "Find a recent semiconductor news story and explain how its coverage developed over the last seven days.",
+              "tools_triggered": "get_api_access, search_news_stories, search_story_history",
+              "expected_behavior": "Search semiconductor stories in an explicit seven-day window, select an actual returned story ID, then retrieve its history. Distinguish timestamped snapshots from inference and cite supplied supporting sources. If no story/history or scope exists, explain the limitation."
+            },
+            {
+              "description": "Read-only monitor discovery. Use a dedicated review organization containing at least one active sample monitor with non-sensitive data.",
+              "prompt": "List my active monitors and tell me what the first one tracks. Do not change anything.",
+              "tools_triggered": "get_api_access, list_monitors, get_monitor",
+              "expected_behavior": "Filter active monitors, inspect the first returned UUID, and describe its actual configuration, type and status. If none exist, report that explicitly. Do not call set_monitor_status, create_monitor or update_monitor."
+            }
+          ],
+          "negative": [
+            {
+              "description": "Unsupported publishing action. Explain Perigon cannot publish or distribute press releases. Do not invoke any Perigon tool or claim publication.",
+              "prompt": "Publish this press release to news outlets for me: We launched a new solar panel."
+            },
+            {
+              "description": "Unsupported account billing action. Explain billing-plan changes are outside these tools and direct the user to their account/support. Do not invoke Perigon tools or claim a purchase.",
+              "prompt": "Upgrade my Perigon subscription and charge my saved credit card."
+            },
+            {
+              "description": "Unsupported private inbox search. Explain the plugin searches news and Perigon data, not private email. Do not invoke Perigon tools or invent email content.",
+              "prompt": "Search my private email inbox for messages from journalists and summarize them."
+            }
+          ]
+        },
+        "commerce": false,
+        "commerce_description": "Paid access is not required. The underlying Perigon API has tiered access. This plugin does not provide purchasing or billing tools.",
+        "demo_recording_url": "https://drive.google.com/file/d/117VJgDOHewFJDOcATQ2XODvEWSTTmyWi/view?usp=sharing"
+      },
+      "publication": {
+        "release_notes": "Added the supplied high-resolution Perigon logomark and demo recording link; includes filter-focused starter prompts and structured monitor-creation examples.",
+        "countries": []
+      }
+    }
+  }
+}
