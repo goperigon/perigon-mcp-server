@@ -354,6 +354,19 @@ Examples:
 
 ---
 
+### ChatGPT plugin skills
+
+Workflow instructions for OpenAI’s plugin format live under [`skills/`](./skills/). Each skill is a folder with a **`SKILL.md`** file (YAML `name` + `description`, then procedure)—see [Skills](https://developers.openai.com/plugins/concepts/skills) and [Build skills](https://developers.openai.com/plugins/build/skills).
+
+| Skill | Directory | Trigger |
+|-------|-----------|---------|
+| News research | [`skills/news-research/`](./skills/news-research/) | Headlines, entities, trends, journalists, cited briefings |
+| Monitor Insights | [`skills/monitor-insights/`](./skills/monitor-insights/) | Monitors, events, newsletters, Signal Insights analysis |
+
+Point the plugin manifest at `"skills": "./skills/"`. You can import skills from the deployed MCP server via **Scan Tools** in the submission portal, or ship this directory in the plugin package.
+
+---
+
 ### MCP Registry
 
 Registry name: `io.github.goperigon/perigon-mcp-server`.
