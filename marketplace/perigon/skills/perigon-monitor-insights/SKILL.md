@@ -31,7 +31,7 @@ Use this skill for **configured monitors** and **Signal Insights** analysis. New
 
 ## File and shell tools
 
-Use `signal_insights_list_files`, `read_file`, `write_file`, `grep`, `str_replace`, and `shell` only within the active workspace for analysis workflows. Do not treat workspace paths as public URLs.
+Use `signal_insights_list_files`, `signal_insights_read_file`, `signal_insights_write_file`, `signal_insights_grep`, `signal_insights_str_replace`, and `signal_insights_shell` only within the active workspace for analysis workflows. Do not treat workspace paths as public URLs.
 
 ## Output
 
