@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "perigon",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "Search filterable news data, create monitors that extract structured events, and analyze coverage trends.",
   "author": {
     "name": "Perigon"
@@ -26,7 +26,15 @@
         "supportURL": "https://perigon.io/contact",
         "privacyPolicyURL": "https://perigon.io/privacy",
         "termsOfServiceURL": "https://perigon.io/terms",
-        "category": "Data & Analytics"
+        "category": "Data & Analytics",
+        "capabilities": [
+          "Filter news coverage",
+          "Analyze sentiment and coverage trends",
+          "Research journalists and publishers",
+          "Create news monitors",
+          "Extract structured events",
+          "Export data and create charts"
+        ]
       },
       "review": {
         "test_cases": {
@@ -82,7 +90,7 @@
         "demo_recording_url": "https://drive.google.com/file/d/117VJgDOHewFJDOcATQ2XODvEWSTTmyWi/view?usp=sharing"
       },
       "publication": {
-        "release_notes": "Clarified the news data analysis purpose, selected Data & Analytics, and removed pricing language from the public description.",
+        "release_notes": "Added capability labels for news filtering, sentiment and coverage analysis, journalist and publisher research, monitor creation, structured event extraction, and data exports and charts.",
         "countries": []
       }
     }
