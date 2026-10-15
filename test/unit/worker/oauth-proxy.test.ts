@@ -44,6 +44,18 @@ describe("oauth authorize redirect", () => {
       "https://app.test.local/oauth/authorize?client_id=abc&resource=https%3A%2F%2Fmcp.test.local",
     );
   });
+
+  test("adds default resource when missing from authorize request", () => {
+    const response = handleOAuthAuthorizeRedirect(
+      new Request("https://mcp.test.local/oauth/authorize?client_id=abc"),
+      env,
+    );
+
+    expect(response.status).toBe(302);
+    expect(response.headers.get("Location")).toBe(
+      "https://app.test.local/oauth/authorize?client_id=abc&resource=https%3A%2F%2Fmcp.test.local",
+    );
+  });
 });
 
 describe("proxyOAuthApiRequest", () => {
@@ -52,10 +64,13 @@ describe("proxyOAuthApiRequest", () => {
     installFetchMock((input, init) => {
       upstream.url = urlOf(input);
       upstream.init = init;
-      return new Response(JSON.stringify({ access_token: "tok", token_type: "Bearer" }), {
-        status: 200,
-        headers: { "content-type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({ access_token: "tok", token_type: "Bearer" }),
+        {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        },
+      );
     });
 
     const formBody =

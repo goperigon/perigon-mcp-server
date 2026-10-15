@@ -1,4 +1,8 @@
-import { perigonApiOrigin, perigonAppOrigin } from "../lib/mcp-env";
+import {
+  mcpPublicOrigin,
+  perigonApiOrigin,
+  perigonAppOrigin,
+} from "../lib/mcp-env";
 
 const OAUTH_API_PREFIX = "/v1/mcp/oauth/";
 
@@ -23,6 +27,9 @@ export function handleOAuthAuthorizeRedirect(
   const incoming = new URL(request.url);
   const target = new URL("/oauth/authorize", appOrigin);
   target.search = incoming.search;
+  if (!target.searchParams.has("resource")) {
+    target.searchParams.set("resource", mcpPublicOrigin(env, request));
+  }
 
   if (request.method === "HEAD") {
     return new Response(null, {
