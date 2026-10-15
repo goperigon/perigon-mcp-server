@@ -9,6 +9,7 @@ import {
 } from "../../../worker/mcp/register-tool-config";
 import { articleCountsTool } from "../../../worker/mcp/tools/search/stats-article-counts";
 import { searchSignalsTool } from "../../../worker/mcp/tools/signals/search-signals";
+import { TOOL_DEFINITIONS } from "../../../worker/mcp/tools/index";
 
 const noopToolResult = {
   content: [{ type: "text" as const, text: "ok" }],
@@ -51,6 +52,36 @@ describe("buildSignalToolRegisterConfig", () => {
 });
 
 describe("tools/list registration metadata", () => {
+  test("every advertised tool preserves explicit safety hints through the MCP SDK", async () => {
+    const server = new McpServer({ name: "perigon-test", version: "1.0.0" });
+    for (const definition of Object.values(TOOL_DEFINITIONS)) {
+      server.registerTool(
+        definition.name,
+        buildNewsToolRegisterConfig(definition, definition.description),
+        async () => noopToolResult,
+      );
+    }
+    const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+    const client = new Client({ name: "test-client", version: "1.0.0" });
+    try {
+      await server.connect(serverTransport);
+      await client.connect(clientTransport);
+      const { tools } = await client.listTools();
+      expect(tools).toHaveLength(Object.keys(TOOL_DEFINITIONS).length);
+      for (const tool of tools) {
+        for (const hint of ["readOnlyHint", "destructiveHint", "openWorldHint"] as const) {
+          expect(typeof tool.annotations?.[hint], `${tool.name}.${hint}`).toBe("boolean");
+        }
+      }
+      const createMonitor = tools.find((tool) => tool.name === "create_monitor");
+      expect(createMonitor?.annotations?.readOnlyHint).toBe(false);
+      expect(createMonitor?.annotations?.destructiveHint).toBe(true);
+      expect(createMonitor?.annotations?.openWorldHint).toBe(true);
+    } finally {
+      await client.close();
+      await server.close();
+    }
+  });
   test("news tool list entry includes title, annotations.title, and hints", async () => {
     const server = new McpServer({ name: "perigon-test", version: "1.0.0" });
     const config = buildNewsToolRegisterConfig(
