@@ -12,10 +12,10 @@ export type ToolCallback<T extends z.ZodObject<any> = z.ZodObject<any>> = (
 export interface ToolAnnotations {
   /** Human-readable label for MCP host tool directories (e.g. Claude connector review). */
   title?: string;
-  readOnlyHint?: boolean;
-  destructiveHint?: boolean;
+  readOnlyHint: boolean;
+  destructiveHint: boolean;
   idempotentHint?: boolean;
-  openWorldHint?: boolean;
+  openWorldHint: boolean;
 }
 
 /**
@@ -26,7 +26,7 @@ export interface ToolDefinition<T extends z.ZodObject<any> = z.ZodObject<any>> {
   title: string;
   description: string;
   parameters: T;
-  annotations?: ToolAnnotations;
+  annotations: ToolAnnotations;
   createHandler: (perigon: Perigon) => ToolCallback<T>;
 }
 
