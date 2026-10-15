@@ -1,0 +1,331 @@
+Perigon annotation review notes — 2026-10-15
+
+Prepared from local tool definitions and handlers. These explanations accompany the server annotations; they do not override them. Deploy and rescan before confirming the portal values. Live destructive operations were not executed.
+
+Category: Data & Analytics. Primary purpose: filter and analyze news data, extract structured monitor events, and compare coverage trends.
+
+The reviewer explicitly requested justifications. Current official pages conflict on whether these are required; supply them in review information as requested.
+
+search_news_articles
+Behavior: Search and filter individual news articles from 200k+ global sources. Use this for finding specific articles by keyword, topic, category, source, location, person, company, journalist, sentiment, or time range. Supports Boolean query syntax (AND, OR, NOT), exact phrases, and wildcards. Returns full article metadata: content/summary, entities, topics, taxonomies, keywords, sentiment, story cluster ID, and matchedAuthors (journalist IDs — feed into search_journalists(journalistIds) to profile who wrote it). A null field here may reflect this key's plan rather than absent data — see get_api_access.
+readOnlyHint: true — Retrieves existing data or computes a response without creating, updating, deleting, or sending user content.
+destructiveHint: false — Does not overwrite or delete user data or initiate an irreversible action.
+openWorldHint: true — Queries public or open-ended news, publisher, person, or reference entities.
+
+search_news_stories
+Behavior: Search clustered news stories (headlines) that group related articles across multiple sources into a single narrative. Use this to understand major news events, trending headlines, and story arcs rather than finding individual articles. Filter by category, topic, source, location, person, company, or time range. Returns summaries, key points, unique/total article counts, sentiment, and top topics/categories/people/companies/locations for the cluster. Feed the id into search_story_history to see how the story evolved, or search_news_articles(newsStoryIds) to pull its member articles.
+readOnlyHint: true — Retrieves existing data or computes a response without creating, updating, deleting, or sending user content.
+destructiveHint: false — Does not overwrite or delete user data or initiate an irreversible action.
+openWorldHint: true — Queries public or open-ended news, publisher, person, or reference entities.
+
+search_story_history
+Behavior: Search story history to track how news stories evolve over time. Returns timestamped snapshots of story clusters including summaries, short summaries, key points, and changelogs. Use this to understand how a story has developed, what changed between updates, and to review the timeline of a news event. Filter by cluster ID, date range, sort order, or changelog presence. Only use this tool instead of search_news_stories tool when you need to understand the history of a story.
+readOnlyHint: true — Retrieves existing data or computes a response without creating, updating, deleting, or sending user content.
+destructiveHint: false — Does not overwrite or delete user data or initiate an irreversible action.
+openWorldHint: true — Queries public or open-ended news, publisher, person, or reference entities.
+
+search_vector_news
+Behavior: Semantic search over recent news articles using natural language and vector embeddings. Use this instead of search_news_articles when the query is conversational, conceptual, or intent-based rather than keyword-based (e.g., 'how is AI transforming drug discovery' vs 'AI drug discovery'). Defaults to the last 30 days; override with pubDateFrom/pubDateTo for older coverage. Returns articles ranked by relevance score with content, metadata, and similarity scores.
+readOnlyHint: true — Retrieves existing data or computes a response without creating, updating, deleting, or sending user content.
+destructiveHint: false — Does not overwrite or delete user data or initiate an irreversible action.
+openWorldHint: true — Queries public or open-ended news, publisher, person, or reference entities.
+
+summarize_news
+Behavior: Generate an AI-powered summary of news coverage matching your filters. Use this when the user wants a synthesized overview or briefing on a topic rather than a list of individual articles. Combines article search with LLM summarization to produce concise, coherent summaries with supporting article citations. Accepts all standard article filters (keywords, categories, topics, sources, dates, locations) plus summarization controls (prompt, model, temperature).
+readOnlyHint: true — Retrieves existing data or computes a response without creating, updating, deleting, or sending user content.
+destructiveHint: false — Does not overwrite or delete user data or initiate an irreversible action.
+openWorldHint: true — Queries public or open-ended news, publisher, person, or reference entities.
+
+search_journalists
+Behavior: Search 230k+ journalist and reporter profiles in the Perigon database. Use this to find who covers specific topics, publications, or regions — or who is personally based in a place. Two distinct location concepts: `countries` filters reporting focus (what they cover, derived from their published articles), while `locationCountry`/`locationState`/`locationCounty`/`locationCity`/`locationArea` filter their own profile location (where they are based) — these levels AND together, so pass only the narrowest level the user named. Also filter by name, Twitter handle, publication, content category, topic, or posting activity. Returns journalist profiles with their top sources, profile locations, reporting-focus countries, and monthly posting frequency. A location query returning nothing is usually a casing mismatch (exact-term matching), not an absence of journalists.
+readOnlyHint: true — Retrieves existing data or computes a response without creating, updating, deleting, or sending user content.
+destructiveHint: false — Does not overwrite or delete user data or initiate an irreversible action.
+openWorldHint: true — Queries public or open-ended news, publisher, person, or reference entities.
+
+search_sources
+Behavior: Search 200k+ news publications and media outlets in the Perigon database. Use this to discover or compare news sources by name, domain, location, audience size, or publishing volume. Filter by curated bundles (top10, top100), paywall status, or geographic location. Returns source profiles with domain, monthly visits, top topics covered, and publishing frequency.
+readOnlyHint: true — Retrieves existing data or computes a response without creating, updating, deleting, or sending user content.
+destructiveHint: false — Does not overwrite or delete user data or initiate an irreversible action.
+openWorldHint: true — Queries public or open-ended news, publisher, person, or reference entities.
+
+search_people
+Behavior: Search 650k+ public figures, politicians, celebrities, executives, and newsworthy individuals in the Perigon database. Use this to look up biographical information about specific people or find people by occupation. Filter by name, occupation, or Wikidata ID. Returns biographical profiles with name, aliases, occupation, position, political party, gender, dates of birth/death, and description. Prefer wikidataId over personName on search_news_articles to avoid name ambiguity.
+readOnlyHint: true — Retrieves existing data or computes a response without creating, updating, deleting, or sending user content.
+destructiveHint: false — Does not overwrite or delete user data or initiate an irreversible action.
+openWorldHint: true — Queries public or open-ended news, publisher, person, or reference entities.
+
+search_companies
+Behavior: Search corporations and businesses in the Perigon database. Use this to look up company information, find companies by industry/sector, or identify companies by stock ticker or domain. Filter by name, domain, ticker symbol, industry, sector, country, or stock exchange. Returns company profiles with id, domains, tickers, CEO, employee count, industry/sector classification, headquarters, and description. Feed id/domains/symbol into search_news_articles(companyId|companyDomain|companySymbol) to find coverage.
+readOnlyHint: true — Retrieves existing data or computes a response without creating, updating, deleting, or sending user content.
+destructiveHint: false — Does not overwrite or delete user data or initiate an irreversible action.
+openWorldHint: true — Queries public or open-ended news, publisher, person, or reference entities.
+
+search_topics
+Behavior: Browse and search the Perigon topic taxonomy. Use this to discover available topics for use as filters in other search tools (articles, stories, journalists). Topics are more granular than categories. Filter by name, category, or subcategory. Returns topic names with their category/subcategory classification.
+readOnlyHint: true — Retrieves existing data or computes a response without creating, updating, deleting, or sending user content.
+destructiveHint: false — Does not overwrite or delete user data or initiate an irreversible action.
+openWorldHint: false — Limited to the authenticated account/workspace or the fixed Perigon topic taxonomy.
+
+search_wikipedia
+Behavior: Search Wikipedia pages using keyword-based queries with advanced filtering. Use this for factual background information, encyclopedia-style lookups, or when you need structured Wikipedia data. Filter by title, summary, content, Wikidata entity IDs, categories, page views, and revision dates. Returns page summaries, URLs, Wikidata IDs, categories, page view statistics, and last modification dates.
+readOnlyHint: true — Retrieves existing data or computes a response without creating, updating, deleting, or sending user content.
+destructiveHint: false — Does not overwrite or delete user data or initiate an irreversible action.
+openWorldHint: true — Queries public or open-ended news, publisher, person, or reference entities.
+
+search_vector_wikipedia
+Behavior: Semantic search over Wikipedia pages using natural language and vector embeddings. Use this instead of search_wikipedia when the query is conceptual or conversational rather than keyword-based. Finds pages related by meaning even without exact keyword matches. Returns page summaries, Wikidata IDs, categories, and similarity scores. Filter by viewership with pageviewsFrom/pageviewsTo — there is no boolean has-pageviews filter on this endpoint (unlike search_wikipedia).
+readOnlyHint: true — Retrieves existing data or computes a response without creating, updating, deleting, or sending user content.
+destructiveHint: false — Does not overwrite or delete user data or initiate an irreversible action.
+openWorldHint: true — Queries public or open-ended news, publisher, person, or reference entities.
+
+get_avg_sentiment
+Behavior: Get average sentiment scores (positive, negative, neutral) bucketed over time for articles matching the given filters. Use this when the user asks about sentiment trends, how tone of coverage has shifted, or wants a chart/table of sentiment over a period — NOT for reading sentiment on individual articles (use search_news_articles for that). Returns one sentiment record per time bucket with averaged positive, negative, and neutral scores. Use splitBy to control the interval (HOUR, DAY, WEEK, MONTH, or NONE for a single aggregate across the whole date range). Supports a curated subset of article filters: q, from/to, source(Group), category, topic, language, country, person/company identifiers, taxonomy, and exclude variants for source/category/topic — not the full search_news_articles filter set. Pair with get_article_counts on identical filters for a complete trend view.
+readOnlyHint: true — Retrieves existing data or computes a response without creating, updating, deleting, or sending user content.
+destructiveHint: false — Does not overwrite or delete user data or initiate an irreversible action.
+openWorldHint: true — Queries public or open-ended news, publisher, person, or reference entities.
+
+get_article_counts
+Behavior: Get article publication volume bucketed over time for articles matching the given filters. Use this when the user asks about coverage trends, how much a topic was covered over time, or wants a chart/table of article counts — NOT just for finding the total number of articles (use search_news_articles with showNumResults for a simple total count). Returns one count per time bucket. Use splitBy to control the interval (HOUR, DAY, WEEK, MONTH, or NONE for a single total across the whole date range). Supports a curated subset of article filters: q, from/to, source(Group), category, topic, language, country, person/company identifiers, taxonomy, and exclude variants for source/category/topic — not the full search_news_articles filter set.
+readOnlyHint: true — Retrieves existing data or computes a response without creating, updating, deleting, or sending user content.
+destructiveHint: false — Does not overwrite or delete user data or initiate an irreversible action.
+openWorldHint: true — Queries public or open-ended news, publisher, person, or reference entities.
+
+get_top_entities
+Behavior: Get the most frequently mentioned entities in articles matching the given filters, ranked by raw mention count. Use this when the user asks 'what topics/people/companies are most covered?' or 'who appears most in X news?' — i.e., questions about overall mention frequency within a fixed window. Do NOT use this for detecting sudden spikes or trending entities; use get_top_people or get_top_companies for spike detection instead. Defaults to returning topics, people, and companies; use the entity parameter to request other types (cities, journalists, sources). Supports the same article filters as search_news_articles.
+readOnlyHint: true — Retrieves existing data or computes a response without creating, updating, deleting, or sending user content.
+destructiveHint: false — Does not overwrite or delete user data or initiate an irreversible action.
+openWorldHint: true — Queries public or open-ended news, publisher, person, or reference entities.
+
+get_top_people
+Behavior: Get the people whose news coverage is spiking — mentioned significantly more in a recent window than a prior baseline period. Use this when the user asks 'who is trending?', 'who suddenly got a lot of coverage?', or 'which people are in the news more than usual?' — NOT for simple most-mentioned frequency (use get_top_entities for that). Returns a ranked list with current mention count, baseline count, and a spike score (higher = bigger relative increase). The comparison window defaults to last 3 days vs. last 30 days; override with currentFrom/To and baselineFrom/To. Supports all standard article filters to scope the analysis to a specific topic, source, or date range.
+readOnlyHint: true — Retrieves existing data or computes a response without creating, updating, deleting, or sending user content.
+destructiveHint: false — Does not overwrite or delete user data or initiate an irreversible action.
+openWorldHint: true — Queries public or open-ended news, publisher, person, or reference entities.
+
+get_top_companies
+Behavior: Get the companies whose news coverage is spiking — mentioned significantly more in a recent window than a prior baseline period. Use this when the user asks 'which companies are trending?', 'which companies are getting more coverage than usual?', or 'what companies are suddenly in the news?' — NOT for simple most-mentioned frequency (use get_top_entities for that). Returns a ranked list with current mention count, baseline count, and a spike score (higher = bigger relative increase). The comparison window defaults to last 3 days vs. last 30 days; override with currentFrom/To and baselineFrom/To. Supports all standard article filters to scope the analysis to a specific topic, source, or date range.
+readOnlyHint: true — Retrieves existing data or computes a response without creating, updating, deleting, or sending user content.
+destructiveHint: false — Does not overwrite or delete user data or initiate an irreversible action.
+openWorldHint: true — Queries public or open-ended news, publisher, person, or reference entities.
+
+get_company_news
+Behavior: Quick shortcut to get recent news about a specific company by name. Automatically looks up company details for context, then finds recent articles mentioning that company within a configurable time window. Use this for simple 'what's the latest news about [company]?' queries. For advanced filtering, use search_news_articles with companyDomain or companySymbol instead.
+readOnlyHint: true — Retrieves existing data or computes a response without creating, updating, deleting, or sending user content.
+destructiveHint: false — Does not overwrite or delete user data or initiate an irreversible action.
+openWorldHint: true — Queries public or open-ended news, publisher, person, or reference entities.
+
+get_person_news
+Behavior: Quick shortcut to get recent news about a specific person by name. Automatically looks up the person's profile for context, then finds recent articles mentioning them within a configurable time window. Use this for simple 'what's the latest news about [person]?' queries. For advanced filtering, use search_news_articles with personName instead.
+readOnlyHint: true — Retrieves existing data or computes a response without creating, updating, deleting, or sending user content.
+destructiveHint: false — Does not overwrite or delete user data or initiate an irreversible action.
+openWorldHint: true — Queries public or open-ended news, publisher, person, or reference entities.
+
+get_location_news
+Behavior: Quick shortcut to get recent news for a geographic location (city, state, or country). Automatically detects the location type and applies appropriate geographic filters. Use this for simple 'what's happening in [location]?' queries. For advanced filtering, use search_news_articles with explicit city/state/country parameters instead.
+readOnlyHint: true — Retrieves existing data or computes a response without creating, updating, deleting, or sending user content.
+destructiveHint: false — Does not overwrite or delete user data or initiate an irreversible action.
+openWorldHint: true — Queries public or open-ended news, publisher, person, or reference entities.
+
+list_monitors
+Behavior: List and search the authenticated user's Perigon monitors. Use this first to discover monitor UUIDs, inspect statuses, or find monitors by name or classification. Archived monitors are excluded unless explicitly requested.
+readOnlyHint: true — Retrieves existing data or computes a response without creating, updating, deleting, or sending user content.
+destructiveHint: false — Does not overwrite or delete user data or initiate an irreversible action.
+openWorldHint: false — Limited to the authenticated account/workspace or the fixed Perigon topic taxonomy.
+
+get_monitor
+Behavior: Retrieve the complete configuration for one Perigon monitor by UUID, including its objective, status, classification, article query, output schema, schedule, watchlist, and delivery contact points.
+readOnlyHint: true — Retrieves existing data or computes a response without creating, updating, deleting, or sending user content.
+destructiveHint: false — Does not overwrite or delete user data or initiate an irreversible action.
+openWorldHint: false — Limited to the authenticated account/workspace or the fixed Perigon topic taxonomy.
+
+get_monitor_events
+Behavior: Retrieve structured matches emitted asynchronously by an EVENT or MENTIONS monitor. Returns extracted schema data, event summaries, matched entities, and a bounded set of related article details. Use pagination or date filters for additional results.
+readOnlyHint: true — Retrieves existing data or computes a response without creating, updating, deleting, or sending user content.
+destructiveHint: false — Does not overwrite or delete user data or initiate an irreversible action.
+openWorldHint: false — Limited to the authenticated account/workspace or the fixed Perigon topic taxonomy.
+
+get_monitor_newsletters
+Behavior: Retrieve human-readable briefings generated on a monitor's schedule, typically for TOPIC monitors. Returns newsletter content and bounded citation metadata. Use pagination, title, or date filters for additional results.
+readOnlyHint: true — Retrieves existing data or computes a response without creating, updating, deleting, or sending user content.
+destructiveHint: false — Does not overwrite or delete user data or initiate an irreversible action.
+openWorldHint: false — Limited to the authenticated account/workspace or the fixed Perigon topic taxonomy.
+
+get_monitor_summaries
+Behavior: Retrieve rolling AI-generated summaries produced as a monitor processes matching content. Use pagination or creation-date filters to inspect summary history.
+readOnlyHint: true — Retrieves existing data or computes a response without creating, updating, deleting, or sending user content.
+destructiveHint: false — Does not overwrite or delete user data or initiate an irreversible action.
+openWorldHint: false — Limited to the authenticated account/workspace or the fixed Perigon topic taxonomy.
+
+create_monitor
+Behavior: Create a Perigon monitor for continuously detecting events, mentions, or scheduled topic briefings. Defaults to DRAFT; only pass ACTIVE when the user explicitly asks to start processing. ACTIVE TOPIC monitors require both a schedule and newsletter configuration. An ACTIVE monitor starts background processing and can deliver notifications to configured contact points; delivered notifications cannot be recalled.
+readOnlyHint: false — Creates a persistent monitor and can start processing when ACTIVE.
+destructiveHint: true — ACTIVE monitors can deliver notifications to configured contact points; delivered notifications cannot be recalled. DRAFT is the default.
+openWorldHint: true — Can start monitoring public news and deliver notifications to configured recipients.
+
+update_monitor
+Behavior: Partially update a Perigon monitor's configuration. Omitted fields remain unchanged; query, schema, schedules, entity groups, and contact points are complete replacements when provided. Use set_monitor_status for lifecycle changes.
+readOnlyHint: false — Updates an existing monitor configuration.
+destructiveHint: true — Can overwrite existing configuration and change active notification behavior.
+openWorldHint: true — An active monitor processes public news and can deliver notifications to configured recipients.
+
+set_monitor_status
+Behavior: Activate, pause, or archive a Perigon monitor. ACTIVE starts its processing pipeline, STOPPED pauses it, and ARCHIVED hides it from default lists and cannot be reversed through the public API. Use only when the user explicitly requests the lifecycle change.
+readOnlyHint: false — Starts, pauses, or archives an existing monitor.
+destructiveHint: true — Archival cannot be reversed through the public API; activation can trigger notification delivery.
+openWorldHint: true — Activation starts public-news processing and can deliver configured notifications.
+
+get_api_access
+Behavior: Report this API key's scopes, organization, usage quota, pagination limits, and the entitlement behavior those scopes imply (which article fields always come back null, which filter params will 403, and any silent date-window clamps). Call this once at the start of a session, or whenever a field is unexpectedly null, a 403 occurs, or coverage before/after a date seems to be missing — a null field or empty date range may reflect this key's plan rather than absent data. Calling this tool does not count against the account's request quota.
+readOnlyHint: true — Retrieves existing data or computes a response without creating, updating, deleting, or sending user content.
+destructiveHint: false — Does not overwrite or delete user data or initiate an irreversible action.
+openWorldHint: false — Limited to the authenticated account/workspace or the fixed Perigon topic taxonomy.
+
+get_source_by_id
+Behavior: Look up one news source/publisher by its exact ID or domain. Use this after search_sources or search_news_articles surfaces a source you want full detail on — `id` is @InternalParameter on search_sources, so this endpoint is the only route to a single source's paywall status, alt names, and location.
+readOnlyHint: true — Retrieves existing data or computes a response without creating, updating, deleting, or sending user content.
+destructiveHint: false — Does not overwrite or delete user data or initiate an irreversible action.
+openWorldHint: true — Queries public or open-ended news, publisher, person, or reference entities.
+
+get_top_topics
+Behavior: Get the topics whose news coverage is spiking — mentioned significantly more in a recent window than a prior baseline period. Use this alongside get_top_people and get_top_companies when the user asks 'what topics are trending?' The comparison window defaults to last 3 days vs. last 30 days; override with currentFrom/To and baselineFrom/To. Supports the same curated article filters as the other stats tools.
+readOnlyHint: true — Retrieves existing data or computes a response without creating, updating, deleting, or sending user content.
+destructiveHint: false — Does not overwrite or delete user data or initiate an irreversible action.
+openWorldHint: true — Queries public or open-ended news, publisher, person, or reference entities.
+
+get_story_stats
+Behavior: Get story-level (clustered headline) volume or velocity over time — the story equivalent of get_article_counts. Use metric='volume' for publication counts bucketed by time, or metric='velocity' for how fast specific clusters are accumulating mentions (requires clusterId from search_news_stories). Requires the CLUSTERS permission.
+readOnlyHint: true — Retrieves existing data or computes a response without creating, updating, deleting, or sending user content.
+destructiveHint: false — Does not overwrite or delete user data or initiate an irreversible action.
+openWorldHint: true — Queries public or open-ended news, publisher, person, or reference entities.
+
+watchlists
+Behavior: List, get by ID, or resolve by exact name the organization's watchlists (curated people/company lists used to scope monitors and article searches via the watchlist filter). Pass id for a single lookup, resolveNames to look up by exact name, or neither to list/search by nameContains.
+readOnlyHint: true — Retrieves existing data or computes a response without creating, updating, deleting, or sending user content.
+destructiveHint: false — Does not overwrite or delete user data or initiate an irreversible action.
+openWorldHint: true — Can resolve shared public lists as well as the organization’s private lists; not limited to private account data.
+
+create_watchlist
+Behavior: Create a new watchlist of people and/or companies. Only use this when the user explicitly asks to create a watchlist — do not create one speculatively as part of a search or monitor workflow.
+readOnlyHint: false — Persists a new watchlist.
+destructiveHint: false — Adds a new list without replacing or deleting an existing list.
+openWorldHint: false — Writes a list scoped to the authenticated organization; does not contact listed people or companies.
+
+update_watchlist
+Behavior: Partially update a watchlist. Only provided fields are changed; people/companies arrays are replaced wholesale when provided, not merged. Only use this when the user explicitly asks to modify a watchlist.
+readOnlyHint: false — Updates a stored watchlist.
+destructiveHint: true — Can replace existing list properties or membership.
+openWorldHint: false — Updates the authenticated organization’s list; does not contact its members.
+
+source_groups
+Behavior: List, get by ID, or resolve by exact name the organization's custom source groups (curated domain bundles usable via the sourceGroup filter, alongside built-ins like top10/top100). Pass id for a single lookup, resolveNames to look up by exact name, or neither to list/search.
+readOnlyHint: true — Retrieves existing data or computes a response without creating, updating, deleting, or sending user content.
+destructiveHint: false — Does not overwrite or delete user data or initiate an irreversible action.
+openWorldHint: true — Can resolve shared public lists as well as the organization’s private lists; not limited to private account data.
+
+create_source_group
+Behavior: Create a new custom source group (a curated bundle of publisher domains) usable via the sourceGroup filter. Only use this when the user explicitly asks to create one.
+readOnlyHint: false — Persists a new source group.
+destructiveHint: false — Adds a new group without replacing or deleting an existing group.
+openWorldHint: false — Stores publisher-domain strings in the authenticated organization; does not publish to or write to those domains.
+
+update_source_group
+Behavior: Partially update a source group. Only provided fields are changed; the domains array is replaced wholesale when provided, not merged. Only use this when the user explicitly asks to modify a source group.
+readOnlyHint: false — Updates a stored source group.
+destructiveHint: true — Can replace existing group properties or domains.
+openWorldHint: false — Updates the authenticated organization’s group; does not write to its publisher domains.
+
+contact_points
+Behavior: List or get by UUID the organization's contact points (delivery channels used by monitor notifications — email or webhook). Read-only; use this to find a contactPointId before wiring it into create_monitor/update_monitor.
+readOnlyHint: true — Retrieves existing data or computes a response without creating, updating, deleting, or sending user content.
+destructiveHint: false — Does not overwrite or delete user data or initiate an irreversible action.
+openWorldHint: false — Limited to the authenticated account/workspace or the fixed Perigon topic taxonomy.
+
+article_refresh
+Behavior: Check the status of a background article-refresh job by ID, or peek best-effort cached refresh data for up to 100 article IDs without starting a job. Read-only — this tool cannot submit new refresh jobs or spend refresh credits; it only observes jobs submitted elsewhere (e.g. via the REST API directly).
+readOnlyHint: true — Only observes existing job status or cached article data; does not queue refresh work.
+destructiveHint: false — Does not overwrite or delete user data or initiate an irreversible action.
+openWorldHint: true — Returns cached data about public news articles.
+
+signal_insights_create_workspace
+Behavior: Create a new Signal Insights analysis workspace. Call this ONCE at the beginning of any conversation that needs data analysis. Returns a workspace handle required by all analysis tools (signal_insights_execute_code, signal_insights_shell, signal_insights_export_events, file tools). Do NOT invent workspace IDs — always use the one returned here.
+readOnlyHint: false — Creates a persistent analysis workspace.
+destructiveHint: false — Creates a new workspace without deleting or overwriting existing user files.
+openWorldHint: false — Creates a bounded workspace for this authenticated analysis session.
+
+signal_insights_search_signals
+Behavior: Search for signals by name or monitoring objective. Optional classificationTypes filter: EVENT, MENTIONS, TOPIC (briefings). Omit for all types. Results include classificationType, eventCount, and newsletterCount. Use this to find relevant signals before fetching data. If the search query is not present, this can be used to list all available signals.
+readOnlyHint: true — Retrieves existing data or computes a response without creating, updating, deleting, or sending user content.
+destructiveHint: false — Does not overwrite or delete user data or initiate an irreversible action.
+openWorldHint: false — Limited to the authenticated account/workspace or the fixed Perigon topic taxonomy.
+
+signal_insights_read_signal
+Behavior: Get full signal metadata including classificationType and type-specific fields. EVENT/MENTIONS: data schema, event types, event count — use before export_events. TOPIC: newsletterCount and date range — use list_newsletters / read_newsletter.
+readOnlyHint: true — Retrieves existing data or computes a response without creating, updating, deleting, or sending user content.
+destructiveHint: false — Does not overwrite or delete user data or initiate an irreversible action.
+openWorldHint: false — Limited to the authenticated account/workspace or the fixed Perigon topic taxonomy.
+
+signal_insights_list_newsletters
+Behavior: List newsletters (briefings) for a TOPIC signal. Returns title, short excerpt (~500 chars), and timestamps — not full content. Only works for TOPIC signals; EVENT and MENTIONS will error. Use after signal_insights_read_signal confirms classificationType is TOPIC, then call signal_insights_read_newsletter for full content.
+readOnlyHint: true — Retrieves existing data or computes a response without creating, updating, deleting, or sending user content.
+destructiveHint: false — Does not overwrite or delete user data or initiate an irreversible action.
+openWorldHint: false — Limited to the authenticated account/workspace or the fixed Perigon topic taxonomy.
+
+signal_insights_read_newsletter
+Behavior: Fetch a full newsletter by UUID and return it as markdown (YAML frontmatter + body). Use after signal_insights_list_newsletters to get complete briefing content for context or analysis. Only works for newsletters belonging to TOPIC signals.
+readOnlyHint: true — Retrieves existing data or computes a response without creating, updating, deleting, or sending user content.
+destructiveHint: false — Does not overwrite or delete user data or initiate an irreversible action.
+openWorldHint: false — Limited to the authenticated account/workspace or the fixed Perigon topic taxonomy.
+
+signal_insights_export_events
+Behavior: Export signal events using a structured query API. No raw SQL — specify signals, fields, filters, aggregations, and ordering. EVENT and MENTIONS signals only — TOPIC (briefing) signals will error; use signal_insights_list_newsletters / signal_insights_read_newsletter instead. Returns a preview of the first rows plus an S3 file path for the full dataset (JSONL). Available fields: eventType, eventDate, createdAt, updatedAt, summary, uuid, data, articles, signalId, or data.<path> for JSONB subfields (e.g. data.companyName). Filter options: eventTypes (list), date ranges (eventDateFrom/To, createdAtFrom/To), JSONB containment (data: [{op: CONTAINS, value: {key: val}}]). Select expressions: {type: 'field', name}, {type: 'date_trunc', granularity: HOUR|DAY|WEEK|MONTH|QUARTER|YEAR, field}, {type: 'agg', function: COUNT|COUNT_DISTINCT|SUM|AVG|MIN|MAX, field?}. Group by / order by: use {index: N} (1-based) when select is provided, or {field: 'name'} when select is omitted. Omit select to fetch all scalar event fields. Results are written to S3 and accessible in the sandbox at /home/user/workspace/artifacts/<filename>.
+readOnlyHint: false — Exports account events into a persisted S3-backed file.
+destructiveHint: true — A supplied outputFile can overwrite an existing session export at the same path.
+openWorldHint: false — Reads organization-scoped events and writes within the session’s managed storage; no arbitrary destination parameter.
+
+signal_insights_execute_code
+Behavior: Execute Python code inside a persistent sandboxed Jupyter kernel (IPython). State is fully preserved between calls: variables, imports, DataFrames, fitted models, and function definitions all remain in memory. WORKSPACE (/home/user/workspace): default working directory. Use this to create any files you need. DATA (/home/user/workspace/artifacts): S3-backed read-write directory. Query result files appear here automatically. This directory persists across sandbox restarts. OUTPUT (/home/user/workspace/artifacts/output): write user-facing deliverables here (charts, reports, CSVs, exports). Files in output/ appear in the user's Artifacts panel and are downloadable. Internal/intermediate files should stay in DATA root. Pre-installed highlights: pandas, numpy, matplotlib, seaborn, scipy, scikit-learn, statsmodels, pyarrow, polars, openpyxl, sqlalchemy, beautifulsoup4, nltk, xgboost, lightgbm, shap, pillow, sympy, tabulate, rich. CHARTS: charts produced here (e.g. via plt.show()) are NOT displayed to the user. To show a chart to the user, call signal_insights_preview_chart with the plotting code instead. Before groupby/value_counts/top-N charts, drop rows with missing category values (dropna / notna on the label column) — null categories often dominate and mislead. No outbound internet access except *.amazonaws.com.
+readOnlyHint: false — Executes caller-supplied code or commands in a persistent workspace; can write files and change state.
+destructiveHint: true — Code or commands can overwrite or delete workspace data; chart preview also executes Python.
+openWorldHint: true — Execution permits outbound access to allowed Amazon AWS endpoints; the destination is not limited to a single private account by the tool schema.
+
+signal_insights_preview_chart
+Behavior: Render a chart to the user. Use this whenever you want to DISPLAY a chart — it is the only tool whose output appears in the interactive chart viewer. Runs Python in the SAME persistent Jupyter kernel as signal_insights_execute_code, so variables, imports, and DataFrames computed there are available here. Do data prep/analysis in signal_insights_execute_code; use this tool only for the plotting code. Call plt.show() after the chart. One plt.show() per chart; for multiple charts call this tool separately. No outbound internet access except *.amazonaws.com.
+readOnlyHint: false — Executes caller-supplied code or commands in a persistent workspace; can write files and change state.
+destructiveHint: true — Code or commands can overwrite or delete workspace data; chart preview also executes Python.
+openWorldHint: true — Execution permits outbound access to allowed Amazon AWS endpoints; the destination is not limited to a single private account by the tool schema.
+
+signal_insights_shell
+Behavior: Run a bash command in the E2B sandbox environment. Working directory is /home/user/workspace. Query data files are accessible at /home/user/workspace/artifacts. No internet access except *.amazonaws.com.
+readOnlyHint: false — Executes caller-supplied code or commands in a persistent workspace; can write files and change state.
+destructiveHint: true — Code or commands can overwrite or delete workspace data; chart preview also executes Python.
+openWorldHint: true — Execution permits outbound access to allowed Amazon AWS endpoints; the destination is not limited to a single private account by the tool schema.
+
+signal_insights_list_files
+Behavior: List files in a directory of the sandbox workspace. Default directory is the workspace root (/home/user/workspace).
+readOnlyHint: true — Retrieves existing data or computes a response without creating, updating, deleting, or sending user content.
+destructiveHint: false — Does not overwrite or delete user data or initiate an irreversible action.
+openWorldHint: false — Limited to the authenticated account/workspace or the fixed Perigon topic taxonomy.
+
+signal_insights_grep
+Behavior: Search a file's contents for lines matching a regex pattern. Reads the file via the SDK (no shell injection risk). Returns matching lines with line numbers. Use on files up to a few MB; for larger files, use signal_insights_execute_code directly instead.
+readOnlyHint: true — Retrieves existing data or computes a response without creating, updating, deleting, or sending user content.
+destructiveHint: false — Does not overwrite or delete user data or initiate an irreversible action.
+openWorldHint: false — Limited to the authenticated account/workspace or the fixed Perigon topic taxonomy.
+
+signal_insights_read_file
+Behavior: Read a file from the sandbox workspace. Internally, this reads the full file into memory. Use on files up to a few MB; for larger files, use signal_insights_execute_code directly instead.
+readOnlyHint: true — Retrieves existing data or computes a response without creating, updating, deleting, or sending user content.
+destructiveHint: false — Does not overwrite or delete user data or initiate an irreversible action.
+openWorldHint: false — Limited to the authenticated account/workspace or the fixed Perigon topic taxonomy.
+
+signal_insights_write_file
+Behavior: Write content to a file in the sandbox workspace. Creates directories as needed.
+readOnlyHint: false — Writes a file in the analysis workspace.
+destructiveHint: true — Can overwrite existing file contents.
+openWorldHint: false — Writes within the bounded analysis workspace.
+
+signal_insights_str_replace
+Behavior: Find and replace a string in a file in the sandbox workspace. Internally, this reads the full file into memory. Use on files up to a few MB; for larger files, use signal_insights_execute_code directly instead.
+readOnlyHint: false — Edits a file in the analysis workspace.
+destructiveHint: true — Replaces existing file contents.
+openWorldHint: false — Edits within the bounded analysis workspace.

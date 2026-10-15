@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "perigon",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Search filterable news data, create monitors that extract structured events, and analyze coverage trends.",
   "author": {
     "name": "Perigon"
@@ -11,7 +11,7 @@
       "interface": {
         "displayName": "Perigon",
         "shortDescription": "News research and monitoring",
-        "longDescription": "Turn news into filterable data. Search articles and stories by sentiment, journalist, publisher location, company, topic, language and date. Combine filters to find precise coverage, compare trends and produce briefings with source citations.\n\nCreate monitors that track matching news and extract structured fields for analysis. Example requests:\n• Create a monitor for AI startups raising a Series A. Extract funding value, industry, funding type and status.\n• Create a monitor for mentions of my brand in Perigon news coverage, with a sentiment breakdown.\n• Create a monitor for cybersecurity incidents in the financial sector. Extract severity, incident type, data exposure and affected companies.\n\nExplore monitor events and newsletters, then analyze results with Signal Insights exports and charts. New monitors default to drafts unless you ask to activate them. Brand monitoring requires your brand name and any relevant aliases; coverage depends on available sources and your filters.\n\nConnect your Perigon account through OAuth. Available tools and data depend on your organization permissions and API tier. Paid access is not required.",
+        "longDescription": "Perigon helps analysts and researchers search, filter and analyze global news data. Search articles and stories by sentiment, journalist, publisher location, company, topic, language and date. Combine filters to find precise coverage, compare trends and produce briefings with source citations.\n\nCreate monitors that track matching news and extract structured fields for analysis. Example requests:\n• Create a monitor for AI startups raising a Series A. Extract funding value, industry, funding type and status.\n• Create a monitor for mentions of my brand in Perigon news coverage, with a sentiment breakdown.\n• Create a monitor for cybersecurity incidents in the financial sector. Extract severity, incident type, data exposure and affected companies.\n\nExplore monitor events and newsletters, then analyze results with Signal Insights exports and charts. New monitors default to drafts unless you ask to activate them. Brand monitoring requires your brand name and any relevant aliases; coverage depends on available sources and your filters.\n\nConnect your Perigon account through OAuth. Available tools and data depend on your organization permissions.",
         "websiteURL": "https://perigon.io/docs/api/mcp",
         "logo": "./assets/icon.png",
         "composerIcon": "./assets/icon.png",
@@ -25,7 +25,8 @@
         "developerName": "Perigon",
         "supportURL": "https://perigon.io/contact",
         "privacyPolicyURL": "https://perigon.io/privacy",
-        "termsOfServiceURL": "https://perigon.io/terms"
+        "termsOfServiceURL": "https://perigon.io/terms",
+        "category": "Data & Analytics"
       },
       "review": {
         "test_cases": {
@@ -81,7 +82,7 @@
         "demo_recording_url": "https://drive.google.com/file/d/117VJgDOHewFJDOcATQ2XODvEWSTTmyWi/view?usp=sharing"
       },
       "publication": {
-        "release_notes": "Added the supplied high-resolution Perigon logomark and demo recording link; includes filter-focused starter prompts and structured monitor-creation examples.",
+        "release_notes": "Clarified the news data analysis purpose, selected Data & Analytics, and removed pricing language from the public description.",
         "countries": []
       }
     }
