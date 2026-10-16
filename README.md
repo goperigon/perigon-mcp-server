@@ -264,6 +264,8 @@ Read tools are default. Write tools are opt-in because the shared monitor schema
 | `create_monitor` | Opt-in | Create a DRAFT or ACTIVE monitor. Defaults to DRAFT. |
 | `update_monitor` | Opt-in | Partial update; omitted fields are preserved. |
 
+`schedulePolicy` hours and days are wall-clock times in `timezoneId`, matching Delivery settings in the Perigon product. The public API stores those intervals in UTC; this server converts on read and write. A daily 3:00 AM America/Chicago briefing is returned and accepted as `hour: 3`, not `hour: 8`.
+
 #### Platform
 
 All of these are opt-in. `get_source_by_id` and `get_top_topics` are also in `research`. `get_story_stats` is name-only.

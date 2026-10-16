@@ -15,6 +15,7 @@ import {
 import { toolResult } from "../utils/formatting";
 import { createErrorMessage } from "../utils/error-handling";
 import { formatMonitorDetail } from "../utils/monitor-formatting";
+import { toUtcSchedulePolicy } from "../utils/schedule-timezone";
 
 export const createMonitorArgs = z.object({
   name: z.string().trim().min(1).max(256),
@@ -53,7 +54,9 @@ export const createMonitorArgs = z.object({
   ),
   schedulePolicy: monitorSchedulePolicyArgs
     .optional()
-    .describe("Recurring processing schedule."),
+    .describe(
+      "Recurring processing schedule. Interval hour and minute are wall-clock times in timezoneId."
+    ),
   watchlistId: z
     .number()
     .int()
@@ -85,7 +88,10 @@ export function createMonitor(perigon: Perigon): ToolCallback<typeof createMonit
 
       const body: MonitorCreateRequest = {
         ...args,
-        query: buildMonitorQuery(args.query)
+        query: buildMonitorQuery(args.query),
+        schedulePolicy: args.schedulePolicy
+          ? toUtcSchedulePolicy(args.schedulePolicy)
+          : undefined
       };
       const result = await perigon.createMonitor(body);
       return toolResult(

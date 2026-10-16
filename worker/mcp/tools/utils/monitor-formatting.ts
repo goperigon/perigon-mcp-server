@@ -5,6 +5,7 @@ import {
   MonitorSummaryDto
 } from "../../../types/monitors";
 import { createPaginationHeader } from "./formatting";
+import { toLocalSchedulePolicy } from "./schedule-timezone";
 
 const MAX_TOOL_OUTPUT_CHARS = 40_000;
 const MAX_MONITOR_CONFIG_CHARS = 16_000;
@@ -124,7 +125,7 @@ export function formatMonitorDetail(monitor: MonitorDto): string {
     newsletterConfig: monitor.newsletterConfig,
     entityGroups: monitor.entityGroups,
     query: monitor.query,
-    schedulePolicy: monitor.schedulePolicy,
+    schedulePolicy: toLocalSchedulePolicy(monitor.schedulePolicy),
     watchlistId: monitor.watchlistId,
     contactPointIds: monitor.contactPointIds
   };
