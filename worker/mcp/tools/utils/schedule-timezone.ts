@@ -25,6 +25,8 @@ const DAY_TO_INT: Record<DayName, number> = {
   SATURDAY: 6
 };
 
+export const MAX_SCHEDULE_INTERVALS = 24;
+
 type ConversionDirection = "localToUtc" | "utcToLocal";
 
 interface CalendarParts {
@@ -35,6 +37,16 @@ interface CalendarParts {
   minute: number;
   second: number;
   weekday: string;
+}
+
+interface ConvertScheduleResult {
+  policy: MonitorSchedulePolicy;
+  lossyWeeklyConversion: boolean;
+}
+
+export interface LocalSchedulePolicyResult {
+  policy: MonitorSchedulePolicy;
+  displayNote?: string;
 }
 
 function parseDay(value: string): DayName | null {
@@ -150,11 +162,6 @@ function createDateInTimezone(
   return new Date(high);
 }
 
-function clampDayOfMonth(year: number, month: number, dayOfMonth: number): number {
-  const daysInMonth = new Date(Date.UTC(year, month, 0)).getUTCDate();
-  return Math.min(Math.max(1, dayOfMonth), daysInMonth);
-}
-
 function findNextLocalWeekdayOccurrence(
   timezone: string,
   weekday: DayName,
@@ -243,11 +250,104 @@ function sortDays(days: DayName[]): DayName[] {
   return [...days].sort((a, b) => DAY_TO_INT[a] - DAY_TO_INT[b]);
 }
 
-function sortDaysOfMonth(days: number[]): number[] {
-  return [...days].sort((a, b) => a - b);
+function formatClockTime(hour: number, minute: number): string {
+  const hour12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+  const meridiem = hour < 12 ? "AM" : "PM";
+  const minuteText = minute.toString().padStart(2, "0");
+  return `${hour12}:${minuteText} ${meridiem}`;
 }
 
-function convertWeeklyIntervalLocalToUtc(
+function formatDayList(days: DayName[]): string {
+  const labels: Record<DayName, string> = {
+    SUNDAY: "Sun",
+    MONDAY: "Mon",
+    TUESDAY: "Tue",
+    WEDNESDAY: "Wed",
+    THURSDAY: "Thu",
+    FRIDAY: "Fri",
+    SATURDAY: "Sat"
+  };
+  return days.map((day) => labels[day]).join(", ");
+}
+
+export function formatSchedulePolicySummary(
+  policy: MonitorSchedulePolicy | null | undefined
+): string | null {
+  if (!policy?.intervals?.length) {
+    return null;
+  }
+
+  const timezoneId = policy.timezoneId?.trim() || "UTC";
+  const parts = policy.intervals.map((interval) => {
+    const time = formatClockTime(interval.hour, interval.minute);
+
+    if (interval.scheduleType === "MONTHLY") {
+      const days = (interval.daysOfMonth ?? [1])
+        .slice()
+        .sort((a, b) => a - b)
+        .join(", ");
+      return `Monthly on day ${days} at ${time}`;
+    }
+
+    const days = (interval.days ?? [])
+      .map(parseDay)
+      .filter((day): day is DayName => day !== null);
+    if (days.length === 7) {
+      return `Daily at ${time}`;
+    }
+    if (days.length > 0) {
+      return `${formatDayList(sortDays(days))} at ${time}`;
+    }
+
+    return `At ${time}`;
+  });
+
+  const schedule = parts.join("; ");
+  return timezoneId === "UTC" ? schedule : `${schedule} (${timezoneId})`;
+}
+
+function convertMonthlyIntervalLocalToUtc(
+  interval: MonitorScheduleInterval,
+  timeZone: string,
+  now: Date
+): MonitorScheduleInterval[] {
+  const guess = new Date(now.getFullYear(), now.getMonth(), 15);
+  const localParts = getDatePartsInTimezone(guess, timeZone);
+  const currentMinutes = localParts.hour * 60 + localParts.minute;
+  const wantMinutes = interval.hour * 60 + interval.minute;
+  const when = new Date(guess.getTime() + (wantMinutes - currentMinutes) * 60 * 1000);
+
+  return [
+    {
+      scheduleType: "MONTHLY",
+      hour: when.getUTCHours(),
+      minute: when.getUTCMinutes(),
+      daysOfMonth: interval.daysOfMonth ?? [1]
+    }
+  ];
+}
+
+function convertMonthlyIntervalUtcToLocal(
+  interval: MonitorScheduleInterval,
+  timeZone: string,
+  now: Date
+): MonitorScheduleInterval[] {
+  const utcRef = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 15, interval.hour, interval.minute, 0)
+  );
+  const parts = getDatePartsInTimezone(utcRef, timeZone);
+
+  return [
+    {
+      scheduleType: "MONTHLY",
+      hour: parts.hour,
+      minute: parts.minute,
+      daysOfMonth: interval.daysOfMonth ?? [1]
+    }
+  ];
+}
+
+function convertWeeklyIntervalLocalToUtcSplit(
   interval: MonitorScheduleInterval,
   timeZone: string,
   now: Date
@@ -317,7 +417,47 @@ function convertWeeklyIntervalLocalToUtc(
   }));
 }
 
-function convertWeeklyIntervalUtcToLocal(
+function convertWeeklyIntervalLocalToUtcLossy(
+  interval: MonitorScheduleInterval,
+  timeZone: string,
+  now: Date
+): MonitorScheduleInterval[] {
+  const sourceDays = (interval.days ?? [])
+    .map(parseDay)
+    .filter((day): day is DayName => day !== null);
+
+  if (sourceDays.length === 0) {
+    return convertWeeklyIntervalLocalToUtcSplit(interval, timeZone, now);
+  }
+
+  const utcDays = new Set<DayName>();
+  let hour = interval.hour;
+  let minute = interval.minute;
+
+  for (const day of sourceDays) {
+    const when = findNextLocalWeekdayOccurrence(
+      timeZone,
+      day,
+      interval.hour,
+      interval.minute,
+      now
+    );
+    hour = when.getUTCHours();
+    minute = when.getUTCMinutes();
+    utcDays.add(DAY_NAMES[when.getUTCDay()]);
+  }
+
+  return [
+    {
+      scheduleType: "WEEKLY",
+      hour,
+      minute,
+      days: sortDays([...utcDays])
+    }
+  ];
+}
+
+function convertWeeklyIntervalUtcToLocalSplit(
   interval: MonitorScheduleInterval,
   timeZone: string,
   now: Date
@@ -376,116 +516,109 @@ function convertWeeklyIntervalUtcToLocal(
   }));
 }
 
-function convertMonthlyIntervalLocalToUtc(
+function convertWeeklyIntervalUtcToLocalLossy(
   interval: MonitorScheduleInterval,
   timeZone: string,
   now: Date
 ): MonitorScheduleInterval[] {
-  const anchor = getDatePartsInTimezone(now, timeZone);
-  const daysOfMonth = interval.daysOfMonth ?? [1];
-  const buckets = new Map<string, { hour: number; minute: number; days: Set<number> }>();
+  const sourceDays = (interval.days ?? [])
+    .map(parseDay)
+    .filter((day): day is DayName => day !== null);
 
-  for (const dayOfMonth of daysOfMonth) {
-    const day = clampDayOfMonth(anchor.year, anchor.month, dayOfMonth);
-    const when = createDateInTimezone(
-      anchor.year,
-      anchor.month,
-      day,
+  if (sourceDays.length === 0) {
+    return convertWeeklyIntervalUtcToLocalSplit(interval, timeZone, now);
+  }
+
+  const localDays = new Set<DayName>();
+  let hour = interval.hour;
+  let minute = interval.minute;
+
+  for (const day of sourceDays) {
+    const when = findNextUtcWeekdayOccurrence(
+      DAY_TO_INT[day],
       interval.hour,
       interval.minute,
-      0,
-      timeZone
-    );
-    const utcDayOfMonth = when.getUTCDate();
-    const hour = when.getUTCHours();
-    const minute = when.getUTCMinutes();
-    const key = `${hour}:${minute}`;
-    const bucket = buckets.get(key) ?? { hour, minute, days: new Set<number>() };
-    bucket.days.add(utcDayOfMonth);
-    buckets.set(key, bucket);
-  }
-
-  return [...buckets.values()].map((bucket) => ({
-    scheduleType: "MONTHLY" as const,
-    hour: bucket.hour,
-    minute: bucket.minute,
-    daysOfMonth: sortDaysOfMonth([...bucket.days])
-  }));
-}
-
-function convertMonthlyIntervalUtcToLocal(
-  interval: MonitorScheduleInterval,
-  timeZone: string,
-  now: Date
-): MonitorScheduleInterval[] {
-  const daysOfMonth = interval.daysOfMonth ?? [1];
-  const buckets = new Map<string, { hour: number; minute: number; days: Set<number> }>();
-
-  for (const dayOfMonth of daysOfMonth) {
-    const day = clampDayOfMonth(now.getUTCFullYear(), now.getUTCMonth() + 1, dayOfMonth);
-    const when = new Date(
-      Date.UTC(
-        now.getUTCFullYear(),
-        now.getUTCMonth(),
-        day,
-        interval.hour,
-        interval.minute,
-        0
-      )
+      now
     );
     const parts = getDatePartsInTimezone(when, timeZone);
-    const key = `${parts.hour}:${parts.minute}`;
-    const bucket = buckets.get(key) ?? {
-      hour: parts.hour,
-      minute: parts.minute,
-      days: new Set<number>()
-    };
-    bucket.days.add(parts.day);
-    buckets.set(key, bucket);
+    hour = parts.hour;
+    minute = parts.minute;
+    localDays.add(weekdayToDayName(parts.weekday));
   }
 
-  return [...buckets.values()].map((bucket) => ({
-    scheduleType: "MONTHLY" as const,
-    hour: bucket.hour,
-    minute: bucket.minute,
-    daysOfMonth: sortDaysOfMonth([...bucket.days])
-  }));
+  return [
+    {
+      scheduleType: "WEEKLY",
+      hour,
+      minute,
+      days: sortDays([...localDays])
+    }
+  ];
 }
 
-function convertInterval(
-  interval: MonitorScheduleInterval,
-  timeZone: string,
+function mapPolicyIntervals(
+  policy: MonitorSchedulePolicy,
+  direction: ConversionDirection,
   now: Date,
-  direction: ConversionDirection
+  mode: "split" | "lossy"
 ): MonitorScheduleInterval[] {
-  if (interval.scheduleType === "MONTHLY") {
-    return direction === "localToUtc"
-      ? convertMonthlyIntervalLocalToUtc(interval, timeZone, now)
-      : convertMonthlyIntervalUtcToLocal(interval, timeZone, now);
-  }
+  return policy.intervals.flatMap((interval) => {
+    if (interval.scheduleType === "MONTHLY") {
+      return direction === "localToUtc"
+        ? convertMonthlyIntervalLocalToUtc(interval, policy.timezoneId, now)
+        : convertMonthlyIntervalUtcToLocal(interval, policy.timezoneId, now);
+    }
 
-  return direction === "localToUtc"
-    ? convertWeeklyIntervalLocalToUtc(interval, timeZone, now)
-    : convertWeeklyIntervalUtcToLocal(interval, timeZone, now);
+    if (direction === "localToUtc") {
+      return mode === "split"
+        ? convertWeeklyIntervalLocalToUtcSplit(interval, policy.timezoneId, now)
+        : convertWeeklyIntervalLocalToUtcLossy(interval, policy.timezoneId, now);
+    }
+
+    return mode === "split"
+      ? convertWeeklyIntervalUtcToLocalSplit(interval, policy.timezoneId, now)
+      : convertWeeklyIntervalUtcToLocalLossy(interval, policy.timezoneId, now);
+  });
 }
 
-function convertSchedule(
+function convertScheduleInternal(
   policy: MonitorSchedulePolicy,
   direction: ConversionDirection,
   now: Date
-): MonitorSchedulePolicy {
+): ConvertScheduleResult {
   const timeZone = policy.timezoneId?.trim() ?? "";
   if (!timeZone || timeZone.toUpperCase() === "UTC" || !isUsableTimezone(timeZone)) {
-    return policy;
+    return { policy, lossyWeeklyConversion: false };
+  }
+
+  let lossyWeeklyConversion = false;
+  let intervals = mapPolicyIntervals(policy, direction, now, "split");
+
+  if (intervals.length > MAX_SCHEDULE_INTERVALS) {
+    intervals = mapPolicyIntervals(policy, direction, now, "lossy");
+    lossyWeeklyConversion = true;
+  }
+
+  if (intervals.length > MAX_SCHEDULE_INTERVALS) {
+    intervals = policy.intervals.flatMap((interval) => {
+      if (interval.scheduleType === "MONTHLY") {
+        return direction === "localToUtc"
+          ? convertMonthlyIntervalLocalToUtc(interval, timeZone, now)
+          : convertMonthlyIntervalUtcToLocal(interval, timeZone, now);
+      }
+      return direction === "localToUtc"
+        ? convertWeeklyIntervalLocalToUtcLossy(interval, timeZone, now)
+        : convertWeeklyIntervalUtcToLocalLossy(interval, timeZone, now);
+    });
+    lossyWeeklyConversion = true;
   }
 
   return {
-    timezoneId: policy.timezoneId,
-    intervals: sortIntervals(
-      policy.intervals.flatMap((interval) =>
-        convertInterval(interval, timeZone, now, direction)
-      )
-    )
+    policy: {
+      timezoneId: policy.timezoneId,
+      intervals: sortIntervals(intervals)
+    },
+    lossyWeeklyConversion
   };
 }
 
@@ -493,7 +626,7 @@ export function toUtcSchedulePolicy(
   policy: MonitorSchedulePolicy,
   now: Date = new Date()
 ): MonitorSchedulePolicy {
-  return convertSchedule(policy, "localToUtc", now);
+  return convertScheduleInternal(policy, "localToUtc", now).policy;
 }
 
 export function toLocalSchedulePolicy<
@@ -502,5 +635,24 @@ export function toLocalSchedulePolicy<
   if (policy == null) {
     return policy;
   }
-  return convertSchedule(policy, "utcToLocal", now) as T;
+  return convertScheduleInternal(policy, "utcToLocal", now).policy as T;
+}
+
+export function toLocalSchedulePolicyForDisplay(
+  policy: MonitorSchedulePolicy | null | undefined,
+  now: Date = new Date()
+): LocalSchedulePolicyResult | null {
+  if (policy == null) {
+    return null;
+  }
+
+  const converted = convertScheduleInternal(policy, "utcToLocal", now);
+  const displayNote = converted.lossyWeeklyConversion
+    ? "Schedule wall-clock times are approximate for some weekdays because this monitor uses more than 24 schedule intervals. Prefer the Schedule summary line over inferring times from interval hour values alone."
+    : undefined;
+
+  return {
+    policy: converted.policy,
+    displayNote
+  };
 }
