@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import {
   formatSchedulePolicySummary,
   MAX_SCHEDULE_INTERVALS,
+  SchedulePolicyConversionError,
   toLocalSchedulePolicy,
   toLocalSchedulePolicyForDisplay,
   toUtcSchedulePolicy
@@ -142,6 +143,30 @@ describe("toUtcSchedulePolicy / toLocalSchedulePolicy", () => {
         expect.objectContaining({ hour: 3, minute: 0, days: ["SUNDAY"] }),
         expect.objectContaining({ hour: 2, minute: 0, days: ["MONDAY"] })
       ])
+    );
+  });
+
+  test("trims padded timezone ids during conversion", () => {
+    const policy = weeklyPolicy(3, " America/Chicago ");
+    const utc = toUtcSchedulePolicy(policy, NOW);
+    expect(utc.timezoneId).toBe("America/Chicago");
+    expect(utc.intervals[0]?.hour).toBe(8);
+  });
+
+  test("rejects local schedules that expand past the API interval limit on write", () => {
+    const springNow = new Date("2026-03-02T12:00:00Z");
+    const localSchedule: MonitorSchedulePolicy = {
+      timezoneId: "America/Chicago",
+      intervals: Array.from({ length: 13 }, (_, index) => ({
+        hour: 3,
+        minute: index,
+        days: ["SUNDAY", "MONDAY"],
+        scheduleType: "WEEKLY" as const
+      }))
+    };
+
+    expect(() => toUtcSchedulePolicy(localSchedule, springNow)).toThrow(
+      SchedulePolicyConversionError
     );
   });
 

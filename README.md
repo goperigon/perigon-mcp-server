@@ -264,7 +264,7 @@ Read tools are default. Write tools are opt-in because the shared monitor schema
 | `create_monitor` | Opt-in | Create a DRAFT or ACTIVE monitor. Defaults to DRAFT. |
 | `update_monitor` | Opt-in | Partial update; omitted fields are preserved. |
 
-`schedulePolicy` hours and days are wall-clock times in `timezoneId`, matching Delivery settings in the Perigon product. The public API stores those intervals in UTC; this server converts on read and write. A daily 3:00 AM America/Chicago briefing is returned and accepted as `hour: 3`, not `hour: 8`. `get_monitor` also includes a human-readable `Schedule:` line. Monthly schedules preserve configured `daysOfMonth` (including day 31). Complex monitors with more than 24 intervals fall back to a lossy weekly conversion so returned schedules remain updatable through MCP.
+`schedulePolicy` hours and days are wall-clock times in `timezoneId`, matching Delivery settings in the Perigon product. The public API stores those intervals in UTC; this server converts on read and write. A daily 3:00 AM America/Chicago briefing is returned and accepted as `hour: 3`, not `hour: 8`. `get_monitor` also includes a human-readable `Schedule:` line. Monthly schedules preserve configured `daysOfMonth` (including day 31). Complex monitors with more than 24 intervals fall back to a lossy weekly conversion on read so returned schedules remain updatable through MCP; writes that would exceed 24 intervals after conversion are rejected instead of approximated.
 
 #### Platform
 

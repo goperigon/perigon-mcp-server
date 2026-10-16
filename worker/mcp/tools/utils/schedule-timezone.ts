@@ -27,6 +27,13 @@ const DAY_TO_INT: Record<DayName, number> = {
 
 export const MAX_SCHEDULE_INTERVALS = 24;
 
+export class SchedulePolicyConversionError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "SchedulePolicyConversionError";
+  }
+}
+
 type ConversionDirection = "localToUtc" | "utcToLocal";
 
 interface CalendarParts {
@@ -560,62 +567,84 @@ function mapPolicyIntervals(
   policy: MonitorSchedulePolicy,
   direction: ConversionDirection,
   now: Date,
-  mode: "split" | "lossy"
+  mode: "split" | "lossy",
+  timeZone: string
 ): MonitorScheduleInterval[] {
   return policy.intervals.flatMap((interval) => {
     if (interval.scheduleType === "MONTHLY") {
       return direction === "localToUtc"
-        ? convertMonthlyIntervalLocalToUtc(interval, policy.timezoneId, now)
-        : convertMonthlyIntervalUtcToLocal(interval, policy.timezoneId, now);
+        ? convertMonthlyIntervalLocalToUtc(interval, timeZone, now)
+        : convertMonthlyIntervalUtcToLocal(interval, timeZone, now);
     }
 
     if (direction === "localToUtc") {
       return mode === "split"
-        ? convertWeeklyIntervalLocalToUtcSplit(interval, policy.timezoneId, now)
-        : convertWeeklyIntervalLocalToUtcLossy(interval, policy.timezoneId, now);
+        ? convertWeeklyIntervalLocalToUtcSplit(interval, timeZone, now)
+        : convertWeeklyIntervalLocalToUtcLossy(interval, timeZone, now);
     }
 
     return mode === "split"
-      ? convertWeeklyIntervalUtcToLocalSplit(interval, policy.timezoneId, now)
-      : convertWeeklyIntervalUtcToLocalLossy(interval, policy.timezoneId, now);
+      ? convertWeeklyIntervalUtcToLocalSplit(interval, timeZone, now)
+      : convertWeeklyIntervalUtcToLocalLossy(interval, timeZone, now);
   });
+}
+
+function scheduleIntervalLimitError(intervalCount: number): SchedulePolicyConversionError {
+  return new SchedulePolicyConversionError(
+    `Error: Schedule expands to ${intervalCount} intervals after timezone conversion, but the API allows at most ${MAX_SCHEDULE_INTERVALS}. Reduce the number of intervals or weekdays before saving.`
+  );
 }
 
 function convertScheduleInternal(
   policy: MonitorSchedulePolicy,
   direction: ConversionDirection,
-  now: Date
+  now: Date,
+  allowLossyWeekly: boolean
 ): ConvertScheduleResult {
   const timeZone = policy.timezoneId?.trim() ?? "";
   if (!timeZone || timeZone.toUpperCase() === "UTC" || !isUsableTimezone(timeZone)) {
     return { policy, lossyWeeklyConversion: false };
   }
 
+  const normalizedPolicy: MonitorSchedulePolicy = {
+    ...policy,
+    timezoneId: timeZone
+  };
+
   let lossyWeeklyConversion = false;
-  let intervals = mapPolicyIntervals(policy, direction, now, "split");
+  let intervals = mapPolicyIntervals(normalizedPolicy, direction, now, "split", timeZone);
 
   if (intervals.length > MAX_SCHEDULE_INTERVALS) {
-    intervals = mapPolicyIntervals(policy, direction, now, "lossy");
+    if (direction === "localToUtc") {
+      throw scheduleIntervalLimitError(intervals.length);
+    }
+    if (!allowLossyWeekly) {
+      throw scheduleIntervalLimitError(intervals.length);
+    }
+    intervals = mapPolicyIntervals(normalizedPolicy, direction, now, "lossy", timeZone);
     lossyWeeklyConversion = true;
   }
 
   if (intervals.length > MAX_SCHEDULE_INTERVALS) {
-    intervals = policy.intervals.flatMap((interval) => {
+    if (direction === "localToUtc") {
+      throw scheduleIntervalLimitError(intervals.length);
+    }
+    intervals = normalizedPolicy.intervals.flatMap((interval) => {
       if (interval.scheduleType === "MONTHLY") {
-        return direction === "localToUtc"
-          ? convertMonthlyIntervalLocalToUtc(interval, timeZone, now)
-          : convertMonthlyIntervalUtcToLocal(interval, timeZone, now);
+        return convertMonthlyIntervalUtcToLocal(interval, timeZone, now);
       }
-      return direction === "localToUtc"
-        ? convertWeeklyIntervalLocalToUtcLossy(interval, timeZone, now)
-        : convertWeeklyIntervalUtcToLocalLossy(interval, timeZone, now);
+      return convertWeeklyIntervalUtcToLocalLossy(interval, timeZone, now);
     });
     lossyWeeklyConversion = true;
   }
 
+  if (intervals.length > MAX_SCHEDULE_INTERVALS) {
+    throw scheduleIntervalLimitError(intervals.length);
+  }
+
   return {
     policy: {
-      timezoneId: policy.timezoneId,
+      timezoneId: timeZone,
       intervals: sortIntervals(intervals)
     },
     lossyWeeklyConversion
@@ -626,7 +655,7 @@ export function toUtcSchedulePolicy(
   policy: MonitorSchedulePolicy,
   now: Date = new Date()
 ): MonitorSchedulePolicy {
-  return convertScheduleInternal(policy, "localToUtc", now).policy;
+  return convertScheduleInternal(policy, "localToUtc", now, false).policy;
 }
 
 export function toLocalSchedulePolicy<
@@ -635,7 +664,7 @@ export function toLocalSchedulePolicy<
   if (policy == null) {
     return policy;
   }
-  return convertScheduleInternal(policy, "utcToLocal", now).policy as T;
+  return convertScheduleInternal(policy, "utcToLocal", now, true).policy as T;
 }
 
 export function toLocalSchedulePolicyForDisplay(
@@ -646,7 +675,7 @@ export function toLocalSchedulePolicyForDisplay(
     return null;
   }
 
-  const converted = convertScheduleInternal(policy, "utcToLocal", now);
+  const converted = convertScheduleInternal(policy, "utcToLocal", now, true);
   const displayNote = converted.lossyWeeklyConversion
     ? "Schedule wall-clock times are approximate for some weekdays because this monitor uses more than 24 schedule intervals. Prefer the Schedule summary line over inferring times from interval hour values alone."
     : undefined;

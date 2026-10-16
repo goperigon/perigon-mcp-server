@@ -15,7 +15,10 @@ import {
 import { toolResult } from "../utils/formatting";
 import { createErrorMessage } from "../utils/error-handling";
 import { formatMonitorDetail } from "../utils/monitor-formatting";
-import { toUtcSchedulePolicy } from "../utils/schedule-timezone";
+import {
+  SchedulePolicyConversionError,
+  toUtcSchedulePolicy
+} from "../utils/schedule-timezone";
 
 export const createMonitorArgs = z.object({
   name: z.string().trim().min(1).max(256),
@@ -86,12 +89,22 @@ export function createMonitor(perigon: Perigon): ToolCallback<typeof createMonit
         );
       }
 
+      let utcSchedulePolicy;
+      if (args.schedulePolicy) {
+        try {
+          utcSchedulePolicy = toUtcSchedulePolicy(args.schedulePolicy);
+        } catch (error) {
+          if (error instanceof SchedulePolicyConversionError) {
+            return toolResult(error.message);
+          }
+          throw error;
+        }
+      }
+
       const body: MonitorCreateRequest = {
         ...args,
         query: buildMonitorQuery(args.query),
-        schedulePolicy: args.schedulePolicy
-          ? toUtcSchedulePolicy(args.schedulePolicy)
-          : undefined
+        schedulePolicy: utcSchedulePolicy
       };
       const result = await perigon.createMonitor(body);
       return toolResult(
