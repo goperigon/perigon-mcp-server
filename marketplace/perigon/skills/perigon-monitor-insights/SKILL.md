@@ -14,7 +14,7 @@ Use this skill for **configured monitors** and **Signal Insights** analysis. New
 ## Monitors (read and lifecycle)
 
 1. `list_monitors` to discover monitors; filter by name, status, or type when the user specifies.
-2. `get_monitor` for full configuration before explaining what a monitor tracks.
+2. `get_monitor` for full configuration before explaining what a monitor tracks. Schedule `hour` / `minute` are wall-clock times in `timezoneId`, matching Delivery settings in the product — do not treat `hour` as UTC.
 3. By monitor type:
    - **EVENT / MENTIONS:** `get_monitor_events` for structured events, summaries, entities, and related articles.
    - **TOPIC:** `get_monitor_newsletters` for scheduled briefings; `get_monitor_summaries` for rolling AI summary history.

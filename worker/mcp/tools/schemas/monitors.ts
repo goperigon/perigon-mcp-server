@@ -327,8 +327,18 @@ const dayOfWeek = z.enum([
 
 const scheduleIntervalArgs = z
   .object({
-    hour: z.number().int().min(0).max(23),
-    minute: z.number().int().min(0).max(59),
+    hour: z
+      .number()
+      .int()
+      .min(0)
+      .max(23)
+      .describe("Wall-clock hour in timezoneId, from 0 through 23."),
+    minute: z
+      .number()
+      .int()
+      .min(0)
+      .max(59)
+      .describe("Wall-clock minute in timezoneId, from 0 through 59."),
     days: z
       .array(dayOfWeek)
       .min(1)
@@ -369,7 +379,9 @@ export const monitorSchedulePolicyArgs = z.object({
   timezoneId: z
     .string()
     .default("UTC")
-    .describe("IANA time zone used to interpret the schedule.")
+    .describe(
+      "IANA time zone for interval hours and days, such as America/Chicago. Defaults to UTC."
+    )
 });
 
 // Returns a fresh instance per call so JSON Schema conversion inlines each

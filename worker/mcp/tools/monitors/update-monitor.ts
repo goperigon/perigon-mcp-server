@@ -15,6 +15,10 @@ import {
 import { toolResult } from "../utils/formatting";
 import { createErrorMessage } from "../utils/error-handling";
 import { formatMonitorDetail } from "../utils/monitor-formatting";
+import {
+  SchedulePolicyConversionError,
+  toUtcSchedulePolicy
+} from "../utils/schedule-timezone";
 
 export const updateMonitorArgs = z.object({
   uuid: z.string().uuid().describe("UUID of the monitor to update."),
@@ -42,7 +46,9 @@ export const updateMonitorArgs = z.object({
   schedulePolicy: monitorSchedulePolicyArgs
     .nullable()
     .optional()
-    .describe("Replacement schedule. Pass null to clear it."),
+    .describe(
+      "Replacement schedule. Interval hour and minute are wall-clock times in timezoneId. Pass null to clear it."
+    ),
   watchlistId: z
     .number()
     .int()
@@ -63,10 +69,27 @@ export function updateMonitor(perigon: Perigon): ToolCallback<typeof updateMonit
     args: z.infer<typeof updateMonitorArgs>
   ): Promise<CallToolResult> => {
     try {
-      const { uuid, query, ...fields } = args;
+      const { uuid, query, schedulePolicy, ...fields } = args;
+      let utcSchedulePolicy: MonitorUpdateRequest["schedulePolicy"] | undefined;
+      if (schedulePolicy !== undefined) {
+        if (schedulePolicy === null) {
+          utcSchedulePolicy = null;
+        } else {
+          try {
+            utcSchedulePolicy = toUtcSchedulePolicy(schedulePolicy);
+          } catch (error) {
+            if (error instanceof SchedulePolicyConversionError) {
+              return toolResult(error.message);
+            }
+            throw error;
+          }
+        }
+      }
+
       const body: MonitorUpdateRequest = {
         ...fields,
-        ...(query ? { query: buildMonitorQuery(query) } : {})
+        ...(query ? { query: buildMonitorQuery(query) } : {}),
+        ...(schedulePolicy === undefined ? {} : { schedulePolicy: utcSchedulePolicy })
       };
 
       if (Object.keys(body).length === 0) {

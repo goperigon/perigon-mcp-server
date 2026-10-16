@@ -96,7 +96,7 @@ Aggregate metrics computed server-side — prefer these over counting search res
 
 Create, configure, and read output from Perigon monitors via the public \`/v1/api/monitors\` API. Always available, no sandbox workspace required.
 
-- \`${listMonitorsTool.name}\` / \`${getMonitorTool.name}\` — discover monitors and inspect configuration before reading output or making changes.
+- \`${listMonitorsTool.name}\` / \`${getMonitorTool.name}\` — discover monitors and inspect configuration before reading output or making changes. Schedule hours are wall-clock times in \`timezoneId\`, matching the product UI; do not treat \`hour\` as UTC.
 - \`${getMonitorEventsTool.name}\` — structured EVENT/MENTIONS output with extracted schema data, summaries, entities, related articles.
 - \`${getMonitorNewslettersTool.name}\` — scheduled TOPIC briefings with markdown content and citations.
 - \`${getMonitorSummariesTool.name}\` — rolling AI-generated summary history.
