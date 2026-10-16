@@ -27,6 +27,16 @@ const DAY_TO_INT: Record<DayName, number> = {
 
 type ConversionDirection = "localToUtc" | "utcToLocal";
 
+interface CalendarParts {
+  year: number;
+  month: number;
+  day: number;
+  hour: number;
+  minute: number;
+  second: number;
+  weekday: string;
+}
+
 function parseDay(value: string): DayName | null {
   const key = value.trim().toUpperCase();
   return key in DAY_TO_INT ? (key as DayName) : null;
@@ -41,25 +51,6 @@ function isUsableTimezone(timezoneId: string): boolean {
   }
 }
 
-function getDateParts(
-  date: Date,
-  timeZone: string
-): { hour: number; minute: number; weekday: string } {
-  const parts = new Intl.DateTimeFormat("en-US", {
-    timeZone,
-    hourCycle: "h23",
-    hour: "2-digit",
-    minute: "2-digit",
-    weekday: "short"
-  }).formatToParts(date);
-
-  return {
-    hour: Number(parts.find((part) => part.type === "hour")?.value ?? "0"),
-    minute: Number(parts.find((part) => part.type === "minute")?.value ?? "0"),
-    weekday: parts.find((part) => part.type === "weekday")?.value ?? "Sun"
-  };
-}
-
 function weekdayToDayName(weekday: string): DayName {
   if (weekday.startsWith("Mon")) return "MONDAY";
   if (weekday.startsWith("Tue")) return "TUESDAY";
@@ -70,95 +61,395 @@ function weekdayToDayName(weekday: string): DayName {
   return "SUNDAY";
 }
 
-function nextSundayUtcMs(now: Date): number {
-  const dayOfWeek = now.getUTCDay();
-  const daysToNextSunday = dayOfWeek === 0 ? 7 : 7 - dayOfWeek;
-  const nextSunday = new Date(
-    now.getTime() + daysToNextSunday * 24 * 60 * 60 * 1000
-  );
-  nextSunday.setUTCHours(0, 0, 0, 0);
-  return nextSunday.getTime();
+function getDatePartsInTimezone(date: Date, timezone: string): CalendarParts {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: timezone,
+    year: "numeric",
+    month: "numeric",
+    day: "numeric",
+    hour: "numeric",
+    minute: "numeric",
+    second: "numeric",
+    hourCycle: "h23",
+    weekday: "short"
+  }).formatToParts(date);
+
+  return {
+    year: Number(parts.find((part) => part.type === "year")?.value ?? 0),
+    month: Number(parts.find((part) => part.type === "month")?.value ?? 0),
+    day: Number(parts.find((part) => part.type === "day")?.value ?? 0),
+    hour: Number(parts.find((part) => part.type === "hour")?.value ?? 0),
+    minute: Number(parts.find((part) => part.type === "minute")?.value ?? 0),
+    second: Number(parts.find((part) => part.type === "second")?.value ?? 0),
+    weekday: parts.find((part) => part.type === "weekday")?.value ?? "Sun"
+  };
 }
 
-function convertClock(
+function createDateInTimezone(
+  year: number,
+  month: number,
+  day: number,
   hour: number,
   minute: number,
-  timeZone: string,
-  now: Date,
-  direction: ConversionDirection
-): { hour: number; minute: number } {
-  if (direction === "localToUtc") {
-    const localRef = new Date(now.getFullYear(), now.getMonth(), 15);
-    const localParts = getDateParts(localRef, timeZone);
-    const deltaMinutes =
-      hour * 60 + minute - (localParts.hour * 60 + localParts.minute);
-    const when = new Date(localRef.getTime() + deltaMinutes * 60 * 1000);
-    return { hour: when.getUTCHours(), minute: when.getUTCMinutes() };
+  second: number,
+  timezone: string
+): Date {
+  const utcGuess = new Date(Date.UTC(year, month - 1, day, hour, minute, second));
+  const guessedParts = getDatePartsInTimezone(utcGuess, timezone);
+
+  const targetMs = Date.UTC(year, month - 1, day, hour, minute, second);
+  const guessedMs = Date.UTC(
+    guessedParts.year,
+    guessedParts.month - 1,
+    guessedParts.day,
+    guessedParts.hour,
+    guessedParts.minute,
+    guessedParts.second
+  );
+  const adjustedDate = new Date(utcGuess.getTime() + (targetMs - guessedMs));
+
+  const verifyParts = getDatePartsInTimezone(adjustedDate, timezone);
+  if (
+    verifyParts.year === year &&
+    verifyParts.month === month &&
+    verifyParts.day === day &&
+    verifyParts.hour === hour &&
+    verifyParts.minute === minute
+  ) {
+    return adjustedDate;
   }
 
-  const utcRef = new Date(
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 15, hour, minute, 0)
-  );
-  const localParts = getDateParts(utcRef, timeZone);
-  return { hour: localParts.hour, minute: localParts.minute };
+  let low = utcGuess.getTime() - 26 * 60 * 60 * 1000;
+  let high = utcGuess.getTime() + 26 * 60 * 60 * 1000;
+
+  while (high - low > 60_000) {
+    const mid = Math.floor((low + high) / 2);
+    const parts = getDatePartsInTimezone(new Date(mid), timezone);
+    const target =
+      year * 10_000_000_000 +
+      month * 100_000_000 +
+      day * 1_000_000 +
+      hour * 10_000 +
+      minute * 100 +
+      second;
+    const current =
+      parts.year * 10_000_000_000 +
+      parts.month * 100_000_000 +
+      parts.day * 1_000_000 +
+      parts.hour * 10_000 +
+      parts.minute * 100 +
+      parts.second;
+
+    if (current < target) {
+      low = mid;
+    } else {
+      high = mid;
+    }
+  }
+
+  return new Date(high);
 }
 
-function convertWeeklyInterval(
+function clampDayOfMonth(year: number, month: number, dayOfMonth: number): number {
+  const daysInMonth = new Date(Date.UTC(year, month, 0)).getUTCDate();
+  return Math.min(Math.max(1, dayOfMonth), daysInMonth);
+}
+
+function findNextLocalWeekdayOccurrence(
+  timezone: string,
+  weekday: DayName,
+  hour: number,
+  minute: number,
+  notBefore: Date
+): Date {
+  for (let offsetDays = 0; offsetDays < 370; offsetDays += 1) {
+    const probe = new Date(notBefore.getTime() + offsetDays * 86_400_000);
+    const parts = getDatePartsInTimezone(probe, timezone);
+    if (weekdayToDayName(parts.weekday) !== weekday) {
+      continue;
+    }
+    return createDateInTimezone(
+      parts.year,
+      parts.month,
+      parts.day,
+      hour,
+      minute,
+      0,
+      timezone
+    );
+  }
+
+  throw new Error(`Could not find upcoming ${weekday} in ${timezone}`);
+}
+
+function findNextUtcWeekdayOccurrence(
+  utcWeekday: number,
+  hour: number,
+  minute: number,
+  notBefore: Date
+): Date {
+  for (let offsetDays = 0; offsetDays < 370; offsetDays += 1) {
+    const probe = new Date(notBefore.getTime() + offsetDays * 86_400_000);
+    if (probe.getUTCDay() !== utcWeekday) {
+      continue;
+    }
+    return new Date(
+      Date.UTC(
+        probe.getUTCFullYear(),
+        probe.getUTCMonth(),
+        probe.getUTCDate(),
+        hour,
+        minute,
+        0
+      )
+    );
+  }
+
+  throw new Error(`Could not find upcoming UTC weekday ${utcWeekday}`);
+}
+
+function sortIntervals(intervals: MonitorScheduleInterval[]): MonitorScheduleInterval[] {
+  const minDay = (days?: string[]) => {
+    if (!days || days.length === 0) {
+      return 7;
+    }
+    let value = 7;
+    for (const day of days) {
+      const parsed = parseDay(day);
+      if (parsed && DAY_TO_INT[parsed] < value) {
+        value = DAY_TO_INT[parsed];
+      }
+    }
+    return value;
+  };
+
+  return [...intervals].sort((left, right) => {
+    const leftDay = minDay(left.days);
+    const rightDay = minDay(right.days);
+    if (leftDay !== rightDay) {
+      return leftDay - rightDay;
+    }
+    if (left.hour !== right.hour) {
+      return left.hour - right.hour;
+    }
+    if (left.minute !== right.minute) {
+      return left.minute - right.minute;
+    }
+    return (left.days?.length ?? 0) - (right.days?.length ?? 0);
+  });
+}
+
+function sortDays(days: DayName[]): DayName[] {
+  return [...days].sort((a, b) => DAY_TO_INT[a] - DAY_TO_INT[b]);
+}
+
+function sortDaysOfMonth(days: number[]): number[] {
+  return [...days].sort((a, b) => a - b);
+}
+
+function convertWeeklyIntervalLocalToUtc(
   interval: MonitorScheduleInterval,
   timeZone: string,
-  now: Date,
-  direction: ConversionDirection
-): MonitorScheduleInterval {
+  now: Date
+): MonitorScheduleInterval[] {
   const sourceDays = (interval.days ?? [])
     .map(parseDay)
     .filter((day): day is DayName => day !== null);
 
   if (sourceDays.length === 0) {
-    return {
-      ...interval,
-      ...convertClock(interval.hour, interval.minute, timeZone, now, direction)
-    };
+    const anchor = getDatePartsInTimezone(now, timeZone);
+    const when = createDateInTimezone(
+      anchor.year,
+      anchor.month,
+      anchor.day,
+      interval.hour,
+      interval.minute,
+      0,
+      timeZone
+    );
+    return [
+      {
+        ...interval,
+        hour: when.getUTCHours(),
+        minute: when.getUTCMinutes()
+      }
+    ];
   }
 
-  const baseMs = nextSundayUtcMs(now);
-  const days = new Set<DayName>();
-  let hour = 0;
-  let minute = 0;
+  const buckets = new Map<string, { hour: number; minute: number; days: Set<DayName> }>();
 
   for (const day of sourceDays) {
-    const dayIndex = DAY_TO_INT[day];
-    if (direction === "localToUtc") {
-      const guess = new Date(baseMs + dayIndex * 24 * 60 * 60 * 1000);
-      const localParts = getDateParts(guess, timeZone);
-      const current =
-        DAY_TO_INT[weekdayToDayName(localParts.weekday)] * 60 * 24 +
-        localParts.hour * 60 +
-        localParts.minute;
-      const wanted = dayIndex * 60 * 24 + interval.hour * 60 + interval.minute;
-      const when = new Date(guess.getTime() + (wanted - current) * 60 * 1000);
-      hour = when.getUTCHours();
-      minute = when.getUTCMinutes();
-      days.add(DAY_NAMES[when.getUTCDay()]);
-    } else {
-      const when = new Date(
-        baseMs +
-          dayIndex * 24 * 60 * 60 * 1000 +
-          interval.hour * 60 * 60 * 1000 +
-          interval.minute * 60 * 1000
-      );
-      const localParts = getDateParts(when, timeZone);
-      hour = localParts.hour;
-      minute = localParts.minute;
-      days.add(weekdayToDayName(localParts.weekday));
-    }
+    const when = findNextLocalWeekdayOccurrence(
+      timeZone,
+      day,
+      interval.hour,
+      interval.minute,
+      now
+    );
+    const utcDay = DAY_NAMES[when.getUTCDay()];
+    const hour = when.getUTCHours();
+    const minute = when.getUTCMinutes();
+    const key = `${hour}:${minute}:${utcDay}`;
+    const bucket = buckets.get(key) ?? { hour, minute, days: new Set<DayName>() };
+    bucket.days.add(utcDay);
+    buckets.set(key, bucket);
   }
 
-  return {
-    ...interval,
-    hour,
-    minute,
-    days: [...days].sort((a, b) => DAY_TO_INT[a] - DAY_TO_INT[b])
-  };
+  const merged = new Map<string, { hour: number; minute: number; days: Set<DayName> }>();
+  for (const bucket of buckets.values()) {
+    const key = `${bucket.hour}:${bucket.minute}`;
+    const existing = merged.get(key) ?? {
+      hour: bucket.hour,
+      minute: bucket.minute,
+      days: new Set<DayName>()
+    };
+    for (const day of bucket.days) {
+      existing.days.add(day);
+    }
+    merged.set(key, existing);
+  }
+
+  return [...merged.values()].map((bucket) => ({
+    scheduleType: "WEEKLY" as const,
+    hour: bucket.hour,
+    minute: bucket.minute,
+    days: sortDays([...bucket.days])
+  }));
+}
+
+function convertWeeklyIntervalUtcToLocal(
+  interval: MonitorScheduleInterval,
+  timeZone: string,
+  now: Date
+): MonitorScheduleInterval[] {
+  const sourceDays = (interval.days ?? [])
+    .map(parseDay)
+    .filter((day): day is DayName => day !== null);
+
+  if (sourceDays.length === 0) {
+    const when = new Date(
+      Date.UTC(
+        now.getUTCFullYear(),
+        now.getUTCMonth(),
+        now.getUTCDate(),
+        interval.hour,
+        interval.minute,
+        0
+      )
+    );
+    const parts = getDatePartsInTimezone(when, timeZone);
+    return [
+      {
+        ...interval,
+        hour: parts.hour,
+        minute: parts.minute
+      }
+    ];
+  }
+
+  const buckets = new Map<string, { hour: number; minute: number; days: Set<DayName> }>();
+
+  for (const day of sourceDays) {
+    const when = findNextUtcWeekdayOccurrence(
+      DAY_TO_INT[day],
+      interval.hour,
+      interval.minute,
+      now
+    );
+    const parts = getDatePartsInTimezone(when, timeZone);
+    const localDay = weekdayToDayName(parts.weekday);
+    const key = `${parts.hour}:${parts.minute}`;
+    const bucket = buckets.get(key) ?? {
+      hour: parts.hour,
+      minute: parts.minute,
+      days: new Set<DayName>()
+    };
+    bucket.days.add(localDay);
+    buckets.set(key, bucket);
+  }
+
+  return [...buckets.values()].map((bucket) => ({
+    scheduleType: "WEEKLY" as const,
+    hour: bucket.hour,
+    minute: bucket.minute,
+    days: sortDays([...bucket.days])
+  }));
+}
+
+function convertMonthlyIntervalLocalToUtc(
+  interval: MonitorScheduleInterval,
+  timeZone: string,
+  now: Date
+): MonitorScheduleInterval[] {
+  const anchor = getDatePartsInTimezone(now, timeZone);
+  const daysOfMonth = interval.daysOfMonth ?? [1];
+  const buckets = new Map<string, { hour: number; minute: number; days: Set<number> }>();
+
+  for (const dayOfMonth of daysOfMonth) {
+    const day = clampDayOfMonth(anchor.year, anchor.month, dayOfMonth);
+    const when = createDateInTimezone(
+      anchor.year,
+      anchor.month,
+      day,
+      interval.hour,
+      interval.minute,
+      0,
+      timeZone
+    );
+    const utcDayOfMonth = when.getUTCDate();
+    const hour = when.getUTCHours();
+    const minute = when.getUTCMinutes();
+    const key = `${hour}:${minute}`;
+    const bucket = buckets.get(key) ?? { hour, minute, days: new Set<number>() };
+    bucket.days.add(utcDayOfMonth);
+    buckets.set(key, bucket);
+  }
+
+  return [...buckets.values()].map((bucket) => ({
+    scheduleType: "MONTHLY" as const,
+    hour: bucket.hour,
+    minute: bucket.minute,
+    daysOfMonth: sortDaysOfMonth([...bucket.days])
+  }));
+}
+
+function convertMonthlyIntervalUtcToLocal(
+  interval: MonitorScheduleInterval,
+  timeZone: string,
+  now: Date
+): MonitorScheduleInterval[] {
+  const daysOfMonth = interval.daysOfMonth ?? [1];
+  const buckets = new Map<string, { hour: number; minute: number; days: Set<number> }>();
+
+  for (const dayOfMonth of daysOfMonth) {
+    const day = clampDayOfMonth(now.getUTCFullYear(), now.getUTCMonth() + 1, dayOfMonth);
+    const when = new Date(
+      Date.UTC(
+        now.getUTCFullYear(),
+        now.getUTCMonth(),
+        day,
+        interval.hour,
+        interval.minute,
+        0
+      )
+    );
+    const parts = getDatePartsInTimezone(when, timeZone);
+    const key = `${parts.hour}:${parts.minute}`;
+    const bucket = buckets.get(key) ?? {
+      hour: parts.hour,
+      minute: parts.minute,
+      days: new Set<number>()
+    };
+    bucket.days.add(parts.day);
+    buckets.set(key, bucket);
+  }
+
+  return [...buckets.values()].map((bucket) => ({
+    scheduleType: "MONTHLY" as const,
+    hour: bucket.hour,
+    minute: bucket.minute,
+    daysOfMonth: sortDaysOfMonth([...bucket.days])
+  }));
 }
 
 function convertInterval(
@@ -166,15 +457,16 @@ function convertInterval(
   timeZone: string,
   now: Date,
   direction: ConversionDirection
-): MonitorScheduleInterval {
+): MonitorScheduleInterval[] {
   if (interval.scheduleType === "MONTHLY") {
-    return {
-      ...interval,
-      ...convertClock(interval.hour, interval.minute, timeZone, now, direction)
-    };
+    return direction === "localToUtc"
+      ? convertMonthlyIntervalLocalToUtc(interval, timeZone, now)
+      : convertMonthlyIntervalUtcToLocal(interval, timeZone, now);
   }
 
-  return convertWeeklyInterval(interval, timeZone, now, direction);
+  return direction === "localToUtc"
+    ? convertWeeklyIntervalLocalToUtc(interval, timeZone, now)
+    : convertWeeklyIntervalUtcToLocal(interval, timeZone, now);
 }
 
 function convertSchedule(
@@ -189,8 +481,10 @@ function convertSchedule(
 
   return {
     timezoneId: policy.timezoneId,
-    intervals: policy.intervals.map((interval) =>
-      convertInterval(interval, timeZone, now, direction)
+    intervals: sortIntervals(
+      policy.intervals.flatMap((interval) =>
+        convertInterval(interval, timeZone, now, direction)
+      )
     )
   };
 }

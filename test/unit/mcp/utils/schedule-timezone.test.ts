@@ -19,16 +19,36 @@ const WEEKLY_DAYS = [
 function weeklyPolicy(
   hour: number,
   timezoneId: string,
-  days: string[] = WEEKLY_DAYS
+  days: string[] = WEEKLY_DAYS,
+  minute = 0
 ): MonitorSchedulePolicy {
   return {
     timezoneId,
     intervals: [
       {
         hour,
-        minute: 0,
+        minute,
         days,
         scheduleType: "WEEKLY"
+      }
+    ]
+  };
+}
+
+function monthlyPolicy(
+  hour: number,
+  timezoneId: string,
+  daysOfMonth: number[],
+  minute = 0
+): MonitorSchedulePolicy {
+  return {
+    timezoneId,
+    intervals: [
+      {
+        hour,
+        minute,
+        daysOfMonth,
+        scheduleType: "MONTHLY"
       }
     ]
   };
@@ -81,24 +101,45 @@ describe("toUtcSchedulePolicy / toLocalSchedulePolicy", () => {
     expect(local?.intervals[0]?.days).toEqual(["MONDAY"]);
   });
 
-  test("converts monthly clock time and keeps daysOfMonth", () => {
-    const policy: MonitorSchedulePolicy = {
-      timezoneId: "America/Chicago",
-      intervals: [
-        {
-          hour: 3,
-          minute: 30,
-          daysOfMonth: [1, 15],
-          scheduleType: "MONTHLY"
-        }
-      ]
-    };
+  test("converts monthly clock time and keeps daysOfMonth when no day shift", () => {
+    const policy = monthlyPolicy(3, "America/Chicago", [1, 15], 30);
 
     const utc = toUtcSchedulePolicy(policy, NOW);
     expect(utc.intervals[0]?.hour).toBe(8);
     expect(utc.intervals[0]?.minute).toBe(30);
     expect(utc.intervals[0]?.daysOfMonth).toEqual([1, 15]);
     expect(toLocalSchedulePolicy(utc, NOW)).toEqual(policy);
+  });
+
+  test("shifts monthly daysOfMonth when local time crosses UTC midnight", () => {
+    const local = monthlyPolicy(23, "America/Chicago", [15]);
+    const utc = toUtcSchedulePolicy(local, NOW);
+
+    expect(utc.intervals[0]?.hour).toBe(4);
+    expect(utc.intervals[0]?.daysOfMonth).toEqual([16]);
+    expect(toLocalSchedulePolicy(utc, NOW)).toEqual(local);
+  });
+
+  test("round-trips Sunday schedules across the DST transition", () => {
+    const transitionNow = new Date("2026-10-26T12:00:00Z");
+    const local = weeklyPolicy(3, "America/Chicago", ["SUNDAY"]);
+
+    const utc = toUtcSchedulePolicy(local, transitionNow);
+    expect(toLocalSchedulePolicy(utc, transitionNow)).toEqual(local);
+  });
+
+  test("splits weekly days when UTC storage maps to different local times", () => {
+    const springNow = new Date("2026-03-02T12:00:00Z");
+    const stored = weeklyPolicy(8, "America/Chicago", ["SUNDAY", "MONDAY"]);
+    const local = toLocalSchedulePolicy(stored, springNow);
+
+    expect(local?.intervals).toHaveLength(2);
+    expect(local?.intervals).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ hour: 3, minute: 0, days: ["SUNDAY"] }),
+        expect.objectContaining({ hour: 2, minute: 0, days: ["MONDAY"] })
+      ])
+    );
   });
 
   test("passes through null and undefined", () => {
