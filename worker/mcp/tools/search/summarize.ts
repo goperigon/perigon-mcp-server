@@ -43,26 +43,22 @@ export const summarizeArgs = createBaseSearchArgs().extend({
     .max(2)
     .optional()
     .describe(
-      "LLM sampling temperature: 0.0 = deterministic, up to 2.0 = very creative.",
+      "LLM sampling temperature: 0.0 = deterministic, up to 2.0 = very creative. Ignored by gpt-6-luna and gpt-6.1-sol.",
     ),
   topP: z
     .number()
     .min(0)
     .max(1)
     .optional()
-    .describe("Nucleus sampling (0.0-1.0)."),
+    .describe(
+      "Nucleus sampling (0.0-1.0). Ignored by gpt-6-luna and gpt-6.1-sol.",
+    ),
   model: z
-    .enum([
-      "gpt-4o",
-      "gpt-4o-mini",
-      "gpt-4.1",
-      "gpt-4.1-mini",
-      "gpt-4.1-nano",
-      "llama-3.3-70b-versatile",
-      "deepseek-r1-distill-llama-70b",
-    ])
+    .enum(["gpt-6-luna", "gpt-6.1-sol", "openai/gpt-oss-120b"])
     .optional()
-    .describe("LLM model to use for summary generation."),
+    .describe(
+      "LLM model to use for summary generation. Defaults to gpt-6-luna (fast, cheap). Use gpt-6.1-sol for higher-quality synthesis of complex topics.",
+    ),
   method: z
     .enum(["ARTICLES", "CLUSTERS"])
     .optional()
