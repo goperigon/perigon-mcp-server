@@ -19,12 +19,14 @@ export class InsightsApiClient {
     private readonly apiKey: string,
     private readonly timeoutMs: number = 60_000,
     apiUrl: string = DEFAULT_PERIGON_API_URL,
+    private readonly telemetryHeaders: () => Record<string, string> = () => ({}),
   ) {
     this.baseUrl = `${normalizePerigonApiHost(apiUrl)}${INSIGHTS_MCP_PATH}`;
   }
 
   private get headers(): HeadersInit {
     return {
+      ...this.telemetryHeaders(),
       Authorization: `Bearer ${this.apiKey}`,
     };
   }

@@ -1,4 +1,4 @@
-import { Configuration, V1Api } from "@goperigon/perigon-ts";
+import { Configuration, V1Api, type Middleware } from "@goperigon/perigon-ts";
 import { AuthIntrospectionResponse, HttpError } from "../types/types";
 import {
   MonitorCreateRequest,
@@ -468,20 +468,41 @@ export interface StoryVelocityEntry {
   count: number;
 }
 
+export type TelemetryHeaderProvider = () => Record<string, string>;
+
 export class Perigon extends V1Api {
   private apiKey: string;
   private baseUrl: string;
+  private readonly telemetryHeaders: TelemetryHeaderProvider;
 
-  constructor(apiKey: string, apiUrl: string = DEFAULT_PERIGON_API_URL) {
+  constructor(
+    apiKey: string,
+    apiUrl: string = DEFAULT_PERIGON_API_URL,
+    telemetryHeaders: TelemetryHeaderProvider = () => ({}),
+  ) {
     const apiHost = normalizePerigonApiHost(apiUrl);
+    const telemetryMiddleware: Middleware = {
+      pre: async (context) => {
+        const headers = new Headers(context.init.headers);
+        for (const [key, value] of Object.entries(telemetryHeaders())) {
+          headers.set(key, value);
+        }
+        return {
+          url: context.url,
+          init: { ...context.init, headers },
+        };
+      },
+    };
     super(
       new Configuration({
         apiKey,
         basePath: apiHost,
+        middleware: [telemetryMiddleware],
       }),
     );
     this.apiKey = apiKey;
     this.baseUrl = `${apiHost}/v1`;
+    this.telemetryHeaders = telemetryHeaders;
   }
 
   async introspection(): Promise<AuthIntrospectionResponse> {
@@ -793,11 +814,15 @@ export class Perigon extends V1Api {
 
   private authHeaders(): HeadersInit {
     return {
+      ...this.telemetryHeaders(),
       Authorization: `Bearer ${this.apiKey}`,
     };
   }
 
   private applyAuthHeaders(headers: Headers): void {
+    for (const [key, value] of Object.entries(this.telemetryHeaders())) {
+      headers.set(key, value);
+    }
     headers.set("Authorization", `Bearer ${this.apiKey}`);
   }
 
