@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "perigon",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "Search filterable news data, create monitors that extract structured events, and analyze coverage trends.",
   "author": {
     "name": "Perigon"
@@ -90,7 +90,7 @@
         "demo_recording_url": "https://drive.google.com/file/d/117VJgDOHewFJDOcATQ2XODvEWSTTmyWi/view?usp=sharing"
       },
       "publication": {
-        "release_notes": "Added capability labels for news filtering, sentiment and coverage analysis, journalist and publisher research, monitor creation, structured event extraction, and data exports and charts.",
+        "release_notes": "Updated the monitor skill to interpret schedule hours and minutes as local wall-clock times in timezoneId, matching the Perigon product delivery settings, rather than treating them as UTC.",
         "countries": []
       }
     }
