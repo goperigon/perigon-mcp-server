@@ -7,6 +7,7 @@ import { PerigonMCP, type Props } from "../mcp/mcp";
 import { introspectionCacheTtlMs } from "../lib/mcp-access-token";
 import { mcpPublicOrigin, perigonApiOrigin } from "../lib/mcp-env";
 import { parseMcpToolFilterFromRequest } from "../mcp/request-tool-surface";
+import { buildMcpTelemetryHeaders } from "../lib/telemetry-headers";
 
 const SSE_PATHS = ["/v1/sse", "/v1/sse/message"] as const;
 const STREAMABLE_PATH = "/v1/mcp";
@@ -73,7 +74,7 @@ export async function handleMCP(
     if (rateLimitResponse) return rateLimitResponse;
 
     const props = await loadMcpProps(request, apiKey, env);
-    ctx.props = props;
+    Object.assign(ctx as object, { props });
 
     return dispatchMcp(request, env, ctx);
   } catch (error) {
@@ -115,7 +116,9 @@ async function loadMcpProps(
   env: Env,
 ): Promise<Props> {
   const perigonApiUrl = perigonApiOrigin(env, request);
-  const perigon = new Perigon(apiKey, perigonApiUrl);
+  const perigon = new Perigon(apiKey, perigonApiUrl, () =>
+    buildMcpTelemetryHeaders({}),
+  );
   const apiKeyDetails = await getCachedIntrospection(perigon, apiKey);
   const { requestedTools, explicitAllTools } = parseMcpToolFilterFromRequest(
     request.url,

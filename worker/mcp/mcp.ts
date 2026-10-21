@@ -3,6 +3,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { Scopes } from "../types/types";
 import { TOOL_DEFINITIONS, type ToolName } from "./tools";
 import { Perigon } from "../lib/perigon";
+import { buildMcpTelemetryHeaders } from "../lib/telemetry-headers";
 import { SIGNAL_TOOL_NAMES } from "./tools/selection";
 import { resolveNewsToolsForSession } from "./tool-registration";
 import { InsightsApiClient } from "../lib/insights-api-client";
@@ -66,7 +67,6 @@ export class PerigonMCP extends McpAgent<Env, unknown, Props> {
   private readonly registeredToolNames = new Set<ToolName>();
 
   async init() {
-    const perigon = new Perigon(this.props!.apiKey, this.props!.perigonApiUrl);
     const { scopes, requestedTools, explicitAllTools } = this.props!;
 
     // ── News tools (existing) ──────────────────────────────────────────────
@@ -82,7 +82,7 @@ export class PerigonMCP extends McpAgent<Env, unknown, Props> {
     const capabilityReport = deriveCapabilities(scopes);
 
     for (const toolName of activeNewsTools) {
-      this.registerNewsTool(toolName, perigon, capabilityReport);
+      this.registerNewsTool(toolName, capabilityReport);
     }
 
     this.registerReferenceResources(capabilityReport);
@@ -131,11 +131,6 @@ export class PerigonMCP extends McpAgent<Env, unknown, Props> {
       }),
     );
 
-    const insightsApi = new InsightsApiClient(
-      this.props!.apiKey,
-      undefined,
-      this.props!.perigonApiUrl,
-    );
     const pokeyClient = new PokeyInsightsClient(
       this.env.POKEY_SIGNAL_INSIGHTS_BASE_URL,
       this.props!.apiKey,
@@ -143,6 +138,16 @@ export class PerigonMCP extends McpAgent<Env, unknown, Props> {
 
     for (const toolName of activeSignalTools) {
       const def: SignalToolDefinition<any> = SIGNAL_TOOL_DEFINITIONS[toolName];
+      const insightsApi = new InsightsApiClient(
+        this.props!.apiKey,
+        undefined,
+        this.props!.perigonApiUrl,
+        () =>
+          buildMcpTelemetryHeaders({
+            toolName,
+            clientInfo: this.server.server.getClientVersion(),
+          }),
+      );
       this.server.registerTool(
         def.name,
         buildSignalToolRegisterConfig(def),
@@ -195,11 +200,20 @@ export class PerigonMCP extends McpAgent<Env, unknown, Props> {
 
   private registerNewsTool(
     toolName: ToolName,
-    perigon: Perigon,
     capabilityReport: ReturnType<typeof deriveCapabilities>,
   ): void {
     if (this.registeredToolNames.has(toolName)) return;
     this.registeredToolNames.add(toolName);
+
+    const perigon = new Perigon(
+      this.props!.apiKey,
+      this.props!.perigonApiUrl,
+      () =>
+        buildMcpTelemetryHeaders({
+          toolName,
+          clientInfo: this.server.server.getClientVersion(),
+        }),
+    );
 
     const definition = TOOL_DEFINITIONS[toolName];
     const entitlementNote = entitlementNoteForTool(toolName, capabilityReport);
