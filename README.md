@@ -34,7 +34,7 @@
 
 Endpoint: `https://mcp.perigon.io/v1/mcp`
 
-Try it in the [playground](https://mcp.perigon.io) (requires a signed-in [Perigon dashboard](https://perigon.io) session). Human-oriented setup: [perigon.io/docs/api/mcp](https://perigon.io/docs/api/mcp). **Install with an agent:** pass [perigon.io/mcp.md](https://perigon.io/mcp.md) to your AI client and follow the steps (OAuth sign-in, no API key in chat).
+Try it in the [playground](https://perigon.io/mcp) (requires a signed-in [Perigon dashboard](https://perigon.io) session). Human-oriented setup: [perigon.io/docs/api/mcp](https://perigon.io/docs/api/mcp). **Install with an agent:** pass [perigon.io/mcp.md](https://perigon.io/mcp.md) to your AI client and follow the steps (OAuth sign-in, no API key in chat).
 
 #### OAuth (recommended)
 
