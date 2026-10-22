@@ -109,7 +109,15 @@
         "directory": "./dist/",
         "not_found_handling": "single-page-application",
         "binding": "ASSETS",
-        "run_worker_first": ["/v1/*", "/.well-known/*", "/oauth/*"],
+        "run_worker_first": [
+          "/v1/*",
+          "/.well-known/*",
+          "/oauth/*",
+          "/",
+          "/chat",
+          "/chat/*",
+          "/inspector",
+        ],
       },
       "vars": {
         "ENVIRONMENT": "production",

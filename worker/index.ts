@@ -14,6 +14,7 @@ import {
   isOAuthMetadataPath,
 } from "./handlers";
 import { createCorsPreflightResponse, withCorsHeaders } from "./lib/cors";
+import { playgroundRedirectResponse } from "./lib/playground-redirect";
 
 export { PerigonMCP };
 
@@ -77,6 +78,9 @@ export default {
 
     const preflightResponse = createCorsPreflightResponse(request, env);
     if (preflightResponse) return preflightResponse;
+
+    const playgroundRedirect = playgroundRedirectResponse(request);
+    if (playgroundRedirect) return playgroundRedirect;
 
     const missingKey = ensureAnthropicKey(env);
     if (missingKey) return withCorsHeaders(request, missingKey, env);

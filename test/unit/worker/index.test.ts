@@ -244,6 +244,48 @@ describe("worker/index ROUTES", () => {
     expect(await res.text()).toBe("Not found");
   });
 
+  test("GET / → 302 sandbox MCP playground", async () => {
+    const res = await worker.fetch(
+      new Request("https://mcp.perigon.io/"),
+      fakeEnv,
+      fakeCtx,
+    );
+    expect(res.status).toBe(302);
+    expect(res.headers.get("Location")).toBe("https://perigon.io/mcp");
+  });
+
+  test("GET /.well-known/oauth-protected-resource → OAuth metadata", async () => {
+    handlerSpies.handleOAuthMetadata.mockClear();
+    const res = await worker.fetch(
+      new Request("https://mcp.perigon.io/.well-known/oauth-protected-resource"),
+      fakeEnv,
+      fakeCtx,
+    );
+    expect(res.status).toBe(200);
+    expect(handlerSpies.handleOAuthMetadata).toHaveBeenCalledTimes(1);
+  });
+
+  test("POST / stays 404", async () => {
+    const res = await worker.fetch(
+      new Request("https://mcp.perigon.io/", { method: "POST" }),
+      fakeEnv,
+      fakeCtx,
+    );
+    expect(res.status).toBe(404);
+  });
+
+  test("GET /chat → 302 playground chat tab", async () => {
+    const res = await worker.fetch(
+      new Request("https://mcp.perigon.io/chat"),
+      fakeEnv,
+      fakeCtx,
+    );
+    expect(res.status).toBe(302);
+    expect(res.headers.get("Location")).toBe(
+      "https://perigon.io/mcp?tab=chat",
+    );
+  });
+
   test.each([
     ["/v1/auth", "handleTurnstileAuth"],
     ["/v1/validate-user", "handleValidateUser"],
