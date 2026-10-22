@@ -21,8 +21,8 @@ function isLocalDevOrigin(origin: string): boolean {
   return hostname != null && LOCAL_DEV_HOSTNAMES.has(hostname);
 }
 
-/** True when the request hit the public MCP host (not wrangler/miniflare localhost). */
-function isPublicMcpRequest(request: Request): boolean {
+/** True when the request hit the public MCP host (not local dev hostnames). */
+export function isPublicMcpRequest(request: Request): boolean {
   const hostname = new URL(request.url).hostname;
   return hostname === "mcp.perigon.io";
 }

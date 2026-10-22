@@ -1,3 +1,5 @@
+import { isPublicMcpRequest } from "./mcp-env";
+
 /** Canonical MCP playground UI (sandbox app). */
 export const MCP_PLAYGROUND_URL = "https://perigon.io/mcp";
 
@@ -33,6 +35,10 @@ export function buildPlaygroundRedirectUrl(requestUrl: URL): URL {
 /** Browser UI on mcp.perigon.io → sandbox playground. MCP stays on /v1/*. */
 export function playgroundRedirectResponse(request: Request): Response | null {
   if (request.method !== "GET" && request.method !== "HEAD") {
+    return null;
+  }
+
+  if (!isPublicMcpRequest(request)) {
     return null;
   }
 

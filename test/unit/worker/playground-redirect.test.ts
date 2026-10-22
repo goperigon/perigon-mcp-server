@@ -63,4 +63,11 @@ describe("playground redirect", () => {
     );
     expect(res).toBeNull();
   });
+
+  test("playgroundRedirectResponse skips local dev host", () => {
+    const res = playgroundRedirectResponse(
+      new Request("https://local-mcp.perigon.io:5173/"),
+    );
+    expect(res).toBeNull();
+  });
 });
