@@ -40,6 +40,19 @@ const ROUTES: Record<string, RouteHandler> = {
   "/v1/mcp": handleMCP,
 };
 
+async function serveStaticAsset(
+  request: Request,
+  env: Env,
+): Promise<Response | null> {
+  if (request.method !== "GET" && request.method !== "HEAD") {
+    return null;
+  }
+  if (!env.ASSETS) {
+    return null;
+  }
+  return env.ASSETS.fetch(request);
+}
+
 function ensureAnthropicKey(env: Env): Response | null {
   if (env.ANTHROPIC_API_KEY) return null;
   console.error("ANTHROPIC_API_KEY is not set");
@@ -102,6 +115,10 @@ export default {
 
     const handler = ROUTES[pathname];
     if (!handler) {
+      const assetResponse = await serveStaticAsset(request, env);
+      if (assetResponse) {
+        return assetResponse;
+      }
       return withCorsHeaders(
         request,
         new Response("Not found", { status: 404 }),

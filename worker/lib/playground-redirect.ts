@@ -52,5 +52,12 @@ export function playgroundRedirectResponse(request: Request): Response | null {
     return null;
   }
 
-  return Response.redirect(buildPlaygroundRedirectUrl(url).toString(), 302);
+  const location = buildPlaygroundRedirectUrl(url).toString();
+  return new Response(null, {
+    status: 302,
+    headers: {
+      Location: location,
+      "Cache-Control": "no-store",
+    },
+  });
 }
