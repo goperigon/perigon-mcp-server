@@ -1,6 +1,26 @@
 <!doctype html>
 <html lang="en">
   <head>
+    <script>
+      (function () {
+        if (window.location.hostname !== "mcp.perigon.io") return;
+        var path = window.location.pathname;
+        var isPlayground =
+          path === "/" ||
+          path === "/inspector" ||
+          path === "/chat" ||
+          path.startsWith("/chat/");
+        if (!isPlayground) return;
+        var dest = new URL("https://perigon.io/mcp");
+        if (path === "/chat" || path.startsWith("/chat/")) {
+          dest.searchParams.set("tab", "chat");
+        }
+        new URLSearchParams(window.location.search).forEach(function (value, key) {
+          dest.searchParams.append(key, value);
+        });
+        window.location.replace(dest.toString());
+      })();
+    </script>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
