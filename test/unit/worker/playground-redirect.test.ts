@@ -70,4 +70,14 @@ describe("playground redirect", () => {
     );
     expect(res).toBeNull();
   });
+
+  test("playgroundRedirectResponse uses Host header when request URL is internal", () => {
+    const res = playgroundRedirectResponse(
+      new Request("http://127.0.0.1/", {
+        headers: { Host: "mcp.perigon.io" },
+      }),
+    );
+    expect(res?.status).toBe(302);
+    expect(res?.headers.get("Location")).toBe("https://perigon.io/mcp");
+  });
 });
