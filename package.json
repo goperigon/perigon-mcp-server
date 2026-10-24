@@ -17,8 +17,10 @@
   "author": "Perigon (https://www.perigon.io)",
   "type": "module",
   "scripts": {
-    "deploy": "bun run build && bunx wrangler deploy --env production",
-    "deploy:versions": "bun run build && bunx wrangler versions upload --env production",
+    "build:production": "CLOUDFLARE_ENV=production vite build",
+    "verify:deploy-config": "node scripts/verify-deploy-config.mjs",
+    "deploy": "bun run build:production && bun run verify:deploy-config && bunx wrangler deploy --config dist/perigon_mcp_server/wrangler.json",
+    "deploy:versions": "bun run build:production && bun run verify:deploy-config && bunx wrangler versions upload --config dist/perigon_mcp_server/wrangler.json",
     "dev": "vite dev",
     "build": "vite build",
     "mcp": "bunx @modelcontextprotocol/inspector",
