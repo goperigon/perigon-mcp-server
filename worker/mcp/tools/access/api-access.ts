@@ -35,6 +35,11 @@ export function getApiAccess(
       if (limits.resetAt) output += `Quota Resets At: ${limits.resetAt} (utc)\n`;
       if (limits.subscriptionCancelAt)
         output += `Subscription Cancels At: ${limits.subscriptionCancelAt} (utc)\n`;
+      const socialSources = introspection.socialSources ?? [];
+      output += `Social Sources: ${socialSources.join(", ") || "none"}\n`;
+      if (limits.social) {
+        output += `Social Requests Used: ${limits.social.requestsUsed}${limits.social.requestLimit != null ? ` / ${limits.social.requestLimit}` : " (no limit)"} (separate from the news quota)\n`;
+      }
 
       output += `\n<capabilities>\n`;
       output += `Article fields always null for this key: ${report.strippedArticleFields.join(", ") || "none"}\n`;

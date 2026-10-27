@@ -127,6 +127,7 @@ async function loadMcpProps(
     apiKey,
     perigonApiUrl,
     scopes: apiKeyDetails.scopes,
+    socialSources: apiKeyDetails.socialSources ?? [],
     organizationId: apiKeyDetails.organizationId,
     requestedTools,
     explicitAllTools,

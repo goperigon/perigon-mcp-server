@@ -31,6 +31,11 @@ import {
   apiAccessTool,
 } from "./tools";
 import { resolveActiveTools } from "./tools/selection";
+import {
+  SOCIAL_TOOL_NAMES,
+  SOCIAL_TOOL_SOURCES,
+  type SocialToolName,
+} from "./tools/social";
 
 // Map scopes to tool names
 const SCOPE_TO_TOOLS: Partial<Record<Scopes, ToolName[]>> = {
@@ -145,4 +150,20 @@ export function resolveNewsToolsForSession(
     [...allowedNewsTools, ...OPT_IN_TOOL_NAMES],
     requestedTools,
   );
+}
+
+/**
+ * Resolves the social tools to register for a session: only tools whose
+ * social source the organization can use (from introspection), narrowed by
+ * any `?tools=` filter. Part of the default set — a session without social
+ * access never sees them, so they cost no always-on tokens there.
+ */
+export function resolveSocialToolsForSession(
+  socialSources: readonly string[],
+  requestedTools: string[] | null,
+): SocialToolName[] {
+  const allowed = SOCIAL_TOOL_NAMES.filter((name) =>
+    socialSources.includes(SOCIAL_TOOL_SOURCES[name]),
+  );
+  return resolveActiveTools(allowed, requestedTools);
 }

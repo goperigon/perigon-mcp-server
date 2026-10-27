@@ -1,5 +1,6 @@
 import { TOOL_DEFINITIONS, type ToolName } from "./index";
 import { SIGNAL_TOOL_DEFINITIONS } from "./signals";
+import { SOCIAL_TOOL_NAMES, type SocialToolName } from "./social";
 
 export const SIGNAL_TOOL_NAMES = Object.keys(
   SIGNAL_TOOL_DEFINITIONS,
@@ -7,10 +8,15 @@ export const SIGNAL_TOOL_NAMES = Object.keys(
 
 export type SignalToolName = keyof typeof SIGNAL_TOOL_DEFINITIONS;
 
+/** Every tool name a `?tools=` filter may select. */
+export type KnownToolName = ToolName | SocialToolName;
+
 // Signal tool names are also in TOOL_DEFINITIONS; Object.keys covers both.
-const ALL_KNOWN_TOOL_NAMES = new Set(
-  Object.keys(TOOL_DEFINITIONS) as ToolName[],
-);
+// Social tools live in their own registry (see tools/social/index.ts).
+const ALL_KNOWN_TOOL_NAMES = new Set<KnownToolName>([
+  ...(Object.keys(TOOL_DEFINITIONS) as ToolName[]),
+  ...SOCIAL_TOOL_NAMES,
+]);
 
 /**
  * Named subsets of `TOOL_DEFINITIONS`, keyed by lowercase alias, so a host
@@ -18,7 +24,7 @@ const ALL_KNOWN_TOOL_NAMES = new Set(
  * scope gating — `resolveActiveTools` still intersects with what the API
  * key's scopes actually allow, so a profile can never expand access.
  */
-const RESEARCH_TOOL_NAMES: ToolName[] = [
+const RESEARCH_TOOL_NAMES: KnownToolName[] = [
   "search_news_articles",
   "search_news_stories",
   "search_story_history",
@@ -39,7 +45,7 @@ const RESEARCH_TOOL_NAMES: ToolName[] = [
   "get_api_access",
 ];
 
-const MONITORING_TOOL_NAMES: ToolName[] = [
+const MONITORING_TOOL_NAMES: KnownToolName[] = [
   "list_monitors",
   "get_monitor",
   "get_monitor_events",
@@ -51,7 +57,7 @@ const MONITORING_TOOL_NAMES: ToolName[] = [
   ...(SIGNAL_TOOL_NAMES as readonly ToolName[]),
 ];
 
-const PLATFORM_TOOL_NAMES: ToolName[] = [
+const PLATFORM_TOOL_NAMES: KnownToolName[] = [
   "watchlists",
   "create_watchlist",
   "update_watchlist",
@@ -63,7 +69,7 @@ const PLATFORM_TOOL_NAMES: ToolName[] = [
   "get_api_access",
 ];
 
-const MINIMAL_TOOL_NAMES: ToolName[] = [
+const MINIMAL_TOOL_NAMES: KnownToolName[] = [
   "search_news_articles",
   "get_avg_sentiment",
   "get_article_counts",
@@ -73,11 +79,17 @@ const MINIMAL_TOOL_NAMES: ToolName[] = [
   "get_api_access",
 ];
 
-export const TOOL_PROFILES: Record<string, ToolName[]> = {
+const SOCIAL_PROFILE_TOOL_NAMES: KnownToolName[] = [
+  ...SOCIAL_TOOL_NAMES,
+  "get_api_access",
+];
+
+export const TOOL_PROFILES: Record<string, KnownToolName[]> = {
   research: RESEARCH_TOOL_NAMES,
   monitoring: MONITORING_TOOL_NAMES,
   platform: PLATFORM_TOOL_NAMES,
   minimal: MINIMAL_TOOL_NAMES,
+  social: SOCIAL_PROFILE_TOOL_NAMES,
 };
 
 /**
@@ -97,7 +109,7 @@ export function isExplicitAllToolsRequest(param: string | null): boolean {
  * Parses the raw `?tool=` (or `?tools=`) query parameter value into a
  * validated list of known tool names (news tools and signal tools).
  * Accepts explicit tool names, named profile aliases (`research`,
- * `monitoring`, `platform`, `minimal`), or a mix of both — profile aliases
+ * `monitoring`, `platform`, `minimal`, `social`), or a mix of both — profile aliases
  * expand to their underlying tool list before validation.
  *
  * Returns `null` when the parameter is absent, empty, or `"all"` (callers that
@@ -108,7 +120,9 @@ export function isExplicitAllToolsRequest(param: string | null): boolean {
  * Unknown names mixed with valid names are silently dropped, so callers
  * receive only the subset they can actually use.
  */
-export function parseRequestedTools(param: string | null): ToolName[] | null {
+export function parseRequestedTools(
+  param: string | null,
+): KnownToolName[] | null {
   if (!param) return null;
   if (param.trim().toLowerCase() === "all") return null;
 
@@ -119,8 +133,8 @@ export function parseRequestedTools(param: string | null): ToolName[] | null {
 
   const expanded = candidates.flatMap((name) => TOOL_PROFILES[name] ?? [name]);
 
-  const valid = expanded.filter((name): name is ToolName =>
-    ALL_KNOWN_TOOL_NAMES.has(name as ToolName),
+  const valid = expanded.filter((name): name is KnownToolName =>
+    ALL_KNOWN_TOOL_NAMES.has(name as KnownToolName),
   );
 
   return valid.length > 0 ? [...new Set(valid)] : null;
@@ -135,10 +149,10 @@ export function parseRequestedTools(param: string | null): ToolName[] | null {
  * This preserves scope-based access control: callers can only select tools
  * they already have access to; the parameter cannot expand access.
  */
-export function resolveActiveTools(
-  allowedTools: ToolName[],
+export function resolveActiveTools<T extends string>(
+  allowedTools: T[],
   requestedTools: string[] | null,
-): ToolName[] {
+): T[] {
   if (!requestedTools || requestedTools.length === 0) return allowedTools;
   const requested = new Set<string>(requestedTools);
   return allowedTools.filter((name) => requested.has(name));

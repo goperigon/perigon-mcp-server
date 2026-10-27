@@ -64,6 +64,11 @@ export interface MockPerigonOverrides {
   getContactPoint?: AnyAsyncFn;
   getArticleRefreshJob?: AnyAsyncFn;
   peekArticleRefresh?: AnyAsyncFn;
+  searchXPosts?: AnyAsyncFn;
+  searchRedditPosts?: AnyAsyncFn;
+  searchLinkedInPosts?: AnyAsyncFn;
+  getLinkedInPersonActivity?: AnyAsyncFn;
+  getLinkedInCompanyPosts?: AnyAsyncFn;
 }
 
 const ALL_METHODS = [
@@ -116,6 +121,11 @@ const ALL_METHODS = [
   "getContactPoint",
   "getArticleRefreshJob",
   "peekArticleRefresh",
+  "searchXPosts",
+  "searchRedditPosts",
+  "searchLinkedInPosts",
+  "getLinkedInPersonActivity",
+  "getLinkedInCompanyPosts",
 ] as const;
 
 export type MockPerigon = Perigon & {

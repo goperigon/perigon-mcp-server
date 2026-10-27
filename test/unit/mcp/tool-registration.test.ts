@@ -1,7 +1,13 @@
 import { describe, expect, test } from "bun:test";
-import { resolveNewsToolsForSession } from "../../../worker/mcp/tool-registration";
-import { TOOL_PROFILES } from "../../../worker/mcp/tools/selection";
-import { Scopes } from "../../../worker/types/types";
+import {
+  resolveNewsToolsForSession,
+  resolveSocialToolsForSession,
+} from "../../../worker/mcp/tool-registration";
+import {
+  parseRequestedTools,
+  TOOL_PROFILES,
+} from "../../../worker/mcp/tools/selection";
+import { Scopes, SocialSource } from "../../../worker/types/types";
 
 const NO_SCOPES: Scopes[] = [];
 
@@ -95,5 +101,60 @@ describe("resolveNewsToolsForSession", () => {
     expect(active).not.toContain("create_monitor");
     expect(active).not.toContain("watchlists");
     expect(active).not.toContain("get_top_topics");
+  });
+
+  test("never returns social tools", () => {
+    const active = resolveNewsToolsForSession(
+      Object.values(Scopes),
+      TOOL_PROFILES.social,
+      true,
+    );
+    expect(active).not.toContain("search_x_posts");
+  });
+});
+
+describe("resolveSocialToolsForSession", () => {
+  test("no social sources → no social tools, even when requested", () => {
+    expect(resolveSocialToolsForSession([], null)).toEqual([]);
+    expect(resolveSocialToolsForSession([], TOOL_PROFILES.social)).toEqual([]);
+  });
+
+  test("each source unlocks only its own tools", () => {
+    expect(resolveSocialToolsForSession([SocialSource.X], null)).toEqual([
+      "search_x_posts",
+    ]);
+    expect(resolveSocialToolsForSession([SocialSource.REDDIT], null)).toEqual([
+      "search_reddit_posts",
+    ]);
+    expect(
+      resolveSocialToolsForSession([SocialSource.LINKEDIN], null).sort(),
+    ).toEqual([
+      "get_linkedin_company_posts",
+      "get_linkedin_person_activity",
+      "search_linkedin_posts",
+    ]);
+  });
+
+  test("unknown future sources are ignored", () => {
+    expect(resolveSocialToolsForSession(["TIKTOK"], null)).toEqual([]);
+  });
+
+  test("?tools= filter narrows the allowed social tools", () => {
+    const allSources = Object.values(SocialSource);
+    expect(
+      resolveSocialToolsForSession(
+        allSources,
+        parseRequestedTools("search_reddit_posts,search_news_articles"),
+      ),
+    ).toEqual(["search_reddit_posts"]);
+    expect(
+      resolveSocialToolsForSession(allSources, TOOL_PROFILES.minimal),
+    ).toEqual([]);
+    expect(
+      resolveSocialToolsForSession(
+        [SocialSource.X],
+        parseRequestedTools("social"),
+      ),
+    ).toEqual(["search_x_posts"]);
   });
 });

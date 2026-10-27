@@ -1,11 +1,11 @@
 import { afterEach, describe, expect, mock, test } from "bun:test";
 import type { Props } from "../../../worker/mcp/mcp";
-import { HttpError } from "../../../worker/types/types";
+import { HttpError, SocialSource } from "../../../worker/types/types";
 import { restoreFetch } from "../../helpers/mock-fetch";
 
 let introspectionError = new HttpError(401, "invalid api key");
 let introspectionSucceeds = false;
-const introspectionSuccess = {
+let introspectionSuccess: Record<string, unknown> = {
   scopes: [],
   organizationId: 1,
 };
@@ -170,5 +170,32 @@ describe("handleMCP tool filter forwarding", () => {
         explicitAllTools: true,
       }),
     );
+  });
+});
+
+describe("handleMCP social sources", () => {
+  test("forwards the introspected social sources to the session", async () => {
+    introspectionSucceeds = true;
+    introspectionSuccess = {
+      scopes: [],
+      organizationId: 1,
+      socialSources: ["X", "LINKEDIN"],
+    };
+
+    await handleMCP(mcpRequest("Bearer test-key-social"), env, ctx);
+
+    expect(sessionPropsFromDispatch?.socialSources).toEqual([
+      SocialSource.X,
+      SocialSource.LINKEDIN,
+    ]);
+  });
+
+  test("defaults to no social sources when introspection omits them", async () => {
+    introspectionSucceeds = true;
+    introspectionSuccess = { scopes: [], organizationId: 1 };
+
+    await handleMCP(mcpRequest("Bearer test-key-no-social"), env, ctx);
+
+    expect(sessionPropsFromDispatch?.socialSources).toEqual([]);
   });
 });
