@@ -329,3 +329,12 @@ Behavior: Find and replace a string in a file in the sandbox workspace. Internal
 readOnlyHint: false — Edits a file in the analysis workspace.
 destructiveHint: true — Replaces existing file contents.
 openWorldHint: false — Edits within the bounded analysis workspace.
+
+
+Social tools — 0.1.8, 2026-10-27
+Applies to search_x_posts, search_reddit_posts, search_linkedin_posts, get_linkedin_person_activity and get_linkedin_company_posts.
+readOnlyHint: true — Retrieve social posts or activity without publishing, editing or deleting content.
+destructiveHint: false — Do not overwrite or remove user data or send messages.
+openWorldHint: true — Retrieve data from external social platforms.
+idempotentHint: false — Repeated requests consume social quota; live results may vary. This is the current explicit server value, not a claim that reads mutate social content.
+Prepared from source; not a live behavior test.
