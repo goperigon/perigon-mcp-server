@@ -9,3 +9,13 @@ Examples that map well to Perigon tools:
 - How sentiment on [topic] trended this month → matched filters on `get_article_counts` + `get_avg_sentiment`.
 
 MCP prompts (when the host supports them) align with these workflows: `entity_deep_dive`, `narrative_trace`, `coverage_trend`, `journalist_beat_profile`, `competitive_landscape`, `spike_explainer`.
+
+## Social research examples
+
+- Recent English X posts about renewable energy → `search_x_posts`, `searchType=LATEST`, with language and date operators in `query`.
+- Top AI posts in r/technology this week → `search_reddit_posts`, `subreddit=technology`, `sort=TOP`, `time=WEEK`.
+- LinkedIn posts about AI funding this week → `search_linkedin_posts`, `query=AI AND funding`, `datePosted=PAST_WEEK`, `sortBy=DATE_POSTED`.
+- Recent posts by a company or person on LinkedIn → use a supplied or verified LinkedIn URL with `get_linkedin_company_posts` or `get_linkedin_person_activity`.
+- Compare news and social discussion → search each source independently, cite returned evidence, and distinguish sample themes from measured news statistics. Do not claim comprehensive social coverage or a social sentiment score that the tools did not return.
+
+Social access depends on the organization's source entitlements. Social searches consume a separate quota; these tools cannot post or message on the user's behalf.
