@@ -57,6 +57,8 @@ const QUOTA_PATTERNS = [
   /quota/i,
   /usage limit/i,
   /requests? (used|remaining)/i,
+  // "The number of allowed (social) requests is exceeded"
+  /allowed (\w+ )?requests is exceeded/i,
 ];
 const PAGINATION_PATTERNS = [/pagination/i, /page.{0,20}(limit|exceed)/i];
 

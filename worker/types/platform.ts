@@ -116,6 +116,18 @@ export interface ApiLimitsDto {
   resetAt?: string | null;
   subscriptionCancelAt?: string | null;
   keyStatuses?: ApiKeyStatus[] | null;
+  /** Absent when the account has no social access. */
+  social?: SocialLimits | null;
+}
+
+/** Usage of the `/v1/social/*` endpoints, tracked separately from the news quota. */
+export interface SocialLimits {
+  requestsUsed: number;
+  /** `null` means unlimited. */
+  requestLimit?: number | null;
+  since?: string | null;
+  lastMadeAt?: string | null;
+  resetAt?: string | null;
 }
 
 export type ArticleRefreshJobStatus =

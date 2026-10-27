@@ -1,11 +1,15 @@
 import { McpAgent } from "agents/mcp";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { Scopes } from "../types/types";
-import { TOOL_DEFINITIONS, type ToolName } from "./tools";
+import { Scopes, SocialSource } from "../types/types";
+import { TOOL_DEFINITIONS, type ToolDefinition, type ToolName } from "./tools";
 import { Perigon } from "../lib/perigon";
 import { buildMcpTelemetryHeaders } from "../lib/telemetry-headers";
 import { SIGNAL_TOOL_NAMES } from "./tools/selection";
-import { resolveNewsToolsForSession } from "./tool-registration";
+import {
+  resolveNewsToolsForSession,
+  resolveSocialToolsForSession,
+} from "./tool-registration";
+import { SOCIAL_TOOL_DEFINITIONS } from "./tools/social";
 import { InsightsApiClient } from "../lib/insights-api-client";
 import { PokeyInsightsClient } from "../lib/pokey-insights-client";
 import {
@@ -45,6 +49,8 @@ export type Props = {
   /** Resolved Perigon API base URL (may differ from env when prod host has dev vars). */
   perigonApiUrl: string;
   scopes: Scopes[];
+  /** Social sources the organization can use; gates the social tools. */
+  socialSources: SocialSource[];
   requestedTools: string[] | null;
   /** When true, `?tools=all` — default scope tools plus opt-in catalogue tools. */
   explicitAllTools: boolean;
@@ -64,10 +70,11 @@ export class PerigonMCP extends McpAgent<Env, unknown, Props> {
   // registerTool() throws if the same name is registered twice. Tracked
   // separately so one misconfigured entry skips a duplicate instead of
   // aborting init() and leaving the session with no tools at all.
-  private readonly registeredToolNames = new Set<ToolName>();
+  private readonly registeredToolNames = new Set<string>();
 
   async init() {
-    const { scopes, requestedTools, explicitAllTools } = this.props!;
+    const { scopes, socialSources, requestedTools, explicitAllTools } =
+      this.props!;
 
     // ── News tools (existing) ──────────────────────────────────────────────
     const activeNewsTools = resolveNewsToolsForSession(
@@ -83,6 +90,16 @@ export class PerigonMCP extends McpAgent<Env, unknown, Props> {
 
     for (const toolName of activeNewsTools) {
       this.registerNewsTool(toolName, capabilityReport);
+    }
+
+    // ── Social tools (only for organizations with the social source) ──────
+    // `socialSources` is absent on props persisted before it existed.
+    for (const toolName of resolveSocialToolsForSession(
+      socialSources ?? [],
+      requestedTools,
+    )) {
+      const definition = SOCIAL_TOOL_DEFINITIONS[toolName];
+      this.registerPerigonTool(definition, definition.description);
     }
 
     this.registerReferenceResources(capabilityReport);
@@ -202,6 +219,20 @@ export class PerigonMCP extends McpAgent<Env, unknown, Props> {
     toolName: ToolName,
     capabilityReport: ReturnType<typeof deriveCapabilities>,
   ): void {
+    const definition = TOOL_DEFINITIONS[toolName];
+    const entitlementNote = entitlementNoteForTool(toolName, capabilityReport);
+    const description = entitlementNote
+      ? `${definition.description} ${entitlementNote}`
+      : definition.description;
+    this.registerPerigonTool(definition, description);
+  }
+
+  /** Registers a tool backed by the Perigon REST API client. */
+  private registerPerigonTool(
+    definition: ToolDefinition,
+    description: string,
+  ): void {
+    const toolName = definition.name;
     if (this.registeredToolNames.has(toolName)) return;
     this.registeredToolNames.add(toolName);
 
@@ -214,12 +245,6 @@ export class PerigonMCP extends McpAgent<Env, unknown, Props> {
           clientInfo: this.server.server.getClientVersion(),
         }),
     );
-
-    const definition = TOOL_DEFINITIONS[toolName];
-    const entitlementNote = entitlementNoteForTool(toolName, capabilityReport);
-    const description = entitlementNote
-      ? `${definition.description} ${entitlementNote}`
-      : definition.description;
 
     this.server.registerTool(
       definition.name,

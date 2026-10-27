@@ -2,6 +2,10 @@ import { describe, expect, test } from "bun:test";
 import { z } from "zod";
 import { TOOL_DEFINITIONS } from "../../../worker/mcp/tools";
 import { SIGNAL_TOOL_DEFINITIONS } from "../../../worker/mcp/tools/signals";
+import {
+  SOCIAL_TOOL_DEFINITIONS,
+  SOCIAL_TOOL_SOURCES,
+} from "../../../worker/mcp/tools/social";
 
 const EXPECTED_TOOL_NAMES = [
   // Search tools
@@ -108,6 +112,27 @@ describe("TOOL_DEFINITIONS", () => {
     for (const [key, def] of Object.entries(TOOL_DEFINITIONS)) {
       const handler = def.createHandler(fakePerigon);
       expect(typeof handler, `${key} handler`).toBe("function");
+    }
+  });
+});
+
+describe("SOCIAL_TOOL_DEFINITIONS", () => {
+  test("stays out of TOOL_DEFINITIONS, which backs the playground UI", () => {
+    for (const name of Object.keys(SOCIAL_TOOL_DEFINITIONS)) {
+      expect(TOOL_DEFINITIONS[name], name).toBeUndefined();
+    }
+  });
+
+  test("every social tool is keyed by its name and mapped to a source", () => {
+    for (const [key, def] of Object.entries(SOCIAL_TOOL_DEFINITIONS)) {
+      expect(def.name, `${key}.name`).toBe(key);
+      expect(def.title.trim().length, `${key}.title`).toBeGreaterThan(0);
+      expect(def.parameters).toBeInstanceOf(z.ZodObject);
+      expect(def.annotations.readOnlyHint, `${key}.readOnlyHint`).toBe(true);
+      expect(
+        SOCIAL_TOOL_SOURCES[key as keyof typeof SOCIAL_TOOL_SOURCES],
+        `${key} source`,
+      ).toBeDefined();
     }
   });
 });

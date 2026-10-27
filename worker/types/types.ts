@@ -34,6 +34,18 @@ export class HttpError extends Error {
 export interface AuthIntrospectionResponse {
   scopes: Scopes[];
   organizationId: number;
+  /** Social sources the org's plans allow through `/v1/social/*`. Absent on API versions that predate it. */
+  socialSources?: SocialSource[];
+}
+
+/**
+ * Mirrors `SignalSocialSource` (business-api-server:
+ * com.gawq.api.db.model.signals.SignalSocialSource).
+ */
+export enum SocialSource {
+  X = "X",
+  REDDIT = "REDDIT",
+  LINKEDIN = "LINKEDIN",
 }
 
 /**

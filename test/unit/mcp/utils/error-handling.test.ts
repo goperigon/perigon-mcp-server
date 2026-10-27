@@ -97,6 +97,17 @@ describe("createErrorMessage classification guidance", () => {
     expect(msg).toContain("get_api_access");
   });
 
+  test("403 with the API's request-limit messages appends quota guidance", async () => {
+    for (const message of [
+      "The number of allowed requests is exceeded",
+      "The number of allowed social requests is exceeded",
+    ]) {
+      const body = JSON.stringify({ status: 403, message });
+      const msg = await createErrorMessage(new HttpError(403, body));
+      expect(msg, message).toContain("exhausted its usage quota");
+    }
+  });
+
   test("403 with unrecognized phrasing falls back to plan-restriction guidance", async () => {
     const msg = await createErrorMessage(new HttpError(403, "Forbidden"));
     expect(msg).toContain("plan does not include");

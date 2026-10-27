@@ -28,6 +28,19 @@ import {
   UpdateWatchlistRequest,
   WatchlistDto,
 } from "../types/platform";
+import {
+  LinkedInCompanyPostsType,
+  LinkedInFeedParams,
+  LinkedInPersonActivityType,
+  LinkedInPostSearchParams,
+  RedditPostSearchParams,
+  SocialLinkedInFeedPost,
+  SocialLinkedInPost,
+  SocialRedditPost,
+  SocialSearchResult,
+  SocialXPost,
+  XPostSearchParams,
+} from "../types/social";
 import { typedFetch } from "./typed-fetch";
 
 export const DEFAULT_PERIGON_API_URL = "https://api.perigon.io";
@@ -1036,6 +1049,51 @@ export class Perigon extends V1Api {
       "/api/contactPoints",
       `/${encodeURIComponent(uuid)}`,
     );
+  }
+
+  // ── Social (/v1/social) — counts against the separate social quota ─────
+  // Not retried: the API already retries the upstream provider, and each
+  // attempt counts against the social quota.
+
+  private async socialFetch<T>(
+    path: string,
+    params: Record<string, unknown>,
+  ): Promise<T> {
+    const sp = buildQueryParams(params);
+    return await typedFetch<T>(
+      `${this.baseUrl}/social${path}?${sp.toString()}`,
+      { headers: this.authHeaders() },
+    );
+  }
+
+  async searchXPosts(
+    params: XPostSearchParams,
+  ): Promise<SocialSearchResult<SocialXPost>> {
+    return await this.socialFetch("/x/posts", { ...params });
+  }
+
+  async searchRedditPosts(
+    params: RedditPostSearchParams,
+  ): Promise<SocialSearchResult<SocialRedditPost>> {
+    return await this.socialFetch("/reddit/posts", { ...params });
+  }
+
+  async searchLinkedInPosts(
+    params: LinkedInPostSearchParams,
+  ): Promise<SocialSearchResult<SocialLinkedInPost>> {
+    return await this.socialFetch("/linkedin/posts", { ...params });
+  }
+
+  async getLinkedInPersonActivity(
+    params: LinkedInFeedParams<LinkedInPersonActivityType>,
+  ): Promise<SocialSearchResult<SocialLinkedInFeedPost>> {
+    return await this.socialFetch("/linkedin/people/activity", { ...params });
+  }
+
+  async getLinkedInCompanyPosts(
+    params: LinkedInFeedParams<LinkedInCompanyPostsType>,
+  ): Promise<SocialSearchResult<SocialLinkedInFeedPost>> {
+    return await this.socialFetch("/linkedin/companies/posts", { ...params });
   }
 
   // ── Article refresh (/v1/articles/refresh) — read-only per plan ────────
