@@ -81,7 +81,11 @@ async function loadMcpProps(
   const perigon = new Perigon(apiKey, perigonApiUrl, () =>
     buildMcpTelemetryHeaders({}),
   );
-  const apiKeyDetails = await getCachedIntrospection(perigon, apiKey);
+  const apiKeyDetails = await getCachedIntrospection(
+    perigon,
+    apiKey,
+    perigonApiUrl,
+  );
   const { requestedTools, explicitAllTools } = parseMcpToolFilterFromRequest(
     request.url,
   );

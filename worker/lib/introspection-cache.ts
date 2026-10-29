@@ -8,6 +8,9 @@ import { introspectionCacheTtlMs } from "./mcp-access-token";
  * caches the result per API key for the isolate's lifetime (bounded by TTL),
  * so a session sending many requests in quick succession pays for one
  * introspection call rather than one per request.
+ *
+ * Entries are keyed by API origin as well as key: the same key can resolve to
+ * different scopes and social sources on a local or staging API.
  */
 const INTROSPECTION_CACHE_TTL_MS = 5 * 60 * 1000;
 const introspectionCache = new Map<
@@ -18,8 +21,9 @@ const introspectionCache = new Map<
 export async function getCachedIntrospection(
   perigon: Perigon,
   apiKey: string,
+  apiOrigin: string,
 ): Promise<AuthIntrospectionResponse> {
-  const cacheKey = await hashKey(apiKey);
+  const cacheKey = `${apiOrigin} ${await hashKey(apiKey)}`;
   const cached = introspectionCache.get(cacheKey);
   if (cached && cached.expiresAt > Date.now()) {
     return cached.result;

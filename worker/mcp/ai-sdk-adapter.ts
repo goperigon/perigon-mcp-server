@@ -34,12 +34,12 @@ export function createAISDKTools(
 
   const allToolNames = Object.keys(TOOL_DEFINITIONS) as ToolName[];
   const activeToolNames = resolveActiveTools(allToolNames, requestedTools ?? null);
-  const activeDefinitions: [string, ToolDefinition<any>][] = [
+  const activeDefinitions: [string, ToolDefinition][] = [
     ...activeToolNames.map(
-      (name): [string, ToolDefinition<any>] => [name, TOOL_DEFINITIONS[name]]
+      (name): [string, ToolDefinition] => [name, TOOL_DEFINITIONS[name]]
     ),
     ...socialToolNames.map(
-      (name): [string, ToolDefinition<any>] => [
+      (name): [string, ToolDefinition] => [
         name,
         SOCIAL_TOOL_DEFINITIONS[name],
       ]

@@ -16,6 +16,7 @@ import {
   logStreamTextError,
 } from "../lib/stream-error-handler";
 import { getCachedIntrospection } from "../lib/introspection-cache";
+import { DEFAULT_PERIGON_API_URL } from "../lib/mcp-env";
 import { Perigon } from "../lib/perigon";
 import { createAISDKTools } from "../mcp/ai-sdk-adapter";
 import { resolveSocialToolsForSession } from "../mcp/tool-registration";
@@ -131,7 +132,8 @@ async function resolveChatSocialTools(
   try {
     const introspection = await getCachedIntrospection(
       new Perigon(perigonApiKey),
-      perigonApiKey
+      perigonApiKey,
+      DEFAULT_PERIGON_API_URL
     );
     return resolveSocialToolsForSession(
       introspection.socialSources ?? [],

@@ -16,8 +16,8 @@ let introspectionResult: Record<string, unknown> | HttpError = {
 const realPerigonModule = await import("../../../worker/lib/perigon");
 await mock.module("../../../worker/lib/perigon", () => ({
   ...realPerigonModule,
-  Perigon: class {
-    introspection() {
+  Perigon: class extends realPerigonModule.Perigon {
+    override introspection() {
       return introspectionResult instanceof HttpError
         ? Promise.reject(introspectionResult)
         : Promise.resolve(introspectionResult);
@@ -132,6 +132,50 @@ describe("handleTools POST", () => {
     } finally {
       console.error = original;
     }
+  });
+
+  test("executes a valid social tool against the upstream API", async () => {
+    let socialRequest: { url: string; authorization: string | null } | null =
+      null;
+    installFetchMock((input, init) => {
+      const url = urlOf(input);
+      if (url.endsWith("/v1/user")) {
+        return new Response("unauthorized", { status: 401 });
+      }
+      socialRequest = {
+        url,
+        authorization: new Headers(init?.headers).get("Authorization"),
+      };
+      return jsonResponse({
+        status: 200,
+        numResults: 1,
+        results: [
+          {
+            id: "1",
+            url: "https://x.com/perigon/status/1",
+            text: "hello",
+            author: { screenName: "perigon" },
+            likes: 3,
+          },
+        ],
+      });
+    });
+
+    const response = await handleTools(
+      runRequest("search_x_posts", { query: "openai" }),
+      env,
+    );
+    const body = (await response.json()) as { result: string };
+
+    expect(response.status).toBe(200);
+    expect(socialRequest).toEqual({
+      url: "https://api.perigon.io/v1/social/x/posts?q=openai&searchType=LATEST",
+      authorization: "Bearer tools-key-run",
+    });
+    expect(body.result).toContain(
+      '<x_post id="1" url="https://x.com/perigon/status/1" author="@perigon"',
+    );
+    expect(body.result).toContain("Text: hello");
   });
 
   test("still returns 404 for unknown tools", async () => {

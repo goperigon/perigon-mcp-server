@@ -3,6 +3,7 @@ import { HttpError, type SocialSource } from "../types/types";
 import { Perigon } from "../lib/perigon";
 import { handleError } from "../lib/handle-error";
 import { getCachedIntrospection } from "../lib/introspection-cache";
+import { DEFAULT_PERIGON_API_URL } from "../lib/mcp-env";
 import { validatePerigonAuth } from "../lib/perigon-auth";
 import { resolvePerigonApiKey } from "../lib/resolve-perigon-api-key";
 import { TOOL_DEFINITIONS } from "../mcp/tools";
@@ -76,7 +77,8 @@ async function resolveSocialSources(
   try {
     const introspection = await getCachedIntrospection(
       new Perigon(apiKey),
-      apiKey
+      apiKey,
+      DEFAULT_PERIGON_API_URL
     );
     return introspection.socialSources ?? [];
   } catch (error) {
