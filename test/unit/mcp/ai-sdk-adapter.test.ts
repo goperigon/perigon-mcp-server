@@ -4,6 +4,10 @@ import {
   createAISDKTools,
 } from "../../../worker/mcp/ai-sdk-adapter";
 import { TOOL_DEFINITIONS } from "../../../worker/mcp/tools";
+import {
+  SOCIAL_TOOL_DEFINITIONS,
+  SOCIAL_TOOL_NAMES,
+} from "../../../worker/mcp/tools/social";
 
 describe("convertMCPResult", () => {
   test("returns the first text content", () => {
@@ -83,5 +87,28 @@ describe("createAISDKTools", () => {
     expect(t).toBeDefined();
     expect(t.inputSchema).toBe(TOOL_DEFINITIONS["search_people"].parameters);
     expect(typeof t.execute).toBe("function");
+  });
+
+  test("excludes social tools unless they are passed", () => {
+    const tools = createAISDKTools("fake-key");
+    for (const name of SOCIAL_TOOL_NAMES) {
+      expect(tools[name], `${name} should be absent`).toBeUndefined();
+    }
+  });
+
+  test("adds the given social tools alongside the requested news tools", () => {
+    const tools = createAISDKTools(
+      "fake-key",
+      ["search_news_articles", "search_reddit_posts"],
+      ["search_reddit_posts"]
+    );
+    expect(Object.keys(tools).sort()).toEqual([
+      "search_news_articles",
+      "search_reddit_posts",
+    ]);
+    expect(tools["search_reddit_posts"].inputSchema).toBe(
+      SOCIAL_TOOL_DEFINITIONS["search_reddit_posts"].parameters
+    );
+    expect(typeof tools["search_reddit_posts"].execute).toBe("function");
   });
 });

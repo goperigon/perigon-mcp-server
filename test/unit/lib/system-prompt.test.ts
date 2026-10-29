@@ -38,4 +38,18 @@ describe("buildSystemPrompt", () => {
     const b = buildSystemPrompt(FIXED_NOW);
     expect(a).toBe(b);
   });
+
+  test("omits the social section without social tools", () => {
+    const prompt = buildSystemPrompt(FIXED_NOW);
+    expect(prompt).not.toContain("Social Research");
+    expect(prompt).not.toContain("search_reddit_posts");
+  });
+
+  test("describes only the social tools it is given", () => {
+    const prompt = buildSystemPrompt(FIXED_NOW, ["search_reddit_posts"]);
+    expect(prompt).toContain("Social Research");
+    expect(prompt).toContain("**search_reddit_posts**");
+    expect(prompt).not.toContain("**search_x_posts**");
+    expect(prompt).not.toContain("{{");
+  });
 });
