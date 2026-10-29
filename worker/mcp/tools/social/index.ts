@@ -1,8 +1,9 @@
 /**
- * Social media tools (`/v1/social/*`). Kept out of `TOOL_DEFINITIONS` so the
- * playground UI (`/v1/tools`, chat, tool selector) does not expose them;
- * they are registered only on MCP sessions whose organization can use the
- * corresponding social source.
+ * Social media tools (`/v1/social/*`). Kept out of `TOOL_DEFINITIONS` because
+ * they are gated by the organization's social sources rather than API key
+ * scopes. MCP sessions and the playground chat register only the tools the
+ * organization can use; the playground tool list includes all of them with
+ * their `socialSource` so the UI can lock unavailable ones.
  */
 import { SocialSource } from "../../../types/types";
 import type { ToolDefinition } from "../types";

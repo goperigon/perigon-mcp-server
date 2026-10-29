@@ -15,9 +15,16 @@ import {
   createStreamErrorHandler,
   logStreamTextError,
 } from "../lib/stream-error-handler";
+import { getCachedIntrospection } from "../lib/introspection-cache";
+import { Perigon } from "../lib/perigon";
 import { createAISDKTools } from "../mcp/ai-sdk-adapter";
-import { parseRequestedTools, resolveToolParam } from "../mcp/tools/selection";
-import type { ToolName } from "../mcp/tools";
+import { resolveSocialToolsForSession } from "../mcp/tool-registration";
+import {
+  parseRequestedTools,
+  resolveToolParam,
+  type KnownToolName,
+} from "../mcp/tools/selection";
+import type { SocialToolName } from "../mcp/tools/social";
 
 const CHAT_MODEL_ID = "claude-opus-4-6";
 const MAX_STEPS = 20;
@@ -57,7 +64,12 @@ export async function handleChat(
     const apiKeys = await resolveApiKeys(request, env, isAuthenticated);
     if (apiKeys instanceof Response) return apiKeys;
 
-    return runChat({ messages, requestedTools, ...apiKeys });
+    const socialToolNames = await resolveChatSocialTools(
+      apiKeys.perigonApiKey,
+      requestedTools
+    );
+
+    return runChat({ messages, requestedTools, socialToolNames, ...apiKeys });
   } catch (error) {
     return handleChatError(error);
   }
@@ -108,9 +120,33 @@ async function resolveApiKeys(
   return { anthropicApiKey, perigonApiKey };
 }
 
+/**
+ * Social tools the key's organization can use, narrowed by the request's tool
+ * filter. Introspection failures drop social tools rather than the chat.
+ */
+async function resolveChatSocialTools(
+  perigonApiKey: string,
+  requestedTools: KnownToolName[] | null
+): Promise<SocialToolName[]> {
+  try {
+    const introspection = await getCachedIntrospection(
+      new Perigon(perigonApiKey),
+      perigonApiKey
+    );
+    return resolveSocialToolsForSession(
+      introspection.socialSources ?? [],
+      requestedTools
+    );
+  } catch (error) {
+    console.error("Error introspecting API key for chat social tools:", error);
+    return [];
+  }
+}
+
 interface RunChatArgs extends ApiKeys {
   messages: UIMessage[];
-  requestedTools: ToolName[] | null;
+  requestedTools: KnownToolName[] | null;
+  socialToolNames: SocialToolName[];
 }
 
 function runChat({
@@ -118,10 +154,11 @@ function runChat({
   anthropicApiKey,
   perigonApiKey,
   requestedTools,
+  socialToolNames,
 }: RunChatArgs): Response {
   const anthropic = createAnthropic({ apiKey: anthropicApiKey });
-  const tools = createAISDKTools(perigonApiKey, requestedTools);
-  const systemPrompt = resolveSystemPrompt(messages);
+  const tools = createAISDKTools(perigonApiKey, requestedTools, socialToolNames);
+  const systemPrompt = resolveSystemPrompt(messages, socialToolNames);
 
   const result = streamText({
     model: anthropic(CHAT_MODEL_ID),
@@ -148,9 +185,12 @@ function runChat({
  * If the client already provided a system message, leave the conversation
  * alone. Otherwise generate a fresh dated system prompt for `streamText`.
  */
-function resolveSystemPrompt(messages: UIMessage[]): string | undefined {
+function resolveSystemPrompt(
+  messages: UIMessage[],
+  socialToolNames: SocialToolName[]
+): string | undefined {
   const hasSystem = messages.some((msg) => msg.role === "system");
-  return hasSystem ? undefined : buildSystemPrompt();
+  return hasSystem ? undefined : buildSystemPrompt(new Date(), socialToolNames);
 }
 
 function handleChatError(error: unknown): Response {

@@ -1,10 +1,10 @@
-import { AuthIntrospectionResponse, HttpError } from "../types/types";
+import { HttpError } from "../types/types";
 import { Perigon } from "../lib/perigon";
 import { handleError } from "../lib/handle-error";
 import { hashKey } from "../lib/hash";
 import { McpAgent } from "agents/mcp";
 import { PerigonMCP, type Props } from "../mcp/mcp";
-import { introspectionCacheTtlMs } from "../lib/mcp-access-token";
+import { getCachedIntrospection } from "../lib/introspection-cache";
 import { mcpPublicOrigin, perigonApiOrigin } from "../lib/mcp-env";
 import { parseMcpToolFilterFromRequest } from "../mcp/request-tool-surface";
 import { buildMcpTelemetryHeaders } from "../lib/telemetry-headers";
@@ -13,44 +13,6 @@ const SSE_PATHS = ["/v1/sse", "/v1/sse/message"] as const;
 const STREAMABLE_PATH = "/v1/mcp";
 const API_KEY_HELP =
   "Sign in with your Perigon account via OAuth, or create a free account and copy a key from https://perigon.io/dev/keys, then send it as Authorization: Bearer <key>.";
-
-/**
- * `introspection()` was previously called on every single MCP request. This
- * caches the result per API key for the isolate's lifetime (bounded by TTL),
- * so a session sending many requests in quick succession pays for one
- * introspection call rather than one per request.
- */
-const INTROSPECTION_CACHE_TTL_MS = 5 * 60 * 1000;
-const introspectionCache = new Map<
-  string,
-  { result: AuthIntrospectionResponse; expiresAt: number }
->();
-
-async function getCachedIntrospection(
-  perigon: Perigon,
-  apiKey: string,
-): Promise<AuthIntrospectionResponse> {
-  const cacheKey = await hashKey(apiKey);
-  const cached = introspectionCache.get(cacheKey);
-  if (cached && cached.expiresAt > Date.now()) {
-    return cached.result;
-  }
-
-  try {
-    const result = await perigon.introspection();
-    const ttlMs = introspectionCacheTtlMs(apiKey, INTROSPECTION_CACHE_TTL_MS);
-    if (ttlMs > 0) {
-      introspectionCache.set(cacheKey, {
-        result,
-        expiresAt: Date.now() + ttlMs,
-      });
-    }
-    return result;
-  } catch (error) {
-    introspectionCache.delete(cacheKey);
-    throw error;
-  }
-}
 
 /**
  * Authenticates the MCP request via the `Authorization: Bearer <key>` header

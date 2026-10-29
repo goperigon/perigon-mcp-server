@@ -1,10 +1,18 @@
 import { zodToJsonSchema } from "zod-to-json-schema";
-import { HttpError } from "../types/types";
+import { HttpError, type SocialSource } from "../types/types";
 import { Perigon } from "../lib/perigon";
 import { handleError } from "../lib/handle-error";
+import { getCachedIntrospection } from "../lib/introspection-cache";
 import { validatePerigonAuth } from "../lib/perigon-auth";
 import { resolvePerigonApiKey } from "../lib/resolve-perigon-api-key";
 import { TOOL_DEFINITIONS } from "../mcp/tools";
+import {
+  SOCIAL_TOOL_DEFINITIONS,
+  SOCIAL_TOOL_NAMES,
+  SOCIAL_TOOL_SOURCES,
+  type SocialToolName,
+} from "../mcp/tools/social";
+import type { ToolDefinition } from "../mcp/tools/types";
 import { convertMCPResult } from "../mcp/ai-sdk-adapter";
 
 interface ToolInvocationBody {
@@ -14,14 +22,17 @@ interface ToolInvocationBody {
 
 /**
  * GET — list every available tool with its name, description, and JSON-schema
- * arguments. POST — execute a tool by name with the given args.
+ * arguments. Social tools carry the `socialSource` they need; when the request
+ * sends `X-Perigon-API-Key`, `socialSources` reports that key's sources (`null`
+ * when unknown) so the playground can lock tools the key cannot use.
+ * POST — execute a tool by name with the given args.
  */
 export async function handleTools(
   request: Request,
   _env: Env
 ): Promise<Response> {
   if (request.method === "GET") {
-    return listTools();
+    return listTools(request);
   }
 
   if (request.method === "POST") {
@@ -31,14 +42,56 @@ export async function handleTools(
   return new Response("Method not allowed", { status: 405 });
 }
 
-function listTools(): Response {
-  const tools = Object.entries(TOOL_DEFINITIONS).map(([name, def]) => ({
+async function listTools(request: Request): Promise<Response> {
+  const newsTools = Object.entries(TOOL_DEFINITIONS).map(([name, def]) => ({
     name,
     description: def.description,
     args: zodToJsonSchema(def.parameters),
   }));
+  const socialTools = SOCIAL_TOOL_NAMES.map((name) => {
+    const def = SOCIAL_TOOL_DEFINITIONS[name];
+    return {
+      name,
+      description: def.description,
+      args: zodToJsonSchema(def.parameters),
+      socialSource: SOCIAL_TOOL_SOURCES[name],
+    };
+  });
 
-  return Response.json({ tools });
+  const socialSources = await resolveSocialSources(request);
+
+  return Response.json({
+    tools: [...newsTools, ...socialTools],
+    socialSources,
+  });
+}
+
+/** The request key's social sources, or `null` without a key or on failure. */
+async function resolveSocialSources(
+  request: Request
+): Promise<SocialSource[] | null> {
+  const apiKey = await resolvePerigonApiKey(request, false);
+  if (!apiKey) return null;
+
+  try {
+    const introspection = await getCachedIntrospection(
+      new Perigon(apiKey),
+      apiKey
+    );
+    return introspection.socialSources ?? [];
+  } catch (error) {
+    console.error("Error introspecting API key for tool list:", error);
+    return null;
+  }
+}
+
+function isSocialToolName(name: string): name is SocialToolName {
+  return (SOCIAL_TOOL_NAMES as string[]).includes(name);
+}
+
+function findToolDefinition(toolName: string): ToolDefinition | undefined {
+  if (isSocialToolName(toolName)) return SOCIAL_TOOL_DEFINITIONS[toolName];
+  return TOOL_DEFINITIONS[toolName];
 }
 
 async function executeTool(request: Request): Promise<Response> {
@@ -50,7 +103,7 @@ async function executeTool(request: Request): Promise<Response> {
       return new Response("Invalid request", { status: 400 });
     }
 
-    const toolDef = TOOL_DEFINITIONS[toolName];
+    const toolDef = findToolDefinition(toolName);
     if (!toolDef) {
       return new Response("Tool not found", { status: 404 });
     }
