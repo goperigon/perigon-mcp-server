@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { z } from "zod";
+import type { Perigon } from "../../../worker/lib/perigon";
 import { TOOL_DEFINITIONS } from "../../../worker/mcp/tools";
 import { SIGNAL_TOOL_DEFINITIONS } from "../../../worker/mcp/tools/signals";
 import {
@@ -108,7 +109,7 @@ describe("TOOL_DEFINITIONS", () => {
   });
 
   test("each tool's createHandler returns a function", () => {
-    const fakePerigon = {} as any;
+    const fakePerigon = {} as Perigon;
     for (const [key, def] of Object.entries(TOOL_DEFINITIONS)) {
       const handler = def.createHandler(fakePerigon);
       expect(typeof handler, `${key} handler`).toBe("function");

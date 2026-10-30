@@ -87,6 +87,40 @@ describe("searchNewsStories", () => {
     expect(call2.minSourceDiversity).toBe(0.05);
   });
 
+  test("renders article, publisher, and source diversity counts", async () => {
+    const perigon = createMockPerigon({
+      searchStories: async () => ({
+        ...storiesFixture,
+        results: [
+          {
+            ...storiesFixture.results[0],
+            totalCount: 133,
+            uniqueCount: 124,
+            uniqueSources: Array.from({ length: 8 }, (_, i) => `s${i}.com`),
+          },
+        ],
+      }),
+    });
+    const output = text(
+      await searchNewsStories(perigon)(newsStoriesArgs.parse({})),
+    );
+    expect(output).toContain("Articles: 133 total, 124 unique");
+    expect(output).toContain("Publishers: 8");
+    expect(output).toContain("Source Diversity: 0.06");
+  });
+
+  test("shows unknown source diversity when counts are missing", async () => {
+    const perigon = createMockPerigon({
+      searchStories: async () => storiesFixture,
+    });
+    const output = text(
+      await searchNewsStories(perigon)(newsStoriesArgs.parse({})),
+    );
+    expect(output).toContain("Articles: N/A total, N/A unique");
+    expect(output).toContain("Publishers: N/A");
+    expect(output).toContain("Source Diversity: unknown");
+  });
+
   test("returns noResults when numResults === 0", async () => {
     const perigon = createMockPerigon({
       searchStories: async () => emptyStoriesFixture,

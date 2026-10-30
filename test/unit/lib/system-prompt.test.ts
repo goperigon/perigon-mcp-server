@@ -25,6 +25,14 @@ describe("buildSystemPrompt", () => {
     expect(prompt).toContain("You are Cerebro");
   });
 
+  test("includes monitor workflow and mutation safety guidance", () => {
+    const prompt = buildSystemPrompt(FIXED_NOW);
+    expect(prompt).toContain("list_monitors / get_monitor");
+    expect(prompt).toContain("Create monitors as DRAFT");
+    expect(prompt).toContain("ARCHIVED cannot be reversed");
+    expect(prompt).toContain("replaces query, data schema, entity groups");
+  });
+
   test("substitutes both occurrences of {{date}} (replaceAll)", () => {
     const prompt = buildSystemPrompt(FIXED_NOW);
     // The string "2024-06-15" should appear at least twice — once in

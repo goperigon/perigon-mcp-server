@@ -53,7 +53,7 @@ export const getMonitorEventsTool = {
   name: "get_monitor_events",
   title: "Get monitor events",
   description:
-    "Retrieve structured matches emitted asynchronously by an EVENT or MENTIONS monitor. Returns extracted schema data, event summaries, matched entities, and a bounded set of related article details. Use pagination or date filters for additional results.",
+    "Retrieve structured matches emitted asynchronously by an EVENT or MENTIONS monitor. Returns extracted schema data, event summaries, matched entities, and a bounded set of related article details. Event data also carries standard source fields for the event's primary source (url, pubDate, authorsByline, language, title, content, sourceChannel), named the same for news articles and LinkedIn, Reddit, or X posts. Use pagination or date filters for additional results.",
   parameters: getMonitorEventsArgs,
   annotations: {
     readOnlyHint: true,
