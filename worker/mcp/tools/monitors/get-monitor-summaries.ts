@@ -60,7 +60,7 @@ export const getMonitorSummariesTool = {
     readOnlyHint: true,
     destructiveHint: false,
     idempotentHint: true,
-    openWorldHint: true
+    openWorldHint: false
   },
   createHandler: (perigon: Perigon) => getMonitorSummaries(perigon)
 } satisfies ToolDefinition<typeof getMonitorSummariesArgs>;

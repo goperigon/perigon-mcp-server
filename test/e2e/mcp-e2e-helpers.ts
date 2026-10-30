@@ -15,14 +15,20 @@ const SERVER_READY_TIMEOUT_MS = 60_000;
 const DEV_VARS_PATH = join(process.cwd(), ".dev.vars");
 
 export const EXPECTED_TOOL_NAMES = [
+  "get_api_access",
   "get_article_counts",
   "get_avg_sentiment",
   "get_company_news",
   "get_location_news",
+  "get_monitor",
+  "get_monitor_events",
+  "get_monitor_newsletters",
+  "get_monitor_summaries",
   "get_person_news",
   "get_top_companies",
   "get_top_entities",
   "get_top_people",
+  "list_monitors",
   "search_companies",
   "search_journalists",
   "search_news_articles",
@@ -34,6 +40,7 @@ export const EXPECTED_TOOL_NAMES = [
   "search_vector_news",
   "search_vector_wikipedia",
   "search_wikipedia",
+  "set_monitor_status",
   "summarize_news",
 ] as const satisfies readonly ToolName[];
 

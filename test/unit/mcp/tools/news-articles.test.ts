@@ -17,7 +17,7 @@ function getText(result: any): string {
 describe("searchNewsArticles", () => {
   test("forwards mapped params and renders article output", async () => {
     const perigon = createMockPerigon({
-      searchArticles: async () => articlesFixture,
+      searchArticlesFull: async () => articlesFixture,
     });
     const handler = searchNewsArticles(perigon);
 
@@ -34,8 +34,8 @@ describe("searchNewsArticles", () => {
 
     const result = await handler(args);
 
-    expect(perigon.searchArticles).toHaveBeenCalledTimes(1);
-    const call = firstCallArgs<any>(perigon.searchArticles);
+    expect(perigon.searchArticlesFull).toHaveBeenCalledTimes(1);
+    const call = firstCallArgs<any>(perigon.searchArticlesFull);
     // Query is AND-joined by createSearchField
     expect(call.q).toBe("AI AND healthcare");
     // Arg → SDK param renames
@@ -59,7 +59,7 @@ describe("searchNewsArticles", () => {
 
   test("summarize:false renders article.content instead of summary", async () => {
     const perigon = createMockPerigon({
-      searchArticles: async () => articlesFixture,
+      searchArticlesFull: async () => articlesFixture,
     });
     const handler = searchNewsArticles(perigon);
     const args = newsArticlesArgs.parse({ summarize: false });
@@ -69,17 +69,17 @@ describe("searchNewsArticles", () => {
 
   test("countries default to ['us']", async () => {
     const perigon = createMockPerigon({
-      searchArticles: async () => articlesFixture,
+      searchArticlesFull: async () => articlesFixture,
     });
     const handler = searchNewsArticles(perigon);
     const args = newsArticlesArgs.parse({});
     await handler(args);
-    expect(firstCallArgs<any>(perigon.searchArticles).country).toEqual(["us"]);
+    expect(firstCallArgs<any>(perigon.searchArticlesFull).country).toEqual(["us"]);
   });
 
   test("returns noResults when numResults === 0", async () => {
     const perigon = createMockPerigon({
-      searchArticles: async () => emptyArticlesFixture,
+      searchArticlesFull: async () => emptyArticlesFixture,
     });
     const handler = searchNewsArticles(perigon);
     const args = newsArticlesArgs.parse({});
@@ -89,19 +89,19 @@ describe("searchNewsArticles", () => {
 
   test("location triggers applyLocationFilter and sets q when no query", async () => {
     const perigon = createMockPerigon({
-      searchArticles: async () => articlesFixture,
+      searchArticlesFull: async () => articlesFixture,
     });
     const handler = searchNewsArticles(perigon);
     const args = newsArticlesArgs.parse({ location: "Austin", locationType: "city" });
     await handler(args);
-    const call = firstCallArgs<any>(perigon.searchArticles);
+    const call = firstCallArgs<any>(perigon.searchArticlesFull);
     expect(call.city).toEqual(["Austin"]);
     expect(call.q).toBe("Austin");
   });
 
   test("explicit query is preserved when location is also provided", async () => {
     const perigon = createMockPerigon({
-      searchArticles: async () => articlesFixture,
+      searchArticlesFull: async () => articlesFixture,
     });
     const handler = searchNewsArticles(perigon);
     const args = newsArticlesArgs.parse({
@@ -110,7 +110,7 @@ describe("searchNewsArticles", () => {
       locationType: "auto",
     });
     await handler(args);
-    const call = firstCallArgs<any>(perigon.searchArticles);
+    const call = firstCallArgs<any>(perigon.searchArticlesFull);
     expect(call.q).toBe("election");
     expect(call.state).toEqual(["TX"]);
   });
@@ -118,7 +118,7 @@ describe("searchNewsArticles", () => {
   test("error path returns toolResult starting with 'Error:'", async () => {
     const errorSpy = spyOn(console, "error").mockImplementation(() => {});
     const perigon = createMockPerigon({
-      searchArticles: async () => {
+      searchArticlesFull: async () => {
         throw new HttpError(500, '{"message":"upstream failure"}');
       },
     });
@@ -133,7 +133,7 @@ describe("searchNewsArticles", () => {
 
   test("from/to dates are forwarded as Date objects", async () => {
     const perigon = createMockPerigon({
-      searchArticles: async () => articlesFixture,
+      searchArticlesFull: async () => articlesFixture,
     });
     const handler = searchNewsArticles(perigon);
     const args = newsArticlesArgs.parse({
@@ -141,7 +141,7 @@ describe("searchNewsArticles", () => {
       to: "2024-02-01",
     });
     await handler(args);
-    const call = firstCallArgs<any>(perigon.searchArticles);
+    const call = firstCallArgs<any>(perigon.searchArticlesFull);
     expect(call.from).toBeInstanceOf(Date);
     expect(call.to).toBeInstanceOf(Date);
   });

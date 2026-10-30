@@ -6,6 +6,12 @@ export const writeFileTool = {
   description:
     "Write content to a file in the sandbox workspace. Creates directories as needed.",
   parameters: writeFileSchema,
+  annotations: {
+    title: "Write Insights file",
+    readOnlyHint: false,
+    openWorldHint: false,
+    destructiveHint: true,
+  },
   createHandler: (_insightsApi, pokeyClient) => async (args) =>
     pokeyClient.executeTool("write", args),
 } as const satisfies SignalToolDefinition<typeof writeFileSchema>;

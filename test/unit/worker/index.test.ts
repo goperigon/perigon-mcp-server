@@ -16,6 +16,20 @@ const handlerSpies = {
   handleValidateUser: mock(
     async () => new Response("validate-user", { status: 200 }),
   ),
+  handleOAuthMetadata: mock(
+    () => new Response("oauth-metadata", { status: 200 }),
+  ),
+  isOAuthMetadataPath: mock((pathname: string) =>
+    pathname.startsWith("/.well-known/oauth-"),
+  ),
+  handleOAuthAuthorizeRedirect: mock(
+    () => new Response(null, { status: 302, headers: { Location: "/app" } }),
+  ),
+  isOAuthAuthorizePath: mock((pathname: string) => pathname === "/oauth/authorize"),
+  isOAuthApiProxyPath: mock((pathname: string) =>
+    pathname.startsWith("/v1/mcp/oauth/"),
+  ),
+  proxyOAuthApiRequest: mock(async () => new Response("oauth-proxy", { status: 200 })),
 };
 
 await mock.module("../../../worker/handlers", () => handlerSpies);
@@ -28,7 +42,19 @@ await mock.module("../../../worker/mcp/mcp", () => ({
 const workerModule = await import("../../../worker/index");
 const worker = workerModule.default;
 
+const assetsFetchSpy = mock(async (request: Request) => {
+  const pathname = new URL(request.url).pathname;
+  return new Response(`asset:${pathname}`, {
+    status: 200,
+    headers: { "Content-Type": "application/javascript" },
+  });
+});
+
 const fakeEnv = { ANTHROPIC_API_KEY: "sk-ant-fake" } as unknown as Env;
+const fakeEnvWithAssets = {
+  ANTHROPIC_API_KEY: "sk-ant-fake",
+  ASSETS: { fetch: assetsFetchSpy },
+} as unknown as Env;
 const fakeLocalCorsEnv = {
   ANTHROPIC_API_KEY: "sk-ant-fake",
   ENVIRONMENT: "development",
@@ -230,6 +256,95 @@ describe("worker/index ROUTES", () => {
     expect(await res.text()).toBe("Not found");
   });
 
+  test("unmatched GET delegates to ASSETS.fetch", async () => {
+    assetsFetchSpy.mockClear();
+    const res = await worker.fetch(
+      new Request("https://localhost/assets/index-abc.js"),
+      fakeEnvWithAssets,
+      fakeCtx,
+    );
+    expect(res.status).toBe(200);
+    expect(await res.text()).toBe("asset:/assets/index-abc.js");
+    expect(assetsFetchSpy).toHaveBeenCalledTimes(1);
+  });
+
+  test("unmatched HEAD delegates to ASSETS.fetch", async () => {
+    assetsFetchSpy.mockClear();
+    const res = await worker.fetch(
+      new Request("https://localhost/favicon.ico", { method: "HEAD" }),
+      fakeEnvWithAssets,
+      fakeCtx,
+    );
+    expect(res.status).toBe(200);
+    expect(assetsFetchSpy).toHaveBeenCalledTimes(1);
+  });
+
+  test("unmatched POST does not call ASSETS.fetch", async () => {
+    assetsFetchSpy.mockClear();
+    const res = await worker.fetch(
+      new Request("https://localhost/assets/index-abc.js", { method: "POST" }),
+      fakeEnvWithAssets,
+      fakeCtx,
+    );
+    expect(res.status).toBe(404);
+    expect(assetsFetchSpy).not.toHaveBeenCalled();
+  });
+
+  test("known MCP route does not call ASSETS.fetch", async () => {
+    assetsFetchSpy.mockClear();
+    handlerSpies.handleMCP.mockClear();
+    const res = await worker.fetch(
+      new Request("https://localhost/v1/mcp"),
+      fakeEnvWithAssets,
+      fakeCtx,
+    );
+    expect(res.status).toBe(200);
+    expect(handlerSpies.handleMCP).toHaveBeenCalledTimes(1);
+    expect(assetsFetchSpy).not.toHaveBeenCalled();
+  });
+
+  test("GET / → 302 sandbox MCP playground", async () => {
+    const res = await worker.fetch(
+      new Request("https://mcp.perigon.io/"),
+      fakeEnv,
+      fakeCtx,
+    );
+    expect(res.status).toBe(302);
+    expect(res.headers.get("Location")).toBe("https://perigon.io/mcp");
+  });
+
+  test("GET /.well-known/oauth-protected-resource → OAuth metadata", async () => {
+    handlerSpies.handleOAuthMetadata.mockClear();
+    const res = await worker.fetch(
+      new Request("https://mcp.perigon.io/.well-known/oauth-protected-resource"),
+      fakeEnv,
+      fakeCtx,
+    );
+    expect(res.status).toBe(200);
+    expect(handlerSpies.handleOAuthMetadata).toHaveBeenCalledTimes(1);
+  });
+
+  test("POST / stays 404", async () => {
+    const res = await worker.fetch(
+      new Request("https://mcp.perigon.io/", { method: "POST" }),
+      fakeEnv,
+      fakeCtx,
+    );
+    expect(res.status).toBe(404);
+  });
+
+  test("GET /chat → 302 playground chat tab", async () => {
+    const res = await worker.fetch(
+      new Request("https://mcp.perigon.io/chat"),
+      fakeEnv,
+      fakeCtx,
+    );
+    expect(res.status).toBe(302);
+    expect(res.headers.get("Location")).toBe(
+      "https://perigon.io/mcp?tab=chat",
+    );
+  });
+
   test.each([
     ["/v1/auth", "handleTurnstileAuth"],
     ["/v1/validate-user", "handleValidateUser"],
@@ -260,4 +375,18 @@ describe("worker/index ROUTES", () => {
       expect(handlerSpies.handleMCP).toHaveBeenCalledTimes(1);
     },
   );
+
+  test.each([
+    "/.well-known/oauth-protected-resource",
+    "/.well-known/oauth-authorization-server",
+  ])("%s → handleOAuthMetadata", async (path) => {
+    handlerSpies.handleOAuthMetadata.mockClear();
+    const res = await worker.fetch(
+      new Request(`https://localhost${path}`),
+      fakeEnv,
+      fakeCtx,
+    );
+    expect(res.status).toBe(200);
+    expect(handlerSpies.handleOAuthMetadata).toHaveBeenCalledTimes(1);
+  });
 });

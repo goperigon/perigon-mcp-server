@@ -12,7 +12,7 @@ const text = (r: any) => r.content[0].text as string;
 describe("searchJournalists", () => {
   test("maps query → q, sources → source, labels → label, categories → category, topics → topic", async () => {
     const perigon = createMockPerigon({
-      searchJournalists: async () => journalistsFixture,
+      searchJournalistsFull: async () => journalistsFixture,
     });
     const args = journalistsArgs.parse({
       query: "tech reporter",
@@ -26,7 +26,7 @@ describe("searchJournalists", () => {
     });
     const result = await searchJournalists(perigon)(args);
 
-    const call = firstCallArgs<any>(perigon.searchJournalists);
+    const call = firstCallArgs<any>(perigon.searchJournalistsFull);
     expect(call.q).toBe("tech AND reporter");
     expect(call.source).toEqual(["nyt.com"]);
     expect(call.label).toEqual(["Opinion"]);
@@ -39,25 +39,42 @@ describe("searchJournalists", () => {
     expect(text(result)).toContain('<journalist id="j1"');
   });
 
-  test("countries default to ['us'] and lowercase", async () => {
+  test("countries has no default and lowercases when provided", async () => {
     const perigon = createMockPerigon({
-      searchJournalists: async () => journalistsFixture,
+      searchJournalistsFull: async () => journalistsFixture,
     });
     await searchJournalists(perigon)(journalistsArgs.parse({}));
-    expect(firstCallArgs<any>(perigon.searchJournalists).country).toEqual(["us"]);
+    expect(firstCallArgs<any>(perigon.searchJournalistsFull).country).toBeUndefined();
 
     const perigon2 = createMockPerigon({
-      searchJournalists: async () => journalistsFixture,
+      searchJournalistsFull: async () => journalistsFixture,
     });
     await searchJournalists(perigon2)(
       journalistsArgs.parse({ countries: ["GB", "Jp"] })
     );
-    expect(firstCallArgs<any>(perigon2.searchJournalists).country).toEqual(["gb", "jp"]);
+    expect(firstCallArgs<any>(perigon2.searchJournalistsFull).country).toEqual(["gb", "jp"]);
+  });
+
+  test("location filters are forwarded verbatim", async () => {
+    const perigon = createMockPerigon({
+      searchJournalistsFull: async () => journalistsFixture,
+    });
+    await searchJournalists(perigon)(
+      journalistsArgs.parse({
+        locationCountry: ["US"],
+        locationState: ["NY"],
+        locationCity: ["New York"],
+      })
+    );
+    const call = firstCallArgs<any>(perigon.searchJournalistsFull);
+    expect(call.locationCountry).toEqual(["us"]);
+    expect(call.locationState).toEqual(["NY"]);
+    expect(call.locationCity).toEqual(["New York"]);
   });
 
   test("returns noResults when numResults === 0", async () => {
     const perigon = createMockPerigon({
-      searchJournalists: async () => ({ status: 200, numResults: 0, results: [] }),
+      searchJournalistsFull: async () => ({ status: 200, numResults: 0, results: [] }),
     });
     const result = await searchJournalists(perigon)(journalistsArgs.parse({}));
     expect(text(result)).toBe("No results found");
@@ -66,7 +83,7 @@ describe("searchJournalists", () => {
   test("error path", async () => {
     const errorSpy = spyOn(console, "error").mockImplementation(() => {});
     const perigon = createMockPerigon({
-      searchJournalists: async () => {
+      searchJournalistsFull: async () => {
         throw new HttpError(500, "boom");
       },
     });

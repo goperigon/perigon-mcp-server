@@ -17,8 +17,8 @@
   "author": "Perigon (https://www.perigon.io)",
   "type": "module",
   "scripts": {
-    "deploy": "bun run build && bunx wrangler deploy",
-    "deploy:versions": "bun run build && bunx wrangler versions upload",
+    "deploy": "bun run build && bunx wrangler deploy --env production",
+    "deploy:versions": "bun run build && bunx wrangler versions upload --env production",
     "dev": "vite dev",
     "build": "vite build",
     "mcp": "bunx @modelcontextprotocol/inspector",

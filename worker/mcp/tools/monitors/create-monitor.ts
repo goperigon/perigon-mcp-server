@@ -15,6 +15,10 @@ import {
 import { toolResult } from "../utils/formatting";
 import { createErrorMessage } from "../utils/error-handling";
 import { formatMonitorDetail } from "../utils/monitor-formatting";
+import {
+  SchedulePolicyConversionError,
+  toUtcSchedulePolicy
+} from "../utils/schedule-timezone";
 
 export const createMonitorArgs = z.object({
   name: z.string().trim().min(1).max(256),
@@ -53,7 +57,9 @@ export const createMonitorArgs = z.object({
   ),
   schedulePolicy: monitorSchedulePolicyArgs
     .optional()
-    .describe("Recurring processing schedule."),
+    .describe(
+      "Recurring processing schedule. Interval hour and minute are wall-clock times in timezoneId."
+    ),
   watchlistId: z
     .number()
     .int()
@@ -83,9 +89,22 @@ export function createMonitor(perigon: Perigon): ToolCallback<typeof createMonit
         );
       }
 
+      let utcSchedulePolicy;
+      if (args.schedulePolicy) {
+        try {
+          utcSchedulePolicy = toUtcSchedulePolicy(args.schedulePolicy);
+        } catch (error) {
+          if (error instanceof SchedulePolicyConversionError) {
+            return toolResult(error.message);
+          }
+          throw error;
+        }
+      }
+
       const body: MonitorCreateRequest = {
         ...args,
-        query: buildMonitorQuery(args.query)
+        query: buildMonitorQuery(args.query),
+        schedulePolicy: utcSchedulePolicy
       };
       const result = await perigon.createMonitor(body);
       return toolResult(
@@ -104,11 +123,11 @@ export const createMonitorTool = {
   name: "create_monitor",
   title: "Create monitor",
   description:
-    "Create a Perigon monitor for continuously detecting events, mentions, or scheduled topic briefings. Defaults to DRAFT; only pass ACTIVE when the user explicitly asks to start processing. ACTIVE TOPIC monitors require both a schedule and newsletter configuration.",
+    "Create a Perigon monitor for continuously detecting events, mentions, or scheduled topic briefings. Defaults to DRAFT; only pass ACTIVE when the user explicitly asks to start processing. ACTIVE TOPIC monitors require both a schedule and newsletter configuration. An ACTIVE monitor starts background processing and can deliver notifications to configured contact points; delivered notifications cannot be recalled.",
   parameters: createMonitorArgs,
   annotations: {
     readOnlyHint: false,
-    destructiveHint: false,
+    destructiveHint: true,
     idempotentHint: false,
     openWorldHint: true
   },

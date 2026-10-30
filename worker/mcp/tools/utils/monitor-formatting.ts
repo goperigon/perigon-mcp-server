@@ -5,6 +5,10 @@ import {
   MonitorSummaryDto
 } from "../../../types/monitors";
 import { createPaginationHeader } from "./formatting";
+import {
+  formatSchedulePolicySummary,
+  toLocalSchedulePolicyForDisplay
+} from "./schedule-timezone";
 
 const MAX_TOOL_OUTPUT_CHARS = 40_000;
 const MAX_MONITOR_CONFIG_CHARS = 16_000;
@@ -118,13 +122,16 @@ export function formatMonitorList(
 }
 
 export function formatMonitorDetail(monitor: MonitorDto): string {
+  const scheduleDisplay = toLocalSchedulePolicyForDisplay(monitor.schedulePolicy);
+  const scheduleSummary = formatSchedulePolicySummary(scheduleDisplay?.policy);
+
   const configuration = {
     prompt: monitor.prompt,
     dataSchema: monitor.dataSchema,
     newsletterConfig: monitor.newsletterConfig,
     entityGroups: monitor.entityGroups,
     query: monitor.query,
-    schedulePolicy: monitor.schedulePolicy,
+    schedulePolicy: scheduleDisplay?.policy ?? null,
     watchlistId: monitor.watchlistId,
     contactPointIds: monitor.contactPointIds
   };
@@ -138,7 +145,13 @@ Status: ${text(monitor.status)}
 Classification: ${text(monitor.classificationType)}
 Objective: ${text(monitor.monitoringObjective)}
 Created At: ${text(monitor.createdAt)}
-Updated At: ${text(monitor.updatedAt)}
+Updated At: ${text(monitor.updatedAt)}${
+    scheduleSummary ? `\nSchedule: ${text(scheduleSummary)}` : ""
+  }${
+    scheduleDisplay?.displayNote
+      ? `\n<scheduleNote>${text(scheduleDisplay.displayNote)}</scheduleNote>`
+      : ""
+  }
 <configuration>
 ${configurationJson}
 </configuration>${configurationNotice ? `\n<truncated>${text(configurationNotice)}</truncated>` : ""}

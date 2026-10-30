@@ -45,17 +45,15 @@ describe("searchSources", () => {
     expect(text(result)).toContain('<source name="Example">');
   });
 
-  test("PINNED BUG: sortBy is accepted but never forwarded to the SDK", async () => {
-    // Document existing behavior: the schema accepts sortBy but the handler
-    // doesn't pass it through. If this changes, update the handler too.
+  test("sortBy is forwarded to the SDK", async () => {
     const perigon = createMockPerigon({
       searchSources: async () => sourcesFixture,
     });
     await searchSources(perigon)(
-      sourcesArgs.parse({ sortBy: "createdAt" })
+      sourcesArgs.parse({ sortBy: "monthlyVisits" })
     );
     const call = firstCallArgs<any>(perigon.searchSources);
-    expect(call).not.toHaveProperty("sortBy");
+    expect(call.sortBy).toBe("monthlyVisits");
   });
 
   test("returns noResults when numResults === 0", async () => {

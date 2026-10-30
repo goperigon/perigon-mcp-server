@@ -4,41 +4,52 @@ import { handleError } from "../lib/handle-error";
 import { hashKey } from "../lib/hash";
 import { McpAgent } from "agents/mcp";
 import { PerigonMCP, type Props } from "../mcp/mcp";
-import { parseRequestedTools, resolveToolParam } from "../mcp/tools/selection";
+import { getCachedIntrospection } from "../lib/introspection-cache";
+import { mcpPublicOrigin, perigonApiOrigin } from "../lib/mcp-env";
+import { parseMcpToolFilterFromRequest } from "../mcp/request-tool-surface";
+import { buildMcpTelemetryHeaders } from "../lib/telemetry-headers";
 
 const SSE_PATHS = ["/v1/sse", "/v1/sse/message"] as const;
 const STREAMABLE_PATH = "/v1/mcp";
+const API_KEY_HELP =
+  "Sign in with your Perigon account via OAuth, or create a free account and copy a key from https://perigon.io/dev/keys, then send it as Authorization: Bearer <key>.";
 
 /**
  * Authenticates the MCP request via the `Authorization: Bearer <key>` header
- * (a Perigon API key), enforces a per-key rate limit, and dispatches to the
- * MCP transport (SSE or streamable HTTP).
+ * (a Perigon API key or MCP OAuth JWT), enforces a per-key rate limit, and
+ * dispatches to the MCP transport (SSE or streamable HTTP).
  */
 export async function handleMCP(
   request: Request,
   env: Env,
-  ctx: ExecutionContext
+  ctx: ExecutionContext,
 ): Promise<Response> {
   try {
-    const apiKey = extractBearerKey(request);
-    if (!apiKey) {
-      return handleError("Unauthorized", 401);
+    const bearerToken = extractBearerKey(request);
+    if (!bearerToken) {
+      return unauthorizedResponse(request, env, "Unauthorized", API_KEY_HELP);
     }
+
+    const apiKey = await resolveApiKey(bearerToken, env);
 
     const rateLimitResponse = await enforceRateLimit(apiKey, env);
     if (rateLimitResponse) return rateLimitResponse;
 
-    const props = await loadMcpProps(request, apiKey);
-    ctx.props = props;
+    const props = await loadMcpProps(request, apiKey, env);
+    Object.assign(ctx as object, { props });
 
     return dispatchMcp(request, env, ctx);
   } catch (error) {
-    return handleMcpError(error);
+    return handleMcpError(error, request, env);
   }
 }
 
 function extractBearerKey(request: Request): string | undefined {
   return request.headers.get("Authorization")?.split(" ")[1];
+}
+
+async function resolveApiKey(bearerToken: string, _env: Env): Promise<string> {
+  return bearerToken;
 }
 
 /**
@@ -48,7 +59,7 @@ function extractBearerKey(request: Request): string | undefined {
  */
 async function enforceRateLimit(
   apiKey: string,
-  env: Env
+  env: Env,
 ): Promise<Response | null> {
   const key = await hashKey(apiKey);
   const { success } = await env.MCP_RATE_LIMITER.limit({ key });
@@ -57,28 +68,42 @@ async function enforceRateLimit(
   return handleError(
     "Rate limit exceeded",
     429,
-    "You have exceeded allowed number of mcp related requests for this period"
+    "You have exceeded allowed number of mcp related requests for this period",
   );
 }
 
-async function loadMcpProps(request: Request, apiKey: string): Promise<Props> {
-  const perigon = new Perigon(apiKey);
-  const apiKeyDetails = await perigon.introspection();
-  const requestedTools = parseRequestedTools(
-    resolveToolParam(new URL(request.url))
+async function loadMcpProps(
+  request: Request,
+  apiKey: string,
+  env: Env,
+): Promise<Props> {
+  const perigonApiUrl = perigonApiOrigin(env, request);
+  const perigon = new Perigon(apiKey, perigonApiUrl, () =>
+    buildMcpTelemetryHeaders({}),
+  );
+  const apiKeyDetails = await getCachedIntrospection(
+    perigon,
+    apiKey,
+    perigonApiUrl,
+  );
+  const { requestedTools, explicitAllTools } = parseMcpToolFilterFromRequest(
+    request.url,
   );
   return {
     apiKey,
+    perigonApiUrl,
     scopes: apiKeyDetails.scopes,
+    socialSources: apiKeyDetails.socialSources ?? [],
     organizationId: apiKeyDetails.organizationId,
     requestedTools,
+    explicitAllTools,
   };
 }
 
 function dispatchMcp(
   request: Request,
   env: Env,
-  ctx: ExecutionContext
+  ctx: ExecutionContext,
 ): Promise<Response> | Response {
   const { pathname } = new URL(request.url);
 
@@ -97,18 +122,50 @@ function dispatchMcp(
   return new Response("Not found", { status: 404 });
 }
 
-function handleMcpError(error: unknown): Response {
-  console.error("Failed to process MCP request:", error);
+function unauthorizedResponse(
+  request: Request,
+  env: Env,
+  error: string,
+  details: string,
+): Response {
+  const resourceMetadata = `${mcpPublicOrigin(env, request)}/.well-known/oauth-protected-resource`;
+  return Response.json(
+    { error, details },
+    {
+      status: 401,
+      headers: {
+        "content-type": "application/json",
+        "WWW-Authenticate": `Bearer resource_metadata="${resourceMetadata}"`,
+      },
+    },
+  );
+}
+
+function handleMcpError(
+  error: unknown,
+  request: Request,
+  env: Env,
+): Response {
   if (error instanceof HttpError) {
+    if (error.statusCode === 401) {
+      return unauthorizedResponse(
+        request,
+        env,
+        "Failed to process MCP request",
+        API_KEY_HELP,
+      );
+    }
     return handleError(
       "Failed to process MCP request",
       error.statusCode,
-      error.responseBody
+      error.responseBody,
     );
   }
+
+  console.error("Failed to process MCP request", error);
   return handleError(
     "Failed to process MCP request",
     500,
-    "Error: " + (error instanceof Error ? error.message : String(error))
+    error instanceof Error ? error.message : "Unknown error",
   );
 }

@@ -30,13 +30,13 @@ export const getMonitorTool = {
   name: "get_monitor",
   title: "Get monitor",
   description:
-    "Retrieve the complete configuration for one Perigon monitor by UUID, including its objective, status, classification, article query, output schema, schedule, watchlist, and delivery contact points.",
+    "Retrieve the complete configuration for one Perigon monitor by UUID, including its objective, status, classification, article query, output schema, schedule, watchlist, and delivery contact points. Schedule hours are wall-clock times in timezoneId.",
   parameters: getMonitorArgs,
   annotations: {
     readOnlyHint: true,
     destructiveHint: false,
     idempotentHint: true,
-    openWorldHint: true
+    openWorldHint: false
   },
   createHandler: (perigon: Perigon) => getMonitor(perigon)
 } satisfies ToolDefinition<typeof getMonitorArgs>;

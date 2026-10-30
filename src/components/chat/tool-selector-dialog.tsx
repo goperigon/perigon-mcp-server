@@ -22,6 +22,8 @@ const CATEGORIES: McpToolCategory[] = [
   "stats",
   "use-cases",
   "monitors",
+  "entitlements",
+  "platform",
   "signal-insights",
 ];
 

@@ -12,6 +12,12 @@ export const createWorkspaceTool = {
     `Returns a workspace handle required by all analysis tools (${executeCodeTool.name}, ${shellTool.name}, ${exportEventsTool.name}, file tools). ` +
     "Do NOT invent workspace IDs — always use the one returned here.",
   parameters: createWorkspaceSchema,
+  annotations: {
+    title: "Initialize Insights analysis",
+    readOnlyHint: false,
+    openWorldHint: false,
+    destructiveHint: false,
+  },
   createHandler: (_insightsApi, pokeyClient) => async () =>
     pokeyClient.createWorkspace(),
 } as const satisfies SignalToolDefinition<typeof createWorkspaceSchema>;

@@ -24,6 +24,10 @@ export const topEntitiesArgs = statsFilterArgs.extend({
     .describe(
       "Which entity types to return. Options: topics, people, companies, cities, journalists, sources. Defaults to topics, people, and companies.",
     ),
+  expandEntities: z
+    .boolean()
+    .optional()
+    .describe("Return a larger, less-deduplicated entity set per type."),
 });
 
 const TOTAL_KEY: Record<EntityType, keyof TopEntitiesDto> = {
@@ -57,7 +61,15 @@ export function getTopEntities(
         personName: args.personName,
         companyDomain: args.companyDomain,
         companySymbol: args.companySymbol,
+        journalistId: args.journalistId,
+        personWikidataId: args.personWikidataId,
+        companyId: args.companyId,
+        taxonomy: args.taxonomy,
+        excludeSource: args.excludeSource,
+        excludeCategory: args.excludeCategory,
+        excludeTopic: args.excludeTopic,
         entity: requested,
+        expandEntities: args.expandEntities,
       });
 
       const hasResults = requested.some((t) => {
@@ -96,8 +108,14 @@ export function getTopEntities(
 
 export const topEntitiesTool = {
   name: "get_top_entities",
+  title: "Top entities",
   description:
     "Get the most frequently mentioned entities in articles matching the given filters, ranked by raw mention count. Use this when the user asks 'what topics/people/companies are most covered?' or 'who appears most in X news?' — i.e., questions about overall mention frequency within a fixed window. Do NOT use this for detecting sudden spikes or trending entities; use get_top_people or get_top_companies for spike detection instead. Defaults to returning topics, people, and companies; use the entity parameter to request other types (cities, journalists, sources). Supports the same article filters as search_news_articles.",
   parameters: topEntitiesArgs,
+  annotations: {
+    readOnlyHint: true,
+    openWorldHint: true,
+    destructiveHint: false,
+  },
   createHandler: (perigon: Perigon) => getTopEntities(perigon),
 } satisfies ToolDefinition<typeof topEntitiesArgs>;
