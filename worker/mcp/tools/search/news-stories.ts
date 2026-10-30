@@ -189,10 +189,13 @@ export function searchNewsStories(
             .filter(Boolean)
             .join("; ") || "N/A";
         const topCountries = story.topCountries?.join(", ") || "N/A";
-        const totalCount = story.totalCount ?? 0;
-        const publisherCount = story.uniqueSources?.length ?? 0;
+        const totalCount = story.totalCount;
+        const publisherCount = story.uniqueSources?.length;
         const sourceDiversity =
-          totalCount > 0 && publisherCount > 0
+          totalCount != null &&
+          totalCount > 0 &&
+          publisherCount != null &&
+          publisherCount > 0
             ? (publisherCount / totalCount).toFixed(2)
             : "unknown";
 
@@ -202,8 +205,8 @@ Short Summary: ${story.shortSummary ?? "N/A"}
 Key Points: ${keyPoints}
 Created At: ${story.createdAt} (utc)
 Updated At: ${story.updatedAt} (utc)
-Articles: ${totalCount} total, ${story.uniqueCount ?? 0} unique
-Publishers: ${publisherCount}
+Articles: ${totalCount ?? "N/A"} total, ${story.uniqueCount ?? "N/A"} unique
+Publishers: ${publisherCount ?? "N/A"}
 Source Diversity: ${sourceDiversity}
 Unique Sources: ${story.uniqueSources?.join(", ") || "N/A"}
 Sentiment: ${JSON.stringify(story.sentiment)}
