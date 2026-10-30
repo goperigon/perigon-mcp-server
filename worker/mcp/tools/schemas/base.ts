@@ -2,11 +2,42 @@ import { z } from "zod";
 import { CONSTANTS } from "../types";
 
 /**
- * Parse time string to Date object
+ * Formats the API accepts for a date-valued parameter, quoted back to the
+ * caller verbatim when a value fails to parse.
  */
-function parseTime(str: string) {
-  if (str === "") return undefined;
-  return new Date(str);
+const DATE_FORMAT_HINT =
+  'ISO 8601 (e.g. 2024-02-01T23:59:59Z) or yyyy-mm-dd (e.g. 2024-02-01). Relative expressions such as "last week" or "yesterday" are not supported — resolve them to an absolute date first.';
+
+/**
+ * Parse a date-valued tool parameter to a `Date`. An empty string means "not
+ * set" (hosts sometimes send `""` for an omitted optional string), and
+ * anything unparseable raises a zod issue rather than yielding an
+ * `Invalid Date`.
+ *
+ * Rejecting at the schema is what makes the failure actionable for the model
+ * on the other end: it names the offending parameter and the accepted
+ * formats, and it is the only path that reaches
+ * `experimental_repairToolCall` (see `worker/lib/repair-tool-call.ts`), which
+ * fires on `InvalidToolInputError` and so never sees a schema that parsed
+ * "successfully" into an `Invalid Date`. Left unvalidated, the bad value
+ * instead throws `RangeError: Invalid Date` from whichever query-string
+ * builder tries to serialize it, and surfaces as a bare "Invalid Date"
+ * naming neither the parameter nor the format.
+ */
+export function parseDateParam(
+  value: string,
+  ctx: z.RefinementCtx,
+): Date | undefined {
+  if (value === "") return undefined;
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: `Invalid date ${JSON.stringify(value)} — use ${DATE_FORMAT_HINT}`,
+    });
+    return z.NEVER;
+  }
+  return parsed;
 }
 
 /**
@@ -69,14 +100,14 @@ export const paginationArgs = z.object({
 export const defaultArgs = z.object({
   from: z
     .string()
-    .transform(parseTime)
+    .transform(parseDateParam)
     .optional()
     .describe(
       "Filter for articles published before this date. Accepts ISO 8601 format (e.g., 2022-02-01T23:59:59) or yyyy-mm-dd format."
     ),
   to: z
     .string()
-    .transform(parseTime)
+    .transform(parseDateParam)
     .optional()
     .describe(
       "Filter for articles published before this date, avoid setting this field unless you are looking in the distant past and want to set an upper bound for time. Accepts ISO 8601 format (e.g., 2022-02-01T00:00:00) or yyyy-mm-dd format."
