@@ -17,7 +17,13 @@ import {
   type McpToolCategory,
 } from "@/lib/mcp-tools";
 
-const CATEGORIES: McpToolCategory[] = ["search", "stats", "use-cases", "signal-insights"];
+const CATEGORIES: McpToolCategory[] = [
+  "search",
+  "stats",
+  "use-cases",
+  "monitors",
+  "signal-insights",
+];
 
 interface ToolSelectorDialogProps {
   open: boolean;

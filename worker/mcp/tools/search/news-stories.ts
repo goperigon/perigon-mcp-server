@@ -85,7 +85,7 @@ export const newsStoriesArgs = createBaseSearchArgs().extend({
     .max(1)
     .optional()
     .describe(
-      "Minimum ratio of unique sources to unique articles (uniqueSources / uniqueCount), from 0 to 1. Filters out stories dominated by a single publisher (e.g., 0.05 requires at least 1 unique source per 20 articles). Not applied by default.",
+      "Minimum ratio of distinct publishers to total articles in the story, including reprints (uniqueSources / totalCount), from 0 to 1. Drops stories that look big only because a few publishers posted many articles, e.g. SEC filing or press-release repost sites. 0.2 requires 1 publisher per 5 articles; 0.05 (1 per 20) is too loose to remove most of these. Use 0.2 for top headlines, most-covered, or trending requests. Not applied by default.",
     ),
 });
 
@@ -170,10 +170,19 @@ export function searchNewsStories(
       if (result.numResults === 0) return noResults;
 
       const stories = result.results.map((story) => {
+        const totalCount = story.totalCount ?? 0;
+        const publisherCount = story.uniqueSources?.length ?? 0;
+        const sourceDiversity =
+          totalCount > 0 && publisherCount > 0
+            ? (publisherCount / totalCount).toFixed(2)
+            : "unknown";
         return `<news_story id="${story.id}" title="${story.name}">
 Content: ${story.summary}
 Created At: ${story.createdAt} (utc)
 Updated At: ${story.updatedAt} (utc)
+Articles: ${totalCount} total, ${story.uniqueCount ?? 0} unique
+Publishers: ${publisherCount}
+Source Diversity: ${sourceDiversity}
 Sentiment: ${JSON.stringify(story.sentiment)}
 </news_story>`;
       });

@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { z } from "zod";
+import type { Perigon } from "../../../worker/lib/perigon";
 import { TOOL_DEFINITIONS } from "../../../worker/mcp/tools";
 
 const EXPECTED_TOOL_NAMES = [
@@ -26,6 +27,15 @@ const EXPECTED_TOOL_NAMES = [
   "get_company_news",
   "get_person_news",
   "get_location_news",
+  // Monitor tools
+  "list_monitors",
+  "get_monitor",
+  "get_monitor_events",
+  "get_monitor_newsletters",
+  "get_monitor_summaries",
+  "create_monitor",
+  "update_monitor",
+  "set_monitor_status",
   // Signal Insights tools
   "signal_insights_create_workspace",
   "signal_insights_search_signals",
@@ -48,7 +58,7 @@ describe("TOOL_DEFINITIONS", () => {
     const actual = Object.keys(TOOL_DEFINITIONS).sort();
     const expected = [...EXPECTED_TOOL_NAMES].sort();
     expect(actual).toEqual(expected);
-    expect(actual.length).toBe(34);
+    expect(actual.length).toBe(42);
   });
 
   test("each tool exposes name, description, parameters, and createHandler", () => {
@@ -63,7 +73,7 @@ describe("TOOL_DEFINITIONS", () => {
   });
 
   test("each tool's createHandler returns a function", () => {
-    const fakePerigon = {} as any;
+    const fakePerigon = {} as Perigon;
     for (const [key, def] of Object.entries(TOOL_DEFINITIONS)) {
       const handler = def.createHandler(fakePerigon);
       expect(typeof handler, `${key} handler`).toBe("function");

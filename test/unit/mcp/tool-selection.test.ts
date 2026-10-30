@@ -114,7 +114,7 @@ describe("parseRequestedTools", () => {
     expect(parseRequestedTools("invalid_tool")).toBeNull();
   });
 
-  test("accepts all 20 known tool names without dropping any", () => {
+  test("accepts all news and monitor tool names without dropping any", () => {
     const allNames: ToolName[] = [
       "search_news_articles",
       "search_news_stories",
@@ -136,6 +136,14 @@ describe("parseRequestedTools", () => {
       "get_company_news",
       "get_person_news",
       "get_location_news",
+      "list_monitors",
+      "get_monitor",
+      "get_monitor_events",
+      "get_monitor_newsletters",
+      "get_monitor_summaries",
+      "create_monitor",
+      "update_monitor",
+      "set_monitor_status",
     ];
     const param = allNames.join(",");
     const result = parseRequestedTools(param);
