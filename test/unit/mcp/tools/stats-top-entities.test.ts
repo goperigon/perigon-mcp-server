@@ -1,4 +1,5 @@
 import { describe, expect, spyOn, test } from "bun:test";
+import type { TopEntitiesParams } from "../../../../worker/lib/perigon";
 import { HttpError } from "../../../../worker/types/types";
 import {
   getTopEntities,
@@ -27,7 +28,7 @@ describe("getTopEntities", () => {
       getTopEntities: async () => topEntitiesFixture,
     });
     await getTopEntities(perigon)(topEntitiesArgs.parse({}));
-    const call = firstCallArgs<any>(perigon.getTopEntities);
+    const call = firstCallArgs<TopEntitiesParams>(perigon.getTopEntities);
     expect(call.size).toBe(10);
     expect(call.showReprints).toBe(false);
   });
@@ -44,7 +45,7 @@ describe("getTopEntities", () => {
         clusterId: ["c1", "c2"],
       })
     );
-    const call = firstCallArgs<any>(perigon.getTopEntities);
+    const call = firstCallArgs<TopEntitiesParams>(perigon.getTopEntities);
     expect(call.size).toBe(50);
     expect(call.showReprints).toBe(true);
     expect(call.journalistId).toEqual(["j1"]);
