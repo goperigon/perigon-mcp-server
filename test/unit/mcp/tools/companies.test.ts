@@ -37,7 +37,7 @@ describe("searchCompanies", () => {
     expect(call.exchange).toEqual(["NYSE"]);
     expect(call.industry).toBe("Tech");
     expect(call.sector).toBe("IT");
-    expect(text(result)).toContain('<company name="Acme">');
+    expect(text(result)).toContain('<company id="c1" name="Acme">');
     expect(text(result)).toContain("CEO: Bob Smith");
   });
 

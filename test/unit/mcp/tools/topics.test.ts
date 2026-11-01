@@ -28,7 +28,7 @@ describe("searchTopics", () => {
 
     const t = text(result);
     expect(t).toContain("Got 1 topics");
-    expect(t).toContain('<topic name="Markets">');
+    expect(t).toContain('<topic id="" name="Markets">');
     expect(t).toContain("Category: Business");
     expect(t).toContain("Sub Category: Finance");
   });

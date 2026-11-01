@@ -1,13 +1,12 @@
 import { describe, expect, test } from "bun:test";
 import {
-  getAllowedToolsForScopes,
+  isExplicitAllToolsRequest,
   parseRequestedTools,
   resolveActiveTools,
   resolveToolParam,
-  STATS_TOOL_NAMES,
+  TOOL_PROFILES,
 } from "../../../worker/mcp/tools/selection";
 import type { ToolName } from "../../../worker/mcp/tools";
-import { Scopes } from "../../../worker/types/types";
 
 // A stable subset of known tool names used throughout these tests
 const KNOWN: ToolName[] = [
@@ -33,19 +32,19 @@ describe("resolveToolParam", () => {
 
   test("returns value of ?tool= when present", () => {
     expect(resolveToolParam(u("?tool=search_news_articles"))).toBe(
-      "search_news_articles"
+      "search_news_articles",
     );
   });
 
   test("returns value of ?tools= when present (alias)", () => {
     expect(resolveToolParam(u("?tools=search_news_articles"))).toBe(
-      "search_news_articles"
+      "search_news_articles",
     );
   });
 
   test("?tool= takes precedence over ?tools= when both are present", () => {
     expect(
-      resolveToolParam(u("?tool=search_news_articles&tools=search_people"))
+      resolveToolParam(u("?tool=search_news_articles&tools=search_people")),
     ).toBe("search_news_articles");
   });
 
@@ -55,6 +54,24 @@ describe("resolveToolParam", () => {
 
   test("returns empty string (falsy) for ?tool= with no value", () => {
     expect(resolveToolParam(u("?tool="))).toBe("");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// isExplicitAllToolsRequest
+// ---------------------------------------------------------------------------
+
+describe("isExplicitAllToolsRequest", () => {
+  test('returns true only for "all"', () => {
+    expect(isExplicitAllToolsRequest("all")).toBe(true);
+    expect(isExplicitAllToolsRequest("ALL")).toBe(true);
+    expect(isExplicitAllToolsRequest("  all  ")).toBe(true);
+  });
+
+  test("returns false when absent or a concrete filter", () => {
+    expect(isExplicitAllToolsRequest(null)).toBe(false);
+    expect(isExplicitAllToolsRequest("monitoring")).toBe(false);
+    expect(isExplicitAllToolsRequest("create_monitor")).toBe(false);
   });
 });
 
@@ -97,15 +114,13 @@ describe("parseRequestedTools", () => {
 
   test("handles whitespace around commas", () => {
     const result = parseRequestedTools(
-      " search_news_articles , search_people "
+      " search_news_articles , search_people ",
     );
     expect(result).toEqual(["search_news_articles", "search_people"]);
   });
 
   test("silently drops unknown tool names", () => {
-    const result = parseRequestedTools(
-      "search_news_articles,nonexistent_tool"
-    );
+    const result = parseRequestedTools("search_news_articles,nonexistent_tool");
     expect(result).toEqual(["search_news_articles"]);
   });
 
@@ -156,7 +171,7 @@ describe("parseRequestedTools", () => {
 
   test("preserves order of valid names as they appear in the parameter", () => {
     const result = parseRequestedTools(
-      "search_companies,search_news_articles,search_people"
+      "search_companies,search_news_articles,search_people",
     );
     expect(result).toEqual([
       "search_companies",
@@ -237,29 +252,54 @@ describe("resolveActiveTools", () => {
 });
 
 // ---------------------------------------------------------------------------
-// getAllowedToolsForScopes
+// Named tool profiles
 // ---------------------------------------------------------------------------
 
-describe("getAllowedToolsForScopes", () => {
-  test("always includes article search and every stats tool, even with no scopes", () => {
-    const allowed = getAllowedToolsForScopes([]);
-    expect(allowed).toContain("search_news_articles");
-    for (const name of STATS_TOOL_NAMES) {
-      expect(allowed).toContain(name);
+describe("parseRequestedTools with named profiles", () => {
+  test("expands a bare profile alias to its full tool list", () => {
+    const result = parseRequestedTools("minimal");
+    expect(result).not.toBeNull();
+    expect(result!.sort()).toEqual([...TOOL_PROFILES.minimal].sort());
+  });
+
+  test("profile aliases are case-insensitive", () => {
+    const result = parseRequestedTools("MINIMAL");
+    expect(result!.sort()).toEqual([...TOOL_PROFILES.minimal].sort());
+  });
+
+  test("combines a profile alias with explicit tool names", () => {
+    const result = parseRequestedTools("minimal,search_topics");
+    expect(result).not.toBeNull();
+    expect(result).toContain("search_topics");
+    for (const name of TOOL_PROFILES.minimal) {
+      expect(result).toContain(name);
     }
-    expect(allowed).not.toContain("search_news_stories");
   });
 
-  test("adds scope-mapped tools without dropping stats tools", () => {
-    const allowed = getAllowedToolsForScopes([Scopes.CLUSTERS]);
-    expect(allowed).toContain("search_news_stories");
-    expect(allowed).toContain("get_top_entities");
-  });
-
-  test("?tools= can narrow a session to stats tools", () => {
-    const allowed = getAllowedToolsForScopes([]);
-    expect(resolveActiveTools(allowed, ["get_top_entities"])).toEqual([
-      "get_top_entities",
+  test("combining two profiles unions their tool lists without duplicates", () => {
+    const result = parseRequestedTools("minimal,platform");
+    expect(result).not.toBeNull();
+    const expected = new Set([
+      ...TOOL_PROFILES.minimal,
+      ...TOOL_PROFILES.platform,
     ]);
+    expect(new Set(result)).toEqual(expected);
+    expect(result!.length).toBe(expected.size);
+  });
+
+  test("every profile only contains known tool names", () => {
+    for (const [profileName, toolNames] of Object.entries(TOOL_PROFILES)) {
+      const result = parseRequestedTools(toolNames.join(","));
+      expect(result, `profile ${profileName}`).not.toBeNull();
+      expect(new Set(result)).toEqual(new Set(toolNames));
+    }
+  });
+
+  test("resolveActiveTools still intersects a profile with scope-allowed tools", () => {
+    // A profile can request tools the key doesn't actually have access to;
+    // resolveActiveTools must narrow to the intersection, never expand it.
+    const requested = parseRequestedTools("research");
+    const result = resolveActiveTools(ALL_ALLOWED, requested);
+    expect(result.every((name) => ALL_ALLOWED.includes(name))).toBe(true);
   });
 });

@@ -76,6 +76,31 @@ export const statsFilterArgs = z.object({
     .array(z.string())
     .optional()
     .describe("Filter articles mentioning companies by stock ticker symbol (e.g., AAPL)."),
+  journalistId: z
+    .array(z.string())
+    .optional()
+    .describe("Filter articles written by specific journalist IDs."),
+  personWikidataId: z
+    .array(z.string())
+    .optional()
+    .describe("Filter articles mentioning a person by Wikidata ID (unambiguous vs. personName)."),
+  companyId: z
+    .array(z.string())
+    .optional()
+    .describe("Filter articles mentioning specific company IDs."),
+  taxonomy: z
+    .array(z.string())
+    .optional()
+    .describe("Filter by Google Content Category, full path (e.g. /Finance/Banking/Other)."),
+  excludeSource: z
+    .array(z.string())
+    .optional()
+    .describe("Exclude publisher domains (wildcards supported)."),
+  excludeCategory: z
+    .array(z.string())
+    .optional()
+    .describe("Exclude content categories."),
+  excludeTopic: z.array(z.string()).optional().describe("Exclude topics."),
 });
 
 export type StatsFilterArgs = z.infer<typeof statsFilterArgs>;

@@ -2,6 +2,11 @@ import { describe, expect, test } from "bun:test";
 import { z } from "zod";
 import type { Perigon } from "../../../worker/lib/perigon";
 import { TOOL_DEFINITIONS } from "../../../worker/mcp/tools";
+import { SIGNAL_TOOL_DEFINITIONS } from "../../../worker/mcp/tools/signals";
+import {
+  SOCIAL_TOOL_DEFINITIONS,
+  SOCIAL_TOOL_SOURCES,
+} from "../../../worker/mcp/tools/social";
 
 const EXPECTED_TOOL_NAMES = [
   // Search tools
@@ -36,6 +41,20 @@ const EXPECTED_TOOL_NAMES = [
   "create_monitor",
   "update_monitor",
   "set_monitor_status",
+  // Entitlement/access tools
+  "get_api_access",
+  // Platform tools
+  "get_source_by_id",
+  "get_top_topics",
+  "get_story_stats",
+  "watchlists",
+  "create_watchlist",
+  "update_watchlist",
+  "source_groups",
+  "create_source_group",
+  "update_source_group",
+  "contact_points",
+  "article_refresh",
   // Signal Insights tools
   "signal_insights_create_workspace",
   "signal_insights_search_signals",
@@ -58,7 +77,7 @@ describe("TOOL_DEFINITIONS", () => {
     const actual = Object.keys(TOOL_DEFINITIONS).sort();
     const expected = [...EXPECTED_TOOL_NAMES].sort();
     expect(actual).toEqual(expected);
-    expect(actual.length).toBe(42);
+    expect(actual.length).toBe(54);
   });
 
   test("each tool exposes name, description, parameters, and createHandler", () => {
@@ -72,11 +91,49 @@ describe("TOOL_DEFINITIONS", () => {
     }
   });
 
+  test("each news tool has a non-empty display title", () => {
+    for (const [key, def] of Object.entries(TOOL_DEFINITIONS)) {
+      expect(typeof def.title, `${key}.title`).toBe("string");
+      expect(def.title.trim().length, `${key}.title`).toBeGreaterThan(0);
+    }
+  });
+
+  test("each signal tool has annotations.title for MCP host directories", () => {
+    for (const [key, def] of Object.entries(SIGNAL_TOOL_DEFINITIONS)) {
+      expect(def.annotations.title, `${key}.annotations.title`).toBeDefined();
+      expect(
+        def.annotations.title?.trim().length,
+        `${key}.annotations.title`,
+      ).toBeGreaterThan(0);
+    }
+  });
+
   test("each tool's createHandler returns a function", () => {
     const fakePerigon = {} as Perigon;
     for (const [key, def] of Object.entries(TOOL_DEFINITIONS)) {
       const handler = def.createHandler(fakePerigon);
       expect(typeof handler, `${key} handler`).toBe("function");
+    }
+  });
+});
+
+describe("SOCIAL_TOOL_DEFINITIONS", () => {
+  test("stays out of TOOL_DEFINITIONS, which backs the playground UI", () => {
+    for (const name of Object.keys(SOCIAL_TOOL_DEFINITIONS)) {
+      expect(TOOL_DEFINITIONS[name], name).toBeUndefined();
+    }
+  });
+
+  test("every social tool is keyed by its name and mapped to a source", () => {
+    for (const [key, def] of Object.entries(SOCIAL_TOOL_DEFINITIONS)) {
+      expect(def.name, `${key}.name`).toBe(key);
+      expect(def.title.trim().length, `${key}.title`).toBeGreaterThan(0);
+      expect(def.parameters).toBeInstanceOf(z.ZodObject);
+      expect(def.annotations.readOnlyHint, `${key}.readOnlyHint`).toBe(true);
+      expect(
+        SOCIAL_TOOL_SOURCES[key as keyof typeof SOCIAL_TOOL_SOURCES],
+        `${key} source`,
+      ).toBeDefined();
     }
   });
 });

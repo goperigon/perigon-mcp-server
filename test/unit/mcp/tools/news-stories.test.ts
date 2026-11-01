@@ -116,7 +116,8 @@ describe("searchNewsStories", () => {
     const output = text(
       await searchNewsStories(perigon)(newsStoriesArgs.parse({})),
     );
-    expect(output).toContain("Publishers: 0");
+    expect(output).toContain("Articles: N/A total, N/A unique");
+    expect(output).toContain("Publishers: N/A");
     expect(output).toContain("Source Diversity: unknown");
   });
 

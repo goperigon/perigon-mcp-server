@@ -27,22 +27,7 @@ export function createSearchField(contextDescription: string) {
       return value;
     })
     .describe(
-      `Elasticsearch-style search query for filtering ${contextDescription}. Supports advanced search syntax including:
-
-    • Boolean operators: AND, OR, NOT (case-sensitive)
-    • Exact phrase matching: Use double quotes around phrases (e.g., "US Election")
-    • Wildcards: Use * for multiple characters, ? for single character (e.g., econom*, climat?)
-    • Grouping: Use parentheses to group terms (e.g., (trump OR biden) AND election)
-    • Field-specific searches: Can target specific content areas
-
-    Examples:
-    • Simple terms: trump biden
-    • Boolean logic: "trump" OR "biden"
-    • Phrase matching: "US Election" AND "trump"
-    • Wildcards: climat* AND (warming OR change)
-    • Complex queries: ("artificial intelligence" OR AI) AND (healthcare OR medical) NOT cryptocurrency
-
-    Note: Simple phrases will be automatically joined with AND operators. Use quotes for exact phrase matching.`
+      `Search query for ${contextDescription}. Supports Boolean operators (AND, OR, NOT), "exact phrases", and wildcards (* ?), e.g. ("AI" OR "artificial intelligence") NOT crypto. Unquoted multi-word input is auto-joined with AND.`,
     );
 }
 
@@ -58,10 +43,5 @@ export const sortByEnum = z
     SortBy.TotalCount,
   ])
   .describe(
-    `Sort order for search results. Options:
-      • ${SortBy.Relevance}: Sort by search relevance score (most relevant first)
-      • ${SortBy.CreatedAt}: Sort by creation date (newest first)
-      • ${SortBy.UpdatedAt}: Sort by last update date (most recently updated first)
-      • ${SortBy.Count}: Sort by count/activity (most active first)
-      • ${SortBy.TotalCount}: Sort by total count (highest total first)`
+    `Sort order: ${SortBy.Relevance} (best match), ${SortBy.CreatedAt}/${SortBy.UpdatedAt} (newest first), ${SortBy.Count}/${SortBy.TotalCount} (highest activity first).`,
   );

@@ -1,0 +1,20 @@
+{
+  "name": "perigon-development",
+  "interface": {
+    "displayName": "Perigon Development"
+  },
+  "plugins": [
+    {
+      "name": "perigon",
+      "source": {
+        "source": "local",
+        "path": "./perigon"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Data & Analytics"
+    }
+  ]
+}

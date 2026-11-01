@@ -80,7 +80,7 @@ const baseCreateInput = {
 
 const topicSchedule = {
   intervals: [{ hour: 9, minute: 0, days: ["MONDAY"] }],
-  timezoneId: "America/Chicago"
+  timezoneId: "UTC"
 };
 
 afterEach(() => {
@@ -175,7 +175,7 @@ describe("createMonitor", () => {
         intervals: [
           { hour: 9, minute: 0, days: ["MONDAY"], scheduleType: "WEEKLY" }
         ],
-        timezoneId: "America/Chicago"
+        timezoneId: "UTC"
       },
       newsletterConfig: {
         citations: true,

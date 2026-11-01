@@ -36,7 +36,7 @@ describe("summarizeNews", () => {
       maxTokens: 1024,
       temperature: 0.3,
       topP: 0.9,
-      model: "gpt-4o-mini",
+      model: "gpt-6-luna",
       method: "ARTICLES",
       summarizeFields: "SUMMARY",
     });
@@ -64,7 +64,7 @@ describe("summarizeNews", () => {
       maxTokens: 1024,
       temperature: 0.3,
       topP: 0.9,
-      model: "gpt-4o-mini",
+      model: "gpt-6-luna",
       method: "ARTICLES",
       summarizeFields: "SUMMARY",
     });
@@ -108,6 +108,12 @@ describe("summarizeNews", () => {
     expect(() =>
       summarizeArgs.parse({ model: "claude-7-omega" as any })
     ).toThrow();
+  });
+
+  test("rejects deprecated OpenAI models", () => {
+    for (const model of ["gpt-4o", "gpt-4o-mini", "gpt-4.1", "gpt-4.1-mini"]) {
+      expect(() => summarizeArgs.parse({ model: model as any })).toThrow();
+    }
   });
 
   test("rejects out-of-range temperature/topP", () => {

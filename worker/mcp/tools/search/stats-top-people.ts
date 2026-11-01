@@ -58,6 +58,18 @@ export const topPeopleArgs = statsFilterArgs.extend({
     .optional()
     .default(10)
     .describe("Number of top people to return (1–100). Default: 10."),
+  minBaseline: z
+    .number()
+    .optional()
+    .describe("Minimum baseline mentions required to be eligible for ranking."),
+  minCurrent: z
+    .number()
+    .optional()
+    .describe("Minimum current-window mentions required to be eligible for ranking."),
+  smoothingAlpha: z
+    .number()
+    .optional()
+    .describe("Smoothing factor applied to the baseline rate to reduce noise from small counts."),
 });
 
 export function getTopPeople(
@@ -80,12 +92,22 @@ export function getTopPeople(
         personName: args.personName,
         companyDomain: args.companyDomain,
         companySymbol: args.companySymbol,
+        journalistId: args.journalistId,
+        personWikidataId: args.personWikidataId,
+        companyId: args.companyId,
+        taxonomy: args.taxonomy,
+        excludeSource: args.excludeSource,
+        excludeCategory: args.excludeCategory,
+        excludeTopic: args.excludeTopic,
         currentFrom: args.currentFrom,
         currentTo: args.currentTo,
         baselineFrom: args.baselineFrom,
         baselineTo: args.baselineTo,
         normalizeByDay: args.normalizeByDay,
         size: args.size,
+        minBaseline: args.minBaseline,
+        minCurrent: args.minCurrent,
+        smoothingAlpha: args.smoothingAlpha,
       });
 
       if (!result.data || result.data.length === 0) return noResults;
@@ -121,8 +143,14 @@ export function getTopPeople(
 
 export const topPeopleTool = {
   name: "get_top_people",
+  title: "Top people",
   description:
     "Get the people whose news coverage is spiking — mentioned significantly more in a recent window than a prior baseline period. Use this when the user asks 'who is trending?', 'who suddenly got a lot of coverage?', or 'which people are in the news more than usual?' — NOT for simple most-mentioned frequency (use get_top_entities for that). Returns a ranked list with current mention count, baseline count, and a spike score (higher = bigger relative increase). The comparison window defaults to last 3 days vs. last 30 days; override with currentFrom/To and baselineFrom/To. Supports all standard article filters to scope the analysis to a specific topic, source, or date range.",
   parameters: topPeopleArgs,
+  annotations: {
+    readOnlyHint: true,
+    openWorldHint: true,
+    destructiveHint: false,
+  },
   createHandler: (perigon: Perigon) => getTopPeople(perigon),
 } satisfies ToolDefinition<typeof topPeopleArgs>;

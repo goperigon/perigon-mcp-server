@@ -1,5 +1,26 @@
 import worker from "./worker/index.ts";
 
+/** OAuth metadata must advertise a URL clients can reach (not a fixed localhost default). */
+function resolveMcpPublicUrl(request) {
+  const configured = process.env.MCP_PUBLIC_URL?.replace(/\/$/, "");
+  if (configured) {
+    return configured;
+  }
+
+  const requestUrl = new URL(request.url);
+  const forwardedHost = request.headers.get("x-forwarded-host");
+  const forwardedProto = request.headers.get("x-forwarded-proto");
+  if (forwardedHost) {
+    const host = forwardedHost.split(",")[0]?.trim();
+    const proto =
+      forwardedProto?.split(",")[0]?.trim() ||
+      requestUrl.protocol.replace(":", "");
+    return `${proto}://${host}`;
+  }
+
+  return `${requestUrl.protocol}//${requestUrl.host}`;
+}
+
 const server = Bun.serve({
   port: 3000,
   fetch: async (request) => {
@@ -35,6 +56,11 @@ const server = Bun.serve({
     // Create a mock environment for the worker
     const env = {
       PERIGON_API_KEY: apiKey,
+      MCP_PUBLIC_URL: resolveMcpPublicUrl(request),
+      PERIGON_API_URL:
+        process.env.PERIGON_API_URL || "https://api.perigon.io",
+      PERIGON_APP_URL:
+        process.env.PERIGON_APP_URL || "https://www.perigon.io",
       ANTHROPIC_API_KEY:
         process.env.ANTHROPIC_API_KEY || "mock-key-for-mcp-only",
       AUTH_KV: {

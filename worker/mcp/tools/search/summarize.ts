@@ -43,26 +43,22 @@ export const summarizeArgs = createBaseSearchArgs().extend({
     .max(2)
     .optional()
     .describe(
-      "LLM sampling temperature: 0.0 = deterministic, up to 2.0 = very creative.",
+      "LLM sampling temperature: 0.0 = deterministic, up to 2.0 = very creative. Ignored by gpt-6-luna and gpt-6.1-sol.",
     ),
   topP: z
     .number()
     .min(0)
     .max(1)
     .optional()
-    .describe("Nucleus sampling (0.0-1.0)."),
+    .describe(
+      "Nucleus sampling (0.0-1.0). Ignored by gpt-6-luna and gpt-6.1-sol.",
+    ),
   model: z
-    .enum([
-      "gpt-4o",
-      "gpt-4o-mini",
-      "gpt-4.1",
-      "gpt-4.1-mini",
-      "gpt-4.1-nano",
-      "llama-3.3-70b-versatile",
-      "deepseek-r1-distill-llama-70b",
-    ])
+    .enum(["gpt-6-luna", "gpt-6.1-sol", "openai/gpt-oss-120b"])
     .optional()
-    .describe("LLM model to use for summary generation."),
+    .describe(
+      "LLM model to use for summary generation. Defaults to gpt-6-luna (fast, cheap). Use gpt-6.1-sol for higher-quality synthesis of complex topics.",
+    ),
   method: z
     .enum(["ARTICLES", "CLUSTERS"])
     .optional()
@@ -105,6 +101,12 @@ export const summarizeArgs = createBaseSearchArgs().extend({
     .array(z.string())
     .optional()
     .describe("Filter for articles mentioning companies by ticker symbol."),
+  showReprints: z
+    .boolean()
+    .default(false)
+    .describe(
+      "Include wire-service reprint copies among the articles fed into the summary. Defaults to false (deduplicated).",
+    ),
   sortBy: z
     .enum([
       AllEndpointSortBy.Date,
@@ -148,6 +150,7 @@ export function summarizeNews(
     personName,
     companyDomain,
     companySymbol,
+    showReprints,
     categories,
     topics,
   }: z.infer<typeof summarizeArgs>): Promise<CallToolResult> => {
@@ -183,7 +186,7 @@ export function summarizeNews(
         companySymbol,
         category: categories,
         topic: topics,
-        showReprints: false,
+        showReprints,
       });
 
       if (!result.summary && result.numResults === 0) return noResults;
@@ -216,8 +219,14 @@ Pub Date: ${article.pubDate} (utc)
 
 export const summarizeTool = {
   name: "summarize_news",
+  title: "Search Summarizer",
   description:
     "Generate an AI-powered summary of news coverage matching your filters. Use this when the user wants a synthesized overview or briefing on a topic rather than a list of individual articles. Combines article search with LLM summarization to produce concise, coherent summaries with supporting article citations. Accepts all standard article filters (keywords, categories, topics, sources, dates, locations) plus summarization controls (prompt, model, temperature).",
   parameters: summarizeArgs,
+  annotations: {
+    readOnlyHint: true,
+    openWorldHint: true,
+    destructiveHint: false,
+  },
   createHandler: (perigon: Perigon) => summarizeNews(perigon),
 } satisfies ToolDefinition<typeof summarizeArgs>;

@@ -66,7 +66,7 @@ export const getMonitorNewslettersTool = {
     readOnlyHint: true,
     destructiveHint: false,
     idempotentHint: true,
-    openWorldHint: true
+    openWorldHint: false
   },
   createHandler: (perigon: Perigon) => getMonitorNewsletters(perigon)
 } satisfies ToolDefinition<typeof getMonitorNewslettersArgs>;

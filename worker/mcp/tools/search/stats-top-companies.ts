@@ -58,6 +58,18 @@ export const topCompaniesArgs = statsFilterArgs.extend({
     .optional()
     .default(10)
     .describe("Number of top companies to return (1–100). Default: 10."),
+  minBaseline: z
+    .number()
+    .optional()
+    .describe("Minimum baseline mentions required to be eligible for ranking."),
+  minCurrent: z
+    .number()
+    .optional()
+    .describe("Minimum current-window mentions required to be eligible for ranking."),
+  smoothingAlpha: z
+    .number()
+    .optional()
+    .describe("Smoothing factor applied to the baseline rate to reduce noise from small counts."),
 });
 
 export function getTopCompanies(
@@ -80,25 +92,40 @@ export function getTopCompanies(
         personName: args.personName,
         companyDomain: args.companyDomain,
         companySymbol: args.companySymbol,
+        journalistId: args.journalistId,
+        personWikidataId: args.personWikidataId,
+        companyId: args.companyId,
+        taxonomy: args.taxonomy,
+        excludeSource: args.excludeSource,
+        excludeCategory: args.excludeCategory,
+        excludeTopic: args.excludeTopic,
         currentFrom: args.currentFrom,
         currentTo: args.currentTo,
         baselineFrom: args.baselineFrom,
         baselineTo: args.baselineTo,
         normalizeByDay: args.normalizeByDay,
         size: args.size,
+        minBaseline: args.minBaseline,
+        minCurrent: args.minCurrent,
+        smoothingAlpha: args.smoothingAlpha,
       });
 
       if (!result.data || result.data.length === 0) return noResults;
 
       const rows = result.data.map((c, i) => {
         const name = escapeAttr(c.company?.name ?? c.wikidataId);
-        const domain = escapeAttr((c.company?.domains ?? [])[0] ?? "");
-        const ticker = escapeAttr((c.company?.symbols ?? [])[0]?.symbol ?? "");
+        const domains = escapeAttr((c.company?.domains ?? []).join(", "));
+        const tickers = escapeAttr(
+          (c.company?.symbols ?? [])
+            .map((s) => s.symbol)
+            .filter(Boolean)
+            .join(", "),
+        );
         const industry = escapeAttr(c.company?.industry ?? "");
         const sector = escapeAttr(c.company?.sector ?? "");
         return (
           `<company rank="${i + 1}" id="${c.wikidataId}" name="${name}" ` +
-          `domain="${domain}" ticker="${ticker}" industry="${industry}" sector="${sector}" ` +
+          `domains="${domains}" tickers="${tickers}" industry="${industry}" sector="${sector}" ` +
           `current_mentions="${c.currentMentions}" baseline_mentions="${c.baselineMentions}" ` +
           `current_rate_per_day="${c.currentRatePerDay.toFixed(2)}" baseline_rate_per_day="${c.baselineRatePerDay.toFixed(2)}" ` +
           `spike_score="${c.spikeScore.toFixed(2)}" />`
@@ -122,8 +149,14 @@ export function getTopCompanies(
 
 export const topCompaniesTool = {
   name: "get_top_companies",
+  title: "Top companies",
   description:
     "Get the companies whose news coverage is spiking — mentioned significantly more in a recent window than a prior baseline period. Use this when the user asks 'which companies are trending?', 'which companies are getting more coverage than usual?', or 'what companies are suddenly in the news?' — NOT for simple most-mentioned frequency (use get_top_entities for that). Returns a ranked list with current mention count, baseline count, and a spike score (higher = bigger relative increase). The comparison window defaults to last 3 days vs. last 30 days; override with currentFrom/To and baselineFrom/To. Supports all standard article filters to scope the analysis to a specific topic, source, or date range.",
   parameters: topCompaniesArgs,
+  annotations: {
+    readOnlyHint: true,
+    openWorldHint: true,
+    destructiveHint: false,
+  },
   createHandler: (perigon: Perigon) => getTopCompanies(perigon),
 } satisfies ToolDefinition<typeof topCompaniesArgs>;

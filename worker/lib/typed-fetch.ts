@@ -11,7 +11,19 @@ export async function typedFetch<T>(
       `Failed to fetch: status: ${response.status} response: ${responseBody}`,
     );
 
-    throw new HttpError(response.status, responseBody);
+    const retryAfterHeader = response.headers.get(
+      "X-Rate-Limit-Retry-After-Millis",
+    );
+    const retryAfterMillis = retryAfterHeader
+      ? Number(retryAfterHeader)
+      : undefined;
+
+    throw new HttpError(
+      response.status,
+      responseBody,
+      undefined,
+      Number.isFinite(retryAfterMillis) ? retryAfterMillis : undefined,
+    );
   }
 
   const typedResp = (await response.json()) as T;

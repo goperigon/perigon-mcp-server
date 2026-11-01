@@ -8,6 +8,12 @@ export const listFilesTool = {
     "List files in a directory of the sandbox workspace. " +
     `Default directory is the workspace root (${WORKSPACE_DIR}).`,
   parameters: listFilesSchema,
+  annotations: {
+    title: "List Insights files",
+    readOnlyHint: true,
+    openWorldHint: false,
+    destructiveHint: false,
+  },
   createHandler: (_insightsApi, pokeyClient) => async (args) =>
     pokeyClient.executeTool("list", args),
 } as const satisfies SignalToolDefinition<typeof listFilesSchema>;
