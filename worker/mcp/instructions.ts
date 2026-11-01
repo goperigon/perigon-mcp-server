@@ -13,6 +13,11 @@ import { wikipediaTool } from "./tools/search/wikipedia";
 import { wikipediaVectorTool } from "./tools/search/wikipedia-vector";
 import { newsVectorTool } from "./tools/search/news-vector";
 import { summarizeTool } from "./tools/search/summarize";
+import { topEntitiesTool } from "./tools/search/stats-top-entities";
+import { topPeopleTool } from "./tools/search/stats-top-people";
+import { topCompaniesTool } from "./tools/search/stats-top-companies";
+import { articleCountsTool } from "./tools/search/stats-article-counts";
+import { avgSentimentTool } from "./tools/search/stats-avg-sentiment";
 import { createWorkspaceTool } from "./tools/signals/create-workspace";
 import { searchSignalsTool } from "./tools/signals/search-signals";
 import { readSignalTool } from "./tools/signals/read-signal";
@@ -59,6 +64,12 @@ Tools:
 - \`${wikipediaTool.name}\` / \`${wikipediaVectorTool.name}\` — search Wikipedia for background context.
 - \`${newsVectorTool.name}\` — semantic/vector search over recent news articles.
 - \`${summarizeTool.name}\` — get an AI-generated summary of news on a topic.
+
+Stats tools return aggregated counts over every matching article instead of individual articles. They accept the same core filters as \`${newsArticlesTool.name}\`:
+- \`${topEntitiesTool.name}\` — "who/what is covered most?" Ranked topics, people, companies, cities, journalists, or sources with mention counts and totals. Pass clusterId to break down a single story.
+- \`${topPeopleTool.name}\` / \`${topCompaniesTool.name}\` — "who/what is trending or spiking?" Recent coverage compared to a baseline window.
+- \`${articleCountsTool.name}\` / \`${avgSentimentTool.name}\` — coverage volume or sentiment over time.
+- Prefer these over paging through articles to count or rank things yourself.
 
 Tips:
 - Default country filter is US. Set countries to [] or other codes for international coverage.

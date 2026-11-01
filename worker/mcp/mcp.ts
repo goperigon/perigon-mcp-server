@@ -1,27 +1,13 @@
 import { McpAgent } from "agents/mcp";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { Scopes } from "../types/types";
-import {
-  newsArticlesTool,
-  journalistsTool,
-  newsStoriesTool,
-  storyHistoryTool,
-  summarizeTool,
-  TOOL_DEFINITIONS,
-  type ToolName,
-  sourcesTool,
-  peopleTool,
-  personNewsTool,
-  companiesTool,
-  companyNewsTool,
-  topicsTool,
-  wikipediaTool,
-  wikipediaVectorTool,
-  locationNewsTool,
-  newsVectorTool,
-} from "./tools";
+import { TOOL_DEFINITIONS, type ToolName } from "./tools";
 import { Perigon } from "../lib/perigon";
-import { resolveActiveTools, SIGNAL_TOOL_NAMES } from "./tools/selection";
+import {
+  getAllowedToolsForScopes,
+  resolveActiveTools,
+  SIGNAL_TOOL_NAMES,
+} from "./tools/selection";
 import { InsightsApiClient } from "../lib/insights-api-client";
 import { PokeyInsightsClient } from "../lib/pokey-insights-client";
 import {
@@ -46,53 +32,6 @@ export type Props = {
   requestedTools: string[] | null;
   organizationId: number;
 };
-
-// Map scopes to tool names
-const SCOPE_TO_TOOLS: Partial<Record<Scopes, ToolName[]>> = {
-  [Scopes.CLUSTERS]: [newsStoriesTool.name, storyHistoryTool.name],
-  [Scopes.SEARCH_SUMMARY]: [summarizeTool.name],
-  [Scopes.JOURNALISTS]: [journalistsTool.name],
-  [Scopes.SOURCES]: [sourcesTool.name],
-  [Scopes.PEOPLE]: [peopleTool.name, personNewsTool.name],
-  [Scopes.COMPANIES]: [companiesTool.name, companyNewsTool.name],
-  [Scopes.TOPICS]: [topicsTool.name],
-  [Scopes.LOCATIONS]: [locationNewsTool.name],
-  [Scopes.WIKIPEDIA]: [wikipediaTool.name],
-  [Scopes.VECTOR_SEARCH_NEWS]: [newsVectorTool.name],
-  [Scopes.VECTOR_SEARCH_WIKIPEDIA]: [wikipediaVectorTool.name],
-};
-
-const MONITOR_TOOL_NAMES = [
-  "list_monitors",
-  "get_monitor",
-  "get_monitor_events",
-  "get_monitor_newsletters",
-  "get_monitor_summaries",
-  "create_monitor",
-  "update_monitor",
-  "set_monitor_status",
-] as const satisfies readonly ToolName[];
-
-/**
- * Returns a deduplicated list of tool names permitted by the given API key
- * scopes. `search_news_articles` and monitor tools are always included
- * regardless of scope.
- */
-function getAllowedToolsForScopes(scopes: Scopes[]): ToolName[] {
-  const seen = new Set<ToolName>([
-    newsArticlesTool.name,
-    ...MONITOR_TOOL_NAMES,
-  ]);
-  for (const scope of scopes) {
-    if (!scope) continue;
-    const toolNames = SCOPE_TO_TOOLS[scope];
-    if (!toolNames) continue;
-    for (const name of toolNames) {
-      seen.add(name);
-    }
-  }
-  return [...seen];
-}
 
 export class PerigonMCP extends McpAgent<Env, unknown, Props> {
   // Type assertion needed: agents bundles its own @modelcontextprotocol/sdk copy

@@ -1,10 +1,13 @@
 import { describe, expect, test } from "bun:test";
 import {
+  getAllowedToolsForScopes,
   parseRequestedTools,
   resolveActiveTools,
   resolveToolParam,
+  STATS_TOOL_NAMES,
 } from "../../../worker/mcp/tools/selection";
 import type { ToolName } from "../../../worker/mcp/tools";
+import { Scopes } from "../../../worker/types/types";
 
 // A stable subset of known tool names used throughout these tests
 const KNOWN: ToolName[] = [
@@ -230,5 +233,33 @@ describe("resolveActiveTools", () => {
   test("single requested tool matching allowedTools returns just that tool", () => {
     const result = resolveActiveTools(ALL_ALLOWED, ["search_topics"]);
     expect(result).toEqual(["search_topics"]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// getAllowedToolsForScopes
+// ---------------------------------------------------------------------------
+
+describe("getAllowedToolsForScopes", () => {
+  test("always includes article search and every stats tool, even with no scopes", () => {
+    const allowed = getAllowedToolsForScopes([]);
+    expect(allowed).toContain("search_news_articles");
+    for (const name of STATS_TOOL_NAMES) {
+      expect(allowed).toContain(name);
+    }
+    expect(allowed).not.toContain("search_news_stories");
+  });
+
+  test("adds scope-mapped tools without dropping stats tools", () => {
+    const allowed = getAllowedToolsForScopes([Scopes.CLUSTERS]);
+    expect(allowed).toContain("search_news_stories");
+    expect(allowed).toContain("get_top_entities");
+  });
+
+  test("?tools= can narrow a session to stats tools", () => {
+    const allowed = getAllowedToolsForScopes([]);
+    expect(resolveActiveTools(allowed, ["get_top_entities"])).toEqual([
+      "get_top_entities",
+    ]);
   });
 });

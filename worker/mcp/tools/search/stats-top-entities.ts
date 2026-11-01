@@ -24,6 +24,35 @@ export const topEntitiesArgs = statsFilterArgs.extend({
     .describe(
       "Which entity types to return. Options: topics, people, companies, cities, journalists, sources. Defaults to topics, people, and companies.",
     ),
+  size: z
+    .number()
+    .int()
+    .min(1)
+    .max(100)
+    .optional()
+    .default(10)
+    .describe(
+      "Number of top entries to return per entity type (1–100). Default: 10.",
+    ),
+  showReprints: z
+    .boolean()
+    .optional()
+    .default(false)
+    .describe(
+      "Count wire-service reprints (AP, Reuters) that appear on multiple sites. Default false, matching search_news_articles, so counts are not inflated by syndicated copies.",
+    ),
+  journalistId: z
+    .array(z.string())
+    .optional()
+    .describe(
+      "Only count articles written by these journalist IDs (from search_journalists).",
+    ),
+  clusterId: z
+    .array(z.string())
+    .optional()
+    .describe(
+      "Only count articles in these stories (story IDs from search_news_stories). Use this to break down who and what is covered within a story.",
+    ),
 });
 
 const TOTAL_KEY: Record<EntityType, keyof TopEntitiesDto> = {
@@ -58,6 +87,10 @@ export function getTopEntities(
         companyDomain: args.companyDomain,
         companySymbol: args.companySymbol,
         entity: requested,
+        size: args.size,
+        showReprints: args.showReprints,
+        journalistId: args.journalistId,
+        clusterId: args.clusterId,
       });
 
       const hasResults = requested.some((t) => {
