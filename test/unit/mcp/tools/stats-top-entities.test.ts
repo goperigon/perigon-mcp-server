@@ -1,4 +1,5 @@
 import { describe, expect, spyOn, test } from "bun:test";
+import type { TopEntitiesParams } from "../../../../worker/lib/perigon";
 import { HttpError } from "../../../../worker/types/types";
 import {
   getTopEntities,
@@ -20,6 +21,40 @@ describe("getTopEntities", () => {
       "people",
       "companies",
     ]);
+  });
+
+  test("defaults size to 10 and excludes reprints", async () => {
+    const perigon = createMockPerigon({
+      getTopEntities: async () => topEntitiesFixture,
+    });
+    await getTopEntities(perigon)(topEntitiesArgs.parse({}));
+    const call = firstCallArgs<TopEntitiesParams>(perigon.getTopEntities);
+    expect(call.size).toBe(10);
+    expect(call.showReprints).toBe(false);
+  });
+
+  test("forwards size, showReprints, journalistId, and clusterId", async () => {
+    const perigon = createMockPerigon({
+      getTopEntities: async () => topEntitiesFixture,
+    });
+    await getTopEntities(perigon)(
+      topEntitiesArgs.parse({
+        size: 50,
+        showReprints: true,
+        journalistId: ["j1"],
+        clusterId: ["c1", "c2"],
+      })
+    );
+    const call = firstCallArgs<TopEntitiesParams>(perigon.getTopEntities);
+    expect(call.size).toBe(50);
+    expect(call.showReprints).toBe(true);
+    expect(call.journalistId).toEqual(["j1"]);
+    expect(call.clusterId).toEqual(["c1", "c2"]);
+  });
+
+  test("rejects size outside 1–100", () => {
+    expect(() => topEntitiesArgs.parse({ size: 0 })).toThrow();
+    expect(() => topEntitiesArgs.parse({ size: 101 })).toThrow();
   });
 
   test("renders requested entity buckets with totals", async () => {

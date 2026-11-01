@@ -1,11 +1,15 @@
 import { afterEach, describe, expect, mock, test } from "bun:test";
 import type { Props } from "../../../worker/mcp/mcp";
-import { HttpError, SocialSource } from "../../../worker/types/types";
+import {
+  type AuthIntrospectionResponse,
+  HttpError,
+  SocialSource,
+} from "../../../worker/types/types";
 import { restoreFetch } from "../../helpers/mock-fetch";
 
 let introspectionError = new HttpError(401, "invalid api key");
 let introspectionSucceeds = false;
-let introspectionSuccess: Record<string, unknown> = {
+let introspectionSuccess: AuthIntrospectionResponse = {
   scopes: [],
   organizationId: 1,
 };
@@ -31,9 +35,11 @@ await mock.module("../../../worker/mcp/mcp", () => ({
     }
   },
 }));
+const realPerigonModule = await import("../../../worker/lib/perigon");
 await mock.module("../../../worker/lib/perigon", () => ({
-  Perigon: class {
-    introspection() {
+  ...realPerigonModule,
+  Perigon: class extends realPerigonModule.Perigon {
+    override introspection() {
       if (introspectionSucceeds) {
         return Promise.resolve(introspectionSuccess);
       }
@@ -179,7 +185,7 @@ describe("handleMCP social sources", () => {
     introspectionSuccess = {
       scopes: [],
       organizationId: 1,
-      socialSources: ["X", "LINKEDIN"],
+      socialSources: [SocialSource.X, SocialSource.LINKEDIN],
     };
 
     await handleMCP(mcpRequest("Bearer test-key-social"), env, ctx);

@@ -155,6 +155,9 @@ export interface StatsTimeSeriesParams extends StatsArticleFilters {
 export interface TopEntitiesParams extends StatsArticleFilters {
   entity?: string[];
   expandEntities?: boolean;
+  size?: number;
+  showReprints?: boolean;
+  clusterId?: string[];
 }
 
 export interface TopSpikeParams extends StatsArticleFilters {
@@ -749,6 +752,11 @@ export class Perigon extends V1Api {
     if (params.entity) for (const e of params.entity) sp.append("entity", e);
     if (params.expandEntities !== undefined)
       sp.set("expandEntities", String(params.expandEntities));
+    if (params.size !== undefined) sp.set("size", String(params.size));
+    if (params.showReprints !== undefined)
+      sp.set("showReprints", String(params.showReprints));
+    if (params.clusterId)
+      for (const c of params.clusterId) sp.append("clusterId", c);
     return await fetchWithRetry<TopEntitiesDto>(
       `${this.baseUrl}/stats/topEntities?${sp.toString()}`,
       { headers: this.authHeaders() },

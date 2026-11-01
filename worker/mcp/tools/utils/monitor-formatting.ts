@@ -16,6 +16,7 @@ const MAX_EVENT_DATA_CHARS = 6_000;
 const MAX_NEWSLETTER_CONTENT_CHARS = 8_000;
 const MAX_SUMMARY_CHARS = 5_000;
 const MAX_ARTICLES_PER_ITEM = 5;
+const MAX_STORIES_PER_ITEM = 5;
 
 function truncate(value: string, maxChars: number): string {
   if (value.length <= maxChars) return value;
@@ -209,6 +210,15 @@ function formatNewsletter(newsletter: MonitorNewsletterDto): string {
     )
     .join("\n");
   const omittedArticles = articles.length - MAX_ARTICLES_PER_ITEM;
+  const stories = Object.entries(newsletter.stories ?? {});
+  const formattedStories = stories
+    .slice(0, MAX_STORIES_PER_ITEM)
+    .map(
+      ([storyId, story]) =>
+        `<story id="${escapeAttribute(storyId)}" url="${escapeAttribute(story.url)}">${text(story.title)}</story>`
+    )
+    .join("\n");
+  const omittedStories = stories.length - MAX_STORIES_PER_ITEM;
 
   return `<newsletter uuid="${escapeAttribute(newsletter.uuid)}">
 Title: ${text(newsletter.title)}
@@ -221,7 +231,10 @@ ${truncate(newsletter.content, MAX_NEWSLETTER_CONTENT_CHARS)}
 ${formattedArticles}
 ${omittedArticles > 0 ? `<truncated>${omittedArticles} additional articles omitted.</truncated>` : ""}
 </articles>
-Story Count: ${Object.keys(newsletter.stories ?? {}).length}
+<stories>
+${formattedStories}
+${omittedStories > 0 ? `<truncated>${omittedStories} additional stories omitted.</truncated>` : ""}
+</stories>
 </newsletter>`;
 }
 
