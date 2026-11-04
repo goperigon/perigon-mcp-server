@@ -88,7 +88,7 @@ Tools:
 
 ## Social Research
 
-Social tools require organization access to the corresponding source: X, REDDIT or LINKEDIN. Check \`${apiAccessTool.name}\` for Social Sources and the separate social request quota; unavailable tools do not imply no matching posts.
+Social tools require organization access to the corresponding source: X, REDDIT or LINKEDIN. Check \`${apiAccessTool.name}\` for Social Sources and which quota social requests use: a separate social request quota if the plan has one, otherwise the news request quota; unavailable tools do not imply no matching posts.
 
 - \`${xPostsTool.name}\` — public X posts. Use X query operators for accounts, language and dates; select LATEST for recent posts or TOP for higher-engagement results.
 - \`${redditPostsTool.name}\` — Reddit posts, optionally scoped to a subreddit without the r/ prefix. The time filter applies only with sort=TOP. Do not use X operators.

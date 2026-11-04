@@ -53,7 +53,7 @@ Use this skill for news and social research through the Perigon MCP server. The 
 
 ### Social research (X, Reddit and LinkedIn)
 
-1. Check `get_api_access` for Social Sources and the separate social request quota. Tools are available only for entitled sources; do not interpret an unavailable tool as no matching posts.
+1. Check `get_api_access` for Social Sources and which quota social requests use: a separate social request quota if the plan has one, otherwise the news request quota. Tools are available only for entitled sources; do not interpret an unavailable tool as no matching posts.
 2. Use `search_x_posts` for X. Its `query` supports X operators such as `lang:en`, `from:handle`, `since:YYYY-MM-DD` and `until:YYYY-MM-DD`. Use `searchType=LATEST` for recent posts or `TOP` for higher-engagement results; do not add “viral” to a query to request ranking.
 3. Use `search_reddit_posts` for Reddit. Pass subreddit names without `r/`. Use `sort=TOP` with `time=WEEK` (or another supported window) for time-filtered top posts; `time` is ignored for other sorts. Do not reuse X query operators.
 4. Use `search_linkedin_posts` for LinkedIn keyword searches. Use explicit uppercase AND/OR/NOT, `datePosted` for the supported date window and `sortBy=DATE_POSTED` for recent posts. Set `authorTitle` only when requested. LinkedIn calls can take tens of seconds; avoid duplicate requests while waiting.
