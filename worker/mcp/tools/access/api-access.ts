@@ -37,7 +37,9 @@ export function getApiAccess(
         output += `Subscription Cancels At: ${limits.subscriptionCancelAt} (utc)\n`;
       const socialSources = introspection.socialSources ?? [];
       output += `Social Sources: ${socialSources.join(", ") || "none"}\n`;
-      if (limits.social) {
+      if (limits.social?.sharedQuota) {
+        output += `Social Requests: counted against the news request quota above\n`;
+      } else if (limits.social) {
         output += `Social Requests Used: ${limits.social.requestsUsed}${limits.social.requestLimit != null ? ` / ${limits.social.requestLimit}` : " (no limit)"} (separate from the news quota)\n`;
       }
 

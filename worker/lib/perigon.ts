@@ -1059,9 +1059,10 @@ export class Perigon extends V1Api {
     );
   }
 
-  // ── Social (/v1/social) — counts against the separate social quota ─────
+  // ── Social (/v1/social) — counts against the social quota, or the regular
+  // quota if the plan has none ─────
   // Not retried: the API already retries the upstream provider, and each
-  // attempt counts against the social quota.
+  // attempt counts against the quota.
 
   private async socialFetch<T>(
     path: string,
