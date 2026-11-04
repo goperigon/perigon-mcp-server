@@ -18,4 +18,4 @@ MCP prompts (when the host supports them) align with these workflows: `entity_de
 - Recent posts by a company or person on LinkedIn → use a supplied or verified LinkedIn URL with `get_linkedin_company_posts` or `get_linkedin_person_activity`.
 - Compare news and social discussion → search each source independently, cite returned evidence, and distinguish sample themes from measured news statistics. Do not claim comprehensive social coverage or a social sentiment score that the tools did not return.
 
-Social access depends on the organization's source entitlements. Social searches consume a separate quota; these tools cannot post or message on the user's behalf.
+Social access depends on the organization's source entitlements. Social searches consume a separate social quota if the plan has one, otherwise the news request quota; these tools cannot post or message on the user's behalf.

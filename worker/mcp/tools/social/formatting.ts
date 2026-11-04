@@ -7,7 +7,7 @@ import type {
 const MAX_TEXT_CHARS = 1500;
 
 export const SOCIAL_QUOTA_NOTE =
-  "Each call counts against the account's social request quota, separate from the news quota.";
+  "Each call counts against the account's social request quota if its plan has one, otherwise against the regular request quota.";
 
 export function truncateText(text: string | null | undefined): string {
   const trimmed = text?.trim();

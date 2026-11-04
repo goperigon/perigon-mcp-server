@@ -116,12 +116,17 @@ export interface ApiLimitsDto {
   resetAt?: string | null;
   subscriptionCancelAt?: string | null;
   keyStatuses?: ApiKeyStatus[] | null;
-  /** Absent when the account has no social access. */
+  /** Absent when the account has no social sources. */
   social?: SocialLimits | null;
 }
 
-/** Usage of the `/v1/social/*` endpoints, tracked separately from the news quota. */
+/** Usage of the `/v1/social/*` endpoints. */
 export interface SocialLimits {
+  /**
+   * Social requests count against the news quota. The other fields then
+   * repeat the news quota's values.
+   */
+  sharedQuota: boolean;
   requestsUsed: number;
   /** `null` means unlimited. */
   requestLimit?: number | null;
