@@ -75,6 +75,10 @@
       "preview_id": "0da3be4bc5d84a00bcc3ded53fa882db",
     },
   ],
+  // Production deploy: after `CLOUDFLARE_ENV=production vite build`, upload
+  // `dist/perigon_mcp_server/wrangler.json` (see package.json `deploy` script).
+  // Do not rely on `wrangler deploy --env production` alone — it can upload
+  // top-level dev assets/run_worker_first instead of this block.
   "env": {
     "production": {
       "name": "perigon-mcp-server",
