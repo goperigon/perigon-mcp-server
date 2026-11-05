@@ -415,6 +415,7 @@ export interface JournalistFull {
   avgMonthlyPosts?: number | null;
   twitterHandle?: string | null;
   linkedinUrl?: string | null;
+  email?: string | null;
   imageUrl?: string | null;
   updatedAt?: string | null;
   locations?: JournalistLocation[] | null;
