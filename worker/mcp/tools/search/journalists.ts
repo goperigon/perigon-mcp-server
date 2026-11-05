@@ -218,6 +218,7 @@ Top Topics: ${journalist.topTopics?.map((t) => t.name).join(", ") || "N/A"}
 Top Categories: ${journalist.topCategories?.map((c) => c.name).join(", ") || "N/A"}
 Twitter: ${journalist.twitterHandle ?? "N/A"}
 LinkedIn: ${journalist.linkedinUrl ?? "N/A"}
+Email: ${journalist.email ?? "N/A"}
 </journalist>`;
       });
 
@@ -248,7 +249,7 @@ export const journalistsTool = {
   name: "search_journalists",
   title: "Journalists",
   description:
-    "Search 230k+ journalist and reporter profiles in the Perigon database. Use this to find who covers specific topics, publications, or regions — or who is personally based in a place. Two distinct location concepts: `countries` filters reporting focus (what they cover, derived from their published articles), while `locationCountry`/`locationState`/`locationCounty`/`locationCity`/`locationArea` filter their own profile location (where they are based) — these levels AND together, so pass only the narrowest level the user named. Also filter by name, Twitter handle, publication, content category, topic, or posting activity. Returns journalist profiles with their top sources, profile locations, reporting-focus countries, and monthly posting frequency. A location query returning nothing is usually a casing mismatch (exact-term matching), not an absence of journalists.",
+    "Search 230k+ journalist and reporter profiles in the Perigon database. Use this to find who covers specific topics, publications, or regions — or who is personally based in a place. Two distinct location concepts: `countries` filters reporting focus (what they cover, derived from their published articles), while `locationCountry`/`locationState`/`locationCounty`/`locationCity`/`locationArea` filter their own profile location (where they are based) — these levels AND together, so pass only the narrowest level the user named. Also filter by name, Twitter handle, publication, content category, topic, or posting activity. Returns journalist profiles with their top sources, profile locations, reporting-focus countries, monthly posting frequency, and email address when the key has journalist email access. A location query returning nothing is usually a casing mismatch (exact-term matching), not an absence of journalists.",
   parameters: journalistsArgs,
   annotations: {
     readOnlyHint: true,

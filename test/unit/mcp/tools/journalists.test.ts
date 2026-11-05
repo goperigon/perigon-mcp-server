@@ -72,6 +72,27 @@ describe("searchJournalists", () => {
     expect(call.locationCity).toEqual(["New York"]);
   });
 
+  test("renders email when returned and N/A when missing or null", async () => {
+    const perigon = createMockPerigon({
+      searchJournalistsFull: async () => ({
+        status: 200,
+        numResults: 3,
+        results: [
+          { id: "j1", name: "With Email", email: "jane@example.com" },
+          { id: "j2", name: "Missing Email" },
+          { id: "j3", name: "Null Email", email: null },
+        ],
+      }),
+    });
+    const output = text(await searchJournalists(perigon)(journalistsArgs.parse({})));
+    const block = (id: string) =>
+      output.slice(output.indexOf(`<journalist id="${id}"`)).split("</journalist>")[0];
+
+    expect(block("j1")).toContain("Email: jane@example.com");
+    expect(block("j2")).toContain("Email: N/A");
+    expect(block("j3")).toContain("Email: N/A");
+  });
+
   test("returns noResults when numResults === 0", async () => {
     const perigon = createMockPerigon({
       searchJournalistsFull: async () => ({ status: 200, numResults: 0, results: [] }),
