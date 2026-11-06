@@ -1,9 +1,5 @@
 import { z } from "zod";
-
-function parseTime(str: string) {
-  if (str === "") return undefined;
-  return new Date(str);
-}
+import { parseDateParam } from "./base";
 
 /**
  * Shared article-filter arguments accepted by all /v1/stats/* endpoints.
@@ -18,14 +14,14 @@ export const statsFilterArgs = z.object({
     ),
   from: z
     .string()
-    .transform(parseTime)
+    .transform(parseDateParam)
     .optional()
     .describe(
       "Filter articles published after this date. ISO 8601 or yyyy-mm-dd format."
     ),
   to: z
     .string()
-    .transform(parseTime)
+    .transform(parseDateParam)
     .optional()
     .describe(
       "Filter articles published before this date. ISO 8601 or yyyy-mm-dd format."

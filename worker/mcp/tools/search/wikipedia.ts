@@ -2,7 +2,7 @@ import { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 import { Perigon } from "../../../lib/perigon";
 import { ToolCallback, ToolDefinition } from "../types";
-import { paginationArgs } from "../schemas/base";
+import { paginationArgs, parseDateParam } from "../schemas/base";
 import { createSearchField } from "../schemas/search";
 import {
   toolResult,
@@ -15,11 +15,6 @@ import type { SortBy } from "@goperigon/perigon-ts";
 /**
  * Schema for Wikipedia search arguments
  */
-function parseTime(str: string) {
-  if (str === "") return undefined;
-  return new Date(str);
-}
-
 export const wikipediaArgs = z.object({
   ...paginationArgs.shape,
   query: createSearchField("Wikipedia article content and titles"),
@@ -67,28 +62,28 @@ export const wikipediaArgs = z.object({
     .describe("Maximum average daily page views."),
   wikiRevisionFrom: z
     .string()
-    .transform(parseTime)
+    .transform(parseDateParam)
     .optional()
     .describe(
       "Pages modified on Wikipedia after this date. ISO 8601 or yyyy-mm-dd.",
     ),
   wikiRevisionTo: z
     .string()
-    .transform(parseTime)
+    .transform(parseDateParam)
     .optional()
     .describe(
       "Pages modified on Wikipedia before this date. ISO 8601 or yyyy-mm-dd.",
     ),
   scrapedAtFrom: z
     .string()
-    .transform(parseTime)
+    .transform(parseDateParam)
     .optional()
     .describe(
       "Pages scraped/indexed by Perigon after this date. ISO 8601 or yyyy-mm-dd.",
     ),
   scrapedAtTo: z
     .string()
-    .transform(parseTime)
+    .transform(parseDateParam)
     .optional()
     .describe(
       "Pages scraped/indexed by Perigon before this date. ISO 8601 or yyyy-mm-dd.",
