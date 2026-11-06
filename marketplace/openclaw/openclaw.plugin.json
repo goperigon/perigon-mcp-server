@@ -1,0 +1,126 @@
+{
+  "id": "perigon",
+  "name": "Perigon",
+  "description": "Search filterable news data, create monitors that extract structured events, and analyze coverage trends through Perigon's MCP server",
+  "version": "1.0.0",
+  "categories": ["research"],
+  "activation": {
+    "onStartup": false
+  },
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "apiKey": {
+        "type": "string",
+        "description": "Perigon API key from https://perigon.io/dev/keys (optional if using OAuth)"
+      },
+      "useOAuth": {
+        "type": "boolean",
+        "description": "Use OAuth authentication instead of API key (recommended)",
+        "default": true
+      },
+      "toolFilter": {
+        "type": "string",
+        "description": "Tool filter to pass to MCP server (e.g., 'all', 'research', 'monitoring', or comma-separated tool names)",
+        "default": ""
+      }
+    }
+  },
+  "uiHints": {
+    "apiKey": {
+      "label": "Perigon API Key",
+      "placeholder": "Enter your API key from perigon.io/dev/keys",
+      "sensitive": true
+    },
+    "useOAuth": {
+      "label": "Use OAuth Authentication",
+      "description": "Recommended: Authenticate via OAuth instead of API key"
+    },
+    "toolFilter": {
+      "label": "Tool Filter",
+      "placeholder": "Leave empty for default tools, or specify 'all', 'research', etc.",
+      "description": "Limit the tools exposed by the MCP server"
+    }
+  },
+  "contracts": {
+    "tools": [
+      "search_news_articles",
+      "search_news_stories",
+      "search_story_history",
+      "search_vector_news",
+      "summarize_news",
+      "search_journalists",
+      "search_sources",
+      "search_people",
+      "search_companies",
+      "search_topics",
+      "search_wikipedia",
+      "search_vector_wikipedia",
+      "get_avg_sentiment",
+      "get_article_counts",
+      "get_top_entities",
+      "get_top_people",
+      "get_top_companies",
+      "get_company_news",
+      "get_person_news",
+      "get_location_news",
+      "list_monitors",
+      "get_monitor",
+      "get_monitor_events",
+      "get_monitor_newsletters",
+      "get_monitor_summaries",
+      "create_monitor",
+      "update_monitor",
+      "set_monitor_status",
+      "get_api_access",
+      "get_source_by_id",
+      "get_top_topics",
+      "get_story_stats",
+      "watchlists",
+      "create_watchlist",
+      "update_watchlist",
+      "source_groups",
+      "create_source_group",
+      "update_source_group",
+      "contact_points",
+      "article_refresh",
+      "signal_insights_create_workspace",
+      "signal_insights_search_signals",
+      "signal_insights_read_signal",
+      "signal_insights_list_newsletters",
+      "signal_insights_read_newsletter",
+      "signal_insights_export_events",
+      "signal_insights_execute_code",
+      "signal_insights_preview_chart",
+      "signal_insights_shell",
+      "signal_insights_list_files",
+      "signal_insights_read_file",
+      "signal_insights_write_file",
+      "signal_insights_grep",
+      "signal_insights_str_replace"
+    ]
+  },
+  "mcpServers": {
+    "perigon": {
+      "transport": "streamable-http",
+      "url": "https://mcp.perigon.io/v1/mcp",
+      "enabled": true,
+      "connectionTimeoutMs": 5000,
+      "requestTimeoutMs": 30000,
+      "auth": "oauth",
+      "oauth": {
+        "identity": "per-requester"
+      }
+    }
+  },
+  "catalog": {
+    "displayName": "Perigon",
+    "shortDescription": "News research and monitoring",
+    "longDescription": "Perigon helps analysts and researchers search, filter and analyze global news data. Search articles and stories by sentiment, journalist, publisher location, company, topic, language and date. Combine filters to find precise coverage, compare trends and produce briefings with source citations.\n\nCreate monitors that track matching news and extract structured fields for analysis. Example requests:\n• Create a monitor for AI startups raising a Series A. Extract funding value, industry, funding type and status.\n• Create a monitor for mentions of my brand in Perigon news coverage, with a sentiment breakdown.\n• Create a monitor for cybersecurity incidents in the financial sector. Extract severity, incident type, data exposure and affected companies.\n\nExplore monitor events and newsletters, then analyze results with Signal Insights exports and charts. New monitors default to drafts unless you ask to activate them. Brand monitoring requires your brand name and any relevant aliases; coverage depends on available sources and your filters.\n\nConnect your Perigon account through OAuth. Available tools and data depend on your organization permissions.",
+    "websiteURL": "https://perigon.io/docs/api/mcp",
+    "supportURL": "https://perigon.io/contact",
+    "privacyPolicyURL": "https://perigon.io/privacy",
+    "termsOfServiceURL": "https://perigon.io/terms"
+  }
+}
