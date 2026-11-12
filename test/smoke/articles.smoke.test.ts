@@ -10,6 +10,7 @@ import {
   searchNewsArticles,
 } from "../../worker/mcp/tools/search/news-articles";
 import { Perigon } from "../../worker/lib/perigon";
+import { emptyMcpTelemetryHeaders } from "../../worker/lib/telemetry-headers";
 
 const apiKey = process.env.PERIGON_API_KEY ?? "";
 const skip = !apiKey;
@@ -20,7 +21,7 @@ if (!skip) globalThis.fetch = realFetch;
 
 describe.skipIf(skip)("smoke: search_news_articles", () => {
   test("returns articles for a generic query", async () => {
-    const perigon = new Perigon(apiKey);
+    const perigon = new Perigon(apiKey, undefined, emptyMcpTelemetryHeaders);
     const handler = searchNewsArticles(perigon);
     const args = newsArticlesArgs.parse({ query: "AI", size: 1 });
     const result = await handler(args);

@@ -495,7 +495,7 @@ export class Perigon extends V1Api {
   constructor(
     apiKey: string,
     apiUrl: string = DEFAULT_PERIGON_API_URL,
-    telemetryHeaders: TelemetryHeaderProvider = () => ({}),
+    telemetryHeaders: TelemetryHeaderProvider,
   ) {
     const apiHost = normalizePerigonApiHost(apiUrl);
     const telemetryMiddleware: Middleware = {

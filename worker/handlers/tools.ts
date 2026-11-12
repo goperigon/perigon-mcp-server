@@ -15,6 +15,10 @@ import {
 } from "../mcp/tools/social";
 import type { ToolDefinition } from "../mcp/tools/types";
 import { convertMCPResult } from "../mcp/ai-sdk-adapter";
+import {
+  buildMcpTelemetryHeaders,
+  PLAYGROUND_MCP_CLIENT,
+} from "../lib/telemetry-headers";
 
 interface ToolInvocationBody {
   tool: string;
@@ -76,9 +80,11 @@ async function resolveSocialSources(
 
   try {
     const introspection = await getCachedIntrospection(
-      new Perigon(apiKey),
+      new Perigon(apiKey, DEFAULT_PERIGON_API_URL, () =>
+        buildMcpTelemetryHeaders({ clientInfo: PLAYGROUND_MCP_CLIENT }),
+      ),
       apiKey,
-      DEFAULT_PERIGON_API_URL
+      DEFAULT_PERIGON_API_URL,
     );
     return introspection.socialSources ?? [];
   } catch (error) {
@@ -129,9 +135,14 @@ async function executeTool(request: Request): Promise<Response> {
       );
     }
 
-    const result = await toolDef.createHandler(new Perigon(perigonApiKey))(
-      validatedArgs as never
-    );
+    const result = await toolDef.createHandler(
+      new Perigon(perigonApiKey, DEFAULT_PERIGON_API_URL, () =>
+        buildMcpTelemetryHeaders({
+          toolName,
+          clientInfo: PLAYGROUND_MCP_CLIENT,
+        }),
+      ),
+    )(validatedArgs as never);
 
     return Response.json({ result: convertMCPResult(result) });
   } catch (error) {

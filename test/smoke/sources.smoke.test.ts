@@ -6,6 +6,7 @@ import {
   sourcesArgs,
 } from "../../worker/mcp/tools/search/sources";
 import { Perigon } from "../../worker/lib/perigon";
+import { emptyMcpTelemetryHeaders } from "../../worker/lib/telemetry-headers";
 
 const apiKey = process.env.PERIGON_API_KEY ?? "";
 const skip = !apiKey;
@@ -13,7 +14,7 @@ if (!skip) globalThis.fetch = realFetch;
 
 describe.skipIf(skip)("smoke: search_sources", () => {
   test("returns sources", async () => {
-    const perigon = new Perigon(apiKey);
+    const perigon = new Perigon(apiKey, undefined, emptyMcpTelemetryHeaders);
     const result = await searchSources(perigon)(
       sourcesArgs.parse({ size: 1 })
     );

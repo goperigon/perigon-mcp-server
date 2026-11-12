@@ -10,6 +10,7 @@ import {
   getAvgSentiment,
 } from "../../worker/mcp/tools/search/stats-avg-sentiment";
 import { Perigon } from "../../worker/lib/perigon";
+import { emptyMcpTelemetryHeaders } from "../../worker/lib/telemetry-headers";
 
 const apiKey = process.env.PERIGON_API_KEY ?? "";
 const skip = !apiKey;
@@ -21,7 +22,7 @@ const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000)
 
 describe.skipIf(skip)("smoke: stats", () => {
   test("get_article_counts for the last 24h", async () => {
-    const perigon = new Perigon(apiKey);
+    const perigon = new Perigon(apiKey, undefined, emptyMcpTelemetryHeaders);
     const result = await getArticleCounts(perigon)(
       articleCountsArgs.parse({ from: yesterday, splitBy: "DAY" })
     );
@@ -29,7 +30,7 @@ describe.skipIf(skip)("smoke: stats", () => {
   }, 60_000);
 
   test("get_avg_sentiment for the last 24h", async () => {
-    const perigon = new Perigon(apiKey);
+    const perigon = new Perigon(apiKey, undefined, emptyMcpTelemetryHeaders);
     const result = await getAvgSentiment(perigon)(
       avgSentimentArgs.parse({ from: yesterday, splitBy: "DAY" })
     );

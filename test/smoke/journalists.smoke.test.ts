@@ -6,6 +6,7 @@ import {
   searchJournalists,
 } from "../../worker/mcp/tools/search/journalists";
 import { Perigon } from "../../worker/lib/perigon";
+import { emptyMcpTelemetryHeaders } from "../../worker/lib/telemetry-headers";
 
 const apiKey = process.env.PERIGON_API_KEY ?? "";
 const skip = !apiKey;
@@ -13,7 +14,7 @@ if (!skip) globalThis.fetch = realFetch;
 
 describe.skipIf(skip)("smoke: search_journalists", () => {
   test("returns journalists", async () => {
-    const perigon = new Perigon(apiKey);
+    const perigon = new Perigon(apiKey, undefined, emptyMcpTelemetryHeaders);
     const result = await searchJournalists(perigon)(
       journalistsArgs.parse({ size: 1 })
     );

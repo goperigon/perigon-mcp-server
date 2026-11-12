@@ -6,6 +6,23 @@ export const PERIGON_MCP_CLIENT_HEADER = "x-perigon-mcp-client";
 
 const MCP_CLIENT_VALUE = "mcp";
 
+/** Playground `POST /v1/api/tools` upstream attribution (not a protocol MCP host). */
+export const PLAYGROUND_MCP_CLIENT: Implementation = {
+  name: "perigon-playground",
+  version: "1.0",
+};
+
+/** Playground `POST /v1/api/chat` upstream attribution. */
+export const PLAYGROUND_CHAT_MCP_CLIENT: Implementation = {
+  name: "perigon-playground-chat",
+  version: "1.0",
+};
+
+/** Explicit no-op provider for tests and smoke that do not assert telemetry. */
+export function emptyMcpTelemetryHeaders(): Record<string, string> {
+  return {};
+}
+
 export function buildMcpTelemetryHeaders(args: {
   toolName?: string;
   clientInfo?: Implementation;
