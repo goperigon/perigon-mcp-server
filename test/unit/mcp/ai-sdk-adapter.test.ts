@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { afterEach, describe, expect, test } from "bun:test";
 import {
   convertMCPResult,
   createAISDKTools,
@@ -8,6 +8,21 @@ import {
   SOCIAL_TOOL_DEFINITIONS,
   SOCIAL_TOOL_NAMES,
 } from "../../../worker/mcp/tools/social";
+import {
+  PERIGON_CLIENT_HEADER,
+  PERIGON_MCP_CLIENT_HEADER,
+  PERIGON_MCP_TOOL_HEADER,
+} from "../../../worker/lib/telemetry-headers";
+import {
+  installFetchMock,
+  jsonResponse,
+  restoreFetch,
+  urlOf,
+} from "../../helpers/mock-fetch";
+
+afterEach(() => {
+  restoreFetch();
+});
 
 describe("convertMCPResult", () => {
   test("returns the first text content", () => {
@@ -110,5 +125,55 @@ describe("createAISDKTools", () => {
       SOCIAL_TOOL_DEFINITIONS["search_reddit_posts"].parameters
     );
     expect(typeof tools["search_reddit_posts"].execute).toBe("function");
+  });
+});
+
+describe("createAISDKTools chat telemetry", () => {
+  test("execute sends per-tool headers and playground chat client on upstream fetch", async () => {
+    const captured: Array<{ url: string; headers: Headers }> = [];
+    installFetchMock((input, init) => {
+      const url = urlOf(input);
+      if (url.includes("/articles/all") || url.includes("/people/all")) {
+        captured.push({ url, headers: new Headers(init?.headers) });
+        if (url.includes("/articles/all")) {
+          return jsonResponse({ status: 200, numResults: 0, articles: [] });
+        }
+        return jsonResponse({ status: 200, numResults: 0, results: [] });
+      }
+      return jsonResponse({});
+    });
+
+    const tools = createAISDKTools("chat-telemetry-key", [
+      "search_news_articles",
+      "search_people",
+    ]);
+
+    await tools.search_news_articles.execute({ query: "ai" });
+    await tools.search_people.execute({ name: "Ada" });
+
+    expect(captured).toHaveLength(2);
+
+    const articlesCall = captured.find((entry) =>
+      entry.url.includes("/articles/all"),
+    );
+    const peopleCall = captured.find((entry) =>
+      entry.url.includes("/people/all"),
+    );
+    expect(articlesCall).toBeDefined();
+    expect(peopleCall).toBeDefined();
+
+    for (const [call, toolName] of [
+      [articlesCall!, "search_news_articles"],
+      [peopleCall!, "search_people"],
+    ] as const) {
+      expect(call.headers.get(PERIGON_CLIENT_HEADER)).toBe("mcp");
+      expect(call.headers.get(PERIGON_MCP_TOOL_HEADER)).toBe(toolName);
+      expect(call.headers.get(PERIGON_MCP_CLIENT_HEADER)).toBe(
+        "perigon-playground-chat/1.0",
+      );
+      expect(call.headers.get("Authorization")).toBe(
+        "Bearer chat-telemetry-key",
+      );
+    }
   });
 });
