@@ -71,7 +71,7 @@ export function getLocationNews(
       const todayStr = today.toISOString().split("T")[0];
 
       // Determine location type and prepare search parameters
-      const searchParams: any = {
+      const searchParams: Parameters<Perigon["searchArticles"]>[0] = {
         q: location, // Always include location in query
         from: fromDate,
         to: today,
