@@ -9,9 +9,11 @@ import { createErrorMessage } from "../utils/error-handling";
 export const contactPointsArgs = z.object({
   uuid: z.string().uuid().optional().describe("Get one contact point by UUID."),
   status: z
-    .array(z.enum(["PENDING", "ACTIVE", "DISABLED"]))
+    .array(z.enum(["ACTIVE", "STOPPED", "FAILING", "ARCHIVED"]))
     .optional()
-    .describe("List mode: filter by lifecycle status."),
+    .describe(
+      "List mode: filter by lifecycle status. ACTIVE = delivering, STOPPED = paused, FAILING = deliveries are erroring, ARCHIVED = deleted.",
+    ),
   type: z
     .array(z.enum(["EMAIL", "WEBHOOK"]))
     .optional()

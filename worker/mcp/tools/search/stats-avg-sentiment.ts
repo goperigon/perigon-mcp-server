@@ -7,7 +7,7 @@ import {
   splitByEnum,
   normalizeSplitBy,
 } from "../schemas/stats";
-import { toolResult, noResults } from "../utils/formatting";
+import { toolResult, noResults, dateAttr } from "../utils/formatting";
 import { createErrorMessage } from "../utils/error-handling";
 
 export const avgSentimentArgs = statsFilterArgs.extend({
@@ -49,7 +49,7 @@ export function getAvgSentiment(
 
       const rows = result.results.map(
         (r) =>
-          `<sentiment_bucket date="${r.date}" articles="${r.numResults}">` +
+          `<sentiment_bucket${dateAttr(r.date)} articles="${r.numResults}">` +
           `\nPositive: ${r.avgSentiment.positive.toFixed(4)}` +
           `\nNegative: ${r.avgSentiment.negative.toFixed(4)}` +
           `\nNeutral: ${r.avgSentiment.neutral.toFixed(4)}` +

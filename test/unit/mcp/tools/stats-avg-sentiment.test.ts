@@ -35,16 +35,27 @@ describe("getAvgSentiment", () => {
     expect(t).toContain("Negative: 0.6000");
   });
 
-  test("'NONE' splitBy → undefined on the SDK call but display string is 'NONE'", async () => {
+  test("'NONE' splitBy is sent as none and the undated aggregate renders without a date", async () => {
     const perigon = createMockPerigon({
-      getAvgSentiment: async () => avgSentimentFixture,
+      getAvgSentiment: async () => ({
+        status: 200,
+        results: [
+          {
+            numResults: 25,
+            avgSentiment: { positive: 0.1, negative: 0.2, neutral: 0.7 },
+          },
+        ],
+      }),
     });
     const result = await getAvgSentiment(perigon)(
       avgSentimentArgs.parse({ splitBy: "NONE" })
     );
     const call = firstCallArgs<any>(perigon.getAvgSentiment);
-    expect(call.splitBy).toBeUndefined();
-    expect(text(result)).toContain("(splitBy=NONE)");
+    expect(call.splitBy).toBe("none");
+    const t = text(result);
+    expect(t).toContain("Got 1 sentiment bucket(s) (splitBy=NONE)");
+    expect(t).toContain('<sentiment_bucket articles="25">');
+    expect(t).not.toContain("date=");
   });
 
   test("noResults when results is empty", async () => {

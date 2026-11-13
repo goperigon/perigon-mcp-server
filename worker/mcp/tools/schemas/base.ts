@@ -20,9 +20,8 @@ export const locationArgs = z.object({
       if (!countries) return undefined;
       return countries.map((country) => country.toLowerCase());
     })
-    .default(() => [...CONSTANTS.DEFAULT_COUNTRIES])
     .describe(
-      "Filter by country, 2-letter lowercase code (e.g. us, ca, mx).",
+      "Filter by country, 2-letter lowercase code (e.g. us, ca, mx). Defaults to us when no other geographic filter is given, and the response then starts with a note saying so; pass [] for all countries.",
     ),
   states: z
     .array(z.string())
@@ -112,3 +111,24 @@ export const createBaseSearchArgs = () =>
     ...paginationArgs.shape,
     ...defaultArgs.shape,
   });
+/**
+ * Resolve the country filter to send. The default country applies only when
+ * the caller gave no geographic filter at all; an explicit [] means all countries.
+ */
+export function resolveCountries(
+  countries: string[] | undefined,
+  ...otherLocationFilters: unknown[]
+): { country: string[] | undefined; defaultCountryApplied: boolean } {
+  if (countries !== undefined) {
+    return {
+      country: countries.length > 0 ? countries : undefined,
+      defaultCountryApplied: false,
+    };
+  }
+  const hasOtherFilter = otherLocationFilters.some((filter) =>
+    Array.isArray(filter) ? filter.length > 0 : Boolean(filter),
+  );
+  return hasOtherFilter
+    ? { country: undefined, defaultCountryApplied: false }
+    : { country: [...CONSTANTS.DEFAULT_COUNTRIES], defaultCountryApplied: true };
+}

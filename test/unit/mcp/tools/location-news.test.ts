@@ -62,7 +62,7 @@ describe("getLocationNews", () => {
     expect(text(result)).toContain('Recent news for city "Austin"');
   });
 
-  test("explicit locationType=country lowercases", async () => {
+  test("explicit locationType=country resolves names to codes", async () => {
     const perigon = createMockPerigon({
       searchArticles: async () => articlesFixture,
     });
@@ -70,11 +70,11 @@ describe("getLocationNews", () => {
       locationNewsArgs.parse({ location: "Germany", locationType: "country" })
     );
     expect(firstCallArgs<any>(perigon.searchArticles).country).toEqual([
-      "germany",
+      "de",
     ]);
   });
 
-  test("explicit locationType=state uppercases", async () => {
+  test("explicit locationType=state resolves names to codes", async () => {
     const perigon = createMockPerigon({
       searchArticles: async () => articlesFixture,
     });
@@ -82,8 +82,33 @@ describe("getLocationNews", () => {
       locationNewsArgs.parse({ location: "Texas", locationType: "state" })
     );
     expect(firstCallArgs<any>(perigon.searchArticles).state).toEqual([
-      "TEXAS",
+      "TX",
     ]);
+  });
+
+  test("auto-detects country names", async () => {
+    const perigon = createMockPerigon({
+      searchArticles: async () => articlesFixture,
+    });
+    const result = await getLocationNews(perigon)(
+      locationNewsArgs.parse({ location: "France" })
+    );
+    const call = firstCallArgs<any>(perigon.searchArticles);
+    expect(call.country).toEqual(["fr"]);
+    expect(call.city).toBeUndefined();
+    expect(text(result)).toContain('Recent news for country "France"');
+  });
+
+  test("an unresolvable country falls back to a text search", async () => {
+    const perigon = createMockPerigon({
+      searchArticles: async () => articlesFixture,
+    });
+    await getLocationNews(perigon)(
+      locationNewsArgs.parse({ location: "Narnia", locationType: "country" })
+    );
+    const call = firstCallArgs<any>(perigon.searchArticles);
+    expect(call.q).toBe("Narnia");
+    expect(call.country).toBeUndefined();
   });
 
   test("returns no-recent-news message when articles empty", async () => {

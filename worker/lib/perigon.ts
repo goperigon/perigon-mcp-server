@@ -145,8 +145,8 @@ export interface StatsArticleFilters {
   excludeTopic?: string[];
 }
 
-/** Lowercase enum values accepted by the API for `splitBy`. NONE is represented by omitting the param. */
-export type StatsSplitBy = "hour" | "day" | "week" | "month";
+/** Lowercase enum values accepted by the API for `splitBy`. */
+export type StatsSplitBy = "hour" | "day" | "week" | "month" | "none";
 
 export interface StatsTimeSeriesParams extends StatsArticleFilters {
   splitBy?: StatsSplitBy;
@@ -175,13 +175,15 @@ export interface TopSpikeParams extends StatsArticleFilters {
 
 /** Single bucket from /v1/stats/intervalArticleCounts */
 export interface CountStatDto {
-  date: string;
+  /** Omitted for splitBy=none, where the single result covers the whole range. */
+  date?: string;
   numResults: number;
 }
 
 /** Single bucket from /v1/stats/avgSentiment */
 export interface AvgSentimentStatDto {
-  date: string;
+  /** Omitted for splitBy=none, where the single result covers the whole range. */
+  date?: string;
   numResults: number;
   avgSentiment: {
     positive: number;
@@ -433,6 +435,52 @@ export interface JournalistsFullResult {
   results: JournalistFull[];
 }
 
+/**
+ * Params for the raw `/v1/stories/all` fetch. Field names mirror the API
+ * query params, including `minSourceDiversity`, which `SearchStoriesRequest`
+ * in `@goperigon/perigon-ts@1.1.2` does not declare and silently drops from
+ * the query string.
+ */
+export type StoriesFullParams = Record<string, unknown>;
+
+/**
+ * SDK's `NewsCluster` plus `uniqueSourcesCount` and `sourceDiversity`, which
+ * the API computes per story and the SDK's deserializer drops.
+ */
+export interface StoryFull {
+  id?: string | null;
+  name?: string | null;
+  summary?: string | null;
+  shortSummary?: string | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+  imageUrl?: string | null;
+  keyPoints?: Array<{ point?: string | null }> | null;
+  uniqueSources?: string[] | null;
+  uniqueCount?: number | null;
+  totalCount?: number | null;
+  uniqueSourcesCount?: number | null;
+  sourceDiversity?: number | null;
+  sentiment?: unknown;
+  topTopics?: Array<{ name?: string | null }> | null;
+  topCategories?: Array<{ name?: string | null }> | null;
+  topPeople?: Array<{ name?: string | null }> | null;
+  topCompanies?: Array<{ name?: string | null }> | null;
+  topLocations?: Array<{
+    city?: string | null;
+    state?: string | null;
+    country?: string | null;
+  }> | null;
+  topCountries?: string[] | null;
+  [key: string]: unknown;
+}
+
+export interface StoriesFullResult {
+  status: number;
+  numResults: number;
+  results: StoryFull[];
+}
+
 /** `/v1/sources/{id}` response — same fields as a `search_sources` result item. */
 export interface SourceDetail {
   name?: string | null;
@@ -467,7 +515,7 @@ export interface StoryStatsParams {
   name?: string;
   from?: Date;
   to?: Date;
-  splitBy?: "hour" | "day" | "week" | "month" | "none";
+  splitBy?: StatsSplitBy;
   aggField?: "pubDate" | "addDate";
 }
 
@@ -926,6 +974,21 @@ export class Perigon extends V1Api {
     const sp = buildQueryParams(params);
     return await typedFetch<JournalistsFullResult>(
       `${this.baseUrl}/journalists/all?${sp.toString()}`,
+      { headers: this.authHeaders() },
+    );
+  }
+
+  /**
+   * `GET /v1/stories/all` via raw fetch — the SDK drops `minSourceDiversity`
+   * from the request and `uniqueSourcesCount` / `sourceDiversity` from the
+   * response.
+   */
+  async searchStoriesFull(
+    params: StoriesFullParams,
+  ): Promise<StoriesFullResult> {
+    const sp = buildQueryParams(params);
+    return await typedFetch<StoriesFullResult>(
+      `${this.baseUrl}/stories/all?${sp.toString()}`,
       { headers: this.authHeaders() },
     );
   }

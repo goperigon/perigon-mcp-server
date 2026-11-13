@@ -61,7 +61,10 @@ describe("searchSources", () => {
       searchSources: async () => ({ status: 200, numResults: 0, results: [] }),
     });
     const result = await searchSources(perigon)(sourcesArgs.parse({}));
-    expect(text(result)).toBe("No results found");
+    expect(text(result)).toStartWith(
+      "<note>No country filter was given, so the default country filter was applied: us."
+    );
+    expect(text(result)).toEndWith("No results found");
   });
 
   test("error path", async () => {

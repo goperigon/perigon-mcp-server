@@ -2,7 +2,7 @@ import { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 import { Perigon } from "../../../lib/perigon";
 import { ToolCallback, ToolDefinition } from "../types";
-import { toolResult, noResults } from "../utils/formatting";
+import { toolResult, noResults, dateAttr } from "../utils/formatting";
 import { createErrorMessage } from "../utils/error-handling";
 
 function parseTime(str: string) {
@@ -26,7 +26,9 @@ export const storyStatsArgs = z.object({
     .enum(["hour", "day", "week", "month", "none"])
     .optional()
     .default("month")
-    .describe("Bucket size for volume. Ignored for velocity."),
+    .describe(
+      "Bucket size for volume; none returns a single total for the whole range. Ignored for velocity.",
+    ),
   bucketSize: z
     .number()
     .int()
@@ -79,7 +81,7 @@ export function getStoryStats(
       });
       if (!result.results || result.results.length === 0) return noResults;
       const rows = result.results.map(
-        (r) => `<bucket date="${r.date}" count="${r.numResults}" />`,
+        (r) => `<bucket${dateAttr(r.date)} count="${r.numResults}" />`,
       );
       return toolResult(`<story_volume>\n${rows.join("\n")}\n</story_volume>`);
     } catch (error) {

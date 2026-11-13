@@ -80,7 +80,7 @@ export interface UpdateSourceGroupRequest {
 }
 
 export type ContactPointType = "EMAIL" | "WEBHOOK" | "FASTN";
-export type ContactPointStatus = "PENDING" | "ACTIVE" | "DISABLED";
+export type ContactPointStatus = "ACTIVE" | "STOPPED" | "FAILING" | "ARCHIVED";
 
 export interface ContactPointDto {
   uuid: string;

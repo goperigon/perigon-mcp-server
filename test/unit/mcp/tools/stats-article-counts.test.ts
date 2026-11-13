@@ -32,6 +32,23 @@ describe("getArticleCounts", () => {
     expect(t).toContain('<count_bucket date="2024-01-02" count="5" />');
   });
 
+  test("'NONE' splitBy is sent as none and the undated total renders without a date", async () => {
+    const perigon = createMockPerigon({
+      getArticleCounts: async () => ({
+        status: 200,
+        results: [{ numResults: 1234 }],
+      }),
+    });
+    const result = await getArticleCounts(perigon)(
+      articleCountsArgs.parse({ q: "AI", splitBy: "NONE" })
+    );
+
+    expect(firstCallArgs<any>(perigon.getArticleCounts).splitBy).toBe("none");
+    const t = text(result);
+    expect(t).toContain("1 bucket(s), 1234 total articles (splitBy=NONE)");
+    expect(t).toContain('<count_bucket count="1234" />');
+  });
+
   test("noResults when results is empty", async () => {
     const perigon = createMockPerigon({
       getArticleCounts: async () => ({ status: 200, results: [] }),

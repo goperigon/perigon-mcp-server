@@ -50,6 +50,7 @@ export interface MockPerigonOverrides {
   getStoryVelocity?: AnyAsyncFn;
   searchArticlesFull?: AnyAsyncFn;
   searchJournalistsFull?: AnyAsyncFn;
+  searchStoriesFull?: AnyAsyncFn;
   listWatchlists?: AnyAsyncFn;
   getWatchlist?: AnyAsyncFn;
   resolveWatchlists?: AnyAsyncFn;
@@ -107,6 +108,7 @@ const ALL_METHODS = [
   "getStoryVelocity",
   "searchArticlesFull",
   "searchJournalistsFull",
+  "searchStoriesFull",
   "listWatchlists",
   "getWatchlist",
   "resolveWatchlists",

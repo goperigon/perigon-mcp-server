@@ -7,7 +7,7 @@ import {
   splitByEnum,
   normalizeSplitBy,
 } from "../schemas/stats";
-import { toolResult, noResults } from "../utils/formatting";
+import { toolResult, noResults, dateAttr } from "../utils/formatting";
 import { createErrorMessage } from "../utils/error-handling";
 
 export const articleCountsArgs = statsFilterArgs.extend({
@@ -52,7 +52,7 @@ export function getArticleCounts(
       );
 
       const rows = result.results.map(
-        (r) => `<count_bucket date="${r.date}" count="${r.numResults}" />`,
+        (r) => `<count_bucket${dateAttr(r.date)} count="${r.numResults}" />`,
       );
 
       let output = `Got ${result.results.length} bucket(s), ${totalArticles} total articles (splitBy=${args.splitBy ?? "DAY"})\n`;

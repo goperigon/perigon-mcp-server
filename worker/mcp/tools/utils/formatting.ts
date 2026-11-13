@@ -1,4 +1,5 @@
 import { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
+import { CONSTANTS } from "../types";
 
 /**
  * Create a tool result with text content
@@ -90,4 +91,44 @@ export function formatWikidataDate(
   if (!holder?.time) return fallback;
   // Time is ISO 8601, but we usually only care about the date portion
   return holder.time.split("T")[0] || holder.time;
+}
+
+/**
+ * Render a stats bucket's ` date="..."` attribute, or nothing for undated
+ * splitBy=none totals.
+ */
+export function dateAttr(date: string | null | undefined): string {
+  return date ? ` date="${date}"` : "";
+}
+/**
+ * Tool-description sentence documenting when the default country filter
+ * applies; kept next to the response note so the two stay in sync.
+ */
+export function describeDefaultCountry(
+  geoFilters: string[],
+  howToChange = "pass countries to choose others, or countries: [] for all countries",
+): string {
+  const condition =
+    geoFilters.length > 1
+      ? `none of ${geoFilters.slice(0, -1).join(", ")} or ${geoFilters[geoFilters.length - 1]} is given`
+      : `${geoFilters[0]} is not given`;
+  return `Country default: when ${condition}, results are filtered to country ${CONSTANTS.DEFAULT_COUNTRIES.join(", ")} and the response starts with a <note> saying the default was applied; ${howToChange}.`;
+}
+
+/** Hint for tools that take a single `country` and cannot search all countries. */
+export const SINGLE_COUNTRY_HINT =
+  "Pass country to search another country, or use search_news_articles with countries: [] for all countries.";
+
+/**
+ * Prefix a response with a note when the default country filter was applied,
+ * so the model knows results are narrower than it asked for.
+ */
+export function withDefaultCountryNote(
+  text: string,
+  defaultCountryApplied: boolean,
+  howToChange = "Pass countries to search other countries, or countries: [] for all countries.",
+): string {
+  if (!defaultCountryApplied) return text;
+  const note = `<note>No country filter was given, so the default country filter was applied: ${CONSTANTS.DEFAULT_COUNTRIES.join(", ")}. ${howToChange}</note>`;
+  return `${note}\n\n${text}`;
 }

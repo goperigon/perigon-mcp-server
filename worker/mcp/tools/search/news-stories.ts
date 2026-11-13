@@ -3,12 +3,18 @@ import { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 import { Perigon } from "../../../lib/perigon";
 import { ToolCallback, ToolDefinition } from "../types";
-import { createBaseSearchArgs, categories, topics } from "../schemas/base";
+import {
+  createBaseSearchArgs,
+  categories,
+  topics,
+  resolveCountries,
+} from "../schemas/base";
 import { createSearchField } from "../schemas/search";
 import {
   toolResult,
-  noResults,
   createPaginationHeader,
+  withDefaultCountryNote,
+  describeDefaultCountry,
 } from "../utils/formatting";
 import { createErrorMessage } from "../utils/error-handling";
 
@@ -47,18 +53,6 @@ export const newsStoriesArgs = createBaseSearchArgs().extend({
     .describe(
       "Filter using curated publisher bundles: top10, top25, top50, top100, top25tech, top25crypto.",
     ),
-  language: z
-    .array(z.string())
-    .optional()
-    .describe(
-      "Filter by language using ISO-639 two-letter codes (e.g., en, es, fr).",
-    ),
-  label: z
-    .array(z.string())
-    .optional()
-    .describe(
-      "Filter by editorial labels: Opinion, Paid-news, Non-news, Fact Check, Press Release.",
-    ),
   personName: z
     .string()
     .optional()
@@ -85,7 +79,7 @@ export const newsStoriesArgs = createBaseSearchArgs().extend({
     .max(1)
     .optional()
     .describe(
-      "Minimum ratio of distinct publishers to total articles in the story, including reprints (uniqueSources / totalCount), from 0 to 1. Drops stories that look big only because a few publishers posted many articles, e.g. SEC filing or press-release repost sites. 0.2 requires 1 publisher per 5 articles; 0.05 (1 per 20) is too loose to remove most of these. Use 0.2 for top headlines, most-covered, or trending requests. Not applied by default.",
+      "Minimum ratio of distinct publishers to total articles in the story, including reprints (uniqueSourcesCount / totalCount), from 0 to 1. Drops stories that look big only because a few publishers posted many articles, e.g. SEC filing or press-release repost sites. 0.2 requires 1 publisher per 5 articles; 0.05 (1 per 20) is too loose to remove most of these. Use 0.2 for top headlines, most-covered, or trending requests. Not applied by default.",
     ),
 });
 
@@ -122,8 +116,6 @@ export function searchNewsStories(
     newsStoryIds,
     sources,
     sourceGroup,
-    language,
-    label,
     personName,
     companyDomain,
     companySymbol,
@@ -141,13 +133,18 @@ export function searchNewsStories(
         fromDate.setHours(now.getHours() - 24);
       }
 
-      const result = await perigon.searchStories({
+      const { country, defaultCountryApplied } = resolveCountries(
+        countries,
+        cities,
+        states,
+      );
+      const result = await perigon.searchStoriesFull({
         q: query,
         page,
         size,
         state: states,
         city: cities,
-        country: countries,
+        country,
         from: fromDate,
         to,
         sortBy,
@@ -161,13 +158,14 @@ export function searchNewsStories(
         showDuplicates: true,
         category: categories,
         topic: topics,
-        // language, label, and minSourceDiversity are supported by the API but not typed in the SDK
-        ...(language ? { language } : {}),
-        ...(label ? { label } : {}),
         ...(minSourceDiversity !== undefined ? { minSourceDiversity } : {}),
-      } as any);
+      });
 
-      if (result.numResults === 0) return noResults;
+      if (result.numResults === 0) {
+        return toolResult(
+          withDefaultCountryNote("No results found", defaultCountryApplied),
+        );
+      }
 
       const stories = result.results.map((story) => {
         const keyPoints =
@@ -189,15 +187,6 @@ export function searchNewsStories(
             .filter(Boolean)
             .join("; ") || "N/A";
         const topCountries = story.topCountries?.join(", ") || "N/A";
-        const totalCount = story.totalCount;
-        const publisherCount = story.uniqueSources?.length;
-        const sourceDiversity =
-          totalCount != null &&
-          totalCount > 0 &&
-          publisherCount != null &&
-          publisherCount > 0
-            ? (publisherCount / totalCount).toFixed(2)
-            : "unknown";
 
         return `<news_story id="${story.id}" title="${story.name}">
 Summary: ${story.summary}
@@ -205,10 +194,9 @@ Short Summary: ${story.shortSummary ?? "N/A"}
 Key Points: ${keyPoints}
 Created At: ${story.createdAt} (utc)
 Updated At: ${story.updatedAt} (utc)
-Articles: ${totalCount ?? "N/A"} total, ${story.uniqueCount ?? "N/A"} unique
-Publishers: ${publisherCount ?? "N/A"}
-Source Diversity: ${sourceDiversity}
-Unique Sources: ${story.uniqueSources?.join(", ") || "N/A"}
+Articles: ${story.totalCount ?? "N/A"} total, ${story.uniqueCount ?? "N/A"} unique
+Publishers: ${story.uniqueSourcesCount ?? "N/A"}
+Source Diversity: ${story.sourceDiversity?.toFixed(2) ?? "N/A"}
 Sentiment: ${JSON.stringify(story.sentiment)}
 Top Topics: ${topTopics}
 Top Categories: ${topCategories}
@@ -231,7 +219,7 @@ Image URL: ${story.imageUrl ?? "N/A"}
       output += stories.join("\n\n");
       output += "\n</stories>";
 
-      return toolResult(output);
+      return toolResult(withDefaultCountryNote(output, defaultCountryApplied));
     } catch (error) {
       console.error("Error searching news stories:", error);
       return toolResult(
@@ -250,7 +238,9 @@ export const newsStoriesTool = {
   name: "search_news_stories",
   title: "Stories",
   description:
-    "Search clustered news stories (headlines) that group related articles across multiple sources into a single narrative. Use this to understand major news events, trending headlines, and story arcs rather than finding individual articles. Filter by category, topic, source, location, person, company, or time range. Returns summaries, key points, unique/total article counts, sentiment, and top topics/categories/people/companies/locations for the cluster. Feed the id into search_story_history to see how the story evolved, or search_news_articles(newsStoryIds) to pull its member articles.",
+    "Search clustered news stories (headlines) that group related articles across multiple sources into a single narrative. Use this to understand major news events, trending headlines, and story arcs rather than finding individual articles. Filter by category, topic, source, location, person, company, or time range. Returns summaries, key points, unique/total article counts, sentiment, and top topics/categories/people/companies/locations for the cluster. Feed the id into search_story_history to see how the story evolved, or search_news_articles(newsStoryIds) to pull its member articles." +
+    " " +
+    describeDefaultCountry(["countries", "cities", "states"]),
   parameters: newsStoriesArgs,
   annotations: {
     readOnlyHint: true,

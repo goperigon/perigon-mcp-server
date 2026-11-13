@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { StatsSplitBy } from "../../../lib/perigon";
 
 function parseTime(str: string) {
   if (str === "") return undefined;
@@ -112,10 +113,9 @@ export const splitByEnum = z
     "Time interval for bucketing results. HOUR = hourly, DAY = daily, WEEK = weekly, MONTH = monthly, NONE = single aggregate value across the whole date range."
   );
 
-/** Convert the user-facing splitBy enum to the lowercase value the API expects, or undefined to omit (NONE). */
+/** Convert the user-facing splitBy enum to the lowercase value the API expects. */
 export function normalizeSplitBy(
   splitBy: "HOUR" | "DAY" | "WEEK" | "MONTH" | "NONE" | undefined
-): "hour" | "day" | "week" | "month" | undefined {
-  if (!splitBy || splitBy === "NONE") return undefined;
-  return splitBy.toLowerCase() as "hour" | "day" | "week" | "month";
+): StatsSplitBy | undefined {
+  return splitBy ? (splitBy.toLowerCase() as StatsSplitBy) : undefined;
 }
