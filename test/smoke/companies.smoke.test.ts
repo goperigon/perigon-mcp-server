@@ -6,6 +6,7 @@ import {
   searchCompanies,
 } from "../../worker/mcp/tools/search/companies";
 import { Perigon } from "../../worker/lib/perigon";
+import { emptyMcpTelemetryHeaders } from "../../worker/lib/telemetry-headers";
 
 const apiKey = process.env.PERIGON_API_KEY ?? "";
 const skip = !apiKey;
@@ -13,7 +14,7 @@ if (!skip) globalThis.fetch = realFetch;
 
 describe.skipIf(skip)("smoke: search_companies", () => {
   test("returns companies for a known ticker", async () => {
-    const perigon = new Perigon(apiKey);
+    const perigon = new Perigon(apiKey, undefined, emptyMcpTelemetryHeaders);
     const result = await searchCompanies(perigon)(
       companiesArgs.parse({ symbol: ["AAPL"], size: 1 })
     );

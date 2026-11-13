@@ -7,6 +7,11 @@ import {
   restoreFetch,
   urlOf,
 } from "../../helpers/mock-fetch";
+import {
+  PERIGON_CLIENT_HEADER,
+  PERIGON_MCP_CLIENT_HEADER,
+  PERIGON_MCP_TOOL_HEADER,
+} from "../../../worker/lib/telemetry-headers";
 
 let introspectionResult: Record<string, unknown> | HttpError = {
   scopes: [],
@@ -135,8 +140,11 @@ describe("handleTools POST", () => {
   });
 
   test("executes a valid social tool against the upstream API", async () => {
-    let socialRequest: { url: string; authorization: string | null } | null =
-      null;
+    let socialRequest: {
+      url: string;
+      authorization: string | null;
+      headers: Headers;
+    } | null = null;
     installFetchMock((input, init) => {
       const url = urlOf(input);
       if (url.endsWith("/v1/user")) {
@@ -145,6 +153,7 @@ describe("handleTools POST", () => {
       socialRequest = {
         url,
         authorization: new Headers(init?.headers).get("Authorization"),
+        headers: new Headers(init?.headers),
       };
       return jsonResponse({
         status: 200,
@@ -168,10 +177,17 @@ describe("handleTools POST", () => {
     const body = (await response.json()) as { result: string };
 
     expect(response.status).toBe(200);
-    expect(socialRequest).toEqual({
-      url: "https://api.perigon.io/v1/social/x/posts?q=openai&searchType=LATEST",
-      authorization: "Bearer tools-key-run",
-    });
+    expect(socialRequest?.url).toBe(
+      "https://api.perigon.io/v1/social/x/posts?q=openai&searchType=LATEST",
+    );
+    expect(socialRequest?.authorization).toBe("Bearer tools-key-run");
+    expect(socialRequest?.headers.get(PERIGON_CLIENT_HEADER)).toBe("mcp");
+    expect(socialRequest?.headers.get(PERIGON_MCP_TOOL_HEADER)).toBe(
+      "search_x_posts",
+    );
+    expect(socialRequest?.headers.get(PERIGON_MCP_CLIENT_HEADER)).toBe(
+      "perigon-playground/1.0",
+    );
     expect(body.result).toContain(
       '<x_post id="1" url="https://x.com/perigon/status/1" author="@perigon"',
     );

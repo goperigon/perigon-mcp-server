@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, test } from "bun:test";
 import { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { Perigon } from "../../../../worker/lib/perigon";
+import { emptyMcpTelemetryHeaders } from "../../../../worker/lib/telemetry-headers";
 import {
   MonitorDto,
   MonitorNewsletterDto
@@ -90,7 +91,7 @@ afterEach(() => {
 describe("createMonitor", () => {
   test("defaults status to DRAFT and POSTs the built query", async () => {
     const requests = captureRequests({ data: monitorDto });
-    const result = await createMonitor(new Perigon("test-key"))(
+    const result = await createMonitor(new Perigon("test-key", undefined, emptyMcpTelemetryHeaders))(
       createMonitorArgs.parse(baseCreateInput)
     );
 
@@ -108,7 +109,7 @@ describe("createMonitor", () => {
 
   test("rejects an ACTIVE TOPIC monitor without a schedule or newsletter config", async () => {
     const requests = captureRequests({ data: monitorDto });
-    const handler = createMonitor(new Perigon("test-key"));
+    const handler = createMonitor(new Perigon("test-key", undefined, emptyMcpTelemetryHeaders));
 
     const missingBoth = await handler(
       createMonitorArgs.parse({
@@ -144,7 +145,7 @@ describe("createMonitor", () => {
 
   test("allows a DRAFT TOPIC monitor without a schedule or newsletter config", async () => {
     const requests = captureRequests({ data: monitorDto });
-    await createMonitor(new Perigon("test-key"))(
+    await createMonitor(new Perigon("test-key", undefined, emptyMcpTelemetryHeaders))(
       createMonitorArgs.parse({ ...baseCreateInput, classificationType: "TOPIC" })
     );
 
@@ -157,7 +158,7 @@ describe("createMonitor", () => {
 
   test("sends schedulePolicy and newsletterConfig for an ACTIVE TOPIC monitor", async () => {
     const requests = captureRequests({ data: monitorDto });
-    await createMonitor(new Perigon("test-key"))(
+    await createMonitor(new Perigon("test-key", undefined, emptyMcpTelemetryHeaders))(
       createMonitorArgs.parse({
         ...baseCreateInput,
         classificationType: "TOPIC",
@@ -188,7 +189,7 @@ describe("createMonitor", () => {
 describe("updateMonitor", () => {
   test("sends only provided fields and leaves omitted fields out of the PATCH body", async () => {
     const requests = captureRequests({ data: monitorDto });
-    await updateMonitor(new Perigon("test-key"))(
+    await updateMonitor(new Perigon("test-key", undefined, emptyMcpTelemetryHeaders))(
       updateMonitorArgs.parse({ uuid: MONITOR_UUID, name: "Renamed" })
     );
 
@@ -200,7 +201,7 @@ describe("updateMonitor", () => {
 
   test("sends null and empty arrays when fields are explicitly cleared", async () => {
     const requests = captureRequests({ data: monitorDto });
-    await updateMonitor(new Perigon("test-key"))(
+    await updateMonitor(new Perigon("test-key", undefined, emptyMcpTelemetryHeaders))(
       updateMonitorArgs.parse({
         uuid: MONITOR_UUID,
         prompt: null,
@@ -225,7 +226,7 @@ describe("updateMonitor", () => {
 
   test("rejects an update with no fields without sending a request", async () => {
     const requests = captureRequests({ data: monitorDto });
-    const result = await updateMonitor(new Perigon("test-key"))(
+    const result = await updateMonitor(new Perigon("test-key", undefined, emptyMcpTelemetryHeaders))(
       updateMonitorArgs.parse({ uuid: MONITOR_UUID })
     );
 
@@ -246,7 +247,7 @@ describe("setMonitorStatus", () => {
   for (const { status, method, url } of cases) {
     test(`${status} sends ${method} ${url.replace(MONITORS_URL, "")}`, async () => {
       const requests = captureRequests({ data: { ...monitorDto, status } });
-      const result = await setMonitorStatus(new Perigon("test-key"))(
+      const result = await setMonitorStatus(new Perigon("test-key", undefined, emptyMcpTelemetryHeaders))(
         setMonitorStatusArgs.parse({ uuid: MONITOR_UUID, status })
       );
 
@@ -282,7 +283,7 @@ describe("getMonitorNewsletters", () => {
     captureRequests({ total: 1, data: [newsletter] });
 
     const output = text(
-      await getMonitorNewsletters(new Perigon("test-key"))(
+      await getMonitorNewsletters(new Perigon("test-key", undefined, emptyMcpTelemetryHeaders))(
         getMonitorNewslettersArgs.parse({ uuid: MONITOR_UUID })
       )
     );

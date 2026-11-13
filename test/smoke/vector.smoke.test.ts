@@ -10,6 +10,7 @@ import {
   wikipediaVectorArgs,
 } from "../../worker/mcp/tools/search/wikipedia-vector";
 import { Perigon } from "../../worker/lib/perigon";
+import { emptyMcpTelemetryHeaders } from "../../worker/lib/telemetry-headers";
 
 const apiKey = process.env.PERIGON_API_KEY ?? "";
 const skip = !apiKey;
@@ -17,7 +18,7 @@ if (!skip) globalThis.fetch = realFetch;
 
 describe.skipIf(skip)("smoke: vector search", () => {
   test("search_vector_news returns articles for a conversational query", async () => {
-    const perigon = new Perigon(apiKey);
+    const perigon = new Perigon(apiKey, undefined, emptyMcpTelemetryHeaders);
     const result = await searchVectorNews(perigon)(
       newsVectorArgs.parse({ query: "AI safety progress this year" })
     );
@@ -25,7 +26,7 @@ describe.skipIf(skip)("smoke: vector search", () => {
   }, 60_000);
 
   test("search_vector_wikipedia returns pages for a conversational query", async () => {
-    const perigon = new Perigon(apiKey);
+    const perigon = new Perigon(apiKey, undefined, emptyMcpTelemetryHeaders);
     const result = await searchVectorWikipedia(perigon)(
       wikipediaVectorArgs.parse({ query: "history of OpenAI" })
     );

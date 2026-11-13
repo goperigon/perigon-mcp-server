@@ -3,6 +3,10 @@ import { z } from "zod";
 import { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { TOOL_DEFINITIONS, type ToolName } from "./tools";
 import { Perigon } from "../lib/perigon";
+import {
+  buildMcpTelemetryHeaders,
+  PLAYGROUND_CHAT_MCP_CLIENT,
+} from "../lib/telemetry-headers";
 import { resolveActiveTools } from "./tools/selection";
 import { SOCIAL_TOOL_DEFINITIONS, type SocialToolName } from "./tools/social";
 import type { ToolDefinition } from "./tools/types";
@@ -29,7 +33,6 @@ export function createAISDKTools(
   requestedTools?: string[] | null,
   socialToolNames: readonly SocialToolName[] = []
 ) {
-  const perigon = new Perigon(apiKey);
   const tools: Record<string, any> = {};
 
   const allToolNames = Object.keys(TOOL_DEFINITIONS) as ToolName[];
@@ -56,6 +59,12 @@ export function createAISDKTools(
       execute: async (
         params: z.infer<typeof definition.parameters>
       ): Promise<string> => {
+        const perigon = new Perigon(apiKey, undefined, () =>
+          buildMcpTelemetryHeaders({
+            toolName,
+            clientInfo: PLAYGROUND_CHAT_MCP_CLIENT,
+          }),
+        );
         const mcpTool = definition.createHandler(perigon);
         const result: CallToolResult = await mcpTool(params);
         return convertMCPResult(result);

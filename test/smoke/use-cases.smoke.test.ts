@@ -14,6 +14,7 @@ import {
   locationNewsArgs,
 } from "../../worker/mcp/tools/use-cases/location-news";
 import { Perigon } from "../../worker/lib/perigon";
+import { emptyMcpTelemetryHeaders } from "../../worker/lib/telemetry-headers";
 
 const apiKey = process.env.PERIGON_API_KEY ?? "";
 const skip = !apiKey;
@@ -21,7 +22,7 @@ if (!skip) globalThis.fetch = realFetch;
 
 describe.skipIf(skip)("smoke: use-case tools", () => {
   test("get_company_news for OpenAI", async () => {
-    const perigon = new Perigon(apiKey);
+    const perigon = new Perigon(apiKey, undefined, emptyMcpTelemetryHeaders);
     const result = await getCompanyNews(perigon)(
       companyNewsArgs.parse({ companyName: "OpenAI", days: 7 })
     );
@@ -29,7 +30,7 @@ describe.skipIf(skip)("smoke: use-case tools", () => {
   }, 60_000);
 
   test("get_person_news for Sam Altman", async () => {
-    const perigon = new Perigon(apiKey);
+    const perigon = new Perigon(apiKey, undefined, emptyMcpTelemetryHeaders);
     const result = await getPersonNews(perigon)(
       personNewsArgs.parse({ personName: "Sam Altman", days: 30 })
     );
@@ -37,7 +38,7 @@ describe.skipIf(skip)("smoke: use-case tools", () => {
   }, 60_000);
 
   test("get_location_news for Austin", async () => {
-    const perigon = new Perigon(apiKey);
+    const perigon = new Perigon(apiKey, undefined, emptyMcpTelemetryHeaders);
     const result = await getLocationNews(perigon)(
       locationNewsArgs.parse({ location: "Austin", days: 7 })
     );

@@ -2,9 +2,12 @@ import { afterEach, describe, expect, test } from "bun:test";
 import { InsightsApiClient } from "../../../worker/lib/insights-api-client";
 import { Perigon } from "../../../worker/lib/perigon";
 import {
+  emptyMcpTelemetryHeaders,
   PERIGON_CLIENT_HEADER,
+  PERIGON_MCP_CLIENT_HEADER,
   PERIGON_MCP_TOOL_HEADER,
   buildMcpTelemetryHeaders,
+  PLAYGROUND_MCP_CLIENT,
 } from "../../../worker/lib/telemetry-headers";
 import {
   installFetchMock,
@@ -73,7 +76,11 @@ describe("Perigon telemetry headers", () => {
       return Response.json({});
     });
 
-    const perigon = new Perigon("test-key", "https://api.test.local");
+    const perigon = new Perigon(
+      "test-key",
+      "https://api.test.local",
+      emptyMcpTelemetryHeaders,
+    );
     await perigon.introspection();
 
     expect(capturedHeaders?.get(PERIGON_CLIENT_HEADER)).toBeNull();

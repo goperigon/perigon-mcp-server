@@ -18,6 +18,10 @@ import {
 import { getCachedIntrospection } from "../lib/introspection-cache";
 import { DEFAULT_PERIGON_API_URL } from "../lib/mcp-env";
 import { Perigon } from "../lib/perigon";
+import {
+  buildMcpTelemetryHeaders,
+  PLAYGROUND_CHAT_MCP_CLIENT,
+} from "../lib/telemetry-headers";
 import { createAISDKTools } from "../mcp/ai-sdk-adapter";
 import { resolveSocialToolsForSession } from "../mcp/tool-registration";
 import {
@@ -131,9 +135,11 @@ async function resolveChatSocialTools(
 ): Promise<SocialToolName[]> {
   try {
     const introspection = await getCachedIntrospection(
-      new Perigon(perigonApiKey),
+      new Perigon(perigonApiKey, DEFAULT_PERIGON_API_URL, () =>
+        buildMcpTelemetryHeaders({ clientInfo: PLAYGROUND_CHAT_MCP_CLIENT }),
+      ),
       perigonApiKey,
-      DEFAULT_PERIGON_API_URL
+      DEFAULT_PERIGON_API_URL,
     );
     return resolveSocialToolsForSession(
       introspection.socialSources ?? [],
