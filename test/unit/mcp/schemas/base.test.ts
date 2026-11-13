@@ -3,12 +3,13 @@ import {
   defaultArgs,
   locationArgs,
   paginationArgs,
+  resolveCountries,
 } from "../../../../worker/mcp/tools/schemas/base";
 
 describe("locationArgs", () => {
-  test("countries default to ['us']", () => {
+  test("countries are not defaulted by the schema; handlers use resolveCountries", () => {
     const result = locationArgs.parse({});
-    expect(result.countries).toEqual(["us"]);
+    expect(result.countries).toBeUndefined();
   });
 
   test("countries are lowercased", () => {
@@ -77,5 +78,35 @@ describe("defaultArgs (parseTime)", () => {
     const result = defaultArgs.parse({});
     expect(result.from).toBeUndefined();
     expect(result.to).toBeUndefined();
+  });
+});
+
+describe("resolveCountries", () => {
+  test("applies the default country when no geographic filter is given", () => {
+    expect(resolveCountries(undefined, undefined, [], "")).toEqual({
+      country: ["us"],
+      defaultCountryApplied: true,
+    });
+  });
+
+  test("other geographic filters suppress the default", () => {
+    expect(resolveCountries(undefined, ["Paris"])).toEqual({
+      country: undefined,
+      defaultCountryApplied: false,
+    });
+    expect(resolveCountries(undefined, undefined, undefined, "France")).toEqual(
+      { country: undefined, defaultCountryApplied: false }
+    );
+  });
+
+  test("explicit countries are kept, and [] means all countries", () => {
+    expect(resolveCountries(["fr"])).toEqual({
+      country: ["fr"],
+      defaultCountryApplied: false,
+    });
+    expect(resolveCountries([])).toEqual({
+      country: undefined,
+      defaultCountryApplied: false,
+    });
   });
 });

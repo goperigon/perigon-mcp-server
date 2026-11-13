@@ -9,7 +9,11 @@ import {
   companiesFixture,
   emptyArticlesFixture,
 } from "../../../helpers/fixtures";
-import { createMockPerigon, firstCallArgs } from "../../../helpers/mock-perigon";
+import {
+  createMockPerigon,
+  firstCallArgs,
+  firstRequestOf,
+} from "../../../helpers/mock-perigon";
 
 const text = (r: any) => r.content[0].text as string;
 
@@ -35,6 +39,9 @@ describe("getCompanyNews", () => {
     const articleCall = firstCallArgs<any>(perigon.searchArticles);
     expect(articleCall.q).toBe("Acme");
     expect(articleCall.country).toEqual(["us"]);
+    expect(text(result)).toStartWith(
+      "<note>No country filter was given, so the default country filter was applied: us. Pass country to search another country"
+    );
     expect(articleCall.size).toBe(5);
     expect(articleCall.sortBy).toBe("date");
     expect(articleCall.showNumResults).toBe(true);
@@ -95,9 +102,21 @@ describe("getCompanyNews", () => {
     ).toThrow();
   });
 
-  test("country defaults to 'us' and limit defaults to 10", () => {
+  test("an explicit country is forwarded lowercased, without the default note", async () => {
+    const perigon = createMockPerigon({
+      searchCompanies: async () => companiesFixture,
+      searchArticles: async () => articlesFixture,
+    });
+    const result = await getCompanyNews(perigon)(
+      companyNewsArgs.parse({ companyName: "Acme", country: "GB" })
+    );
+    expect(firstRequestOf(perigon, "searchArticles").country).toEqual(["gb"]);
+    expect(text(result)).not.toContain("<note>");
+  });
+
+  test("country is left to the handler's default and limit defaults to 10", () => {
     const parsed = companyNewsArgs.parse({ companyName: "Acme" });
-    expect(parsed.country).toBe("us");
+    expect(parsed.country).toBeUndefined();
     expect(parsed.limit).toBe(10);
     expect(parsed.days).toBe(7);
   });

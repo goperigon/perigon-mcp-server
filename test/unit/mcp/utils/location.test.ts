@@ -6,6 +6,8 @@ import {
   detectLocationType,
   mergeLocationFilters,
   parseLocation,
+  resolveCountryCode,
+  resolveStateCode,
 } from "../../../../worker/mcp/tools/utils/location";
 
 describe("detectLocationType", () => {
@@ -35,6 +37,56 @@ describe("detectLocationType", () => {
   test("defaults longer names to city", () => {
     expect(detectLocationType("Austin")).toBe("city");
     expect(detectLocationType("Mountain View")).toBe("city");
+    expect(detectLocationType("Paris")).toBe("city");
+  });
+
+  test("recognizes full US state and country names", () => {
+    expect(detectLocationType("Texas")).toBe("state");
+    expect(detectLocationType("new york")).toBe("state");
+    expect(detectLocationType("France")).toBe("country");
+    expect(detectLocationType("United Kingdom")).toBe("country");
+  });
+});
+
+describe("resolveStateCode", () => {
+  test("uppercases codes and maps full names", () => {
+    expect(resolveStateCode("tx")).toBe("TX");
+    expect(resolveStateCode("Texas")).toBe("TX");
+    expect(resolveStateCode(" north  carolina ")).toBe("NC");
+    expect(resolveStateCode("District of Columbia")).toBe("DC");
+  });
+
+  test("returns undefined for names that are not US states", () => {
+    expect(resolveStateCode("Bavaria")).toBeUndefined();
+    expect(resolveStateCode("constructor")).toBeUndefined();
+    expect(resolveStateCode("toString")).toBeUndefined();
+  });
+});
+
+describe("resolveCountryCode", () => {
+  test("lowercases codes and maps uk to gb", () => {
+    expect(resolveCountryCode("FR")).toBe("fr");
+    expect(resolveCountryCode("uk")).toBe("gb");
+  });
+
+  test("maps English names and common aliases to current ISO codes", () => {
+    expect(resolveCountryCode("France")).toBe("fr");
+    expect(resolveCountryCode("Germany")).toBe("de");
+    expect(resolveCountryCode("United Kingdom")).toBe("gb");
+    expect(resolveCountryCode("Great Britain")).toBe("gb");
+    expect(resolveCountryCode("United States")).toBe("us");
+    expect(resolveCountryCode("USA")).toBe("us");
+    expect(resolveCountryCode("the Netherlands")).toBe("nl");
+    expect(resolveCountryCode("Vietnam")).toBe("vn");
+    expect(resolveCountryCode("Serbia")).toBe("rs");
+    expect(resolveCountryCode("Myanmar")).toBe("mm");
+    expect(resolveCountryCode("Turkey")).toBe("tr");
+    expect(resolveCountryCode("Côte d’Ivoire")).toBe("ci");
+    expect(resolveCountryCode("China")).toBe("cn");
+  });
+
+  test("returns undefined for unknown names", () => {
+    expect(resolveCountryCode("Atlantis")).toBeUndefined();
   });
 });
 
@@ -43,6 +95,13 @@ describe("parseLocation", () => {
     const result = parseLocation("Austin");
     expect(result.detectedType).toBe("city");
     expect(result.filter).toEqual({ city: ["Austin"] });
+  });
+
+  test("Object.prototype property names are treated as cities", () => {
+    expect(parseLocation("constructor")).toEqual({
+      detectedType: "city",
+      filter: { city: ["constructor"] },
+    });
   });
 
   test("auto-detect state uppercases the value", () => {
@@ -59,14 +118,22 @@ describe("parseLocation", () => {
   });
 
   test("explicit type overrides auto detection", () => {
-    const result = parseLocation("Texas", "state");
-    expect(result.detectedType).toBe("state");
-    expect(result.filter).toEqual({ state: ["TEXAS"] });
+    const result = parseLocation("Georgia", "country");
+    expect(result.detectedType).toBe("country");
+    expect(result.filter).toEqual({ country: ["ge"] });
   });
 
-  test("explicit country lowercases", () => {
-    const result = parseLocation("Germany", "country");
-    expect(result.filter).toEqual({ country: ["germany"] });
+  test("state and country names resolve to codes", () => {
+    expect(parseLocation("Texas", "state").filter).toEqual({ state: ["TX"] });
+    expect(parseLocation("Germany", "country").filter).toEqual({
+      country: ["de"],
+    });
+    expect(parseLocation("France").filter).toEqual({ country: ["fr"] });
+  });
+
+  test("unresolvable state or country names yield no structured filter", () => {
+    expect(parseLocation("Bavaria", "state").filter).toEqual({});
+    expect(parseLocation("Narnia", "country").filter).toEqual({});
   });
 });
 
@@ -108,6 +175,17 @@ describe("applyLocationFilter", () => {
   test("does not overwrite an existing query", () => {
     const out = applyLocationFilter({ q: "trump" }, "Austin", "auto", "trump");
     expect(out.q).toBe("trump");
+  });
+
+  test("adds an unresolvable location to the query as text", () => {
+    const out = applyLocationFilter(
+      { q: "beer" },
+      "Bavaria",
+      "state",
+      "beer"
+    );
+    expect(out.q).toBe('(beer) AND "Bavaria"');
+    expect(out.state).toBeUndefined();
   });
 });
 

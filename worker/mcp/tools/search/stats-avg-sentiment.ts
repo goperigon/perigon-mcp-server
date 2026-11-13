@@ -4,10 +4,11 @@ import { Perigon, AvgSentimentStatDto, StatResult } from "../../../lib/perigon";
 import { ToolCallback, ToolDefinition } from "../types";
 import {
   statsFilterArgs,
+  statsFilters,
   splitByEnum,
   normalizeSplitBy,
 } from "../schemas/stats";
-import { toolResult, noResults } from "../utils/formatting";
+import { toolResult, noResults, dateAttr } from "../utils/formatting";
 import { createErrorMessage } from "../utils/error-handling";
 
 export const avgSentimentArgs = statsFilterArgs.extend({
@@ -23,25 +24,7 @@ export function getAvgSentiment(
     try {
       const result: StatResult<AvgSentimentStatDto> =
         await perigon.getAvgSentiment({
-          q: args.q,
-          from: args.from,
-          to: args.to,
-          source: args.source,
-          sourceGroup: args.sourceGroup,
-          category: args.category,
-          topic: args.topic,
-          language: args.language,
-          country: args.country,
-          personName: args.personName,
-          companyDomain: args.companyDomain,
-          companySymbol: args.companySymbol,
-          journalistId: args.journalistId,
-          personWikidataId: args.personWikidataId,
-          companyId: args.companyId,
-          taxonomy: args.taxonomy,
-          excludeSource: args.excludeSource,
-          excludeCategory: args.excludeCategory,
-          excludeTopic: args.excludeTopic,
+          ...statsFilters(args),
           splitBy: normalizeSplitBy(args.splitBy),
         });
 
@@ -49,7 +32,7 @@ export function getAvgSentiment(
 
       const rows = result.results.map(
         (r) =>
-          `<sentiment_bucket date="${r.date}" articles="${r.numResults}">` +
+          `<sentiment_bucket${dateAttr(r.date)} articles="${r.numResults}">` +
           `\nPositive: ${r.avgSentiment.positive.toFixed(4)}` +
           `\nNegative: ${r.avgSentiment.negative.toFixed(4)}` +
           `\nNeutral: ${r.avgSentiment.neutral.toFixed(4)}` +

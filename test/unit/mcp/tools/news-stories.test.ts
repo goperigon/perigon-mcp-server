@@ -1,5 +1,6 @@
-import { describe, expect, spyOn, test } from "bun:test";
+import { afterEach, describe, expect, spyOn, test } from "bun:test";
 import { HttpError } from "../../../../worker/types/types";
+import { Perigon } from "../../../../worker/lib/perigon";
 import {
   newsStoriesArgs,
   searchNewsStories,
@@ -8,14 +9,24 @@ import {
   emptyStoriesFixture,
   storiesFixture,
 } from "../../../helpers/fixtures";
-import { createMockPerigon, firstCallArgs } from "../../../helpers/mock-perigon";
+import { createMockPerigon, firstRequestOf } from "../../../helpers/mock-perigon";
+import {
+  installFetchMock,
+  jsonResponse,
+  restoreFetch,
+  urlOf,
+} from "../../../helpers/mock-fetch";
 
 const text = (r: any) => r.content[0].text as string;
+
+afterEach(() => {
+  restoreFetch();
+});
 
 describe("searchNewsStories", () => {
   test("forwards mapped params and renders story output", async () => {
     const perigon = createMockPerigon({
-      searchStories: async () => storiesFixture,
+      searchStoriesFull: async () => storiesFixture,
     });
     const handler = searchNewsStories(perigon);
 
@@ -28,7 +39,7 @@ describe("searchNewsStories", () => {
     });
     const result = await handler(args);
 
-    const call = firstCallArgs<any>(perigon.searchStories);
+    const call = firstRequestOf(perigon, "searchStoriesFull");
     expect(call.q).toBe("merger");
     expect(call.category).toEqual(["Business"]);
     expect(call.topic).toEqual(["Markets"]);
@@ -43,14 +54,14 @@ describe("searchNewsStories", () => {
 
   test("isTopHeadlines:true overrides `from` to the last 24h", async () => {
     const perigon = createMockPerigon({
-      searchStories: async () => storiesFixture,
+      searchStoriesFull: async () => storiesFixture,
     });
     const handler = searchNewsStories(perigon);
     const before = Date.now();
     const args = newsStoriesArgs.parse({ isTopHeadlines: true });
     await handler(args);
     const after = Date.now();
-    const call = firstCallArgs<any>(perigon.searchStories);
+    const call = firstRequestOf(perigon, "searchStoriesFull");
     expect(call.from).toBeInstanceOf(Date);
     const fromMs = (call.from as Date).getTime();
     // Should be within ~24h before "after" (and not later than "before")
@@ -60,43 +71,83 @@ describe("searchNewsStories", () => {
     expect(fromMs).toBeLessThanOrEqual(upperBound);
   });
 
-  test("language/label/minSourceDiversity only included when defined", async () => {
+  test("minSourceDiversity only included when defined", async () => {
     const perigon = createMockPerigon({
-      searchStories: async () => storiesFixture,
+      searchStoriesFull: async () => storiesFixture,
     });
-    const handler = searchNewsStories(perigon);
-    await handler(newsStoriesArgs.parse({}));
-    const call = firstCallArgs<any>(perigon.searchStories);
-    expect(call).not.toHaveProperty("language");
-    expect(call).not.toHaveProperty("label");
-    expect(call).not.toHaveProperty("minSourceDiversity");
+    await searchNewsStories(perigon)(newsStoriesArgs.parse({}));
+    expect(firstRequestOf(perigon, "searchStoriesFull")).not.toHaveProperty(
+      "minSourceDiversity"
+    );
 
     const perigon2 = createMockPerigon({
-      searchStories: async () => storiesFixture,
+      searchStoriesFull: async () => storiesFixture,
     });
     await searchNewsStories(perigon2)(
-      newsStoriesArgs.parse({
-        language: ["en"],
-        label: ["Opinion"],
-        minSourceDiversity: 0.05,
-      })
+      newsStoriesArgs.parse({ minSourceDiversity: 0.05 })
     );
-    const call2 = firstCallArgs<any>(perigon2.searchStories);
-    expect(call2.language).toEqual(["en"]);
-    expect(call2.label).toEqual(["Opinion"]);
-    expect(call2.minSourceDiversity).toBe(0.05);
+    expect(firstRequestOf(perigon2, "searchStoriesFull").minSourceDiversity).toBe(
+      0.05
+    );
   });
 
-  test("renders article, publisher, and source diversity counts", async () => {
-    const perigon = createMockPerigon({
-      searchStories: async () => ({
+  test("sends filters on the wire and renders API-computed source fields", async () => {
+    let capturedUrl = "";
+    installFetchMock((input) => {
+      capturedUrl = urlOf(input);
+      return jsonResponse({
         ...storiesFixture,
         results: [
           {
             ...storiesFixture.results[0],
-            totalCount: 133,
-            uniqueCount: 124,
-            uniqueSources: Array.from({ length: 8 }, (_, i) => `s${i}.com`),
+            totalCount: 40,
+            uniqueCount: 30,
+            uniqueSourcesCount: 10,
+            sourceDiversity: 0.25,
+          },
+        ],
+      });
+    });
+
+    const output = text(
+      await searchNewsStories(new Perigon("test-key"))(
+        newsStoriesArgs.parse({ minSourceDiversity: 0.2 })
+      )
+    );
+
+    const url = new URL(capturedUrl);
+    expect(url.pathname).toBe("/v1/stories/all");
+    expect(url.searchParams.get("minSourceDiversity")).toBe("0.2");
+
+    expect(output).toContain("Articles: 40 total, 30 unique");
+    expect(output).toContain("Publishers: 10");
+    expect(output).toContain("Source Diversity: 0.25");
+    expect(output).not.toContain("Unique Sources");
+  });
+
+  test("does not accept language or label, which the stories API lacks", async () => {
+    expect(newsStoriesArgs.shape).not.toHaveProperty("language");
+    expect(newsStoriesArgs.shape).not.toHaveProperty("label");
+
+    const perigon = createMockPerigon({
+      searchStoriesFull: async () => storiesFixture,
+    });
+    await searchNewsStories(perigon)(
+      newsStoriesArgs.parse({ language: ["en"], label: ["Opinion"] })
+    );
+    const call = firstRequestOf(perigon, "searchStoriesFull");
+    expect(call).not.toHaveProperty("language");
+    expect(call).not.toHaveProperty("label");
+  });
+
+  test("shows N/A when the API omits the source fields", async () => {
+    const perigon = createMockPerigon({
+      searchStoriesFull: async () => ({
+        ...storiesFixture,
+        results: [
+          {
+            ...storiesFixture.results[0],
+            uniqueSources: ["a.com", "b.com"],
           },
         ],
       }),
@@ -104,35 +155,26 @@ describe("searchNewsStories", () => {
     const output = text(
       await searchNewsStories(perigon)(newsStoriesArgs.parse({})),
     );
-    expect(output).toContain("Articles: 133 total, 124 unique");
-    expect(output).toContain("Publishers: 8");
-    expect(output).toContain("Source Diversity: 0.06");
-  });
-
-  test("shows unknown source diversity when counts are missing", async () => {
-    const perigon = createMockPerigon({
-      searchStories: async () => storiesFixture,
-    });
-    const output = text(
-      await searchNewsStories(perigon)(newsStoriesArgs.parse({})),
-    );
     expect(output).toContain("Articles: N/A total, N/A unique");
     expect(output).toContain("Publishers: N/A");
-    expect(output).toContain("Source Diversity: unknown");
+    expect(output).toContain("Source Diversity: N/A");
   });
 
   test("returns noResults when numResults === 0", async () => {
     const perigon = createMockPerigon({
-      searchStories: async () => emptyStoriesFixture,
+      searchStoriesFull: async () => emptyStoriesFixture,
     });
     const result = await searchNewsStories(perigon)(newsStoriesArgs.parse({}));
-    expect(text(result)).toBe("No results found");
+    expect(text(result)).toStartWith(
+      "<note>No country filter was given, so the default country filter was applied: us."
+    );
+    expect(text(result)).toEndWith("No results found");
   });
 
   test("error path returns 'Error: Failed to search news stories:'", async () => {
     const errorSpy = spyOn(console, "error").mockImplementation(() => {});
     const perigon = createMockPerigon({
-      searchStories: async () => {
+      searchStoriesFull: async () => {
         throw new HttpError(500, "boom");
       },
     });

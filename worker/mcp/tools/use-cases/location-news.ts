@@ -4,6 +4,7 @@ import { Perigon } from "../../../lib/perigon";
 import { ToolCallback, ToolDefinition } from "../types";
 import { toolResult } from "../utils/formatting";
 import { createErrorMessage } from "../utils/error-handling";
+import { parseLocation } from "../utils/location";
 
 /**
  * Schema for location news search arguments
@@ -13,7 +14,7 @@ export const locationNewsArgs = z.object({
     .string()
     .min(1)
     .describe(
-      "Location to search for news about (city, state, or country name)",
+      "Location to search for news about: a city, a US state name or code, or a country name or code. Names are resolved to codes (France → fr, Texas → TX).",
     ),
   days: z
     .number()
@@ -70,7 +71,7 @@ export function getLocationNews(
       const todayStr = today.toISOString().split("T")[0];
 
       // Determine location type and prepare search parameters
-      let searchParams: any = {
+      const searchParams: Parameters<Perigon["searchArticles"]>[0] = {
         q: location, // Always include location in query
         from: fromDate,
         to: today,
@@ -80,113 +81,7 @@ export function getLocationNews(
         showReprints: false,
       };
 
-      // Smart location detection and parameter setting
-      if (locationType === "auto") {
-        // Try to detect location type based on common patterns
-        const locationLower = location.toLowerCase();
-
-        // Common US state abbreviations and names
-        const usStates = [
-          "al",
-          "ak",
-          "az",
-          "ar",
-          "ca",
-          "co",
-          "ct",
-          "de",
-          "fl",
-          "ga",
-          "hi",
-          "id",
-          "il",
-          "in",
-          "ia",
-          "ks",
-          "ky",
-          "la",
-          "me",
-          "md",
-          "ma",
-          "mi",
-          "mn",
-          "ms",
-          "mo",
-          "mt",
-          "ne",
-          "nv",
-          "nh",
-          "nj",
-          "nm",
-          "ny",
-          "nc",
-          "nd",
-          "oh",
-          "ok",
-          "or",
-          "pa",
-          "ri",
-          "sc",
-          "sd",
-          "tn",
-          "tx",
-          "ut",
-          "vt",
-          "va",
-          "wa",
-          "wv",
-          "wi",
-          "wy",
-        ];
-        const commonCountries = [
-          "us",
-          "uk",
-          "ca",
-          "au",
-          "de",
-          "fr",
-          "jp",
-          "cn",
-          "in",
-          "br",
-          "mx",
-          "it",
-          "es",
-          "ru",
-        ];
-
-        if (location.length === 2 && usStates.includes(locationLower)) {
-          searchParams.state = [location.toUpperCase()];
-        } else if (
-          location.length === 2 &&
-          commonCountries.includes(locationLower)
-        ) {
-          searchParams.country = [locationLower];
-        } else if (
-          locationLower.includes("county") ||
-          locationLower.includes("city") ||
-          locationLower.includes("town") ||
-          locationLower.includes("village")
-        ) {
-          searchParams.city = [location];
-        } else {
-          // Default to treating as city for longer names
-          searchParams.city = [location];
-        }
-      } else {
-        // Use explicit location type
-        switch (locationType) {
-          case "city":
-            searchParams.city = [location];
-            break;
-          case "state":
-            searchParams.state = [location.toUpperCase()];
-            break;
-          case "country":
-            searchParams.country = [location.toLowerCase()];
-            break;
-        }
-      }
+      Object.assign(searchParams, parseLocation(location, locationType).filter);
 
       // Search for recent news about the location
       const newsResult = await perigon.searchArticles(searchParams);

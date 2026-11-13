@@ -32,6 +32,9 @@ describe("getPersonNews", () => {
     expect(articleCall.q).toBe("Alice");
     expect(articleCall.sortBy).toBe("date");
     expect(articleCall.country).toEqual(["us"]);
+    expect(text(result)).toStartWith(
+      "<note>No country filter was given, so the default country filter was applied: us. Pass country to search another country"
+    );
     const t = text(result);
     expect(t).toContain('Recent news for "Alice"');
     expect(t).toContain("<person-context>");

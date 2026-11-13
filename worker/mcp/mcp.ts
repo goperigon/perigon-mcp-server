@@ -57,15 +57,13 @@ export type Props = {
   organizationId: number;
 };
 
+const SERVER_INFO = { name: "Perigon", version: "1.0.0" };
+
 export class PerigonMCP extends McpAgent<Env, unknown, Props> {
   // Type assertion needed: agents bundles its own @modelcontextprotocol/sdk copy
-  server = new McpServer(
-    {
-      name: "Perigon",
-      version: "1.0.0",
-    },
-    { instructions: instructions.MCP_INSTRUCTIONS },
-  );
+  server = new McpServer(SERVER_INFO, {
+    instructions: instructions.MCP_INSTRUCTIONS,
+  });
 
   // registerTool() throws if the same name is registered twice. Tracked
   // separately so one misconfigured entry skips a duplicate instead of
@@ -76,13 +74,34 @@ export class PerigonMCP extends McpAgent<Env, unknown, Props> {
     const { scopes, socialSources, requestedTools, explicitAllTools } =
       this.props!;
 
-    // ── News tools (existing) ──────────────────────────────────────────────
     const activeNewsTools = resolveNewsToolsForSession(
       scopes,
       requestedTools,
       explicitAllTools,
     );
+    // `socialSources` is absent on props persisted before it existed.
+    const activeSocialTools = resolveSocialToolsForSession(
+      socialSources ?? [],
+      requestedTools,
+    );
+    const activeSignalTools = requestedTools
+      ? SIGNAL_TOOL_NAMES.filter((n) => requestedTools.includes(n))
+      : [...SIGNAL_TOOL_NAMES];
 
+    // `onStart` runs `init()` before connecting `this.server`, so the server
+    // can be rebuilt with instructions that list only this session's tools.
+    this.server = new McpServer(SERVER_INFO, {
+      instructions: instructions.buildInstructions(
+        new Set<string>([
+          ...activeNewsTools,
+          ...activeSocialTools,
+          ...activeSignalTools,
+        ]),
+      ),
+    });
+    this.registeredToolNames.clear();
+
+    // ── News tools (existing) ──────────────────────────────────────────────
     // Computed once per session from the already-known scopes (no extra
     // network call) and used to append session-specific entitlement notes
     // to tool descriptions below.
@@ -93,11 +112,7 @@ export class PerigonMCP extends McpAgent<Env, unknown, Props> {
     }
 
     // ── Social tools (only for organizations with the social source) ──────
-    // `socialSources` is absent on props persisted before it existed.
-    for (const toolName of resolveSocialToolsForSession(
-      socialSources ?? [],
-      requestedTools,
-    )) {
+    for (const toolName of activeSocialTools) {
       const definition = SOCIAL_TOOL_DEFINITIONS[toolName];
       this.registerPerigonTool(definition, definition.description);
     }
@@ -106,10 +121,6 @@ export class PerigonMCP extends McpAgent<Env, unknown, Props> {
     registerResearchPrompts(this.server);
 
     // ── Signal Insights tools (always available) ──────────────────────────
-    const activeSignalTools = requestedTools
-      ? SIGNAL_TOOL_NAMES.filter((n) => requestedTools.includes(n))
-      : [...SIGNAL_TOOL_NAMES];
-
     if (activeSignalTools.length === 0) return;
 
     // Register the chart viewer UI resource (MCP Apps / SEP-1865).

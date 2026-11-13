@@ -1,8 +1,14 @@
 import { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 import { Perigon } from "../../../lib/perigon";
-import { ToolCallback, ToolDefinition } from "../types";
-import { toolResult, formatLabelList } from "../utils/formatting";
+import { CONSTANTS, ToolCallback, ToolDefinition } from "../types";
+import {
+  toolResult,
+  formatLabelList,
+  withDefaultCountryNote,
+  SINGLE_COUNTRY_HINT,
+  describeDefaultCountry,
+} from "../utils/formatting";
 import { createErrorMessage } from "../utils/error-handling";
 
 /**
@@ -30,8 +36,10 @@ export const personNewsArgs = z.object({
   country: z
     .string()
     .length(2)
-    .default("us")
-    .describe("Country code to filter news sources (default: 'us')"),
+    .optional()
+    .describe(
+      "Country code to filter news sources. Defaults to us; the response starts with a note when the default is applied.",
+    ),
 });
 
 /**
@@ -98,7 +106,9 @@ Description: ${person.description ?? "N/A"}
         q: personName,
         from: fromDate,
         to: today,
-        country: [country],
+        country: country
+          ? [country.toLowerCase()]
+          : [...CONSTANTS.DEFAULT_COUNTRIES],
         size: limit,
         sortBy: "date",
         showNumResults: true,
@@ -107,7 +117,11 @@ Description: ${person.description ?? "N/A"}
 
       if (newsResult.numResults === 0) {
         return toolResult(
-          `No recent news found for "${personName}" in the last ${days} days.${personInfo}`,
+          withDefaultCountryNote(
+            `No recent news found for "${personName}" in the last ${days} days.${personInfo}`,
+            !country,
+            SINGLE_COUNTRY_HINT,
+          ),
         );
       }
 
@@ -132,7 +146,7 @@ Journalist Ids: ${journalistIds}
       output += articles.join("\n\n");
       output += "\n</articles>";
 
-      return toolResult(output);
+      return toolResult(withDefaultCountryNote(output, !country, SINGLE_COUNTRY_HINT));
     } catch (error) {
       console.error("Error getting person news:", error);
       return toolResult(
@@ -149,7 +163,12 @@ export const personNewsTool = {
   name: "get_person_news",
   title: "Person news",
   description:
-    "Quick shortcut to get recent news about a specific person by name. Automatically looks up the person's profile for context, then finds recent articles mentioning them within a configurable time window. Use this for simple 'what's the latest news about [person]?' queries. For advanced filtering, use search_news_articles with personName instead.",
+    "Quick shortcut to get recent news about a specific person by name. Automatically looks up the person's profile for context, then finds recent articles mentioning them within a configurable time window. Use this for simple 'what's the latest news about [person]?' queries. For advanced filtering, use search_news_articles with personName instead." +
+    " " +
+    describeDefaultCountry(
+      ["country"],
+      "pass country to choose another, or use search_news_articles with countries: [] for all countries",
+    ),
   parameters: personNewsArgs,
   annotations: {
     readOnlyHint: true,

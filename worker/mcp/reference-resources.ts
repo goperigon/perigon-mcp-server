@@ -32,7 +32,7 @@ export const FIELDS_REFERENCE = `\
 
 ## Articles and stories
 - Reprints are deduplicated by default (\`showReprints=false\`); \`reprintGroupId\` links copies of the same wire story across outlets.
-- A story (cluster) aggregates many articles: \`uniqueCount\`/\`totalCount\` are article counts, \`uniqueSources\` lists distinct publishers — high \`totalCount\` with low \`uniqueCount\` usually means syndication, not broad pickup.
+- A story (cluster) aggregates many articles: \`uniqueCount\`/\`totalCount\` are article counts, \`uniqueSourcesCount\` is the number of distinct publishers and \`sourceDiversity\` is \`uniqueSourcesCount / totalCount\` — high \`totalCount\` with low \`uniqueCount\` usually means syndication, not broad pickup.
 - \`enContentWordCount\` (English content only) is useful for filtering shallow wire-copy from in-depth reporting.
 - \`matchedAuthors\` on an article is the chaining hook to journalist profiles — feed the ids into \`search_journalists(journalistIds)\`.
 

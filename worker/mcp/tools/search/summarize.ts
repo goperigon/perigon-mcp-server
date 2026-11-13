@@ -3,12 +3,22 @@ import { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 import { Perigon } from "../../../lib/perigon";
 import { ToolCallback, ToolDefinition } from "../types";
-import { createBaseSearchArgs, categories, topics } from "../schemas/base";
+import {
+  createBaseSearchArgs,
+  categories,
+  topics,
+  resolveCountries,
+} from "../schemas/base";
 import { createSearchField } from "../schemas/search";
-import { toolResult, noResults } from "../utils/formatting";
+import {
+  toolResult,
+  withDefaultCountryNote,
+  describeDefaultCountry,
+} from "../utils/formatting";
 import { createErrorMessage } from "../utils/error-handling";
 
-export const summarizeArgs = createBaseSearchArgs().extend({
+// The API derives the page size from maxArticleCount, so `size` would be ignored.
+export const summarizeArgs = createBaseSearchArgs().omit({ size: true }).extend({
   query: createSearchField("article content for summarization"),
   categories,
   topics,
@@ -128,7 +138,6 @@ export function summarizeNews(
   return async ({
     query,
     page,
-    size,
     states,
     cities,
     countries,
@@ -167,14 +176,18 @@ export function summarizeNews(
       if (method) summaryBody.method = method;
       if (summarizeFields) summaryBody.summarizeFields = summarizeFields;
 
+      const { country, defaultCountryApplied } = resolveCountries(
+        countries,
+        cities,
+        states,
+      );
       const result = await perigon.searchSummarizer({
         summaryBody,
         q: query,
         page,
-        size,
         state: states,
         city: cities,
-        country: countries,
+        country,
         from,
         to,
         sortBy,
@@ -189,7 +202,11 @@ export function summarizeNews(
         showReprints,
       });
 
-      if (!result.summary && result.numResults === 0) return noResults;
+      if (!result.summary && result.numResults === 0) {
+        return toolResult(
+          withDefaultCountryNote("No results found", defaultCountryApplied),
+        );
+      }
 
       let output = `<summary>\n${result.summary}\n</summary>\n`;
       output += `\nBased on ${result.numResults} articles.\n`;
@@ -207,7 +224,7 @@ Pub Date: ${article.pubDate} (utc)
         output += "\n</supporting_articles>";
       }
 
-      return toolResult(output);
+      return toolResult(withDefaultCountryNote(output, defaultCountryApplied));
     } catch (error) {
       console.error("Error summarizing news:", error);
       return toolResult(
@@ -221,7 +238,9 @@ export const summarizeTool = {
   name: "summarize_news",
   title: "Search Summarizer",
   description:
-    "Generate an AI-powered summary of news coverage matching your filters. Use this when the user wants a synthesized overview or briefing on a topic rather than a list of individual articles. Combines article search with LLM summarization to produce concise, coherent summaries with supporting article citations. Accepts all standard article filters (keywords, categories, topics, sources, dates, locations) plus summarization controls (prompt, model, temperature).",
+    "Generate an AI-powered summary of news coverage matching your filters. Use this when the user wants a synthesized overview or briefing on a topic rather than a list of individual articles. Combines article search with LLM summarization to produce concise, coherent summaries with supporting article citations. Accepts all standard article filters (keywords, categories, topics, sources, dates, locations) plus summarization controls (prompt, model, temperature)." +
+    " " +
+    describeDefaultCountry(["countries", "cities", "states"]),
   parameters: summarizeArgs,
   annotations: {
     readOnlyHint: true,

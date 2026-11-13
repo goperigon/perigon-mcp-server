@@ -2,11 +2,14 @@ import { describe, expect, test } from "bun:test";
 import {
   createCurrentPageHeader,
   createPaginationHeader,
+  describeDefaultCountry,
   formatLabel,
   formatLabelList,
   formatWikidataDate,
   noResults,
+  SINGLE_COUNTRY_HINT,
   toolResult,
+  withDefaultCountryNote,
 } from "../../../../worker/mcp/tools/utils/formatting";
 
 describe("toolResult", () => {
@@ -112,5 +115,37 @@ describe("formatWikidataDate", () => {
 
   test("supports a custom fallback", () => {
     expect(formatWikidataDate(null, "?")).toBe("?");
+  });
+});
+
+describe("withDefaultCountryNote", () => {
+  test("returns the text unchanged when the default was not applied", () => {
+    expect(withDefaultCountryNote("body", false)).toBe("body");
+  });
+
+  test("prefixes a note naming the default country and how to change it", () => {
+    expect(withDefaultCountryNote("body", true)).toBe(
+      "<note>No country filter was given, so the default country filter was applied: us. Pass countries to search other countries, or countries: [] for all countries.</note>\n\nbody"
+    );
+  });
+
+  test("accepts a tool-specific hint", () => {
+    expect(withDefaultCountryNote("body", true, SINGLE_COUNTRY_HINT)).toContain(
+      `applied: us. ${SINGLE_COUNTRY_HINT}</note>`
+    );
+  });
+});
+
+describe("describeDefaultCountry", () => {
+  test("lists the filters that suppress the default", () => {
+    expect(describeDefaultCountry(["countries", "cities", "states"])).toBe(
+      "Country default: when none of countries, cities or states is given, results are filtered to country us and the response starts with a <note> saying the default was applied; pass countries to choose others, or countries: [] for all countries."
+    );
+  });
+
+  test("handles a single filter and a custom hint", () => {
+    expect(describeDefaultCountry(["country"], "pass country")).toBe(
+      "Country default: when country is not given, results are filtered to country us and the response starts with a <note> saying the default was applied; pass country."
+    );
   });
 });

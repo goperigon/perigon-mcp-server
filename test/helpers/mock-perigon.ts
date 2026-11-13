@@ -50,6 +50,7 @@ export interface MockPerigonOverrides {
   getStoryVelocity?: AnyAsyncFn;
   searchArticlesFull?: AnyAsyncFn;
   searchJournalistsFull?: AnyAsyncFn;
+  searchStoriesFull?: AnyAsyncFn;
   listWatchlists?: AnyAsyncFn;
   getWatchlist?: AnyAsyncFn;
   resolveWatchlists?: AnyAsyncFn;
@@ -107,6 +108,7 @@ const ALL_METHODS = [
   "getStoryVelocity",
   "searchArticlesFull",
   "searchJournalistsFull",
+  "searchStoriesFull",
   "listWatchlists",
   "getWatchlist",
   "resolveWatchlists",
@@ -128,9 +130,16 @@ const ALL_METHODS = [
   "getLinkedInCompanyPosts",
 ] as const;
 
+type MockedMethod = (typeof ALL_METHODS)[number];
+
 export type MockPerigon = Perigon & {
-  [K in (typeof ALL_METHODS)[number]]: ReturnType<typeof mock>;
+  [K in MockedMethod]: ReturnType<typeof mock>;
 };
+
+/** The request (first argument) type of a `Perigon` method. */
+export type PerigonRequest<K extends MockedMethod> = NonNullable<
+  Parameters<Extract<Perigon[K], (...args: never[]) => unknown>>[0]
+>;
 
 /**
  * Build a fake `Perigon` instance. Every method is a `bun:test` mock so tests
@@ -168,4 +177,29 @@ export function firstCallArgs<T = unknown>(
     throw new Error("Mock has not been called");
   }
   return fn.mock.calls[0][0] as T;
+}
+
+/** Every request a mocked Perigon method received, typed by the method. */
+export function requestsOf<K extends MockedMethod>(
+  perigon: MockPerigon,
+  method: K
+): PerigonRequest<K>[] {
+  return perigon[method].mock.calls.map((args: unknown[], i: number) => {
+    if (args[0] === undefined) {
+      throw new Error(`Mock ${method} call ${i} had no request`);
+    }
+    return args[0] as PerigonRequest<K>;
+  });
+}
+
+/** The first request a mocked Perigon method received, typed by the method. */
+export function firstRequestOf<K extends MockedMethod>(
+  perigon: MockPerigon,
+  method: K
+): PerigonRequest<K> {
+  const requests = requestsOf(perigon, method);
+  if (requests.length === 0) {
+    throw new Error(`Mock ${method} has not been called`);
+  }
+  return requests[0];
 }

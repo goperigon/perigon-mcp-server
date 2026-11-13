@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { StatsArticleFilters, StatsSplitBy } from "../../../lib/perigon";
 
 function parseTime(str: string) {
   if (str === "") return undefined;
@@ -76,6 +77,10 @@ export const statsFilterArgs = z.object({
     .array(z.string())
     .optional()
     .describe("Filter articles mentioning companies by stock ticker symbol (e.g., AAPL)."),
+  companyName: z
+    .string()
+    .optional()
+    .describe("Filter articles mentioning a company by exact name."),
   journalistId: z
     .array(z.string())
     .optional()
@@ -92,6 +97,16 @@ export const statsFilterArgs = z.object({
     .array(z.string())
     .optional()
     .describe("Filter by Google Content Category, full path (e.g. /Finance/Banking/Other)."),
+  label: z
+    .array(z.string())
+    .optional()
+    .describe("Editorial labels: Opinion, Paid-news, Non-news, Fact Check, Press Release."),
+  excludeLabel: z.array(z.string()).optional().describe("Exclude editorial labels."),
+  showReprints: z
+    .boolean()
+    .optional()
+    .default(false)
+    .describe("Count syndicated reprints. Default false, matching search_news_articles."),
   excludeSource: z
     .array(z.string())
     .optional()
@@ -105,6 +120,35 @@ export const statsFilterArgs = z.object({
 
 export type StatsFilterArgs = z.infer<typeof statsFilterArgs>;
 
+/** Picks the shared article filters out of a stats tool's arguments. */
+export function statsFilters(args: StatsFilterArgs): StatsArticleFilters {
+  return {
+    q: args.q,
+    from: args.from,
+    to: args.to,
+    source: args.source,
+    sourceGroup: args.sourceGroup,
+    category: args.category,
+    topic: args.topic,
+    language: args.language,
+    country: args.country,
+    personName: args.personName,
+    companyDomain: args.companyDomain,
+    companySymbol: args.companySymbol,
+    companyName: args.companyName,
+    journalistId: args.journalistId,
+    personWikidataId: args.personWikidataId,
+    companyId: args.companyId,
+    taxonomy: args.taxonomy,
+    label: args.label,
+    excludeLabel: args.excludeLabel,
+    showReprints: args.showReprints,
+    excludeSource: args.excludeSource,
+    excludeCategory: args.excludeCategory,
+    excludeTopic: args.excludeTopic,
+  };
+}
+
 export const splitByEnum = z
   .enum(["HOUR", "DAY", "WEEK", "MONTH", "NONE"])
   .default("DAY")
@@ -112,10 +156,9 @@ export const splitByEnum = z
     "Time interval for bucketing results. HOUR = hourly, DAY = daily, WEEK = weekly, MONTH = monthly, NONE = single aggregate value across the whole date range."
   );
 
-/** Convert the user-facing splitBy enum to the lowercase value the API expects, or undefined to omit (NONE). */
+/** Convert the user-facing splitBy enum to the lowercase value the API expects. */
 export function normalizeSplitBy(
   splitBy: "HOUR" | "DAY" | "WEEK" | "MONTH" | "NONE" | undefined
-): "hour" | "day" | "week" | "month" | undefined {
-  if (!splitBy || splitBy === "NONE") return undefined;
-  return splitBy.toLowerCase() as "hour" | "day" | "week" | "month";
+): StatsSplitBy | undefined {
+  return splitBy ? (splitBy.toLowerCase() as StatsSplitBy) : undefined;
 }

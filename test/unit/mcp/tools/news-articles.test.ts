@@ -8,7 +8,12 @@ import {
   articlesFixture,
   emptyArticlesFixture,
 } from "../../../helpers/fixtures";
-import { createMockPerigon, firstCallArgs } from "../../../helpers/mock-perigon";
+import {
+  createMockPerigon,
+  firstCallArgs,
+  firstRequestOf,
+  requestsOf,
+} from "../../../helpers/mock-perigon";
 
 function getText(result: any): string {
   return result.content[0].text as string;
@@ -67,14 +72,37 @@ describe("searchNewsArticles", () => {
     expect(getText(result)).toContain("Content: Full content 1");
   });
 
-  test("countries default to ['us']", async () => {
+  test("applies the default country only without a geographic filter, and says so", async () => {
     const perigon = createMockPerigon({
       searchArticlesFull: async () => articlesFixture,
     });
     const handler = searchNewsArticles(perigon);
-    const args = newsArticlesArgs.parse({});
-    await handler(args);
-    expect(firstCallArgs<any>(perigon.searchArticlesFull).country).toEqual(["us"]);
+    const outputs = [
+      await handler(newsArticlesArgs.parse({ query: "election" })),
+      await handler(newsArticlesArgs.parse({ location: "Paris" })),
+      await handler(newsArticlesArgs.parse({ cities: ["London"] })),
+      await handler(newsArticlesArgs.parse({ countries: ["FR"] })),
+      await handler(newsArticlesArgs.parse({ countries: [] })),
+      await handler(newsArticlesArgs.parse({ lat: 51.5, lon: -0.12, maxDistance: 50 })),
+      await handler(newsArticlesArgs.parse({ lat: 0, lon: 0 })),
+    ].map(getText);
+
+    const calls = requestsOf(perigon, "searchArticlesFull");
+    expect(calls.map((call) => call.country)).toEqual([
+      ["us"],
+      undefined,
+      undefined,
+      ["fr"],
+      undefined,
+      undefined,
+      undefined,
+    ]);
+    expect(calls[1].city).toEqual(["Paris"]);
+    expect(outputs[0]).toStartWith("<note>No country filter was given, so the default country filter was applied: us.");
+    expect(outputs[0]).toContain("countries: [] for all countries");
+    for (const output of outputs.slice(1)) {
+      expect(output).not.toContain("<note>");
+    }
   });
 
   test("returns noResults when numResults === 0", async () => {
@@ -84,7 +112,10 @@ describe("searchNewsArticles", () => {
     const handler = searchNewsArticles(perigon);
     const args = newsArticlesArgs.parse({});
     const result = await handler(args);
-    expect(getText(result)).toBe("No results found");
+    expect(getText(result)).toStartWith(
+      "<note>No country filter was given, so the default country filter was applied: us."
+    );
+    expect(getText(result)).toEndWith("No results found");
   });
 
   test("location triggers applyLocationFilter and sets q when no query", async () => {
@@ -97,6 +128,18 @@ describe("searchNewsArticles", () => {
     const call = firstCallArgs<any>(perigon.searchArticlesFull);
     expect(call.city).toEqual(["Austin"]);
     expect(call.q).toBe("Austin");
+  });
+
+  test("country names in location resolve to codes", async () => {
+    const perigon = createMockPerigon({
+      searchArticlesFull: async () => articlesFixture,
+    });
+    await searchNewsArticles(perigon)(
+      newsArticlesArgs.parse({ location: "Germany", locationType: "country" })
+    );
+    expect(firstRequestOf(perigon, "searchArticlesFull").country).toEqual([
+      "de",
+    ]);
   });
 
   test("explicit query is preserved when location is also provided", async () => {

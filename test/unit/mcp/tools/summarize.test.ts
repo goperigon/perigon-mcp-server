@@ -8,7 +8,11 @@ import {
   summarizeFixture,
   summarizeNoResultsFixture,
 } from "../../../helpers/fixtures";
-import { createMockPerigon, firstCallArgs } from "../../../helpers/mock-perigon";
+import {
+  createMockPerigon,
+  firstCallArgs,
+  firstRequestOf,
+} from "../../../helpers/mock-perigon";
 
 const text = (r: any) => r.content[0].text as string;
 
@@ -104,6 +108,21 @@ describe("summarizeNews", () => {
     expect(body).not.toHaveProperty("maxTokens");
   });
 
+  test("does not offer or send size, which the API replaces with maxArticleCount", async () => {
+    const perigon = createMockPerigon({
+      searchSummarizer: async () => summarizeFixture,
+    });
+
+    expect(summarizeArgs.shape).not.toHaveProperty("size");
+    await summarizeNews(perigon)(
+      summarizeArgs.parse({ size: 50, maxArticleCount: 25 })
+    );
+
+    const call = firstRequestOf(perigon, "searchSummarizer");
+    expect(call).not.toHaveProperty("size");
+    expect(call.summaryBody.maxArticleCount).toBe(25);
+  });
+
   test("rejects unknown model", () => {
     expect(() =>
       summarizeArgs.parse({ model: "claude-7-omega" as any })
@@ -126,7 +145,10 @@ describe("summarizeNews", () => {
       searchSummarizer: async () => summarizeNoResultsFixture,
     });
     const result = await summarizeNews(perigon)(summarizeArgs.parse({}));
-    expect(text(result)).toBe("No results found");
+    expect(text(result)).toStartWith(
+      "<note>No country filter was given, so the default country filter was applied: us."
+    );
+    expect(text(result)).toEndWith("No results found");
   });
 
   test("error path", async () => {

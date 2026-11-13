@@ -66,11 +66,8 @@ describe("normalizeSplitBy", () => {
     expect(normalizeSplitBy(undefined)).toBeUndefined();
   });
 
-  test("'NONE' → undefined (omitted from API params)", () => {
-    expect(normalizeSplitBy("NONE")).toBeUndefined();
-  });
-
-  test("everything else is lowercased for the API", () => {
+  test("every value is lowercased for the API, including NONE", () => {
+    expect(normalizeSplitBy("NONE")).toBe("none");
     expect(normalizeSplitBy("HOUR")).toBe("hour");
     expect(normalizeSplitBy("DAY")).toBe("day");
     expect(normalizeSplitBy("WEEK")).toBe("week");

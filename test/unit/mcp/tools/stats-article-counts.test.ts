@@ -5,7 +5,12 @@ import {
   getArticleCounts,
 } from "../../../../worker/mcp/tools/search/stats-article-counts";
 import { articleCountsFixture } from "../../../helpers/fixtures";
-import { createMockPerigon, firstCallArgs } from "../../../helpers/mock-perigon";
+import {
+  createMockPerigon,
+  firstCallArgs,
+  firstRequestOf,
+  requestsOf,
+} from "../../../helpers/mock-perigon";
 
 const text = (r: any) => r.content[0].text as string;
 
@@ -30,6 +35,39 @@ describe("getArticleCounts", () => {
     expect(t).toContain("15 total articles (splitBy=WEEK)");
     expect(t).toContain('<count_bucket date="2024-01-01" count="10" />');
     expect(t).toContain('<count_bucket date="2024-01-02" count="5" />');
+  });
+
+  test("excludes reprints by default and forwards name and label filters", async () => {
+    const perigon = createMockPerigon({
+      getArticleCounts: async () => articleCountsFixture,
+    });
+    await getArticleCounts(perigon)(
+      articleCountsArgs.parse({ companyName: "Toyota", excludeLabel: ["Press Release"] })
+    );
+    await getArticleCounts(perigon)(articleCountsArgs.parse({ showReprints: true }));
+
+    const calls = requestsOf(perigon, "getArticleCounts");
+    expect(calls[0].showReprints).toBe(false);
+    expect(calls[0].companyName).toBe("Toyota");
+    expect(calls[0].excludeLabel).toEqual(["Press Release"]);
+    expect(calls[1].showReprints).toBe(true);
+  });
+
+  test("'NONE' splitBy is sent as none and the undated total renders without a date", async () => {
+    const perigon = createMockPerigon({
+      getArticleCounts: async () => ({
+        status: 200,
+        results: [{ numResults: 1234 }],
+      }),
+    });
+    const result = await getArticleCounts(perigon)(
+      articleCountsArgs.parse({ q: "AI", splitBy: "NONE" })
+    );
+
+    expect(firstRequestOf(perigon, "getArticleCounts").splitBy).toBe("none");
+    const t = text(result);
+    expect(t).toContain("1 bucket(s), 1234 total articles (splitBy=NONE)");
+    expect(t).toContain('<count_bucket count="1234" />');
   });
 
   test("noResults when results is empty", async () => {

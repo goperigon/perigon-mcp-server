@@ -3,12 +3,17 @@ import { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 import { Perigon } from "../../../lib/perigon";
 import { ToolCallback, ToolDefinition } from "../types";
-import { paginationArgs, locationArgs } from "../schemas/base";
+import {
+  paginationArgs,
+  locationArgs,
+  resolveCountries,
+} from "../schemas/base";
 import { createSearchField } from "../schemas/search";
 import {
   toolResult,
-  noResults,
   createPaginationHeader,
+  withDefaultCountryNote,
+  describeDefaultCountry,
 } from "../utils/formatting";
 import { createErrorMessage } from "../utils/error-handling";
 
@@ -104,6 +109,11 @@ export function searchSources(
     sortBy,
   }: z.infer<typeof sourcesArgs>): Promise<CallToolResult> => {
     try {
+      const { country, defaultCountryApplied } = resolveCountries(
+        countries,
+        cities,
+        states,
+      );
       const result = await perigon.searchSources({
         name,
         domain: domains,
@@ -116,7 +126,7 @@ export function searchSources(
         sortBy: sortBy as SortBy | undefined,
         page,
         size,
-        sourceCountry: countries,
+        sourceCountry: country,
         sourceState: states,
         sourceCity: cities,
         showNumResults: true,
@@ -126,7 +136,11 @@ export function searchSources(
         minMonthlyVisits,
       });
 
-      if (result.numResults === 0) return noResults;
+      if (result.numResults === 0) {
+        return toolResult(
+          withDefaultCountryNote("No results found", defaultCountryApplied),
+        );
+      }
 
       const sources = result.results.map((source) => {
         return `<source name="${source.name}">
@@ -158,7 +172,7 @@ Top Topics: ${source.topTopics?.map((topic) => topic.name).join(", ") || "N/A"}
       output += sources.join("\n\n");
       output += "\n</sources>";
 
-      return toolResult(output);
+      return toolResult(withDefaultCountryNote(output, defaultCountryApplied));
     } catch (error) {
       console.error("Error searching sources:", error);
       return toolResult(
@@ -175,7 +189,9 @@ export const sourcesTool = {
   name: "search_sources",
   title: "Sources",
   description:
-    "Search 200k+ news publications and media outlets in the Perigon database. Use this to discover or compare news sources by name, domain, location, audience size, or publishing volume. Filter by curated bundles (top10, top100), paywall status, or geographic location. Returns source profiles with domain, monthly visits, top topics covered, and publishing frequency.",
+    "Search 200k+ news publications and media outlets in the Perigon database. Use this to discover or compare news sources by name, domain, location, audience size, or publishing volume. Filter by curated bundles (top10, top100), paywall status, or geographic location. Returns source profiles with domain, monthly visits, top topics covered, and publishing frequency." +
+    " " +
+    describeDefaultCountry(["countries", "cities", "states"]),
   parameters: sourcesArgs,
   annotations: {
     readOnlyHint: true,

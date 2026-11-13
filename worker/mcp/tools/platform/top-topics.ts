@@ -2,7 +2,7 @@ import { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 import { Perigon, SpikeResult, TopicSpike } from "../../../lib/perigon";
 import { ToolCallback, ToolDefinition } from "../types";
-import { statsFilterArgs } from "../schemas/stats";
+import { statsFilterArgs, statsFilters } from "../schemas/stats";
 import { toolResult, noResults } from "../utils/formatting";
 import { createErrorMessage } from "../utils/error-handling";
 
@@ -66,25 +66,7 @@ export function getTopTopics(
   ): Promise<CallToolResult> => {
     try {
       const result: SpikeResult<TopicSpike> = await perigon.getTopTopics({
-        q: args.q,
-        from: args.from,
-        to: args.to,
-        source: args.source,
-        sourceGroup: args.sourceGroup,
-        category: args.category,
-        topic: args.topic,
-        language: args.language,
-        country: args.country,
-        personName: args.personName,
-        companyDomain: args.companyDomain,
-        companySymbol: args.companySymbol,
-        journalistId: args.journalistId,
-        personWikidataId: args.personWikidataId,
-        companyId: args.companyId,
-        taxonomy: args.taxonomy,
-        excludeSource: args.excludeSource,
-        excludeCategory: args.excludeCategory,
-        excludeTopic: args.excludeTopic,
+        ...statsFilters(args),
         currentFrom: args.currentFrom,
         currentTo: args.currentTo,
         baselineFrom: args.baselineFrom,
