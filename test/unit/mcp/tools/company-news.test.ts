@@ -9,7 +9,11 @@ import {
   companiesFixture,
   emptyArticlesFixture,
 } from "../../../helpers/fixtures";
-import { createMockPerigon, firstCallArgs } from "../../../helpers/mock-perigon";
+import {
+  createMockPerigon,
+  firstCallArgs,
+  firstRequestOf,
+} from "../../../helpers/mock-perigon";
 
 const text = (r: any) => r.content[0].text as string;
 
@@ -106,7 +110,7 @@ describe("getCompanyNews", () => {
     const result = await getCompanyNews(perigon)(
       companyNewsArgs.parse({ companyName: "Acme", country: "GB" })
     );
-    expect(firstCallArgs<any>(perigon.searchArticles).country).toEqual(["gb"]);
+    expect(firstRequestOf(perigon, "searchArticles").country).toEqual(["gb"]);
     expect(text(result)).not.toContain("<note>");
   });
 

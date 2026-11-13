@@ -5,7 +5,12 @@ import {
   getArticleCounts,
 } from "../../../../worker/mcp/tools/search/stats-article-counts";
 import { articleCountsFixture } from "../../../helpers/fixtures";
-import { createMockPerigon, firstCallArgs } from "../../../helpers/mock-perigon";
+import {
+  createMockPerigon,
+  firstCallArgs,
+  firstRequestOf,
+  requestsOf,
+} from "../../../helpers/mock-perigon";
 
 const text = (r: any) => r.content[0].text as string;
 
@@ -41,7 +46,7 @@ describe("getArticleCounts", () => {
     );
     await getArticleCounts(perigon)(articleCountsArgs.parse({ showReprints: true }));
 
-    const calls = (perigon.getArticleCounts as any).mock.calls.map((c: any[]) => c[0]);
+    const calls = requestsOf(perigon, "getArticleCounts");
     expect(calls[0].showReprints).toBe(false);
     expect(calls[0].companyName).toBe("Toyota");
     expect(calls[0].excludeLabel).toEqual(["Press Release"]);
@@ -59,7 +64,7 @@ describe("getArticleCounts", () => {
       articleCountsArgs.parse({ q: "AI", splitBy: "NONE" })
     );
 
-    expect(firstCallArgs<any>(perigon.getArticleCounts).splitBy).toBe("none");
+    expect(firstRequestOf(perigon, "getArticleCounts").splitBy).toBe("none");
     const t = text(result);
     expect(t).toContain("1 bucket(s), 1234 total articles (splitBy=NONE)");
     expect(t).toContain('<count_bucket count="1234" />');

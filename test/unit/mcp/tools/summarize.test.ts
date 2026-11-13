@@ -8,7 +8,11 @@ import {
   summarizeFixture,
   summarizeNoResultsFixture,
 } from "../../../helpers/fixtures";
-import { createMockPerigon, firstCallArgs } from "../../../helpers/mock-perigon";
+import {
+  createMockPerigon,
+  firstCallArgs,
+  firstRequestOf,
+} from "../../../helpers/mock-perigon";
 
 const text = (r: any) => r.content[0].text as string;
 
@@ -114,7 +118,7 @@ describe("summarizeNews", () => {
       summarizeArgs.parse({ size: 50, maxArticleCount: 25 })
     );
 
-    const call = firstCallArgs<any>(perigon.searchSummarizer);
+    const call = firstRequestOf(perigon, "searchSummarizer");
     expect(call).not.toHaveProperty("size");
     expect(call.summaryBody.maxArticleCount).toBe(25);
   });

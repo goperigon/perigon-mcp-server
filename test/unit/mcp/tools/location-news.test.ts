@@ -8,7 +8,11 @@ import {
   articlesFixture,
   emptyArticlesFixture,
 } from "../../../helpers/fixtures";
-import { createMockPerigon, firstCallArgs } from "../../../helpers/mock-perigon";
+import {
+  createMockPerigon,
+  firstCallArgs,
+  firstRequestOf,
+} from "../../../helpers/mock-perigon";
 
 const text = (r: any) => r.content[0].text as string;
 
@@ -93,7 +97,7 @@ describe("getLocationNews", () => {
     const result = await getLocationNews(perigon)(
       locationNewsArgs.parse({ location: "France" })
     );
-    const call = firstCallArgs<any>(perigon.searchArticles);
+    const call = firstRequestOf(perigon, "searchArticles");
     expect(call.country).toEqual(["fr"]);
     expect(call.city).toBeUndefined();
     expect(text(result)).toContain('Recent news for country "France"');
@@ -106,7 +110,7 @@ describe("getLocationNews", () => {
     await getLocationNews(perigon)(
       locationNewsArgs.parse({ location: "Narnia", locationType: "country" })
     );
-    const call = firstCallArgs<any>(perigon.searchArticles);
+    const call = firstRequestOf(perigon, "searchArticles");
     expect(call.q).toBe("Narnia");
     expect(call.country).toBeUndefined();
   });

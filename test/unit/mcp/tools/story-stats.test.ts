@@ -3,9 +3,8 @@ import {
   getStoryStats,
   storyStatsArgs,
 } from "../../../../worker/mcp/tools/platform/story-stats";
-import { createMockPerigon, firstCallArgs } from "../../../helpers/mock-perigon";
-
-const text = (r: any) => r.content[0].text as string;
+import { createMockPerigon, firstRequestOf } from "../../../helpers/mock-perigon";
+import { getResultText as text } from "../../../helpers/fixtures";
 
 describe("getStoryStats", () => {
   test("volume defaults to monthly buckets", async () => {
@@ -23,7 +22,7 @@ describe("getStoryStats", () => {
       storyStatsArgs.parse({ metric: "volume" })
     );
 
-    expect(firstCallArgs<any>(perigon.getStoryStats).splitBy).toBe("month");
+    expect(firstRequestOf(perigon, "getStoryStats").splitBy).toBe("month");
     const t = text(result);
     expect(t).toContain('<bucket date="2024-01-01T00:00:00Z" count="3" />');
     expect(t).toContain('<bucket date="2024-02-01T00:00:00Z" count="4" />');
@@ -41,7 +40,7 @@ describe("getStoryStats", () => {
       storyStatsArgs.parse({ metric: "volume", splitBy: "none" })
     );
 
-    expect(firstCallArgs<any>(perigon.getStoryStats).splitBy).toBe("none");
+    expect(firstRequestOf(perigon, "getStoryStats").splitBy).toBe("none");
     expect(text(result)).toBe(
       '<story_volume>\n<bucket count="42" />\n</story_volume>'
     );

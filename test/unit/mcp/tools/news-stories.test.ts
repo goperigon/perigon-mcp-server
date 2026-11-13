@@ -9,7 +9,7 @@ import {
   emptyStoriesFixture,
   storiesFixture,
 } from "../../../helpers/fixtures";
-import { createMockPerigon, firstCallArgs } from "../../../helpers/mock-perigon";
+import { createMockPerigon, firstRequestOf } from "../../../helpers/mock-perigon";
 import {
   installFetchMock,
   jsonResponse,
@@ -39,7 +39,7 @@ describe("searchNewsStories", () => {
     });
     const result = await handler(args);
 
-    const call = firstCallArgs<any>(perigon.searchStoriesFull);
+    const call = firstRequestOf(perigon, "searchStoriesFull");
     expect(call.q).toBe("merger");
     expect(call.category).toEqual(["Business"]);
     expect(call.topic).toEqual(["Markets"]);
@@ -61,7 +61,7 @@ describe("searchNewsStories", () => {
     const args = newsStoriesArgs.parse({ isTopHeadlines: true });
     await handler(args);
     const after = Date.now();
-    const call = firstCallArgs<any>(perigon.searchStoriesFull);
+    const call = firstRequestOf(perigon, "searchStoriesFull");
     expect(call.from).toBeInstanceOf(Date);
     const fromMs = (call.from as Date).getTime();
     // Should be within ~24h before "after" (and not later than "before")
@@ -76,7 +76,7 @@ describe("searchNewsStories", () => {
       searchStoriesFull: async () => storiesFixture,
     });
     await searchNewsStories(perigon)(newsStoriesArgs.parse({}));
-    expect(firstCallArgs<any>(perigon.searchStoriesFull)).not.toHaveProperty(
+    expect(firstRequestOf(perigon, "searchStoriesFull")).not.toHaveProperty(
       "minSourceDiversity"
     );
 
@@ -86,7 +86,7 @@ describe("searchNewsStories", () => {
     await searchNewsStories(perigon2)(
       newsStoriesArgs.parse({ minSourceDiversity: 0.05 })
     );
-    expect(firstCallArgs<any>(perigon2.searchStoriesFull).minSourceDiversity).toBe(
+    expect(firstRequestOf(perigon2, "searchStoriesFull").minSourceDiversity).toBe(
       0.05
     );
   });
@@ -135,7 +135,7 @@ describe("searchNewsStories", () => {
     await searchNewsStories(perigon)(
       newsStoriesArgs.parse({ language: ["en"], label: ["Opinion"] })
     );
-    const call = firstCallArgs<any>(perigon.searchStoriesFull);
+    const call = firstRequestOf(perigon, "searchStoriesFull");
     expect(call).not.toHaveProperty("language");
     expect(call).not.toHaveProperty("label");
   });

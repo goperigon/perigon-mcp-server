@@ -8,7 +8,12 @@ import {
   articlesFixture,
   emptyArticlesFixture,
 } from "../../../helpers/fixtures";
-import { createMockPerigon, firstCallArgs } from "../../../helpers/mock-perigon";
+import {
+  createMockPerigon,
+  firstCallArgs,
+  firstRequestOf,
+  requestsOf,
+} from "../../../helpers/mock-perigon";
 
 function getText(result: any): string {
   return result.content[0].text as string;
@@ -82,10 +87,8 @@ describe("searchNewsArticles", () => {
       await handler(newsArticlesArgs.parse({ lat: 0, lon: 0 })),
     ].map(getText);
 
-    const calls = (perigon.searchArticlesFull as any).mock.calls.map(
-      (args: any[]) => args[0]
-    );
-    expect(calls.map((call: any) => call.country)).toEqual([
+    const calls = requestsOf(perigon, "searchArticlesFull");
+    expect(calls.map((call) => call.country)).toEqual([
       ["us"],
       undefined,
       undefined,
@@ -134,7 +137,7 @@ describe("searchNewsArticles", () => {
     await searchNewsArticles(perigon)(
       newsArticlesArgs.parse({ location: "Germany", locationType: "country" })
     );
-    expect(firstCallArgs<any>(perigon.searchArticlesFull).country).toEqual([
+    expect(firstRequestOf(perigon, "searchArticlesFull").country).toEqual([
       "de",
     ]);
   });
