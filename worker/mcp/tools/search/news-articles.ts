@@ -428,6 +428,7 @@ export function searchNewsArticles(
         cities,
         states,
         location,
+        lat !== undefined || lon !== undefined,
       );
       let searchParams: any = {
         q: query,
@@ -626,7 +627,14 @@ export const newsArticlesTool = {
   description:
     "Search and filter individual news articles from 200k+ global sources. Use this for finding specific articles by keyword, topic, category, source, location, person, company, journalist, sentiment, or time range. Supports Boolean query syntax (AND, OR, NOT), exact phrases, and wildcards. Returns full article metadata: content/summary, entities, topics, taxonomies, keywords, sentiment, story cluster ID, and matchedAuthors (journalist IDs — feed into search_journalists(journalistIds) to profile who wrote it). A null field here may reflect this key's plan rather than absent data — see get_api_access." +
     " " +
-    describeDefaultCountry(["countries", "cities", "states", "location"]),
+    describeDefaultCountry([
+      "countries",
+      "cities",
+      "states",
+      "location",
+      "lat",
+      "lon",
+    ]),
   parameters: newsArticlesArgs,
   annotations: {
     readOnlyHint: true,

@@ -78,6 +78,8 @@ describe("searchNewsArticles", () => {
       await handler(newsArticlesArgs.parse({ cities: ["London"] })),
       await handler(newsArticlesArgs.parse({ countries: ["FR"] })),
       await handler(newsArticlesArgs.parse({ countries: [] })),
+      await handler(newsArticlesArgs.parse({ lat: 51.5, lon: -0.12, maxDistance: 50 })),
+      await handler(newsArticlesArgs.parse({ lat: 0, lon: 0 })),
     ].map(getText);
 
     const calls = (perigon.searchArticlesFull as any).mock.calls.map(
@@ -88,6 +90,8 @@ describe("searchNewsArticles", () => {
       undefined,
       undefined,
       ["fr"],
+      undefined,
+      undefined,
       undefined,
     ]);
     expect(calls[1].city).toEqual(["Paris"]);

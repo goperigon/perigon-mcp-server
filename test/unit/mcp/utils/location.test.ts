@@ -58,6 +58,8 @@ describe("resolveStateCode", () => {
 
   test("returns undefined for names that are not US states", () => {
     expect(resolveStateCode("Bavaria")).toBeUndefined();
+    expect(resolveStateCode("constructor")).toBeUndefined();
+    expect(resolveStateCode("toString")).toBeUndefined();
   });
 });
 
@@ -93,6 +95,13 @@ describe("parseLocation", () => {
     const result = parseLocation("Austin");
     expect(result.detectedType).toBe("city");
     expect(result.filter).toEqual({ city: ["Austin"] });
+  });
+
+  test("Object.prototype property names are treated as cities", () => {
+    expect(parseLocation("constructor")).toEqual({
+      detectedType: "city",
+      filter: { city: ["constructor"] },
+    });
   });
 
   test("auto-detect state uppercases the value", () => {

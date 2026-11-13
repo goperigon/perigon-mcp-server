@@ -93,7 +93,7 @@ const COMMON_COUNTRIES = [
   "ru",
 ];
 
-const US_STATE_CODES_BY_NAME: Record<string, string> = {
+const US_STATE_CODES_BY_NAME = new Map<string, string>(Object.entries({
   alabama: "AL",
   alaska: "AK",
   arizona: "AZ",
@@ -145,7 +145,7 @@ const US_STATE_CODES_BY_NAME: Record<string, string> = {
   "west virginia": "WV",
   wisconsin: "WI",
   wyoming: "WY",
-};
+}));
 
 /**
  * Common names that differ from the English region names Intl provides.
@@ -240,7 +240,7 @@ function getCountryCodesByName(): Map<string, string> {
 export function resolveStateCode(location: string): string | undefined {
   const trimmed = location.trim();
   if (/^[a-z]{2}$/i.test(trimmed)) return trimmed.toUpperCase();
-  return US_STATE_CODES_BY_NAME[normalizeName(trimmed)];
+  return US_STATE_CODES_BY_NAME.get(normalizeName(trimmed));
 }
 
 /** Resolve a country code or name (e.g. "fr", "France", "UK") to its lowercase code. */
@@ -268,7 +268,7 @@ export function detectLocationType(location: string): LocationType {
     COMMON_COUNTRIES.includes(locationLower)
   ) {
     return "country";
-  } else if (US_STATE_CODES_BY_NAME[normalizeName(location)]) {
+  } else if (US_STATE_CODES_BY_NAME.has(normalizeName(location))) {
     return "state";
   } else if (location.length > 2 && resolveCountryCode(location)) {
     return "country";
