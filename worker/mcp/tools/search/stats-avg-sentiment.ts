@@ -4,6 +4,7 @@ import { Perigon, AvgSentimentStatDto, StatResult } from "../../../lib/perigon";
 import { ToolCallback, ToolDefinition } from "../types";
 import {
   statsFilterArgs,
+  statsFilters,
   splitByEnum,
   normalizeSplitBy,
 } from "../schemas/stats";
@@ -23,25 +24,7 @@ export function getAvgSentiment(
     try {
       const result: StatResult<AvgSentimentStatDto> =
         await perigon.getAvgSentiment({
-          q: args.q,
-          from: args.from,
-          to: args.to,
-          source: args.source,
-          sourceGroup: args.sourceGroup,
-          category: args.category,
-          topic: args.topic,
-          language: args.language,
-          country: args.country,
-          personName: args.personName,
-          companyDomain: args.companyDomain,
-          companySymbol: args.companySymbol,
-          journalistId: args.journalistId,
-          personWikidataId: args.personWikidataId,
-          companyId: args.companyId,
-          taxonomy: args.taxonomy,
-          excludeSource: args.excludeSource,
-          excludeCategory: args.excludeCategory,
-          excludeTopic: args.excludeTopic,
+          ...statsFilters(args),
           splitBy: normalizeSplitBy(args.splitBy),
         });
 

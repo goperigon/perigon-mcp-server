@@ -136,10 +136,14 @@ export interface StatsArticleFilters {
   personName?: string[];
   companyDomain?: string[];
   companySymbol?: string[];
+  companyName?: string;
   journalistId?: string[];
   personWikidataId?: string[];
   companyId?: string[];
   taxonomy?: string[];
+  label?: string[];
+  excludeLabel?: string[];
+  showReprints?: boolean;
   excludeSource?: string[];
   excludeCategory?: string[];
   excludeTopic?: string[];
@@ -152,11 +156,21 @@ export interface StatsTimeSeriesParams extends StatsArticleFilters {
   splitBy?: StatsSplitBy;
 }
 
+/** Entity buckets of /v1/stats/topEntities. */
+export type TopEntityType =
+  | "topics"
+  | "people"
+  | "companies"
+  | "cities"
+  | "journalists"
+  | "journalistsById"
+  | "sources";
+
 export interface TopEntitiesParams extends StatsArticleFilters {
-  entity?: string[];
-  expandEntities?: boolean;
+  entity?: TopEntityType[];
+  /** Entity types whose ranked keys are expanded into full records. */
+  expandEntities?: TopEntityType[];
   size?: number;
-  showReprints?: boolean;
   clusterId?: string[];
 }
 
@@ -221,8 +235,18 @@ export interface TopEntitiesDto {
   cities?: TopEntityItem[];
   totalJournalists?: number;
   journalists?: TopEntityItem[];
+  totalJournalistsById?: number;
+  journalistsById?: TopEntityItem[];
   totalSources?: number;
   sources?: TopEntityItem[];
+  /** Expanded records, present only for types listed in `expandEntities`. */
+  topPeople?: Array<{ wikidataId: string; name?: string | null }>;
+  topCompanies?: Array<{ id: string; name?: string | null }>;
+  topJournalists?: Array<{
+    id: string;
+    name?: string | null;
+    fullName?: string | null;
+  }>;
 }
 
 /** Single entry in /v1/stats/topPeople */
@@ -757,6 +781,7 @@ export class Perigon extends V1Api {
       for (const d of params.companyDomain) sp.append("companyDomain", d);
     if (params.companySymbol)
       for (const s of params.companySymbol) sp.append("companySymbol", s);
+    if (params.companyName) sp.set("companyName", params.companyName);
     if (params.journalistId)
       for (const j of params.journalistId) sp.append("journalistId", j);
     if (params.personWikidataId)
@@ -765,6 +790,11 @@ export class Perigon extends V1Api {
       for (const c of params.companyId) sp.append("companyId", c);
     if (params.taxonomy)
       for (const t of params.taxonomy) sp.append("taxonomy", t);
+    if (params.label) for (const l of params.label) sp.append("label", l);
+    if (params.excludeLabel)
+      for (const l of params.excludeLabel) sp.append("excludeLabel", l);
+    if (params.showReprints !== undefined)
+      sp.set("showReprints", String(params.showReprints));
     if (params.excludeSource)
       for (const s of params.excludeSource) sp.append("excludeSource", s);
     if (params.excludeCategory)
@@ -799,11 +829,9 @@ export class Perigon extends V1Api {
   async getTopEntities(params: TopEntitiesParams): Promise<TopEntitiesDto> {
     const sp = this.buildStatsFilters(params);
     if (params.entity) for (const e of params.entity) sp.append("entity", e);
-    if (params.expandEntities !== undefined)
-      sp.set("expandEntities", String(params.expandEntities));
+    if (params.expandEntities)
+      for (const e of params.expandEntities) sp.append("expandEntities", e);
     if (params.size !== undefined) sp.set("size", String(params.size));
-    if (params.showReprints !== undefined)
-      sp.set("showReprints", String(params.showReprints));
     if (params.clusterId)
       for (const c of params.clusterId) sp.append("clusterId", c);
     return await fetchWithRetry<TopEntitiesDto>(

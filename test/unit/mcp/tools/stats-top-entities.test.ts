@@ -65,10 +65,58 @@ describe("getTopEntities", () => {
     const t = text(result);
     expect(t).toContain('<top_entities total_articles="100">');
     expect(t).toContain('<topics total="5">');
-    expect(t).toContain('<item rank="1" key="AI" count="30" />');
-    expect(t).toContain('<item rank="2" key="Markets" count="25" />');
+    expect(t).toContain('<item rank="1" name="AI" count="30" />');
+    expect(t).toContain('<item rank="2" name="Markets" count="25" />');
     expect(t).toContain('<people total="2">');
     expect(t).toContain('<companies total="1">');
+  });
+
+  test("expands ID-keyed entities and shows their names", async () => {
+    const perigon = createMockPerigon({
+      getTopEntities: async () => ({
+        totalArticles: 40,
+        totalPeople: 1,
+        people: [{ key: "Q76", count: 9 }],
+        totalCompanies: 1,
+        companies: [{ key: "c-1", count: 4 }],
+        totalJournalistsById: 1,
+        journalistsById: [{ key: "j-1", count: 65 }],
+        topPeople: [{ wikidataId: "Q76", name: "Barack Obama" }],
+        topCompanies: [{ id: "c-1", name: 'Acme "Co" & Sons' }],
+        topJournalists: [{ id: "j-1", name: "shwilson", fullName: "Sheri Wilson" }],
+      }),
+    });
+    const result = await getTopEntities(perigon)(
+      topEntitiesArgs.parse({ entity: ["people", "companies", "journalists", "topics"] })
+    );
+
+    const call = firstCallArgs<TopEntitiesParams>(perigon.getTopEntities);
+    expect(call.entity).toEqual(["people", "companies", "journalistsById", "topics"]);
+    expect(call.expandEntities).toEqual(["people", "companies", "journalistsById"]);
+    const t = text(result);
+    expect(t).toContain('<item rank="1" wikidata_id="Q76" name="Barack Obama" count="9" />');
+    expect(t).toContain(
+      '<item rank="1" id="c-1" name="Acme &quot;Co&quot; &amp; Sons" count="4" />'
+    );
+    expect(t).toContain('<journalists total="1">');
+    expect(t).toContain('<item rank="1" id="j-1" name="Sheri Wilson" count="65" />');
+  });
+
+  test("forwards the shared stats filters", async () => {
+    const perigon = createMockPerigon({
+      getTopEntities: async () => topEntitiesFixture,
+    });
+    await getTopEntities(perigon)(
+      topEntitiesArgs.parse({
+        companyName: "Toyota",
+        label: ["Opinion"],
+        excludeLabel: ["Press Release"],
+      })
+    );
+    const call = firstCallArgs<TopEntitiesParams>(perigon.getTopEntities);
+    expect(call.companyName).toBe("Toyota");
+    expect(call.label).toEqual(["Opinion"]);
+    expect(call.excludeLabel).toEqual(["Press Release"]);
   });
 
   test("rejects unknown entity types in schema", () => {

@@ -32,6 +32,22 @@ describe("getArticleCounts", () => {
     expect(t).toContain('<count_bucket date="2024-01-02" count="5" />');
   });
 
+  test("excludes reprints by default and forwards name and label filters", async () => {
+    const perigon = createMockPerigon({
+      getArticleCounts: async () => articleCountsFixture,
+    });
+    await getArticleCounts(perigon)(
+      articleCountsArgs.parse({ companyName: "Toyota", excludeLabel: ["Press Release"] })
+    );
+    await getArticleCounts(perigon)(articleCountsArgs.parse({ showReprints: true }));
+
+    const calls = (perigon.getArticleCounts as any).mock.calls.map((c: any[]) => c[0]);
+    expect(calls[0].showReprints).toBe(false);
+    expect(calls[0].companyName).toBe("Toyota");
+    expect(calls[0].excludeLabel).toEqual(["Press Release"]);
+    expect(calls[1].showReprints).toBe(true);
+  });
+
   test("'NONE' splitBy is sent as none and the undated total renders without a date", async () => {
     const perigon = createMockPerigon({
       getArticleCounts: async () => ({

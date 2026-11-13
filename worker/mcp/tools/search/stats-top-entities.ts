@@ -1,8 +1,13 @@
 import { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
-import { Perigon, TopEntitiesDto, TopEntityItem } from "../../../lib/perigon";
+import {
+  Perigon,
+  TopEntitiesDto,
+  TopEntityItem,
+  TopEntityType,
+} from "../../../lib/perigon";
 import { ToolCallback, ToolDefinition } from "../types";
-import { statsFilterArgs } from "../schemas/stats";
+import { statsFilterArgs, statsFilters } from "../schemas/stats";
 import { toolResult, noResults } from "../utils/formatting";
 import { createErrorMessage } from "../utils/error-handling";
 
@@ -24,10 +29,6 @@ export const topEntitiesArgs = statsFilterArgs.extend({
     .describe(
       "Which entity types to return. Options: topics, people, companies, cities, journalists, sources. Defaults to topics, people, and companies.",
     ),
-  expandEntities: z
-    .boolean()
-    .optional()
-    .describe("Return a larger, less-deduplicated entity set per type."),
   size: z
     .number()
     .int()
@@ -38,13 +39,6 @@ export const topEntitiesArgs = statsFilterArgs.extend({
     .describe(
       "Number of top entries to return per entity type (1–100). Default: 10.",
     ),
-  showReprints: z
-    .boolean()
-    .optional()
-    .default(false)
-    .describe(
-      "Count wire-service reprints (AP, Reuters) that appear on multiple sites. Default false, matching search_news_articles, so counts are not inflated by syndicated copies.",
-    ),
   clusterId: z
     .array(z.string())
     .optional()
@@ -53,14 +47,61 @@ export const topEntitiesArgs = statsFilterArgs.extend({
     ),
 });
 
-const TOTAL_KEY: Record<EntityType, keyof TopEntitiesDto> = {
-  topics: "totalTopics",
-  people: "totalPeople",
-  companies: "totalCompanies",
-  cities: "totalCities",
-  journalists: "totalJournalists",
-  sources: "totalSources",
+/** API bucket per tool entity type; journalists are ranked by ID so name variants of one journalist merge. */
+const API_ENTITY: Record<EntityType, TopEntityType> = {
+  topics: "topics",
+  people: "people",
+  companies: "companies",
+  cities: "cities",
+  journalists: "journalistsById",
+  sources: "sources",
 };
+
+/** Entity types whose keys are IDs, expanded by the API so names can be shown. */
+const EXPANDED: ReadonlySet<TopEntityType> = new Set<TopEntityType>([
+  "people",
+  "companies",
+  "journalistsById",
+]);
+
+const BUCKET: Record<
+  EntityType,
+  { items: keyof TopEntitiesDto; total: keyof TopEntitiesDto; keyAttr: string }
+> = {
+  topics: { items: "topics", total: "totalTopics", keyAttr: "name" },
+  people: { items: "people", total: "totalPeople", keyAttr: "wikidata_id" },
+  companies: { items: "companies", total: "totalCompanies", keyAttr: "id" },
+  cities: { items: "cities", total: "totalCities", keyAttr: "name" },
+  journalists: {
+    items: "journalistsById",
+    total: "totalJournalistsById",
+    keyAttr: "id",
+  },
+  sources: { items: "sources", total: "totalSources", keyAttr: "domain" },
+};
+
+function escapeAttr(value: string): string {
+  return value.replace(/&/g, "&amp;").replace(/"/g, "&quot;");
+}
+
+/** Names of expanded records, keyed by the bucket key they were looked up by. */
+function namesByKey(
+  result: TopEntitiesDto,
+  entityType: EntityType,
+): Map<string, string> {
+  const names = new Map<string, string>();
+  const add = (key: string, name: string | null | undefined) => {
+    if (name) names.set(key, name);
+  };
+  if (entityType === "people") {
+    for (const p of result.topPeople ?? []) add(p.wikidataId, p.name);
+  } else if (entityType === "companies") {
+    for (const c of result.topCompanies ?? []) add(c.id, c.name);
+  } else if (entityType === "journalists") {
+    for (const j of result.topJournalists ?? []) add(j.id, j.fullName || j.name);
+  }
+  return names;
+}
 
 export function getTopEntities(
   perigon: Perigon,
@@ -70,52 +111,37 @@ export function getTopEntities(
   ): Promise<CallToolResult> => {
     try {
       const requested = args.entity ?? ["topics", "people", "companies"];
+      const apiEntities = requested.map((t) => API_ENTITY[t]);
 
       const result: TopEntitiesDto = await perigon.getTopEntities({
-        q: args.q,
-        from: args.from,
-        to: args.to,
-        source: args.source,
-        sourceGroup: args.sourceGroup,
-        category: args.category,
-        topic: args.topic,
-        language: args.language,
-        country: args.country,
-        personName: args.personName,
-        companyDomain: args.companyDomain,
-        companySymbol: args.companySymbol,
-        journalistId: args.journalistId,
-        personWikidataId: args.personWikidataId,
-        companyId: args.companyId,
-        taxonomy: args.taxonomy,
-        excludeSource: args.excludeSource,
-        excludeCategory: args.excludeCategory,
-        excludeTopic: args.excludeTopic,
-        entity: requested,
-        expandEntities: args.expandEntities,
+        ...statsFilters(args),
+        entity: apiEntities,
+        expandEntities: apiEntities.filter((t) => EXPANDED.has(t)),
         size: args.size,
-        showReprints: args.showReprints,
         clusterId: args.clusterId,
       });
 
-      const hasResults = requested.some((t) => {
-        const items = result[t] as TopEntityItem[] | undefined;
-        return Array.isArray(items) && items.length > 0;
-      });
+      const itemsOf = (t: EntityType) =>
+        result[BUCKET[t].items] as TopEntityItem[] | undefined;
+      const hasResults = requested.some((t) => (itemsOf(t)?.length ?? 0) > 0);
       if (!hasResults) return noResults;
 
       let output = `<top_entities total_articles="${result.totalArticles ?? 0}">\n`;
 
       for (const entityType of requested) {
-        const items = result[entityType] as TopEntityItem[] | undefined;
-        if (!Array.isArray(items) || items.length === 0) continue;
-        const total = result[TOTAL_KEY[entityType]] as number | undefined;
+        const items = itemsOf(entityType);
+        if (!items || items.length === 0) continue;
+        const { total: totalKey, keyAttr } = BUCKET[entityType];
+        const total = result[totalKey] as number | undefined;
+        const names = namesByKey(result, entityType);
         output += `\n<${entityType} total="${total ?? items.length}">\n`;
         output += items
-          .map(
-            (it, i) =>
-              `  <item rank="${i + 1}" key="${it.key}" count="${it.count}" />`,
-          )
+          .map((it, i) => {
+            const name = names.get(it.key);
+            const nameAttr =
+              keyAttr !== "name" && name ? ` name="${escapeAttr(name)}"` : "";
+            return `  <item rank="${i + 1}" ${keyAttr}="${escapeAttr(it.key)}"${nameAttr} count="${it.count}" />`;
+          })
           .join("\n");
         output += `\n</${entityType}>\n`;
       }
@@ -136,7 +162,7 @@ export const topEntitiesTool = {
   name: "get_top_entities",
   title: "Top entities",
   description:
-    "Get the most frequently mentioned entities in articles matching the given filters, ranked by raw mention count. Use this when the user asks 'what topics/people/companies are most covered?' or 'who appears most in X news?' — i.e., questions about overall mention frequency within a fixed window. Do NOT use this for detecting sudden spikes or trending entities; use get_top_people or get_top_companies for spike detection instead. Defaults to returning topics, people, and companies; use the entity parameter to request other types (cities, journalists, sources). Supports the same article filters as search_news_articles.",
+    "Get the most frequently mentioned entities in articles matching the given filters, ranked by raw mention count. Use this when the user asks 'what topics/people/companies are most covered?' or 'who appears most in X news?' — i.e., questions about overall mention frequency within a fixed window. Do NOT use this for detecting sudden spikes or trending entities; use get_top_people or get_top_companies for spike detection instead. Defaults to returning topics, people, and companies; use the entity parameter to request other types (cities, journalists, sources). People, companies, and journalists are returned with their ID (wikidata_id for personWikidataId, company id for companyId, journalist id for journalistId filters) and name; topics and cities by name; sources by domain. Counts include passing mentions, not only articles centered on the entity. Supports the same article filters as get_article_counts, plus clusterId.",
   parameters: topEntitiesArgs,
   annotations: {
     readOnlyHint: true,

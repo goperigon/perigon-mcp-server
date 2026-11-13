@@ -48,15 +48,16 @@ describe("context budget", () => {
   // parameter expansion on search_news_articles and the five stats tools;
   // this ceiling is the actual measured size plus headroom, guarding
   // against further unplanned growth rather than the pre-implementation
-  // estimate.
-  test("research profile stays at or below ~70,000 chars (~17.5k tok)", () => {
-    expect(registryChars(TOOL_PROFILES.research)).toBeLessThanOrEqual(70_000);
+  // estimate. Raised by ~3k chars for the shared stats filters companyName,
+  // label, excludeLabel and showReprints.
+  test("research profile stays at or below ~72,000 chars (~18k tok)", () => {
+    expect(registryChars(TOOL_PROFILES.research)).toBeLessThanOrEqual(72_000);
   });
 
   // Same caveat as the research profile above — ceiling reflects the
   // measured size of search_news_articles plus the five stats tools.
-  test("minimal profile stays at or below ~35,000 chars (~8.75k tok)", () => {
-    expect(registryChars(TOOL_PROFILES.minimal)).toBeLessThanOrEqual(35_000);
+  test("minimal profile stays at or below ~37,500 chars (~9.4k tok)", () => {
+    expect(registryChars(TOOL_PROFILES.minimal)).toBeLessThanOrEqual(37_500);
   });
 
   // Added to the default set for every session with social access.
