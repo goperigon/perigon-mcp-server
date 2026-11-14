@@ -21,7 +21,7 @@
 - [**🔧 Choosing tools**](#choosing-tools)
 - [**🛠️ Tools**](#tools)
 - [**📚 Prompts and resources**](#prompts-and-resources)
-- [**📊 Signal Insights workflow**](#signal-insights-workflow)
+- [**📊 Monitor Insights workflow**](#monitor-insights-workflow)
 - [**💡 Prompting tips**](#prompting-tips)
 - [**📦 MCP Registry**](#mcp-registry)
 - [**💻 Local development**](#local-development)
