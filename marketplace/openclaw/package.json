@@ -1,0 +1,59 @@
+{
+  "name": "@goperigon/openclaw-perigon",
+  "version": "1.0.0",
+  "description": "OpenClaw plugin for Perigon MCP server - search news, create monitors, analyze coverage trends",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": "./dist/index.js"
+  },
+  "files": [
+    "dist",
+    "assets",
+    "openclaw.plugin.json"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "openclaw",
+    "openclaw-plugin",
+    "perigon",
+    "mcp",
+    "news",
+    "research",
+    "monitoring"
+  ],
+  "author": "Perigon (https://www.perigon.io)",
+  "license": "Apache-2.0",
+  "homepage": "https://github.com/goperigon/perigon-mcp-server#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/goperigon/perigon-mcp-server.git",
+    "directory": "marketplace/openclaw"
+  },
+  "bugs": {
+    "url": "https://github.com/goperigon/perigon-mcp-server/issues"
+  },
+  "peerDependencies": {
+    "openclaw": ">=2026.3.24-beta.2"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "^24.0.7",
+    "typescript": "^5.8.3"
+  },
+  "openclaw": {
+    "extensions": ["./dist/index.js"],
+    "compat": {
+      "pluginApi": ">=2026.3.24-beta.2",
+      "minGatewayVersion": "2026.3.24-beta.2"
+    },
+    "build": {
+      "openclawVersion": "2026.3.24-beta.2",
+      "pluginSdkVersion": "2026.3.24-beta.2"
+    }
+  }
+}
