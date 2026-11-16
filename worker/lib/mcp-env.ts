@@ -21,10 +21,19 @@ function isLocalDevOrigin(origin: string): boolean {
   return hostname != null && LOCAL_DEV_HOSTNAMES.has(hostname);
 }
 
+const PUBLIC_MCP_HOSTNAME = "mcp.perigon.io";
+
+function requestHostname(request: Request): string {
+  const hostHeader = request.headers.get("Host");
+  if (hostHeader) {
+    return hostHeader.split(":")[0]?.toLowerCase() ?? "";
+  }
+  return new URL(request.url).hostname.toLowerCase();
+}
+
 /** True when the request hit the public MCP host (not local dev hostnames). */
 export function isPublicMcpRequest(request: Request): boolean {
-  const hostname = new URL(request.url).hostname;
-  return hostname === "mcp.perigon.io";
+  return requestHostname(request) === PUBLIC_MCP_HOSTNAME;
 }
 
 /**
