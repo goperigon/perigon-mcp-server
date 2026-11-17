@@ -132,6 +132,9 @@ export function formatMonitorDetail(monitor: MonitorDto): string {
     newsletterConfig: monitor.newsletterConfig,
     entityGroups: monitor.entityGroups,
     query: monitor.query,
+    xQuery: monitor.xQuery ?? null,
+    redditQuery: monitor.redditQuery ?? null,
+    linkedInQuery: monitor.linkedInQuery ?? null,
     schedulePolicy: scheduleDisplay?.policy ?? null,
     watchlistId: monitor.watchlistId,
     contactPointIds: monitor.contactPointIds

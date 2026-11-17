@@ -2,15 +2,22 @@ import { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 import { Perigon } from "../../../lib/perigon";
 import { MonitorUpdateRequest } from "../../../types/monitors";
-import { ToolCallback, ToolDefinition } from "../types";
+import { SocialSource } from "../../../types/types";
+import { ToolDefinition } from "../types";
 import {
   buildMonitorQuery,
+  buildSocialQueries,
   monitorClassificationType,
   monitorDataSchemaArgs,
   monitorEntityGroupArgs,
+  monitorLinkedInQueryArgs,
   monitorNewsletterConfigArgs,
   monitorQueryArgs,
-  monitorSchedulePolicyArgs
+  monitorRedditQueryArgs,
+  monitorSchedulePolicyArgs,
+  monitorSocialQueryFieldNames,
+  monitorXQueryArgs,
+  unavailableSocialQueryFields
 } from "../schemas/monitors";
 import { toolResult } from "../utils/formatting";
 import { createErrorMessage } from "../utils/error-handling";
@@ -64,12 +71,59 @@ export const updateMonitorArgs = z.object({
     )
 });
 
-export function updateMonitor(perigon: Perigon): ToolCallback<typeof updateMonitorArgs> {
-  return async (
-    args: z.infer<typeof updateMonitorArgs>
-  ): Promise<CallToolResult> => {
+const updateMonitorArgsWithSocial = updateMonitorArgs.extend({
+  query: monitorQueryArgs
+    .nullable()
+    .optional()
+    .describe(
+      "Complete replacement news and web article query. Pass null to stop monitoring news; the monitor must keep at least one social channel."
+    ),
+  xQuery: monitorXQueryArgs()
+    .nullable()
+    .optional()
+    .describe(
+      "Replacement X query. Pass null to stop monitoring X; omit to keep the current X query."
+    ),
+  redditQuery: monitorRedditQueryArgs()
+    .nullable()
+    .optional()
+    .describe(
+      "Replacement Reddit query. Pass null to stop monitoring Reddit; omit to keep the current Reddit query."
+    ),
+  linkedInQuery: monitorLinkedInQueryArgs()
+    .nullable()
+    .optional()
+    .describe(
+      "Replacement LinkedIn query. Pass null to stop monitoring LinkedIn; omit to keep the current LinkedIn query."
+    )
+});
+
+/** Adds the social query fields for the organization's social sources. */
+export function buildUpdateMonitorArgs(socialSources: readonly SocialSource[]) {
+  if (monitorSocialQueryFieldNames(socialSources).length === 0) {
+    return updateMonitorArgs;
+  }
+  return updateMonitorArgsWithSocial.omit(
+    unavailableSocialQueryFields(socialSources)
+  );
+}
+
+type UpdateMonitorInput = z.infer<typeof updateMonitorArgsWithSocial>;
+
+export function updateMonitor(
+  perigon: Perigon
+): (args: UpdateMonitorInput) => Promise<CallToolResult> {
+  return async (args: UpdateMonitorInput): Promise<CallToolResult> => {
     try {
-      const { uuid, query, schedulePolicy, ...fields } = args;
+      const {
+        uuid,
+        query,
+        schedulePolicy,
+        xQuery,
+        redditQuery,
+        linkedInQuery,
+        ...fields
+      } = args;
       let utcSchedulePolicy: MonitorUpdateRequest["schedulePolicy"] | undefined;
       if (schedulePolicy !== undefined) {
         if (schedulePolicy === null) {
@@ -88,7 +142,10 @@ export function updateMonitor(perigon: Perigon): ToolCallback<typeof updateMonit
 
       const body: MonitorUpdateRequest = {
         ...fields,
-        ...(query ? { query: buildMonitorQuery(query) } : {}),
+        ...(query === undefined
+          ? {}
+          : { query: query === null ? null : buildMonitorQuery(query) }),
+        ...buildSocialQueries({ xQuery, redditQuery, linkedInQuery }),
         ...(schedulePolicy === undefined ? {} : { schedulePolicy: utcSchedulePolicy })
       };
 
@@ -125,3 +182,16 @@ export const updateMonitorTool = {
   },
   createHandler: (perigon: Perigon) => updateMonitor(perigon)
 } satisfies ToolDefinition<typeof updateMonitorArgs>;
+
+/** `update_monitor` with the social channels the organization can use. */
+export function updateMonitorToolForSources(
+  socialSources: readonly SocialSource[]
+): ToolDefinition<any> {
+  const fields = monitorSocialQueryFieldNames(socialSources);
+  if (fields.length === 0) return updateMonitorTool;
+  return {
+    ...updateMonitorTool,
+    description: `${updateMonitorTool.description} Social channels: pass ${fields.join(" / ")} to add or replace a channel, or null to remove it. Pass query: null to stop monitoring news.`,
+    parameters: buildUpdateMonitorArgs(socialSources)
+  };
+}

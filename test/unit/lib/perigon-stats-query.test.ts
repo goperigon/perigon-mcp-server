@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, test } from "bun:test";
 import { Perigon } from "../../../worker/lib/perigon";
+import { emptyMcpTelemetryHeaders } from "../../../worker/lib/telemetry-headers";
 import {
   installFetchMock,
   jsonResponse,
@@ -23,7 +24,7 @@ function captureUrls(): URL[] {
 describe("Perigon stats queries", () => {
   test("send companyName, labels and showReprints", async () => {
     const urls = captureUrls();
-    await new Perigon("k", "https://api.test.local").getArticleCounts({
+    await new Perigon("k", "https://api.test.local", emptyMcpTelemetryHeaders).getArticleCounts({
       companyName: "Toyota",
       label: ["Opinion"],
       excludeLabel: ["Press Release", "Paid-news"],
@@ -39,7 +40,7 @@ describe("Perigon stats queries", () => {
 
   test("top entities sends expandEntities as entity types", async () => {
     const urls = captureUrls();
-    await new Perigon("k", "https://api.test.local").getTopEntities({
+    await new Perigon("k", "https://api.test.local", emptyMcpTelemetryHeaders).getTopEntities({
       entity: ["people", "journalistsById"],
       expandEntities: ["people", "journalistsById"],
     });

@@ -20,82 +20,82 @@ export const newsVectorArgs = z.object({
   query: z
     .string()
     .describe(
-      "Natural language query for semantic search of news articles. Describe what you're looking for in conversational language (e.g., 'impact of artificial intelligence on healthcare outcomes'). The query is converted to a vector embedding to find semantically similar articles.",
+      "Natural-language description of what you are looking for, matched by meaning (e.g. 'impact of AI on healthcare outcomes').",
     ),
   pubDateFrom: z
     .string()
     .transform(parseTime)
     .optional()
     .describe(
-      "Only return articles published after this date. ISO 8601 or yyyy-mm-dd. Default: last 30 days.",
+      "Published after this date (ISO 8601 or yyyy-mm-dd). Default: 30 days ago.",
     ),
   pubDateTo: z
     .string()
     .transform(parseTime)
     .optional()
     .describe(
-      "Only return articles published before this date. ISO 8601 or yyyy-mm-dd.",
+      "Published before this date.",
     ),
   showReprints: z
     .boolean()
     .optional()
     .default(false)
     .describe(
-      "Include wire-service reprints (AP, Reuters) that appear on multiple sites. Default: false for deduplication.",
+      "Include wire-service reprints (AP, Reuters) duplicated across sites.",
     ),
   category: z
     .array(z.string())
     .optional()
     .describe(
-      "Filter by content categories (e.g., Politics, Tech, Sports, Business, Finance). Multiple values use OR logic.",
+      "Content categories (e.g. Politics, Tech, Business).",
     ),
   topic: z
     .array(z.string())
     .optional()
     .describe(
-      "Filter by specific topics (e.g., Markets, Cryptocurrency, Climate Change). More granular than categories.",
+      "Topics, more granular than categories (e.g. Markets, Climate Change).",
     ),
   source: z
     .array(z.string())
     .optional()
-    .describe("Filter by publisher domains (e.g., cnn.com, nytimes.com)."),
+    .describe("Publisher domains (e.g. cnn.com)."),
   sourceGroup: z
     .array(z.string())
     .optional()
     .describe(
-      "Filter using curated publisher bundles: top10, top25, top50, top100, top25tech, top25crypto, etc.",
+      "Curated publisher bundles: top10, top25, top50, top100, top25tech, top25crypto.",
     ),
   language: z
     .array(z.string())
     .optional()
     .describe(
-      "Filter by language using ISO-639 two-letter codes (e.g., en, es, fr).",
+      "ISO-639 language codes (e.g. en, es).",
     ),
   country: z
     .array(z.string())
     .optional()
-    .describe("Filter by country using two-letter codes (e.g., us, gb, jp)."),
+    .describe("2-letter country codes (e.g. us, gb)."),
   personName: z
     .array(z.string())
     .optional()
-    .describe("Filter for articles mentioning specific people by name."),
+    .describe("Mentioned people, by name."),
   companyDomain: z
     .array(z.string())
     .optional()
     .describe(
-      "Filter for articles mentioning companies by domain (e.g., apple.com).",
+      "Mentioned companies, by domain (e.g. apple.com).",
     ),
   companySymbol: z
     .array(z.string())
     .optional()
     .describe(
-      "Filter for articles mentioning companies by stock ticker symbol (e.g., AAPL).",
+      "Mentioned companies, by ticker (e.g. AAPL).",
     ),
   label: z
     .array(z.string())
     .optional()
     .describe(
-      "Filter by editorial labels: Opinion, Paid-news, Non-news, Fact Check, Press Release.",
+      "Editorial labels: Opinion, Paid-news, Non-news, Fact Check, Press Release.",
     ),
 });
 
@@ -206,7 +206,7 @@ export const newsVectorTool = {
   name: "search_vector_news",
   title: "Vector News",
   description:
-    "Semantic search over recent news articles using natural language and vector embeddings. Use this instead of search_news_articles when the query is conversational, conceptual, or intent-based rather than keyword-based (e.g., 'how is AI transforming drug discovery' vs 'AI drug discovery'). Defaults to the last 30 days; override with pubDateFrom/pubDateTo for older coverage. Returns articles ranked by relevance score with content, metadata, and similarity scores.",
+    "Semantic search over recent news; use instead of search_news_articles when the query is conversational or conceptual rather than keyword-based ('how is AI transforming drug discovery' vs 'AI drug discovery'). Covers the last 30 days unless pubDateFrom/To is set. Returns articles with content, metadata, and similarity scores.",
   parameters: newsVectorArgs,
   annotations: {
     readOnlyHint: true,

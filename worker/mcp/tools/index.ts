@@ -77,8 +77,14 @@ export { getMonitorTool } from "./monitors/get-monitor";
 export { getMonitorEventsTool } from "./monitors/get-monitor-events";
 export { getMonitorNewslettersTool } from "./monitors/get-monitor-newsletters";
 export { getMonitorSummariesTool } from "./monitors/get-monitor-summaries";
-export { createMonitorTool } from "./monitors/create-monitor";
-export { updateMonitorTool } from "./monitors/update-monitor";
+export {
+  createMonitorTool,
+  createMonitorToolForSources
+} from "./monitors/create-monitor";
+export {
+  updateMonitorTool,
+  updateMonitorToolForSources
+} from "./monitors/update-monitor";
 export { setMonitorStatusTool } from "./monitors/set-monitor-status";
 
 // Export entitlement/access tools

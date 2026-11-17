@@ -139,13 +139,13 @@ describe("withDefaultCountryNote", () => {
 describe("describeDefaultCountry", () => {
   test("lists the filters that suppress the default", () => {
     expect(describeDefaultCountry(["countries", "cities", "states"])).toBe(
-      "Country default: when none of countries, cities or states is given, results are filtered to country us and the response starts with a <note> saying the default was applied; pass countries to choose others, or countries: [] for all countries."
+      "Results default to country us when none of countries, cities or states is given, and the response then starts with a <note>; countries: [] searches all."
     );
   });
 
   test("handles a single filter and a custom hint", () => {
     expect(describeDefaultCountry(["country"], "pass country")).toBe(
-      "Country default: when country is not given, results are filtered to country us and the response starts with a <note> saying the default was applied; pass country."
+      "Results default to country us when country is not given, and the response then starts with a <note>; pass country."
     );
   });
 });

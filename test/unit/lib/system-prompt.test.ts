@@ -33,6 +33,13 @@ describe("buildSystemPrompt", () => {
     expect(prompt).toContain("replaces query, data schema, entity groups");
   });
 
+  test("separates most-mentioned from spike tool guidance", () => {
+    const prompt = buildSystemPrompt(FIXED_NOW);
+    expect(prompt).toContain("- **get_top_entities**: For \"who or what is most covered\"");
+    expect(prompt).toContain("- **get_top_people / get_top_companies**: For \"who is trending");
+    expect(prompt).toContain("Never set from/to on these tools");
+  });
+
   test("substitutes both occurrences of {{date}} (replaceAll)", () => {
     const prompt = buildSystemPrompt(FIXED_NOW);
     // The string "2024-06-15" should appear at least twice — once in

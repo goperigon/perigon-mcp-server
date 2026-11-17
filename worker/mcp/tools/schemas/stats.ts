@@ -15,88 +15,74 @@ export const statsFilterArgs = z.object({
     .string()
     .optional()
     .describe(
-      "Keyword search across article titles, descriptions, and content. Supports Boolean operators (AND, OR, NOT), exact phrases with quotes, and wildcards (* and ?)."
+      'Keyword query over title, description, and content. AND/OR/NOT, "exact phrases", wildcards * ?.'
     ),
   from: z
     .string()
     .transform(parseTime)
     .optional()
-    .describe(
-      "Filter articles published after this date. ISO 8601 or yyyy-mm-dd format."
-    ),
+    .describe("Published after this date (ISO 8601 or yyyy-mm-dd)."),
   to: z
     .string()
     .transform(parseTime)
     .optional()
-    .describe(
-      "Filter articles published before this date. ISO 8601 or yyyy-mm-dd format."
-    ),
+    .describe("Published before this date (ISO 8601 or yyyy-mm-dd)."),
   source: z
     .array(z.string())
     .optional()
-    .describe(
-      "Filter by publisher domains (e.g., cnn.com, nytimes.com). Wildcards supported."
-    ),
+    .describe("Publisher domains (e.g. cnn.com); wildcards supported."),
   sourceGroup: z
     .array(z.string())
     .optional()
-    .describe(
-      "Filter using curated publisher bundles: top10, top25, top50, top100, top25tech, top25crypto."
-    ),
+    .describe("Curated publisher bundles: top10, top25, top50, top100, top25tech, top25crypto."),
   category: z
     .array(z.string())
     .optional()
-    .describe(
-      "Filter by content categories (e.g., Politics, Tech, Business, Finance). Multiple values use OR logic."
-    ),
+    .describe("Content categories (e.g. Politics, Tech, Business, Finance)."),
   topic: z
     .array(z.string())
     .optional()
-    .describe(
-      "Filter by specific topics (e.g., AI, Cryptocurrency, Climate Change). More granular than categories."
-    ),
+    .describe("Topics, more granular than categories (e.g. AI, Climate Change)."),
   language: z
     .array(z.string())
     .optional()
-    .describe("Filter by language using ISO-639 two-letter codes (e.g., en, es, fr)."),
+    .describe("ISO-639 language codes (e.g. en, es)."),
   country: z
     .array(z.string())
     .optional()
-    .describe(
-      "Filter by country where the news event is located, using two-letter codes (e.g., us, gb)."
-    ),
+    .describe("Country where the event is located, 2-letter codes (e.g. us, gb)."),
   personName: z
     .array(z.string())
     .optional()
-    .describe("Filter articles mentioning specific people by name."),
+    .describe("Mentioned people, by name."),
   companyDomain: z
     .array(z.string())
     .optional()
-    .describe("Filter articles mentioning companies by domain (e.g., apple.com)."),
+    .describe("Mentioned companies, by domain (e.g. apple.com)."),
   companySymbol: z
     .array(z.string())
     .optional()
-    .describe("Filter articles mentioning companies by stock ticker symbol (e.g., AAPL)."),
+    .describe("Mentioned companies, by ticker (e.g. AAPL)."),
   companyName: z
     .string()
     .optional()
-    .describe("Filter articles mentioning a company by exact name."),
+    .describe("Mentioned company, by exact name."),
   journalistId: z
     .array(z.string())
     .optional()
-    .describe("Filter articles written by specific journalist IDs."),
+    .describe("Author journalist IDs."),
   personWikidataId: z
     .array(z.string())
     .optional()
-    .describe("Filter articles mentioning a person by Wikidata ID (unambiguous vs. personName)."),
+    .describe("Mentioned people, by Wikidata ID (preferred over personName)."),
   companyId: z
     .array(z.string())
     .optional()
-    .describe("Filter articles mentioning specific company IDs."),
+    .describe("Mentioned companies, by company ID."),
   taxonomy: z
     .array(z.string())
     .optional()
-    .describe("Filter by Google Content Category, full path (e.g. /Finance/Banking/Other)."),
+    .describe("Google Content Category full path (e.g. /Finance/Banking/Other)."),
   label: z
     .array(z.string())
     .optional()
@@ -152,9 +138,7 @@ export function statsFilters(args: StatsFilterArgs): StatsArticleFilters {
 export const splitByEnum = z
   .enum(["HOUR", "DAY", "WEEK", "MONTH", "NONE"])
   .default("DAY")
-  .describe(
-    "Time interval for bucketing results. HOUR = hourly, DAY = daily, WEEK = weekly, MONTH = monthly, NONE = single aggregate value across the whole date range."
-  );
+  .describe("Bucket interval; NONE = one aggregate for the whole range.");
 
 /** Convert the user-facing splitBy enum to the lowercase value the API expects. */
 export function normalizeSplitBy(

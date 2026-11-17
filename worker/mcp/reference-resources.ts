@@ -1,6 +1,6 @@
 /**
  * Long-form guidance moved out of `MCP_INSTRUCTIONS` and into on-demand MCP
- * resources. `MCP_INSTRUCTIONS` is a router — the six behavior-changing
+ * resources. `MCP_INSTRUCTIONS` is a router — the behavior-changing
  * rules plus a tool map and pointers here; anything occasional lives in one
  * of these four resources instead, fetched by URI only when needed.
  *
@@ -27,7 +27,8 @@ export const FIELDS_REFERENCE = `\
 ## Counting and scoring
 - \`numResults\` caps at 10,000 even when more match — use a stats tool (\`get_article_counts\`) for true volume, not \`numResults\`.
 - Sentiment is three independent 0-1 scores (positive/negative/neutral), not one net score.
-- \`spikeScore\` is relative (current vs. baseline rate); \`currentMentions\`/\`currentRatePerDay\` are absolute. \`normalizeByDay\` changes whether counts or per-day rates drive the comparison.
+- \`spikeScore\` is relative (current vs. baseline rate); \`currentMentions\`/\`currentRatePerDay\` are absolute. \`normalizeByDay\` changes whether counts or per-day rates drive the comparison. Both windows are smoothed by +1 mention (\`smoothingAlpha\` default 1), so tiny counts still produce scores — one current mention with no baseline scores 2x on equal windows. Below about 1.1 is not a meaningful spike; always read the score alongside the mention counts.
+- \`get_top_entities\` counts are raw mentions in a single window with no baseline — they measure how much an entity is covered, not whether its coverage is rising.
 - \`score\` on an article is search relevance, not importance or quality.
 
 ## Articles and stories
@@ -70,8 +71,47 @@ Resolve names to IDs before filtering wherever a tool offers both — IDs are un
 ## Narrative tracing
 \`search_news_stories\` → \`id\` → \`search_story_history(clusterIds)\` to see how it evolved → \`search_news_articles(newsStoryIds)\` for the member articles.
 
-## Spike explanation
-\`get_top_people\` / \`get_top_companies\` / \`get_top_topics\` → take the \`wikidataId\` → search the current window for that entity → \`summarize_news\` to explain the cause of the spike.
+## Ranking entities: most-mentioned vs. spiking
+Two different questions, two different tool families:
+- **Most mentioned** — "who is most covered / dominates coverage / has the most share of voice in X?" → \`get_top_entities\`. One window (\`from\`/\`to\`), raw mention counts, no baseline. Passing mentions count, so heads of state and celebrities often top topical queries; present the result as "most mentioned", never "trending". Also the only tool for cities, journalists, and sources.
+- **Trending / surging / spiking** — "who is trending, suddenly in the news, or covered more than usual?" → \`get_top_people\` / \`get_top_companies\` (and \`get_top_topics\` when registered). Compares a current window against a baseline window.
+- **Both** — "who is driving X coverage, and who is new?" → call both families with identical topic/category/q filters and report them as separate lists.
+
+### Spike windows
+- Current window = the user's period: today → last 1 day, this week → last 7 days, this month → last 30 days.
+- "Surging right now" → baseline is an equal-length window immediately before the current one (1 day vs. the prior day, 7 vs. the prior 7, 30 vs. the prior 30). Set \`baselineTo\` = \`currentFrom\`.
+- "Unusual compared with normal" → baseline 4–10x the current window's length (the default is 3 days vs. the preceding 27). Keep \`normalizeByDay=true\` so unequal lengths compare per day.
+- **Never set \`from\`/\`to\` on the spike tools.** They filter every article before the windows are applied, so a \`from\` at the start of the current window empties the baseline and inflates every score.
+
+### Spike thresholds
+- **On the rise** (established entities gaining coverage): \`minBaseline=5\`.
+- **Breaking / brand-new** names: \`minBaseline=0\` plus \`minCurrent\` ≈ 3 for a narrow topic over 1 day, ≈ 10 for broad or multi-day queries. This is a tunable heuristic: with +1 smoothing, one current mention and no baseline already scores 2x on a 1-day vs. 1-day comparison.
+- Request \`size\` 25–50, then judge. Treat \`spike_score\` below about 1.1 as not trending, and always report \`current_mentions\` and \`baseline_mentions\` next to the score.
+- Scope with \`topic\` (exact name from \`search_topics\`), \`category\`, or \`q\`. With no scope, results reflect all news.
+
+### Perennially covered names (default: leave them out)
+Heads of state, mega-celebrities, and dominant companies are mentioned in almost every topic. Unless the user signals otherwise, assume a request for trending, spiking, or breakout people, companies, or topics in a timeframe, topic, or query wants names whose coverage is new or unusual — not these perennial names.
+- **Default procedure:**
+  1. Query in breakout mode: equal-length baseline right before the current window, \`minBaseline=0\`, \`minCurrent\` ≈ 3–10. Perennial names rarely qualify here, because their baseline is high and their ratio stays near 1.
+  2. Use about 1.5x instead of 1.1x as the trending cutoff.
+  3. Drop entries whose \`baseline_mentions\` is far above the rest of the list (on a narrow topic, roughly 10+) and whose \`spike_score\` is under 2. These are covered steadily, not surging.
+  4. Keep a perennial name only if it surged (about 2x or more) and the surge is about the topic — confirm with \`search_news_articles\` filtered to its ID plus the same \`q\`/\`topic\` over the current window. Label it as a well-known name with a genuine topic-specific surge.
+  5. Briefly say what was left out and why (e.g. "left out Donald Trump: 1.2x, mentioned steadily in this coverage"), so the user can ask to include them.
+- **Include perennial names (no filtering, standard 1.1x cutoff, \`minBaseline=5\` "on the rise" call as well) when the user signals it:** they name the entity ("is Trump trending in youth sports?"), ask for "all", "including well-known / major / established" names, or ask which big names or major players are gaining coverage.
+- "Most mentioned" requests (\`get_top_entities\`) are unaffected — perennial names belong in those results.
+- No tool parameter hides a specific entity from the ranking. Drop names from the returned list yourself; do not try to filter an entity out with article filters, which would discard every article that mentions it, including legitimate topic coverage.
+- **Leftover noise is usually the query, not fame.** A phrase can match unrelated stories (e.g. "youth sports" matching "Ministry of Youth and Sports" politicians abroad). Tighten it with \`country\`/\`language\`, a narrower Boolean \`q\` (\`"youth sports" AND (league OR coach OR club)\`), or \`excludeCategory\`/\`excludeTopic\` for clearly off-topic coverage.
+
+### Example mappings
+- "Who's trending in AI this week?" → \`get_top_people\` + \`get_top_companies\`, \`topic=["AI"]\`, current = last 7 days, baseline = the 7 days before, \`minBaseline=0\`, \`minCurrent=5\`, perennial names filtered by default.
+- "Which major AI companies are gaining coverage this week?" → \`get_top_companies\`, same windows, \`minBaseline=5\`, perennial names included.
+- "Who's suddenly in the news about the Fed today?" → \`get_top_people\`, \`q="Federal Reserve"\`, current = last 1 day, baseline = the day before, \`minBaseline=0\`, \`minCurrent=3\`.
+- "Which companies are getting more coverage than usual in EV news?" → \`get_top_companies\`, \`q="electric vehicles"\`, current = last 3–7 days, baseline = the preceding 30 days, \`minBaseline=5\`.
+- "Most-covered EV companies last month" → \`get_top_entities\`, \`entity=["companies"]\`, \`q="electric vehicles"\`, \`from\` = 30 days ago.
+- "Who's driving youth sports coverage, and who's new?" → \`get_top_entities\` (people) for most mentioned, plus \`get_top_people\` with \`minBaseline=0\`, \`minCurrent=3\` for newly surging names.
+
+### Explaining a spike
+Take the returned \`wikidataId\` / company \`id\` → \`search_news_articles\` over the current window filtered to that entity → \`summarize_news\` to explain the cause.
 
 ## Topics
 Call \`search_topics\` first to get the exact taxonomy name before using the \`topic\` filter elsewhere — it does not fuzzy-match.

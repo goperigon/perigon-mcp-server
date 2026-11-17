@@ -19,21 +19,21 @@ import { createErrorMessage } from "../utils/error-handling";
  */
 export const peopleArgs = z.object({
   ...paginationArgs.shape,
-  name: createSearchField("person's name, description, and aliases"),
-  occupation: createSearchField(
-    "occupation names (e.g., politician, actor, CEO, athlete)",
+  name: createSearchField("name, description, and aliases"),
+  occupation: createSearchField("occupation").describe(
+    "Like name, on occupation names (e.g. politician, actor, CEO).",
   ),
   wikidataIds: z
     .array(z.string())
     .optional()
     .describe(
-      "Filter by Wikidata entity IDs (e.g., Q76 for Barack Obama). Precise identifiers from Wikidata.org to eliminate name ambiguity. Multiple values use OR logic.",
+      "Wikidata IDs (e.g. Q76 for Barack Obama).",
     ),
   occupationId: z
     .array(z.string())
     .optional()
     .describe(
-      "Filter by Wikidata occupation IDs (e.g., Q82955 politician, Q33999 actor) instead of free-text occupation.",
+      "Wikidata occupation IDs (e.g. Q82955 politician, Q33999 actor).",
     ),
 });
 
@@ -129,7 +129,7 @@ export const peopleTool = {
   name: "search_people",
   title: "People",
   description:
-    "Search 650k+ public figures, politicians, celebrities, executives, and newsworthy individuals in the Perigon database. Use this to look up biographical information about specific people or find people by occupation. Filter by name, occupation, or Wikidata ID. Returns biographical profiles with name, aliases, occupation, position, political party, gender, dates of birth/death, and description. Prefer wikidataId over personName on search_news_articles to avoid name ambiguity.",
+    "Search 650k+ public figures (politicians, celebrities, executives, newsworthy people) by name, occupation, or Wikidata ID. Returns name, aliases, occupation, position, political party, gender, birth/death dates, and description. Pass wikidataId to search_news_articles(personWikidataId) rather than personName to avoid name ambiguity.",
   parameters: peopleArgs,
   annotations: {
     readOnlyHint: true,

@@ -71,7 +71,7 @@ export const apiAccessTool = {
   name: "get_api_access",
   title: "Get API access and entitlements",
   description:
-    "Report this API key's scopes, organization, usage quota, pagination limits, and the entitlement behavior those scopes imply (which article fields always come back null, which filter params will 403, and any silent date-window clamps). Call this once at the start of a session, or whenever a field is unexpectedly null, a 403 occurs, or coverage before/after a date seems to be missing — a null field or empty date range may reflect this key's plan rather than absent data. Calling this tool does not count against the account's request quota.",
+    "Report this key's scopes, organization, quota, pagination limits, and what they imply: article fields that come back null, filters that 403, and silent date-window clamps. Call once per session, or when a field is unexpectedly null, a 403 occurs, or dates seem missing — these may reflect the plan, not absent data. Free; does not use quota.",
   parameters: apiAccessArgs,
   annotations: {
     readOnlyHint: true,

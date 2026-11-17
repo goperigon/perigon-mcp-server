@@ -57,7 +57,7 @@ export const articleCountsTool = {
   name: "get_article_counts",
   title: "Article volume",
   description:
-    "Get article publication volume bucketed over time for articles matching the given filters. Use this when the user asks about coverage trends, how much a topic was covered over time, or wants a chart/table of article counts — NOT just for finding the total number of articles (use search_news_articles with showNumResults for a simple total count). Returns one count per time bucket. Use splitBy to control the interval (HOUR, DAY, WEEK, MONTH, or NONE for a single total across the whole date range). Supports a curated subset of article filters: q, from/to, source(Group), category, topic, language, country, person/company identifiers and companyName, taxonomy, label/excludeLabel, and exclude variants for source/category/topic — not the full search_news_articles filter set. Reprints are excluded by default (showReprints=false), matching search_news_articles totals.",
+    "Article volume over time for articles matching the filters: one count per splitBy bucket (NONE = one total). Use for coverage trends or charts of counts; for a simple total, search_news_articles reports numResults. Supports a curated subset of search_news_articles filters. Reprints are excluded by default, matching search_news_articles totals.",
   parameters: articleCountsArgs,
   annotations: {
     readOnlyHint: true,

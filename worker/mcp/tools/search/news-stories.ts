@@ -29,7 +29,7 @@ export const newsStoriesArgs = createBaseSearchArgs().extend({
     .array(z.string())
     .optional()
     .describe(
-      `Filter for specific stories by their cluster IDs (the "headlines" or grouped news clusters).`,
+      "Story (cluster) IDs.",
     ),
   sortBy: z
     .enum([
@@ -45,41 +45,41 @@ export const newsStoriesArgs = createBaseSearchArgs().extend({
     .array(z.string())
     .optional()
     .describe(
-      "Filter stories by publisher domains or subdomains. Supports wildcards (* and ?) for pattern matching (e.g., *.cnn.com).",
+      "Publisher domains or subdomains; wildcards * ? (e.g. *.cnn.com).",
     ),
   sourceGroup: z
     .array(z.string())
     .optional()
     .describe(
-      "Filter using curated publisher bundles: top10, top25, top50, top100, top25tech, top25crypto.",
+      "Curated publisher bundles: top10, top25, top50, top100, top25tech, top25crypto.",
     ),
   personName: z
     .string()
     .optional()
-    .describe("Filter for stories mentioning a specific person by exact name."),
+    .describe("Mentioned person, exact name."),
   companyDomain: z
     .array(z.string())
     .optional()
     .describe(
-      "Filter for stories mentioning companies by domain (e.g., apple.com).",
+      "Mentioned companies, by domain (e.g. apple.com).",
     ),
   companySymbol: z
     .array(z.string())
     .optional()
     .describe(
-      "Filter for stories mentioning companies by ticker symbol (e.g., AAPL).",
+      "Mentioned companies, by ticker (e.g. AAPL).",
     ),
   isTopHeadlines: z
     .boolean()
     .optional()
-    .describe("When true, returns only top headlines from the last 24 hours."),
+    .describe("Only top headlines from the last 24 hours."),
   minSourceDiversity: z
     .number()
     .min(0)
     .max(1)
     .optional()
     .describe(
-      "Minimum ratio of distinct publishers to total articles in the story, including reprints (uniqueSourcesCount / totalCount), from 0 to 1. Drops stories that look big only because a few publishers posted many articles, e.g. SEC filing or press-release repost sites. 0.2 requires 1 publisher per 5 articles; 0.05 (1 per 20) is too loose to remove most of these. Use 0.2 for top headlines, most-covered, or trending requests. Not applied by default.",
+      "Minimum distinct publishers ÷ total articles (incl. reprints), 0–1. Drops stories inflated by a few publishers posting many articles (e.g. SEC filing or press-release repost sites). Use 0.2 (1 publisher per 5 articles) for top headlines, most-covered, or trending requests; 0.05 is too loose. Unset by default.",
     ),
 });
 
@@ -238,7 +238,7 @@ export const newsStoriesTool = {
   name: "search_news_stories",
   title: "Stories",
   description:
-    "Search clustered news stories (headlines) that group related articles across multiple sources into a single narrative. Use this to understand major news events, trending headlines, and story arcs rather than finding individual articles. Filter by category, topic, source, location, person, company, or time range. Returns summaries, key points, unique/total article counts, sentiment, and top topics/categories/people/companies/locations for the cluster. Feed the id into search_story_history to see how the story evolved, or search_news_articles(newsStoryIds) to pull its member articles." +
+    "Search news stories: clusters of related articles across sources (headlines). Use for major events, top headlines, and story arcs rather than individual articles. Returns summaries, key points, unique/total article counts, sentiment, and the cluster's top topics, categories, people, companies, and locations. Pass the id to search_story_history to see how a story evolved, or to search_news_articles(newsStoryIds) for its articles." +
     " " +
     describeDefaultCountry(["countries", "cities", "states"]),
   parameters: newsStoriesArgs,

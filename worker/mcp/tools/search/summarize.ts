@@ -19,41 +19,39 @@ import { createErrorMessage } from "../utils/error-handling";
 
 // The API derives the page size from maxArticleCount, so `size` would be ignored.
 export const summarizeArgs = createBaseSearchArgs().omit({ size: true }).extend({
-  query: createSearchField("article content for summarization"),
+  query: createSearchField("article content"),
   categories,
   topics,
   prompt: z
     .string()
     .optional()
     .describe(
-      "Instructions guiding how the summary should be written. Maximum 2048 characters. Example: 'Summarize the key developments and their implications'",
+      "How to write the summary (max 2048 chars), e.g. 'Summarize the key developments and their implications'.",
     ),
   maxArticleCount: z
     .number()
     .int()
     .optional()
-    .describe(
-      "Maximum number of articles to factor into the summary generation.",
-    ),
+    .describe("Maximum articles fed into the summary."),
   returnedArticleCount: z
     .number()
     .int()
     .optional()
     .describe(
-      "Maximum number of supporting articles to include in the response (can be less than maxArticleCount).",
+      "Maximum supporting articles returned (can be less than maxArticleCount).",
     ),
   maxTokens: z
     .number()
     .int()
     .optional()
-    .describe("Maximum tokens to generate in the summary."),
+    .describe("Maximum summary tokens."),
   temperature: z
     .number()
     .min(0)
     .max(2)
     .optional()
     .describe(
-      "LLM sampling temperature: 0.0 = deterministic, up to 2.0 = very creative. Ignored by gpt-6-luna and gpt-6.1-sol.",
+      "Sampling temperature, 0 (deterministic) to 2. Ignored by gpt-6-luna and gpt-6.1-sol.",
     ),
   topP: z
     .number()
@@ -61,61 +59,61 @@ export const summarizeArgs = createBaseSearchArgs().omit({ size: true }).extend(
     .max(1)
     .optional()
     .describe(
-      "Nucleus sampling (0.0-1.0). Ignored by gpt-6-luna and gpt-6.1-sol.",
+      "Nucleus sampling. Ignored by gpt-6-luna and gpt-6.1-sol.",
     ),
   model: z
     .enum(["gpt-6-luna", "gpt-6.1-sol", "openai/gpt-oss-120b"])
     .optional()
     .describe(
-      "LLM model to use for summary generation. Defaults to gpt-6-luna (fast, cheap). Use gpt-6.1-sol for higher-quality synthesis of complex topics.",
+      "gpt-6-luna (default, fast, cheap) or gpt-6.1-sol for higher-quality synthesis of complex topics.",
     ),
   method: z
     .enum(["ARTICLES", "CLUSTERS"])
     .optional()
     .describe(
-      "Article selection method: ARTICLES includes all matches, CLUSTERS picks one per cluster for diversity.",
+      "ARTICLES uses all matches; CLUSTERS picks one per story for diversity.",
     ),
   summarizeFields: z
     .enum(["TITLE", "CONTENT", "SUMMARY"])
     .optional()
     .describe(
-      "Which article fields to include when generating: TITLE, CONTENT, or SUMMARY.",
+      "Article fields fed into the summary.",
     ),
   sources: z
     .array(z.string())
     .optional()
     .describe(
-      "Filter articles by publisher domains. Supports wildcards (e.g., *.cnn.com).",
+      "Publisher domains; wildcards supported (e.g. *.cnn.com).",
     ),
   sourceGroup: z
     .array(z.string())
     .optional()
     .describe(
-      "Filter using curated publisher bundles: top10, top25, top50, top100, top25tech, top25crypto.",
+      "Curated publisher bundles: top10, top25, top50, top100, top25tech, top25crypto.",
     ),
   language: z
     .array(z.string())
     .optional()
     .describe(
-      "Filter by language using ISO-639 two-letter codes (e.g., en, es, fr).",
+      "ISO-639 language codes (e.g. en, es).",
     ),
   personName: z
     .array(z.string())
     .optional()
-    .describe("Filter for articles mentioning specific people."),
+    .describe("Mentioned people, by name."),
   companyDomain: z
     .array(z.string())
     .optional()
-    .describe("Filter for articles mentioning companies by domain."),
+    .describe("Mentioned companies, by domain."),
   companySymbol: z
     .array(z.string())
     .optional()
-    .describe("Filter for articles mentioning companies by ticker symbol."),
+    .describe("Mentioned companies, by ticker."),
   showReprints: z
     .boolean()
     .default(false)
     .describe(
-      "Include wire-service reprint copies among the articles fed into the summary. Defaults to false (deduplicated).",
+      "Include wire-service reprints among the summarized articles.",
     ),
   sortBy: z
     .enum([
@@ -129,7 +127,7 @@ export const summarizeArgs = createBaseSearchArgs().omit({ size: true }).extend(
     ])
     .default(AllEndpointSortBy.Date)
     .optional()
-    .describe("Sort order for articles fed into the summarizer."),
+    .describe("Order of articles fed into the summary."),
 });
 
 export function summarizeNews(
@@ -238,7 +236,7 @@ export const summarizeTool = {
   name: "summarize_news",
   title: "Search Summarizer",
   description:
-    "Generate an AI-powered summary of news coverage matching your filters. Use this when the user wants a synthesized overview or briefing on a topic rather than a list of individual articles. Combines article search with LLM summarization to produce concise, coherent summaries with supporting article citations. Accepts all standard article filters (keywords, categories, topics, sources, dates, locations) plus summarization controls (prompt, model, temperature)." +
+    "AI-generated summary of news coverage matching the filters, with supporting article citations. Use when the user wants an overview or briefing rather than a list of articles." +
     " " +
     describeDefaultCountry(["countries", "cities", "states"]),
   parameters: summarizeArgs,

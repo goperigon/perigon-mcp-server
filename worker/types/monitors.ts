@@ -114,7 +114,51 @@ export interface MonitorSchedulePolicy {
 
 export type MonitorQuery = Record<string, JsonValue>;
 
-export interface MonitorCreateRequest {
+export type MonitorXSearchType = "TOP" | "LATEST" | "MEDIA";
+
+export type MonitorLinkedInContentType =
+  | "PHOTOS"
+  | "VIDEOS"
+  | "JOBS"
+  | "LIVE_VIDEOS"
+  | "DOCUMENTS";
+
+/** A blank `query` turns the channel off. */
+export interface MonitorXQuery {
+  version: "V1";
+  query: string;
+  searchType: MonitorXSearchType;
+}
+
+/** A blank `query` turns the channel off. */
+export interface MonitorRedditQuery {
+  version: "V1";
+  query: string;
+  subreddit?: string | null;
+}
+
+/** Active with a keyword, an author title, or any ID filter; `contentType` alone is not enough. */
+export interface MonitorLinkedInQuery {
+  version: "V1";
+  keyword?: string | null;
+  contentType?: MonitorLinkedInContentType | null;
+  authorTitle?: string | null;
+  mentionsOrganization?: number[] | null;
+  fromMember?: string[] | null;
+  fromCompany?: number[] | null;
+  mentionsMember?: string[] | null;
+  authorCompany?: number[] | null;
+  authorIndustry?: number[] | null;
+}
+
+/** `Removal` is `null` on updates, where `null` stops monitoring that channel. */
+export interface MonitorSocialQueries<Removal extends null = never> {
+  xQuery?: MonitorXQuery | Removal;
+  redditQuery?: MonitorRedditQuery | Removal;
+  linkedInQuery?: MonitorLinkedInQuery | Removal;
+}
+
+export interface MonitorCreateRequest extends MonitorSocialQueries {
   name: string;
   status: "ACTIVE" | "DRAFT";
   classificationType: MonitorClassificationType;
@@ -123,13 +167,14 @@ export interface MonitorCreateRequest {
   dataSchema: MonitorDataSchema;
   newsletterConfig?: MonitorNewsletterConfig;
   entityGroups?: MonitorEntityGroup[];
-  query: MonitorQuery;
+  /** Omitted for a monitor without news. */
+  query?: MonitorQuery;
   schedulePolicy?: MonitorSchedulePolicy;
   watchlistId?: number;
   contactPointIds?: string[];
 }
 
-export interface MonitorUpdateRequest {
+export interface MonitorUpdateRequest extends MonitorSocialQueries<null> {
   name?: string;
   classificationType?: MonitorClassificationType;
   monitoringObjective?: string;
@@ -137,7 +182,8 @@ export interface MonitorUpdateRequest {
   dataSchema?: MonitorDataSchema;
   newsletterConfig?: MonitorNewsletterConfig | null;
   entityGroups?: MonitorEntityGroup[];
-  query?: MonitorQuery;
+  /** `null` stops monitoring news. */
+  query?: MonitorQuery | null;
   schedulePolicy?: MonitorSchedulePolicy | null;
   watchlistId?: number | null;
   contactPointIds?: string[];
@@ -156,6 +202,9 @@ export interface MonitorDto {
   newsletterConfig: MonitorNewsletterConfig | null;
   entityGroups: MonitorEntityGroup[];
   query: MonitorQuery | null;
+  xQuery?: MonitorXQuery | null;
+  redditQuery?: MonitorRedditQuery | null;
+  linkedInQuery?: MonitorLinkedInQuery | null;
   schedulePolicy: MonitorSchedulePolicy | null;
   watchlistId: number | null;
   contactPointIds: string[];

@@ -23,40 +23,38 @@ function parseTime(str: string) {
 export const wikipediaArgs = z.object({
   ...paginationArgs.shape,
   query: createSearchField("Wikipedia article content and titles"),
-  title: createSearchField("Wikipedia page titles"),
-  summary: createSearchField("Wikipedia page summary"),
-  text: createSearchField("Wikipedia page content (across all sections)"),
-  reference: createSearchField("Wikipedia page references"),
+  title: createSearchField("title").describe("Like query, title only."),
+  summary: createSearchField("summary").describe("Like query, summary only."),
+  text: createSearchField("text").describe("Like query, page text (all sections)."),
+  reference: createSearchField("references").describe("Like query, references only."),
   wikiCode: z
     .array(z.string())
     .optional()
     .describe(
-      "Wiki project codes (e.g., enwiki). Currently only 'enwiki' is supported.",
+      "Wiki project codes; only enwiki is supported.",
     ),
   wikidataId: z
     .array(z.string())
     .optional()
-    .describe("Filter by Wikidata entity IDs (e.g., Q42, Q937)."),
+    .describe("Wikidata IDs (e.g. Q42)."),
   wikidataInstanceOfId: z
     .array(z.string())
     .optional()
-    .describe(
-      "Filter pages whose Wikidata entities are instances of these IDs.",
-    ),
+    .describe("Pages whose Wikidata entity is an instance of these IDs."),
   wikidataInstanceOfLabel: z
     .array(z.string())
     .optional()
     .describe(
-      "Filter pages whose Wikidata entities are instances of these labels (e.g., human, city, country).",
+      "Pages whose Wikidata entity is an instance of these labels (e.g. human, city).",
     ),
   category: z
     .array(z.string())
     .optional()
-    .describe("Filter by Wikipedia categories."),
+    .describe("Wikipedia categories."),
   withPageviews: z
     .boolean()
     .optional()
-    .describe("Only return pages that have viewership statistics."),
+    .describe("Only pages with page-view statistics."),
   pageviewsFrom: z
     .number()
     .optional()
@@ -70,28 +68,28 @@ export const wikipediaArgs = z.object({
     .transform(parseTime)
     .optional()
     .describe(
-      "Pages modified on Wikipedia after this date. ISO 8601 or yyyy-mm-dd.",
+      "Edited on Wikipedia after this date.",
     ),
   wikiRevisionTo: z
     .string()
     .transform(parseTime)
     .optional()
     .describe(
-      "Pages modified on Wikipedia before this date. ISO 8601 or yyyy-mm-dd.",
+      "Edited on Wikipedia before this date.",
     ),
   scrapedAtFrom: z
     .string()
     .transform(parseTime)
     .optional()
     .describe(
-      "Pages scraped/indexed by Perigon after this date. ISO 8601 or yyyy-mm-dd.",
+      "Indexed by Perigon after this date.",
     ),
   scrapedAtTo: z
     .string()
     .transform(parseTime)
     .optional()
     .describe(
-      "Pages scraped/indexed by Perigon before this date. ISO 8601 or yyyy-mm-dd.",
+      "Indexed by Perigon before this date.",
     ),
   sortBy: z
     .enum([
@@ -106,7 +104,7 @@ export const wikipediaArgs = z.object({
     .default("relevance")
     .optional()
     .describe(
-      "Sort order: relevance, revisionTsDesc/Asc (edit recency), pageViewsDesc/Asc, or scrapedAtDesc/Asc.",
+      "revisionTs = last edit; scrapedAt = Perigon indexing time.",
     ),
 });
 
@@ -235,7 +233,7 @@ export const wikipediaTool = {
   name: "search_wikipedia",
   title: "Wikipedia",
   description:
-    "Search Wikipedia pages using keyword-based queries with advanced filtering. Use this for factual background information, encyclopedia-style lookups, or when you need structured Wikipedia data. Filter by title, summary, content, Wikidata entity IDs, categories, page views, and revision dates. Returns page summaries, URLs, Wikidata IDs, categories, page view statistics, and last modification dates.",
+    "Keyword search over Wikipedia pages for factual background. Returns summaries, URLs, Wikidata IDs, categories, page views, and last edit dates.",
   parameters: wikipediaArgs,
   annotations: {
     readOnlyHint: true,
