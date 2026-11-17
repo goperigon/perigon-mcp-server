@@ -6,16 +6,14 @@ import { EXECUTE_CODE_TOOL_NAME, PREVIEW_CHART_TOOL_NAME } from "./common";
 export const executeCodeTool = {
   name: EXECUTE_CODE_TOOL_NAME,
   description:
-    "Execute Python code inside a persistent sandboxed Jupyter kernel (IPython). " +
-    "State is fully preserved between calls: variables, imports, DataFrames, fitted models, and function definitions all remain in memory. " +
-    `WORKSPACE (${WORKSPACE_DIR}): default working directory. Use this to create any files you need. ` +
-    `DATA (${DATA_DIR}): S3-backed read-write directory. Query result files appear here automatically. This directory persists across sandbox restarts. ` +
-    `OUTPUT (${OUTPUT_DIR}): write user-facing deliverables here (charts, reports, CSVs, exports). Files in output/ appear in the user's Artifacts panel and are downloadable. Internal/intermediate files should stay in DATA root. ` +
-    "Pre-installed highlights: pandas, numpy, matplotlib, seaborn, scipy, scikit-learn, statsmodels, pyarrow, polars, openpyxl, sqlalchemy, beautifulsoup4, nltk, xgboost, lightgbm, shap, pillow, sympy, tabulate, rich. " +
-    "CHARTS: charts produced here (e.g. via plt.show()) are NOT displayed to the user. " +
-    `To show a chart to the user, call ${PREVIEW_CHART_TOOL_NAME} with the plotting code instead. ` +
-    "Before groupby/value_counts/top-N charts, drop rows with missing category values (dropna / notna on the label column) — null categories often dominate and mislead. " +
-    "No outbound internet access except *.amazonaws.com.",
+    "Run Python in a persistent Jupyter kernel; variables, imports, and DataFrames persist between calls. " +
+    `Working directory: ${WORKSPACE_DIR}. ` +
+    `DATA (${DATA_DIR}): S3-backed, persists across restarts; export files land here; keep intermediate files here. ` +
+    `OUTPUT (${OUTPUT_DIR}): user-facing deliverables (charts, reports, CSVs), shown in the user's Artifacts panel. ` +
+    "Pre-installed: pandas, numpy, matplotlib, seaborn, scipy, scikit-learn, statsmodels, polars, pyarrow, openpyxl, xgboost, lightgbm, nltk, and more. " +
+    `Charts shown here are NOT displayed to the user; use ${PREVIEW_CHART_TOOL_NAME} for that. ` +
+    "Before groupby/value_counts/top-N, drop rows with a missing label — null categories often dominate and mislead. " +
+    "No internet except *.amazonaws.com.",
   parameters: executeCodeSchema,
   annotations: {
     title: "Run Insights code",

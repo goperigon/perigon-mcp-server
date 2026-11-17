@@ -393,11 +393,11 @@ export function createLocationSchema() {
       .min(1)
       .optional()
       .describe(
-        "Location to search for news about: a city, a US state name or code, or a country name or code. Names are resolved to codes (France → fr, Texas → TX). Can be used in combination with other location filters (states, cities, countries); when set, countries no longer defaults to us."
+        "City, US state, or country, by name or code (France → fr, Texas → TX). Combines with states/cities/countries; turns off the us country default."
       ),
     locationType: z
       .enum(["auto", "city", "state", "country"])
       .default("auto")
-      .describe("Type of location - 'auto' will try to detect automatically"),
+      .describe("Location type; auto detects it."),
   };
 }

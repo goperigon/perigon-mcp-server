@@ -5,9 +5,8 @@ import { shellSchema } from "./schemas";
 export const shellTool = {
   name: "signal_insights_shell",
   description:
-    "Run a bash command in the E2B sandbox environment. " +
-    `Working directory is ${WORKSPACE_DIR}. ` +
-    `Query data files are accessible at ${DATA_DIR}. No internet access except *.amazonaws.com.`,
+    `Run a bash command in the sandbox. Working directory: ${WORKSPACE_DIR}; export files: ${DATA_DIR}. ` +
+    "No internet except *.amazonaws.com.",
   parameters: shellSchema,
   annotations: {
     title: "Insights shell",

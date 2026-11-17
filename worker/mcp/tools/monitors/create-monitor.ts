@@ -2,15 +2,22 @@ import { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 import { Perigon } from "../../../lib/perigon";
 import { MonitorCreateRequest } from "../../../types/monitors";
-import { ToolCallback, ToolDefinition } from "../types";
+import { SocialSource } from "../../../types/types";
+import { ToolDefinition } from "../types";
 import {
   buildMonitorQuery,
+  buildSocialQueries,
   monitorClassificationType,
   monitorDataSchemaArgs,
   monitorEntityGroupArgs,
+  monitorLinkedInQueryArgs,
   monitorNewsletterConfigArgs,
   monitorQueryArgs,
-  monitorSchedulePolicyArgs
+  monitorRedditQueryArgs,
+  monitorSchedulePolicyArgs,
+  monitorSocialQueryFieldNames,
+  monitorXQueryArgs,
+  unavailableSocialQueryFields
 } from "../schemas/monitors";
 import { toolResult } from "../utils/formatting";
 import { createErrorMessage } from "../utils/error-handling";
@@ -74,11 +81,49 @@ export const createMonitorArgs = z.object({
     )
 });
 
-export function createMonitor(perigon: Perigon): ToolCallback<typeof createMonitorArgs> {
-  return async (
-    args: z.infer<typeof createMonitorArgs>
-  ): Promise<CallToolResult> => {
+const createMonitorArgsWithSocial = createMonitorArgs.extend({
+  query: monitorQueryArgs
+    .optional()
+    .describe(
+      "News and web article filters. Omit for a monitor that only tracks social channels."
+    ),
+  xQuery: monitorXQueryArgs()
+    .optional()
+    .describe("Track public X posts matching this query."),
+  redditQuery: monitorRedditQueryArgs()
+    .optional()
+    .describe("Track Reddit posts matching this query."),
+  linkedInQuery: monitorLinkedInQueryArgs()
+    .optional()
+    .describe(
+      "Track LinkedIn posts matching this keyword search and/or author, member, or company filters."
+    )
+});
+
+/** Adds the social query fields for the organization's social sources. */
+export function buildCreateMonitorArgs(socialSources: readonly SocialSource[]) {
+  if (monitorSocialQueryFieldNames(socialSources).length === 0) {
+    return createMonitorArgs;
+  }
+  return createMonitorArgsWithSocial.omit(
+    unavailableSocialQueryFields(socialSources)
+  );
+}
+
+type CreateMonitorInput = z.infer<typeof createMonitorArgsWithSocial>;
+
+export function createMonitor(
+  perigon: Perigon
+): (args: CreateMonitorInput) => Promise<CallToolResult> {
+  return async (args: CreateMonitorInput): Promise<CallToolResult> => {
     try {
+      const { query, xQuery, redditQuery, linkedInQuery, ...fields } = args;
+      if (!query && !xQuery && !redditQuery && !linkedInQuery) {
+        return toolResult(
+          "Error: Provide query and/or at least one social query (xQuery, redditQuery, linkedInQuery)."
+        );
+      }
+
       if (
         args.status === "ACTIVE" &&
         args.classificationType === "TOPIC" &&
@@ -102,8 +147,9 @@ export function createMonitor(perigon: Perigon): ToolCallback<typeof createMonit
       }
 
       const body: MonitorCreateRequest = {
-        ...args,
-        query: buildMonitorQuery(args.query),
+        ...fields,
+        ...(query ? { query: buildMonitorQuery(query) } : {}),
+        ...buildSocialQueries<never>({ xQuery, redditQuery, linkedInQuery }),
         schedulePolicy: utcSchedulePolicy
       };
       const result = await perigon.createMonitor(body);
@@ -133,3 +179,16 @@ export const createMonitorTool = {
   },
   createHandler: (perigon: Perigon) => createMonitor(perigon)
 } satisfies ToolDefinition<typeof createMonitorArgs>;
+
+/** `create_monitor` with the social channels the organization can use. */
+export function createMonitorToolForSources(
+  socialSources: readonly SocialSource[]
+): ToolDefinition<ReturnType<typeof buildCreateMonitorArgs>> {
+  const fields = monitorSocialQueryFieldNames(socialSources);
+  if (fields.length === 0) return createMonitorTool;
+  return {
+    ...createMonitorTool,
+    description: `${createMonitorTool.description} Social channels: pass ${fields.join(" / ")} to track social posts, alone or alongside query. Omit query for a social-only monitor.`,
+    parameters: buildCreateMonitorArgs(socialSources)
+  };
+}

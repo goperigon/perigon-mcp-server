@@ -7,10 +7,9 @@ import { exportEventsTool } from "./export-events";
 export const createWorkspaceTool = {
   name: "signal_insights_create_workspace",
   description:
-    "Create a new Signal Insights analysis workspace. " +
-    "Call this ONCE at the beginning of any conversation that needs data analysis. " +
-    `Returns a workspace handle required by all analysis tools (${executeCodeTool.name}, ${shellTool.name}, ${exportEventsTool.name}, file tools). ` +
-    "Do NOT invent workspace IDs — always use the one returned here.",
+    "Create a Signal Insights workspace, ONCE per conversation that needs analysis. " +
+    `Returns the workspace ID required by ${exportEventsTool.name}, ${executeCodeTool.name}, ${shellTool.name}, and the file tools. ` +
+    "Never invent workspace IDs.",
   parameters: createWorkspaceSchema,
   annotations: {
     title: "Initialize Insights analysis",

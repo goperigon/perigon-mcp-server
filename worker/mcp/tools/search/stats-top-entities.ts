@@ -27,7 +27,7 @@ export const topEntitiesArgs = statsFilterArgs.extend({
     .optional()
     .default(["topics", "people", "companies"])
     .describe(
-      "Which entity types to return. Options: topics, people, companies, cities, journalists, sources. Defaults to topics, people, and companies.",
+      "Entity types to return.",
     ),
   size: z
     .number()
@@ -37,13 +37,13 @@ export const topEntitiesArgs = statsFilterArgs.extend({
     .optional()
     .default(10)
     .describe(
-      "Number of top entries to return per entity type (1–100). Default: 10.",
+      "Entries to return per entity type.",
     ),
   clusterId: z
     .array(z.string())
     .optional()
     .describe(
-      "Only count articles in these stories (story IDs from search_news_stories). Use this to break down who and what is covered within a story.",
+      "Only count articles in these stories (IDs from search_news_stories), to break down who and what a story covers.",
     ),
 });
 
@@ -162,7 +162,7 @@ export const topEntitiesTool = {
   name: "get_top_entities",
   title: "Top entities",
   description:
-    "Get the most frequently mentioned entities in articles matching the given filters, ranked by raw mention count. Use this when the user asks 'what topics/people/companies are most covered?' or 'who appears most in X news?' — i.e., questions about overall mention frequency within a fixed window. Do NOT use this for detecting sudden spikes or trending entities; use get_top_people or get_top_companies for spike detection instead. Defaults to returning topics, people, and companies; use the entity parameter to request other types (cities, journalists, sources). People, companies, and journalists are returned with their ID (wikidata_id for personWikidataId, company id for companyId, journalist id for journalistId filters) and name; topics and cities by name; sources by domain. Counts include passing mentions, not only articles centered on the entity. Supports the same article filters as get_article_counts, plus clusterId.",
+    "Most-mentioned entities in articles matching the filters, ranked by raw mention count in one window — for 'what/who is most covered in X news?'. No baseline: for trending or spiking entities use get_top_people / get_top_companies. Counts include passing mentions, so famous figures often top topical queries; call results 'most mentioned', not 'trending'. People, companies, and journalists come with name and ID (wikidata_id → personWikidataId, id → companyId / journalistId); topics and cities by name; sources by domain.",
   parameters: topEntitiesArgs,
   annotations: {
     readOnlyHint: true,

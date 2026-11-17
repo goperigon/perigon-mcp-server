@@ -47,7 +47,7 @@ export const sourceByIdTool = {
   name: "get_source_by_id",
   title: "Get source by ID",
   description:
-    "Look up one news source/publisher by its exact ID or domain. Use this after search_sources or search_news_articles surfaces a source you want full detail on — `id` is @InternalParameter on search_sources, so this endpoint is the only route to a single source's paywall status, alt names, and location.",
+    "Look up one publisher by exact ID or domain for full detail (paywall status, alternative names, location) after search_sources or search_news_articles surfaces it.",
   parameters: sourceByIdArgs,
   annotations: {
     readOnlyHint: true,

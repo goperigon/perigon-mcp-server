@@ -10,9 +10,7 @@
 import { z } from "zod";
 
 const WORKSPACE_DESC =
-  "Workspace ID returned by signal_insights_create_workspace. " +
-  "Call signal_insights_create_workspace once at the start of a conversation, " +
-  "then pass the returned workspace to all analysis tool calls.";
+  "Workspace ID returned by signal_insights_create_workspace.";
 
 // ── Workspace ────────────────────────────────────────────────────────────────
 
@@ -25,15 +23,13 @@ export const searchSignalsSchema = z.object({
     .string()
     .optional()
     .describe(
-      "Search term matched against signal name or monitoring objective. " +
-        "Case-insensitive. Omit to list all available signals.",
+      "Case-insensitive match on signal name or monitoring objective. Omit to list all.",
     ),
   classificationTypes: z
     .array(z.enum(["EVENT", "MENTIONS", "TOPIC"]))
     .optional()
     .describe(
-      "Filter by signal classification. Omit for all types. " +
-        "EVENT/MENTIONS = structured events; TOPIC = briefings/newsletters.",
+      "EVENT/MENTIONS = structured events; TOPIC = briefings. Omit for all.",
     ),
   page: z.number().int().min(0).default(0).optional(),
   limit: z.number().int().min(1).max(50).default(10).optional(),
@@ -43,7 +39,7 @@ export const readSignalSchema = z.object({
   signalUuid: z
     .string()
     .uuid()
-    .describe("UUID of the signal to read. Use search_signals to find UUIDs."),
+    .describe("Signal UUID from signal_insights_search_signals."),
 });
 
 export const listNewslettersSchema = z.object({
@@ -51,7 +47,7 @@ export const listNewslettersSchema = z.object({
     .string()
     .uuid()
     .describe(
-      "UUID of a TOPIC signal. Use search_signals / read_signal to confirm classificationType is TOPIC.",
+      "UUID of a TOPIC signal.",
     ),
   page: z.number().int().min(0).default(0).optional(),
   limit: z.number().int().min(1).max(50).default(10).optional(),
@@ -62,7 +58,7 @@ export const readNewsletterSchema = z.object({
     .string()
     .uuid()
     .describe(
-      "UUID of the newsletter. Use signal_insights_list_newsletters to find UUIDs.",
+      "Newsletter UUID from signal_insights_list_newsletters.",
     ),
 });
 
@@ -146,16 +142,14 @@ export const exportEventsSchema = z.object({
     .string()
     .optional()
     .describe(
-      "Human-readable name/title for this export. " +
-        "Generate a concise, descriptive name summarizing what this export contains.",
+      "Concise, descriptive name for this export.",
     ),
   signalUuids: z
     .array(z.string().uuid())
     .min(1)
     .max(100)
     .describe(
-      "UUIDs of the signals to export data from. " +
-        "Use search_signals to find signals first.",
+      "Signal UUIDs to export.",
     ),
   eventTypes: z
     .array(z.string())

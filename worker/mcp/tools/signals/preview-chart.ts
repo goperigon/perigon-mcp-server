@@ -6,13 +6,9 @@ import { EXECUTE_CODE_TOOL_NAME, PREVIEW_CHART_TOOL_NAME } from "./common";
 export const previewChartTool = {
   name: PREVIEW_CHART_TOOL_NAME,
   description:
-    "Render a chart to the user. Use this whenever you want to DISPLAY a chart — " +
-    "it is the only tool whose output appears in the interactive chart viewer. " +
-    `Runs Python in the SAME persistent Jupyter kernel as ${EXECUTE_CODE_TOOL_NAME}, ` +
-    "so variables, imports, and DataFrames computed there are available here. " +
-    `Do data prep/analysis in ${EXECUTE_CODE_TOOL_NAME}; use this tool only for the plotting code. ` +
-    "Call plt.show() after the chart. One plt.show() per chart; for multiple charts call this tool separately. " +
-    "No outbound internet access except *.amazonaws.com.",
+    "Display a chart to the user — the only tool whose output appears in the interactive chart viewer. " +
+    `Runs in the same kernel as ${EXECUTE_CODE_TOOL_NAME} (its variables are available); do data prep there and only plotting here. ` +
+    "End with exactly one plt.show(); call this tool once per chart.",
   parameters: executeCodeSchema,
   _meta: CHART_TOOL_META,
   annotations: {

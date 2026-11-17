@@ -16,7 +16,7 @@ export const topTopicsArgs = statsFilterArgs.extend({
     .string()
     .transform(parseTime)
     .optional()
-    .describe("Start of the current window. Default: 3 days ago."),
+    .describe("Start of the current window (match the user's period). Default: 3 days ago."),
   currentTo: z
     .string()
     .transform(parseTime)
@@ -31,31 +31,31 @@ export const topTopicsArgs = statsFilterArgs.extend({
     .string()
     .transform(parseTime)
     .optional()
-    .describe("End of the baseline window. Default: 3 days ago."),
+    .describe("End of the baseline window. Default: currentFrom."),
   normalizeByDay: z
     .boolean()
     .optional()
     .default(true)
-    .describe("Compare daily mention rates instead of raw counts. Default: true."),
+    .describe("Compare per-day rates so unequal windows are comparable."),
   size: z
     .number()
     .min(1)
     .max(100)
     .optional()
     .default(10)
-    .describe("Number of top topics to return (1-100). Default: 10."),
+    .describe("Number of topics to return."),
   minBaseline: z
     .number()
     .optional()
-    .describe("Minimum baseline mentions required to be eligible for ranking."),
+    .describe("Minimum baseline mentions to be ranked: 5 = established topics only, 0 = include new topics. Default: 0."),
   minCurrent: z
     .number()
     .optional()
-    .describe("Minimum current-window mentions required to be eligible for ranking."),
+    .describe("Minimum current-window mentions to be ranked; ~3–10 drops noise when minBaseline=0. Default: 0."),
   smoothingAlpha: z
     .number()
     .optional()
-    .describe("Smoothing factor applied to the baseline rate to reduce noise from small counts."),
+    .describe("Added to both counts before comparing rates, damping small-count noise. Default: 1."),
 });
 
 export function getTopTopics(
@@ -107,7 +107,7 @@ export const topTopicsTool = {
   name: "get_top_topics",
   title: "Top topics",
   description:
-    "Get the topics whose news coverage is spiking — mentioned significantly more in a recent window than a prior baseline period. Use this alongside get_top_people and get_top_companies when the user asks 'what topics are trending?' The comparison window defaults to last 3 days vs. last 30 days; override with currentFrom/To and baselineFrom/To. Supports the same curated article filters as the other stats tools.",
+    "Topics whose coverage is spiking versus a baseline window — for 'what topics are trending?' (for most-covered topics, use get_top_entities). spike_score below ~1.1 is not trending. Set windows and thresholds as for get_top_people. Never set from/to (it clips the baseline).",
   parameters: topTopicsArgs,
   annotations: {
     readOnlyHint: true,

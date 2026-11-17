@@ -106,13 +106,13 @@ export function dateAttr(date: string | null | undefined): string {
  */
 export function describeDefaultCountry(
   geoFilters: string[],
-  howToChange = "pass countries to choose others, or countries: [] for all countries",
+  howToChange = "countries: [] searches all",
 ): string {
   const condition =
     geoFilters.length > 1
       ? `none of ${geoFilters.slice(0, -1).join(", ")} or ${geoFilters[geoFilters.length - 1]} is given`
       : `${geoFilters[0]} is not given`;
-  return `Country default: when ${condition}, results are filtered to country ${CONSTANTS.DEFAULT_COUNTRIES.join(", ")} and the response starts with a <note> saying the default was applied; ${howToChange}.`;
+  return `Results default to country ${CONSTANTS.DEFAULT_COUNTRIES.join(", ")} when ${condition}, and the response then starts with a <note>; ${howToChange}.`;
 }
 
 /** Hint for tools that take a single `country` and cannot search all countries. */

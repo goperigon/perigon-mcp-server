@@ -19,45 +19,45 @@ export const storyHistoryArgs = z.object({
     .array(z.string())
     .optional()
     .describe(
-      "Filter to specific stories by their cluster IDs. Only history entries for the specified clusters will be returned.",
+      "Story (cluster) IDs.",
     ),
   from: z
     .string()
     .transform(parseTime)
     .optional()
     .describe(
-      "Filter stories created after this date. Accepts ISO 8601 format (e.g., 2023-03-01T00:00:00) or yyyy-mm-dd format.",
+      "Created after this date (ISO 8601 or yyyy-mm-dd).",
     ),
   to: z
     .string()
     .transform(parseTime)
     .optional()
     .describe(
-      "Filter stories created before this date. Accepts ISO 8601 format (e.g., 2023-03-01T23:59:59) or yyyy-mm-dd format.",
+      "Created before this date.",
     ),
   sortBy: z
     .enum(["createdAt", "triggeredAt"])
     .default("createdAt")
     .optional()
     .describe(
-      "Sort stories by creation date (createdAt) or story refresh trigger date (triggeredAt).",
+      "triggeredAt = story refresh time.",
     ),
   page: z
     .number()
     .min(0)
     .default(0)
-    .describe("Zero-based page number for pagination. From 0 to 10000."),
+    .describe("Page number, 0-based (max 10000)."),
   size: z
     .number()
     .min(1)
     .max(100)
     .default(CONSTANTS.DEFAULT_PAGE_SIZE)
-    .describe("Number of story history results per page, from 1 to 100."),
+    .describe("Results per page."),
   changelogExists: z
     .boolean()
     .optional()
     .describe(
-      "When set, filter to only include clusters that have a changelog (true) or don't have one (false).",
+      "true = only clusters with a changelog; false = only without.",
     ),
 });
 
@@ -140,7 +140,7 @@ export const storyHistoryTool = {
   name: "search_story_history",
   title: "Story History",
   description:
-    "Search story history to track how news stories evolve over time. Returns timestamped snapshots of story clusters including summaries, short summaries, key points, and changelogs. Use this to understand how a story has developed, what changed between updates, and to review the timeline of a news event. Filter by cluster ID, date range, sort order, or changelog presence. Only use this tool instead of search_news_stories tool when you need to understand the history of a story.",
+    "Timestamped snapshots of a story (summaries, key points, changelogs) showing how it developed and what changed between updates. Use instead of search_news_stories only when you need a story's history.",
   parameters: storyHistoryArgs,
   annotations: {
     readOnlyHint: true,

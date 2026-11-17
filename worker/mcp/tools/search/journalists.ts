@@ -17,42 +17,42 @@ import { createErrorMessage } from "../utils/error-handling";
 export const journalistsArgs = z.object({
   ...paginationArgs.shape,
   query: createSearchField("journalist name, title, and Twitter bio"),
-  name: createSearchField("journalist name specifically"),
+  name: createSearchField("name").describe("Like query, name only."),
   categories,
   topics,
   labels: z
     .array(z.string())
     .optional()
     .describe(
-      "Filter journalists by the type of content they typically produce (e.g., Opinion, Paid-news, Non-news).",
+      "Type of content they typically produce (e.g. Opinion, Paid-news, Non-news).",
     ),
   journalistIds: z
     .array(z.string())
     .optional()
-    .describe("Filter for specific journalists by their unique IDs."),
+    .describe("Journalist IDs."),
   sources: z
     .array(z.string())
     .optional()
     .describe(
-      "Filter journalists by publisher domains or subdomains. Supports wildcards (e.g., *.cnn.com).",
+      "Publisher domains they write for; wildcards supported (e.g. *.cnn.com).",
     ),
   twitter: z
     .string()
     .optional()
-    .describe("Filter by exact Twitter/X handle (without the @ symbol)."),
+    .describe("Exact Twitter/X handle, without @."),
   maxMonthlyPosts: z
     .number()
     .int()
     .positive()
     .optional()
-    .describe("Maximum articles per month threshold."),
+    .describe("Maximum articles per month."),
   minMonthlyPosts: z
     .number()
     .min(0)
     .int()
     .positive()
     .optional()
-    .describe("Minimum articles per month threshold."),
+    .describe("Minimum articles per month."),
   countries: z
     .array(z.string())
     .optional()
@@ -61,47 +61,47 @@ export const journalistsArgs = z.object({
       return countries.map((country) => country.toLowerCase());
     })
     .describe(
-      "Reporting focus: countries this journalist commonly covers in their published articles (derived from topCountries), not where they are based. Two-letter codes, lowercase (e.g., us, gb, jp). For 'based in' use locationCountry instead. No default — omit for global results.",
+      "Reporting focus: countries they commonly cover, not where they are based (use locationCountry). Lowercase 2-letter codes (e.g. us, gb). No default.",
     ),
   locationCountry: z
     .array(z.string())
     .optional()
     .transform((values) => values?.map((v) => v.toLowerCase()))
     .describe(
-      "Profile location: country the journalist is personally based in (locations.country), distinct from `countries` (reporting focus). Exact match, lowercase ISO 3166-1 alpha-2 (e.g., us, gb, jp); 'uk' is accepted as an alias for 'gb'. Wrong casing returns zero results, not an error.",
+      "Profile location: country they are based in. Exact match, lowercase 2-letter code (e.g. us, gb; uk is accepted). Wrong casing returns zero results.",
     ),
   locationState: z
     .array(z.string())
     .optional()
     .describe(
-      "Profile location: US state the journalist is based in (locations.state). Exact match, two-letter code, uppercase (e.g., NY, CA).",
+      "Profile location: US state they are based in. Exact match, uppercase 2-letter code (e.g. NY).",
     ),
   locationCounty: z
     .array(z.string())
     .optional()
     .describe(
-      "Profile location: county the journalist is based in (locations.county). Exact match against the full stored name (e.g., 'Los Angeles County').",
+      "Profile location: county they are based in. Exact full name (e.g. 'Los Angeles County').",
     ),
   locationCity: z
     .array(z.string())
     .optional()
     .describe(
-      "Profile location: city the journalist is based in (locations.city). Exact match, proper-cased (e.g., London, not london).",
+      "Profile location: city they are based in. Exact match, proper-cased (London, not london).",
     ),
   locationArea: z
     .array(z.string())
     .optional()
     .describe(
-      "Profile location: neighborhood, borough, or district the journalist is based in (locations.area). Exact match against stored casing.",
+      "Profile location: neighborhood, borough, or district they are based in. Exact match, stored casing.",
     ),
   updatedAtFrom: z
     .string()
     .optional()
-    .describe("Filter for journalist profiles updated after this date (ISO 8601 or yyyy-mm-dd)."),
+    .describe("Profile updated after this date."),
   updatedAtTo: z
     .string()
     .optional()
-    .describe("Filter for journalist profiles updated before this date (ISO 8601 or yyyy-mm-dd)."),
+    .describe("Profile updated before this date."),
 });
 
 /**
@@ -249,7 +249,7 @@ export const journalistsTool = {
   name: "search_journalists",
   title: "Journalists",
   description:
-    "Search 230k+ journalist and reporter profiles in the Perigon database. Use this to find who covers specific topics, publications, or regions — or who is personally based in a place. Two distinct location concepts: `countries` filters reporting focus (what they cover, derived from their published articles), while `locationCountry`/`locationState`/`locationCounty`/`locationCity`/`locationArea` filter their own profile location (where they are based) — these levels AND together, so pass only the narrowest level the user named. Also filter by name, Twitter handle, publication, content category, topic, or posting activity. Returns journalist profiles with their top sources, profile locations, reporting-focus countries, monthly posting frequency, and email address when the key has journalist email access. A location query returning nothing is usually a casing mismatch (exact-term matching), not an absence of journalists.",
+    "Search 230k+ journalist profiles to find who covers a topic, publication, or region, or who is based in a place. `countries` filters reporting focus (what they cover); `locationCountry`/`locationState`/`locationCounty`/`locationCity`/`locationArea` filter where they are based — these AND together, so pass only the narrowest level the user named. Returns top sources, profile locations, reporting-focus countries, monthly posting frequency, and email when the key has journalist email access. An empty location result is usually a casing mismatch, not an absence of journalists.",
   parameters: journalistsArgs,
   annotations: {
     readOnlyHint: true,

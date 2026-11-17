@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, spyOn, test } from "bun:test";
 import { HttpError } from "../../../../worker/types/types";
 import { Perigon } from "../../../../worker/lib/perigon";
+import { emptyMcpTelemetryHeaders } from "../../../../worker/lib/telemetry-headers";
 import {
   newsStoriesArgs,
   searchNewsStories,
@@ -110,7 +111,9 @@ describe("searchNewsStories", () => {
     });
 
     const output = text(
-      await searchNewsStories(new Perigon("test-key"))(
+      await searchNewsStories(
+        new Perigon("test-key", undefined, emptyMcpTelemetryHeaders),
+      )(
         newsStoriesArgs.parse({ minSourceDiversity: 0.2 })
       )
     );

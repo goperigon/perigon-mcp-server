@@ -33,253 +33,239 @@ export const newsArticlesArgs = createBaseSearchArgs().extend({
       AllEndpointSortBy.ReverseAddDate,
     ])
     .describe(
-      `Sort order: ${AllEndpointSortBy.Date}/${AllEndpointSortBy.PubDate} (newest published first), ${AllEndpointSortBy.ReverseDate} (oldest first), ${AllEndpointSortBy.Relevance}, ${AllEndpointSortBy.AddDate} (newest ingested first), ${AllEndpointSortBy.ReverseAddDate} (oldest ingested first), ${AllEndpointSortBy.RefreshDate} (most recently refreshed first).`,
+      `${AllEndpointSortBy.Date}/${AllEndpointSortBy.PubDate}: newest published first; ${AllEndpointSortBy.ReverseDate}: oldest first; ${AllEndpointSortBy.AddDate}/${AllEndpointSortBy.ReverseAddDate}: by ingestion time; ${AllEndpointSortBy.RefreshDate}: most recently refreshed.`,
     )
     .default(AllEndpointSortBy.Date)
     .optional(),
   articleIds: z
     .array(z.string())
     .optional()
-    .describe("Filter for specific articles by their unique article IDs."),
+    .describe("Article IDs."),
   journalistIds: z
     .array(z.string())
     .optional()
-    .describe("Filter for articles written by specific journalist IDs."),
+    .describe("Author journalist IDs."),
   newsStoryIds: z
     .array(z.string())
     .optional()
-    .describe(
-      `Filter for articles by news story/cluster IDs they belong to (the "headlines" or grouped news clusters).`,
-    ),
+    .describe("Story (cluster) IDs the articles belong to."),
   sources: z
     .array(z.string())
     .optional()
     .describe(
-      "Filter by publisher domains or subdomains. Supports wildcards (* and ?) for pattern matching (e.g., *.cnn.com).",
+      "Publisher domains or subdomains; wildcards * ? (e.g. *.cnn.com).",
     ),
   sourceGroup: z
     .array(z.string())
     .optional()
     .describe(
-      "Filter using Perigon's curated publisher bundles for quality-filtered results: top10, top25, top50, top100, top25tech, top25crypto, etc.",
+      "Curated publisher bundles: top10, top25, top50, top100, top25tech, top25crypto, or an org source group.",
     ),
   category: z
     .array(z.string())
     .optional()
     .describe(
-      "Filter by content categories (e.g., Politics, Tech, Sports, Business, Finance, Entertainment). Use 'none' for uncategorized. Multiple values use OR logic.",
+      "Content categories (e.g. Politics, Tech, Sports, Business, Finance); 'none' = uncategorized.",
     ),
   topic: z
     .array(z.string())
     .optional()
     .describe(
-      "Filter by specific topics (e.g., Markets, Crime, Cryptocurrency, Climate Change, College Sports). More granular than categories. Multiple values use OR logic.",
+      "Topics, more granular than categories (e.g. Markets, Crime, Climate Change).",
     ),
   language: z
     .array(z.string())
     .optional()
     .describe(
-      "Filter by language using ISO-639 two-letter codes in lowercase (e.g., en, es, fr, de, ja). Multiple values use OR logic.",
+      "ISO-639 lowercase language codes (e.g. en, es, ja).",
     ),
   label: z
     .array(z.string())
     .optional()
     .describe(
-      "Filter by editorial labels: Opinion, Paid-news, Non-news, Fact Check, Press Release.",
+      "Editorial labels: Opinion, Paid-news, Non-news, Fact Check, Press Release.",
     ),
   medium: z
     .array(z.string())
     .optional()
-    .describe("Filter by content medium: Article or Video."),
+    .describe("Article or Video."),
   personName: z
     .array(z.string())
     .optional()
-    .describe(
-      "Filter for articles mentioning specific people by exact name match.",
-    ),
+    .describe("Mentioned people, exact name."),
   companyDomain: z
     .array(z.string())
     .optional()
     .describe(
-      "Filter for articles mentioning specific companies by domain (e.g., apple.com, microsoft.com).",
+      "Mentioned companies, by domain (e.g. apple.com).",
     ),
   companySymbol: z
     .array(z.string())
     .optional()
     .describe(
-      "Filter for articles mentioning specific companies by stock ticker symbol (e.g., AAPL, MSFT).",
+      "Mentioned companies, by ticker (e.g. AAPL).",
     ),
   showReprints: z
     .boolean()
     .optional()
     .default(false)
     .describe(
-      "Include wire-service reprints (AP, Reuters) that appear on multiple sites. Default false for deduplication.",
+      "Include wire-service reprints (AP, Reuters) duplicated across sites.",
     ),
   addDateFrom: z
     .string()
     .transform((str) => (str === "" ? undefined : new Date(str)))
     .optional()
     .describe(
-      "Filter for articles added/ingested to Perigon after this date. ISO 8601 or yyyy-mm-dd.",
+      "Ingested by Perigon after this date.",
     ),
   addDateTo: z
     .string()
     .transform((str) => (str === "" ? undefined : new Date(str)))
     .optional()
     .describe(
-      "Filter for articles added/ingested to Perigon before this date. ISO 8601 or yyyy-mm-dd.",
+      "Ingested by Perigon before this date.",
     ),
   positiveSentimentFrom: z
     .number()
     .min(0)
     .max(1)
     .optional()
-    .describe("Minimum positive sentiment score (0.0 to 1.0)."),
+    .describe("Min positive sentiment."),
   positiveSentimentTo: z
     .number()
     .min(0)
     .max(1)
     .optional()
-    .describe("Maximum positive sentiment score (0.0 to 1.0)."),
+    .describe("Max positive sentiment."),
   negativeSentimentFrom: z
     .number()
     .min(0)
     .max(1)
     .optional()
-    .describe("Minimum negative sentiment score (0.0 to 1.0)."),
+    .describe("Min negative sentiment."),
   negativeSentimentTo: z
     .number()
     .min(0)
     .max(1)
     .optional()
-    .describe("Maximum negative sentiment score (0.0 to 1.0)."),
+    .describe("Max negative sentiment."),
   summarize: z
     .boolean()
     .default(true)
-    .describe(
-      "Return article summary instead of full content. Defaults to true.",
-    ),
-  title: createSearchField("article headline/title only"),
-  desc: createSearchField("article description field only"),
-  content: createSearchField("full article body content only"),
-  url: createSearchField(
-    "the article URL (e.g. source=cnn.com with url=travel for a section)",
+    .describe("Return summaries instead of full content."),
+  title: createSearchField("headline").describe("Like query, headline only."),
+  desc: createSearchField("description").describe(
+    "Like query, description only.",
+  ),
+  content: createSearchField("body").describe("Like query, body only."),
+  url: createSearchField("URL").describe(
+    "Like query, on the URL (e.g. source=cnn.com with url=travel for a section).",
   ),
   taxonomy: z
     .array(z.string())
     .optional()
-    .describe(
-      "Filter by Google Content Category, full path (e.g. /Finance/Banking/Other).",
-    ),
+    .describe("Google Content Category full path (e.g. /Finance/Banking/Other)."),
   prefixTaxonomy: z
     .string()
     .optional()
-    .describe("Filter by Google Content Category prefix (e.g. /Finance)."),
+    .describe("Google Content Category prefix (e.g. /Finance)."),
   lat: z
     .number()
     .min(-90)
     .max(90)
     .optional()
-    .describe("Geo radius search: center latitude."),
+    .describe("Geo radius center latitude."),
   lon: z
     .number()
     .min(-180)
     .max(180)
     .optional()
-    .describe("Geo radius search: center longitude."),
+    .describe("Geo radius center longitude."),
   maxDistance: z
     .number()
     .min(1)
     .max(300)
     .optional()
-    .describe("Geo radius search: max distance in km from lat/lon."),
+    .describe("Geo radius in km from lat/lon."),
   sourceCountry: z
     .array(z.string())
     .optional()
-    .describe("Filter by the country the publishing source is located in."),
+    .describe("Country the publisher is located in."),
   sourceState: z
     .array(z.string())
     .optional()
-    .describe("Filter by the US state the publishing source is located in."),
+    .describe("US state the publisher is located in."),
   sourceCity: z
     .array(z.string())
     .optional()
-    .describe("Filter by the city the publishing source is located in."),
+    .describe("City the publisher is located in."),
   byline: z
     .array(z.string())
     .optional()
-    .describe("Filter by exact author byline text."),
+    .describe("Exact byline text."),
   author: z
     .array(z.string())
     .optional()
-    .describe("Filter by exact author name."),
+    .describe("Exact author name."),
   linkTo: z
     .string()
     .optional()
-    .describe("Filter to articles linking to this URL pattern."),
+    .describe("Articles linking to this URL pattern."),
   reprintGroupId: z
     .string()
     .optional()
-    .describe(
-      "Return every article in one reprint group, original plus reprints.",
-    ),
+    .describe("Every article in one reprint group (original plus reprints)."),
   searchTranslation: z
     .boolean()
     .optional()
-    .describe(
-      "Also match translated title/description/content for non-English articles.",
-    ),
+    .describe("Also match translated text of non-English articles."),
   neutralSentimentFrom: z
     .number()
     .min(0)
     .max(1)
     .optional()
-    .describe("Minimum neutral sentiment score (0.0 to 1.0)."),
+    .describe("Min neutral sentiment."),
   neutralSentimentTo: z
     .number()
     .min(0)
     .max(1)
     .optional()
-    .describe("Maximum neutral sentiment score (0.0 to 1.0)."),
+    .describe("Max neutral sentiment."),
   refreshDateFrom: z
     .string()
     .transform((str) => (str === "" ? undefined : new Date(str)))
     .optional()
-    .describe("Filter for articles refreshed in Perigon after this date."),
+    .describe("Refreshed in Perigon after this date."),
   refreshDateTo: z
     .string()
     .transform((str) => (str === "" ? undefined : new Date(str)))
     .optional()
-    .describe("Filter for articles refreshed in Perigon before this date."),
+    .describe("Refreshed in Perigon before this date."),
   personWikidataId: z
     .array(z.string())
     .optional()
-    .describe(
-      "Filter by Wikidata ID of a mentioned person — prefer this over personName to avoid ambiguity.",
-    ),
+    .describe("Mentioned people, by Wikidata ID (preferred over personName)."),
   companyId: z
     .array(z.string())
     .optional()
-    .describe("Filter for articles mentioning specific company IDs."),
+    .describe("Mentioned companies, by company ID."),
   companyName: z
     .string()
     .optional()
-    .describe("Filter for articles by exact company name match."),
+    .describe("Mentioned company, exact name."),
   watchlist: z
     .array(z.string())
     .optional()
-    .describe(
-      "Filter to articles mentioning any entity from these watchlist IDs.",
-    ),
+    .describe("Articles mentioning any entity in these watchlist IDs."),
   excludeWatchlist: z
     .array(z.string())
     .optional()
-    .describe("Exclude articles mentioning entities from these watchlist IDs."),
+    .describe("Exclude articles mentioning entities in these watchlists."),
   paywall: z
     .boolean()
     .optional()
-    .describe("Filter by whether the publishing source has a paywall."),
+    .describe("Whether the publisher has a paywall."),
   excludeSources: z
     .array(z.string())
     .optional()
@@ -287,7 +273,7 @@ export const newsArticlesArgs = createBaseSearchArgs().extend({
   excludeSourceGroup: z
     .array(z.string())
     .optional()
-    .describe("Exclude Perigon curated source-group bundles."),
+    .describe("Exclude source groups."),
   excludeCategory: z
     .array(z.string())
     .optional()
@@ -300,15 +286,15 @@ export const newsArticlesArgs = createBaseSearchArgs().extend({
   excludeLanguage: z
     .array(z.string())
     .optional()
-    .describe("Exclude languages by ISO-639 two-letter code."),
+    .describe("Exclude ISO-639 language codes."),
   excludeJournalistId: z
     .array(z.string())
     .optional()
-    .describe("Exclude articles written by specific journalist IDs."),
+    .describe("Exclude author journalist IDs."),
   excludePersonName: z
     .array(z.string())
     .optional()
-    .describe("Exclude articles mentioning these exact person names."),
+    .describe("Exclude articles mentioning these person names."),
   excludePersonWikidataId: z
     .array(z.string())
     .optional()
@@ -320,13 +306,11 @@ export const newsArticlesArgs = createBaseSearchArgs().extend({
   excludeCompanyDomain: z
     .array(z.string())
     .optional()
-    .describe("Exclude articles mentioning companies with these domains."),
+    .describe("Exclude articles mentioning these company domains."),
   excludeCompanySymbol: z
     .array(z.string())
     .optional()
-    .describe(
-      "Exclude articles mentioning companies with these ticker symbols.",
-    ),
+    .describe("Exclude articles mentioning these tickers."),
   ...createLocationSchema(),
 });
 
@@ -625,7 +609,7 @@ export const newsArticlesTool = {
   name: "search_news_articles",
   title: "Articles",
   description:
-    "Search and filter individual news articles from 200k+ global sources. Use this for finding specific articles by keyword, topic, category, source, location, person, company, journalist, sentiment, or time range. Supports Boolean query syntax (AND, OR, NOT), exact phrases, and wildcards. Returns full article metadata: content/summary, entities, topics, taxonomies, keywords, sentiment, story cluster ID, and matchedAuthors (journalist IDs — feed into search_journalists(journalistIds) to profile who wrote it). A null field here may reflect this key's plan rather than absent data — see get_api_access." +
+    "Search individual news articles from 200k+ global sources by keyword, topic, category, source, location, person, company, journalist, sentiment, or time. Returns content or summary, entities, topics, taxonomies, keywords, sentiment, story ID, and matchedAuthors (journalist IDs for search_journalists(journalistIds)). A null field may reflect this key's plan rather than absent data — see get_api_access." +
     " " +
     describeDefaultCountry([
       "countries",

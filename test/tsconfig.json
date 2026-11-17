@@ -4,7 +4,12 @@
     // Bun globals (`bun:test`, `Bun.*`) and Cloudflare worker ambient types
     // (`Env`, `ExecutionContext`, `ExportedHandler`).
     "types": ["bun"],
-    "noEmit": true
+    "noEmit": true,
+    // Path aliases for this project root (`test/`). Do not use deprecated `baseUrl`;
+    // map each alias relative to this tsconfig file (TypeScript 6+).
+    "paths": {
+      "@/*": ["../src/*"]
+    }
   },
   // The root tsconfig excludes `test/`. We re-include it here, alongside the
   // ambient Cloudflare worker types so Env/ExecutionContext resolve in the
