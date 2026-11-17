@@ -64,6 +64,34 @@ describe("buildInstructions", () => {
     expect(text).not.toContain('"spiking" questions');
   });
 
+  test("default session lists create_monitor and explains how to get update_monitor", () => {
+    const text = buildInstructions(
+      new Set<string>([
+        ...resolveNewsToolsForSession([], null),
+        "search_x_posts",
+      ]),
+    );
+
+    expect(text).toContain("`create_monitor` / `set_monitor_status`");
+    expect(text).toContain(
+      "To monitor social channels continuously, use `create_monitor` with their social query fields.",
+    );
+    expect(text).toContain("reconnect with `?tools=all`");
+  });
+
+  test("never points at monitor write tools that are not registered", () => {
+    const text = buildInstructions(
+      new Set<string>(["search_news_articles", "search_x_posts"]),
+    );
+
+    expect(text).not.toContain("create_monitor");
+    expect(text).not.toContain("update_monitor");
+  });
+
+  test("omits the update_monitor hint when update_monitor is registered", () => {
+    expect(MCP_INSTRUCTIONS).not.toContain("reconnect with `?tools=all`");
+  });
+
   test("the full catalogue lists every tool group", () => {
     for (const name of [
       "summarize_news",

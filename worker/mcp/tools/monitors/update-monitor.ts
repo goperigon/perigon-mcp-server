@@ -1,12 +1,16 @@
 import { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 import { Perigon } from "../../../lib/perigon";
-import { MonitorUpdateRequest } from "../../../types/monitors";
+import {
+  MonitorDataSchema,
+  MonitorUpdateRequest
+} from "../../../types/monitors";
 import { SocialSource } from "../../../types/types";
 import { ToolDefinition } from "../types";
 import {
   buildMonitorQuery,
   buildSocialQueries,
+  ensureEventTypeField,
   monitorClassificationType,
   monitorDataSchemaArgs,
   monitorEntityGroupArgs,
@@ -140,8 +144,25 @@ export function updateMonitor(
         }
       }
 
+      let dataSchema: MonitorDataSchema | undefined;
+      if (fields.dataSchema) {
+        const classificationType =
+          fields.classificationType ??
+          (await perigon.getMonitor(uuid)).data.classificationType ??
+          undefined;
+        const ensured = ensureEventTypeField(
+          fields.dataSchema,
+          classificationType
+        );
+        if (!ensured.ok) {
+          return toolResult(ensured.error);
+        }
+        dataSchema = ensured.dataSchema;
+      }
+
       const body: MonitorUpdateRequest = {
         ...fields,
+        ...(dataSchema ? { dataSchema } : {}),
         ...(query === undefined
           ? {}
           : { query: query === null ? null : buildMonitorQuery(query) }),

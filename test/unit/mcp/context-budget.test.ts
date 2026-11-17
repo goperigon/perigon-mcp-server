@@ -2,6 +2,8 @@ import { describe, expect, test } from "bun:test";
 import { zodToJsonSchema } from "zod-to-json-schema";
 import { MCP_INSTRUCTIONS } from "../../../worker/mcp/instructions";
 import { TOOL_DEFINITIONS, type ToolName } from "../../../worker/mcp/tools";
+import { createMonitorToolForSources } from "../../../worker/mcp/tools/monitors/create-monitor";
+import { SocialSource } from "../../../worker/types/types";
 import {
   TOOL_PROFILES,
   type KnownToolName,
@@ -63,5 +65,16 @@ describe("context budget", () => {
   // Added to the default set for every session with social access.
   test("social tools stay at or below ~12,000 chars (~3k tok)", () => {
     expect(registryChars(SOCIAL_TOOL_NAMES)).toBeLessThanOrEqual(12_000);
+  });
+
+  // create_monitor is in the default set; measured with every social query
+  // field, the largest variant a session can receive.
+  test("default create_monitor stays at or below ~15,500 chars (~3.9k tok)", () => {
+    const def = createMonitorToolForSources(Object.values(SocialSource));
+    const chars =
+      def.name.length +
+      def.description.length +
+      JSON.stringify(zodToJsonSchema(def.parameters)).length;
+    expect(chars).toBeLessThanOrEqual(15_500);
   });
 });

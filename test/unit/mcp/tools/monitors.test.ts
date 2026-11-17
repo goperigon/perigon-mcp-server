@@ -244,6 +244,133 @@ describe("updateMonitor", () => {
   });
 });
 
+describe("monitor eventType field", () => {
+  const perigon = () => new Perigon("test-key", undefined, emptyMcpTelemetryHeaders);
+  const sentSchema = (request: CapturedRequest) =>
+    (request.body as { dataSchema: { schema: Record<string, unknown> } })
+      .dataSchema.schema;
+
+  test("adds a required, non-nullable STRING eventType to a MENTIONS schema", async () => {
+    const requests = captureRequests({ data: monitorDto });
+    await createMonitor(perigon())(
+      createMonitorArgs.parse({ ...baseCreateInput, classificationType: "MENTIONS" })
+    );
+
+    expect(requests).toHaveLength(1);
+    expect(sentSchema(requests[0])).toMatchObject({
+      acquirer: { type: "STRING" },
+      eventType: { type: "STRING", required: true, nullable: false }
+    });
+  });
+
+  test("forces a nullable or optional eventType to required and non-nullable", async () => {
+    const requests = captureRequests({ data: monitorDto });
+    await createMonitor(perigon())(
+      createMonitorArgs.parse({
+        ...baseCreateInput,
+        dataSchema: {
+          schema: {
+            eventType: {
+              type: "ENUM",
+              values: ["acquisition", "merger"],
+              required: false
+            }
+          }
+        }
+      })
+    );
+
+    expect(sentSchema(requests[0]).eventType).toEqual({
+      type: "ENUM",
+      values: ["acquisition", "merger"],
+      description: undefined,
+      required: true,
+      nullable: false
+    });
+  });
+
+  test("rejects a non-STRING, non-ENUM eventType without sending a request", async () => {
+    const requests = captureRequests({ data: monitorDto });
+    const result = await createMonitor(perigon())(
+      createMonitorArgs.parse({
+        ...baseCreateInput,
+        dataSchema: { schema: { eventType: { type: "NUMBER" } } }
+      })
+    );
+
+    expect(text(result)).toBe(
+      "Error: EVENT monitors require dataSchema field 'eventType' to be STRING or ENUM, but it is NUMBER."
+    );
+    expect(requests).toHaveLength(0);
+  });
+
+  test("leaves TOPIC schemas unchanged", async () => {
+    const requests = captureRequests({ data: monitorDto });
+    await createMonitor(perigon())(
+      createMonitorArgs.parse({ ...baseCreateInput, classificationType: "TOPIC" })
+    );
+
+    expect(sentSchema(requests[0])).not.toHaveProperty("eventType");
+  });
+
+  test("update uses the passed classificationType without fetching the monitor", async () => {
+    const requests = captureRequests({ data: monitorDto });
+    await updateMonitor(perigon())(
+      updateMonitorArgs.parse({
+        uuid: MONITOR_UUID,
+        classificationType: "MENTIONS",
+        dataSchema: { schema: { acquirer: { type: "STRING" } } }
+      })
+    );
+
+    expect(requests).toHaveLength(1);
+    expect(requests[0].method).toBe("PATCH");
+    expect(sentSchema(requests[0])).toHaveProperty("eventType");
+  });
+
+  test("update reads the existing classification when only dataSchema is passed", async () => {
+    const requests = captureRequests({ data: monitorDto });
+    await updateMonitor(perigon())(
+      updateMonitorArgs.parse({
+        uuid: MONITOR_UUID,
+        dataSchema: { schema: { acquirer: { type: "STRING" } } }
+      })
+    );
+
+    expect(requests).toHaveLength(2);
+    expect(requests[0].url).toBe(`${MONITORS_URL}/${MONITOR_UUID}`);
+    expect(requests[0].method ?? "GET").toBe("GET");
+    expect(requests[1].method).toBe("PATCH");
+    expect(sentSchema(requests[1]).eventType).toMatchObject({
+      type: "STRING",
+      required: true,
+      nullable: false
+    });
+  });
+
+  test("update leaves an existing TOPIC monitor's schema unchanged", async () => {
+    const requests = captureRequests({
+      data: { ...monitorDto, classificationType: "TOPIC" }
+    });
+    await updateMonitor(perigon())(
+      updateMonitorArgs.parse({
+        uuid: MONITOR_UUID,
+        dataSchema: { schema: { acquirer: { type: "STRING" } } }
+      })
+    );
+
+    expect(requests).toHaveLength(2);
+    expect(sentSchema(requests[1])).not.toHaveProperty("eventType");
+  });
+
+  test("documents the eventType requirement in the tool and schema", () => {
+    expect(createMonitorTool.description).toContain("eventType");
+    expect(JSON.stringify(zodToJsonSchema(updateMonitorArgs))).toContain(
+      "require an eventType field"
+    );
+  });
+});
+
 describe("monitor social channels", () => {
   const ALL_SOURCES = [SocialSource.X, SocialSource.REDDIT, SocialSource.LINKEDIN];
   const { query: _query, ...socialOnlyBase } = baseCreateInput;

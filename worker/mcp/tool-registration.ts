@@ -38,7 +38,7 @@ import {
 } from "./tools/social";
 
 // Map scopes to tool names
-const SCOPE_TO_TOOLS: Partial<Record<Scopes, ToolName[]>> = {
+export const SCOPE_TO_TOOLS: Partial<Record<Scopes, ToolName[]>> = {
   [Scopes.CLUSTERS]: [newsStoriesTool.name, storyHistoryTool.name],
   [Scopes.SEARCH_SUMMARY]: [summarizeTool.name],
   [Scopes.JOURNALISTS]: [journalistsTool.name],
@@ -52,16 +52,17 @@ const SCOPE_TO_TOOLS: Partial<Record<Scopes, ToolName[]>> = {
   [Scopes.VECTOR_SEARCH_WIKIPEDIA]: [wikipediaVectorTool.name],
 };
 
-// Read-only monitor tools stay always-on. The two write tools cost about
-// 5,550 always-on tokens between them (large shared monitor query schema)
-// and most sessions never call them, so they move to the `monitoring`
-// profile instead (see tools/selection.ts) rather than the always-on seed set.
-const MONITOR_READ_TOOL_NAMES = [
+// Monitor read tools plus `create_monitor` stay always-on, so a client on the
+// bare URL can discover monitor creation. `update_monitor` repeats the large
+// shared monitor query schema (~2,800 always-on tokens) for a rarer workflow,
+// so it stays in the `monitoring` profile (see tools/selection.ts) instead.
+const MONITOR_DEFAULT_TOOL_NAMES = [
   "list_monitors",
   "get_monitor",
   "get_monitor_events",
   "get_monitor_newsletters",
   "get_monitor_summaries",
+  "create_monitor",
   "set_monitor_status",
 ] as const satisfies readonly ToolName[];
 
@@ -76,17 +77,16 @@ const STATS_TOOL_NAMES = [
   topCompaniesTool.name,
 ] as const satisfies readonly ToolName[];
 
-// These tools carry no `BillingPlan.Permission` gating of their own (the
-// monitor write pair, the platform/watchlist/source-group/contact-point
+// These tools carry no `BillingPlan.Permission` gating of their own
+// (`update_monitor`, the platform/watchlist/source-group/contact-point
 // surface, and the extra read-only lookups), so any valid API key may use
 // them — they are excluded from the default seed set purely to save
-// always-on tokens (see MONITOR_READ_TOOL_NAMES comment above), not because
-// a scope is missing. They must still be selectable via an explicit
+// always-on tokens (see MONITOR_DEFAULT_TOOL_NAMES comment above), not
+// because a scope is missing. They must still be selectable via an explicit
 // `?tools=` name or a named profile (`monitoring`, `platform`, `research`),
 // so they are added to the candidate pool whenever a filter is requested,
 // without ever appearing in the unfiltered default.
-const OPT_IN_TOOL_NAMES = [
-  "create_monitor",
+export const OPT_IN_TOOL_NAMES = [
   "update_monitor",
   "get_source_by_id",
   "get_top_topics",
@@ -103,7 +103,7 @@ const OPT_IN_TOOL_NAMES = [
 
 /**
  * Returns a deduplicated list of tool names permitted by the given API key
- * scopes. `search_news_articles`, the read-only monitor tools, the always-on
+ * scopes. `search_news_articles`, the default monitor tools, the always-on
  * stats tools, and the entitlement self-awareness tool are always included
  * regardless of scope. This is the *default* set used when no `?tools=`
  * filter is requested — see `OPT_IN_TOOL_NAMES` for tools deliberately left
@@ -112,7 +112,7 @@ const OPT_IN_TOOL_NAMES = [
 function getAllowedToolsForScopes(scopes: Scopes[]): ToolName[] {
   const seen = new Set<ToolName>([
     newsArticlesTool.name,
-    ...MONITOR_READ_TOOL_NAMES,
+    ...MONITOR_DEFAULT_TOOL_NAMES,
     ...STATS_TOOL_NAMES,
     apiAccessTool.name,
   ]);
