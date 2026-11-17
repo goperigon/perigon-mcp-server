@@ -34,7 +34,7 @@
 
 Endpoint: `https://mcp.perigon.io/v1/mcp`
 
-The bare URL registers the default tool set: news search, stats, monitor read tools, `create_monitor`, Signal Insights, and the social tools your organization can use. Use `https://mcp.perigon.io/v1/mcp?tools=all` to also register `update_monitor` and the platform tools (watchlists, source groups, contact points). See [Choosing tools](#choosing-tools).
+The bare URL registers the default tool set: news search, stats, monitor tools including `create_monitor`, Signal Insights, and the social tools your organization can use. Use `https://mcp.perigon.io/v1/mcp?tools=all` to also register `update_monitor` and the platform tools (watchlists, source groups, contact points). See [Choosing tools](#choosing-tools).
 
 Try it in the [playground](https://perigon.io/mcp) (requires a signed-in [Perigon dashboard](https://perigon.io) session). Human-oriented setup: [perigon.io/docs/api/mcp](https://perigon.io/docs/api/mcp). **Install with an agent:** pass [perigon.io/mcp.md](https://perigon.io/mcp.md) to your AI client and follow the steps (OAuth sign-in, no API key in chat).
 
@@ -177,14 +177,14 @@ Append `?tools=` to the MCP URL to limit the session. `?tool=` is an alias and w
 ```
 https://mcp.perigon.io/v1/mcp?tools=search_news_articles,search_news_stories
 https://mcp.perigon.io/v1/mcp?tools=research
-https://mcp.perigon.io/v1/mcp?tools=research,create_monitor
+https://mcp.perigon.io/v1/mcp?tools=research,monitoring
 https://mcp.perigon.io/v1/mcp?tools=all
 ```
 
 - Comma-separated tool names, profile aliases, or a mix.
 - A filter replaces the default set rather than adding to it: `?tools=update_monitor` registers only `update_monitor`. Combine profiles and names to keep more, for example `?tools=research,monitoring`.
 - The filter intersects with what your credentials allow (API key scopes or your org’s MCP access for OAuth). It cannot expand access.
-- Omit the parameter or pass an empty value → default set (opt-in tools stay off; smaller tool list for token savings).
+- Omit the parameter or pass an empty value → default set. Opt-in tools (`update_monitor` and the platform tools) stay off unless requested, which keeps the tool list smaller.
 - Pass `all` → scope-allowed default tools plus every opt-in catalogue tool (`update_monitor`, platform helpers, `get_source_by_id`, `get_top_topics`, `get_story_stats`, and the rest). Scope-gated search tools still require the matching permission.
 - Unknown names are dropped. If every name is unknown, the default set is used.
 

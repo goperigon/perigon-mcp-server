@@ -18,7 +18,7 @@ Use this skill for **configured monitors** and **Signal Insights** analysis. New
 3. By monitor type:
    - **EVENT / MENTIONS:** `get_monitor_events` for structured events, summaries, entities, and related articles.
    - **TOPIC:** `get_monitor_newsletters` for scheduled briefings; `get_monitor_summaries` for rolling AI summary history.
-4. **Mutations:** Only call `set_monitor_status`, `create_monitor`, or `update_monitor` when the user explicitly requests a status change or new/updated monitor. Default new monitors to **DRAFT** unless they ask to activate. **Archived** monitors cannot be restored via the public API—confirm before archiving.
+4. **Mutations:** Only call `set_monitor_status`, `create_monitor`, or `update_monitor` when the user explicitly requests a status change or new/updated monitor. Default new monitors to **DRAFT** unless they ask to activate. **Archived** monitors cannot be restored via the public API—confirm before archiving. `create_monitor` is in the default session. `update_monitor` is not; reconnect with `?tools=all` or `?tools=monitoring` to edit an existing monitor. EVENT and MENTIONS schemas need `eventType`; the server adds a required string field when it is omitted.
 
 ## Signal Insights analysis
 
