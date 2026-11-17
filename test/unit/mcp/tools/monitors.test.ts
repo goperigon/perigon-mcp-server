@@ -309,7 +309,7 @@ describe("monitor social channels", () => {
         contentType: "VIDEOS"
       }
     });
-    expect(requests[0].body.linkedInQuery).not.toHaveProperty("keyword");
+    expect(requests[0].body).not.toHaveProperty("linkedInQuery.keyword");
   });
 
   test("rejects a LinkedIn query with only a content type", () => {
