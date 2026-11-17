@@ -14,7 +14,6 @@ const NO_SCOPES: Scopes[] = [];
 describe("resolveNewsToolsForSession", () => {
   test("default (no requestedTools) excludes opt-in-only tools", () => {
     const active = resolveNewsToolsForSession(NO_SCOPES, null);
-    expect(active).not.toContain("create_monitor");
     expect(active).not.toContain("update_monitor");
     expect(active).not.toContain("watchlists");
     expect(active).not.toContain("get_top_topics");
@@ -25,13 +24,19 @@ describe("resolveNewsToolsForSession", () => {
     expect(active).toContain("list_monitors");
   });
 
+  test("default includes create_monitor but not update_monitor", () => {
+    const active = resolveNewsToolsForSession(NO_SCOPES, null);
+    expect(active).toContain("create_monitor");
+    expect(active).not.toContain("update_monitor");
+  });
+
   test("empty requestedTools array behaves like null (no filter)", () => {
     const withNull = resolveNewsToolsForSession(NO_SCOPES, null);
     const withEmpty = resolveNewsToolsForSession(NO_SCOPES, []);
     expect(new Set(withEmpty)).toEqual(new Set(withNull));
   });
 
-  test("explicitAllTools activates opt-in tools including create_monitor", () => {
+  test("explicitAllTools activates opt-in tools including update_monitor", () => {
     const active = resolveNewsToolsForSession(NO_SCOPES, null, true);
     expect(active).toContain("create_monitor");
     expect(active).toContain("update_monitor");
@@ -75,8 +80,8 @@ describe("resolveNewsToolsForSession", () => {
   });
 
   test("explicit single opt-in tool name activates just that tool (plus scope-allowed defaults)", () => {
-    const active = resolveNewsToolsForSession(NO_SCOPES, ["create_monitor"]);
-    expect(active).toEqual(["create_monitor"]);
+    const active = resolveNewsToolsForSession(NO_SCOPES, ["update_monitor"]);
+    expect(active).toEqual(["update_monitor"]);
   });
 
   test("a genuinely scope-gated tool is not activated by request alone", () => {
@@ -98,7 +103,7 @@ describe("resolveNewsToolsForSession", () => {
 
   test("opt-in tools never leak into the default set for a fully-scoped key", () => {
     const active = resolveNewsToolsForSession(Object.values(Scopes), null);
-    expect(active).not.toContain("create_monitor");
+    expect(active).not.toContain("update_monitor");
     expect(active).not.toContain("watchlists");
     expect(active).not.toContain("get_top_topics");
   });

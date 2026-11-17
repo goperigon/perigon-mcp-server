@@ -7,6 +7,7 @@ import { ToolDefinition } from "../types";
 import {
   buildMonitorQuery,
   buildSocialQueries,
+  ensureEventTypeField,
   monitorClassificationType,
   monitorDataSchemaArgs,
   monitorEntityGroupArgs,
@@ -146,8 +147,17 @@ export function createMonitor(
         }
       }
 
+      const ensured = ensureEventTypeField(
+        fields.dataSchema,
+        fields.classificationType
+      );
+      if (!ensured.ok) {
+        return toolResult(ensured.error);
+      }
+
       const body: MonitorCreateRequest = {
         ...fields,
+        dataSchema: ensured.dataSchema,
         ...(query ? { query: buildMonitorQuery(query) } : {}),
         ...buildSocialQueries<never>({ xQuery, redditQuery, linkedInQuery }),
         schedulePolicy: utcSchedulePolicy
@@ -169,7 +179,7 @@ export const createMonitorTool = {
   name: "create_monitor",
   title: "Create monitor",
   description:
-    "Create a Perigon monitor for continuously detecting events, mentions, or scheduled topic briefings. Defaults to DRAFT; only pass ACTIVE when the user explicitly asks to start processing. ACTIVE TOPIC monitors require both a schedule and newsletter configuration. An ACTIVE monitor starts background processing and can deliver notifications to configured contact points; delivered notifications cannot be recalled.",
+    "Create a Perigon monitor for continuously detecting events, mentions, or scheduled topic briefings. Defaults to DRAFT; only pass ACTIVE when the user explicitly asks to start processing. ACTIVE TOPIC monitors require both a schedule and newsletter configuration. EVENT and MENTIONS monitors require a dataSchema field named eventType (STRING or ENUM, required, not nullable); it is added as a required STRING if omitted. An ACTIVE monitor starts background processing and can deliver notifications to configured contact points; delivered notifications cannot be recalled.",
   parameters: createMonitorArgs,
   annotations: {
     readOnlyHint: false,

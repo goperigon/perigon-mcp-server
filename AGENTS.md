@@ -10,7 +10,7 @@ DO NOT needlessly build the app for no reason
 - `bun run deploy` - Deploy to Cloudflare Workers
 - `bun run mcp` - Run MCP inspector
 - `bun run gen` - Generate Wrangler types
-- No test framework configured - check with maintainer before adding tests
+- `bun test` - Run unit tests (smoke tests skip without `PERIGON_API_KEY`)
 
 ## Code Style
 - **TypeScript**: Strict mode, ES2021 target, avoid `any` types
@@ -37,3 +37,14 @@ DO NOT needlessly build the app for no reason
 - Use `useChat` hook from @ai-sdk/react for chat functionality
 - Custom TailwindCSS design tokens for consistent theming
 - Proper TypeScript interfaces for all props and data structures
+
+## Adding or changing a tool
+`test/unit/mcp/tool-catalog.test.ts` fails until the in-repo items are done.
+1. Register it in `TOOL_DEFINITIONS` (`worker/mcp/tools/index.ts`) or `SOCIAL_TOOL_DEFINITIONS` (`worker/mcp/tools/social/index.ts`).
+2. Give it exactly one session tier in `worker/mcp/tool-registration.ts`: always-on default, `SCOPE_TO_TOOLS`, or `OPT_IN_TOOL_NAMES`. Add it to a profile in `worker/mcp/tools/selection.ts` if one fits.
+3. Add a README row under Tools with the matching Availability (`Default`, ``Scope: `X` ``, `Opt-in`, or ``Social: `X` ``).
+4. Add a playground entry to `MCP_TOOLS` in `src/lib/mcp-tools.ts` (registry tools only, not social).
+5. Add or update its bullet in `worker/mcp/instructions.ts`, and only reference tools that are active in the session.
+6. State every field the Perigon API requires in the tool or parameter description; agents cannot see backend validators.
+7. Update `skills/` and `marketplace/perigon/skills/` if the tool changes a workflow.
+8. Outside this repo: update the public docs pages (perigon.io/docs/api/mcp, perigon.io/docs/signals/mcp) and `marketplace/ANNOTATION-REVIEW-NOTES.txt`, and bump `server.json` `version` if the registry listing changes.

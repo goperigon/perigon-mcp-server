@@ -15,9 +15,9 @@ describe("resolveAdvertisedNewsToolsForRequest", () => {
     expect(tools).toContain("update_monitor");
   });
 
-  test("request without a tools filter omits monitor write tools", () => {
+  test("request without a tools filter advertises create_monitor but not update_monitor", () => {
     const tools = resolveAdvertisedNewsToolsForRequest(MCP_ENDPOINT, NO_SCOPES);
-    expect(tools).not.toContain("create_monitor");
+    expect(tools).toContain("create_monitor");
     expect(tools).not.toContain("update_monitor");
     expect(tools).toContain("list_monitors");
   });

@@ -1,6 +1,8 @@
 import { z } from "zod";
 import {
   MonitorArrayElementSchemaProperty,
+  MonitorClassificationType,
+  MonitorDataSchema,
   MonitorDataSchemaProperty,
   MonitorPrimitiveSchemaProperty,
   MonitorQuery,
@@ -293,8 +295,54 @@ export const monitorDataSchemaArgs = z.object({
           return toArrayElementProperty(value as ArrayElementPropertyFields);
         })
     )
-    .describe("Structured event field definitions keyed by output field name.")
+    .describe(
+      "Structured event field definitions keyed by output field name. EVENT and MENTIONS monitors require an eventType field (STRING or ENUM, required, not nullable) naming the event category; it is added automatically if omitted."
+    )
 });
+
+const EVENT_TYPE_FIELD = "eventType";
+
+export type EnsureEventTypeResult =
+  | { ok: true; dataSchema: MonitorDataSchema }
+  | { ok: false; error: string };
+
+/**
+ * The Perigon API rejects EVENT and MENTIONS data schemas unless `eventType`
+ * is present, required, non-nullable, and typed STRING or ENUM. Adds the
+ * field when missing and forces required/non-nullable when present; a
+ * different type is reported rather than coerced.
+ */
+export function ensureEventTypeField(
+  dataSchema: MonitorDataSchema,
+  classificationType: MonitorClassificationType | undefined
+): EnsureEventTypeResult {
+  if (classificationType !== "EVENT" && classificationType !== "MENTIONS") {
+    return { ok: true, dataSchema };
+  }
+  const existing = dataSchema.schema[EVENT_TYPE_FIELD];
+  if (existing && existing.type !== "STRING" && existing.type !== "ENUM") {
+    return {
+      ok: false,
+      error: `Error: ${classificationType} monitors require dataSchema field '${EVENT_TYPE_FIELD}' to be STRING or ENUM, but it is ${existing.type}.`
+    };
+  }
+  const eventType: MonitorDataSchemaProperty = existing
+    ? { ...existing, required: true, nullable: false }
+    : {
+        type: "STRING",
+        description:
+          "Short snake_case category for this event, e.g. funding_round.",
+        required: true,
+        nullable: false
+      };
+  return {
+    ok: true,
+    dataSchema: {
+      ...dataSchema,
+      schema: { ...dataSchema.schema, [EVENT_TYPE_FIELD]: eventType }
+    }
+  };
+}
 
 export const monitorNewsletterConfigArgs = z.object({
   citations: z
