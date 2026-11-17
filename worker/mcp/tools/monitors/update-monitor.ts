@@ -186,7 +186,7 @@ export const updateMonitorTool = {
 /** `update_monitor` with the social channels the organization can use. */
 export function updateMonitorToolForSources(
   socialSources: readonly SocialSource[]
-): ToolDefinition<any> {
+): ToolDefinition<ReturnType<typeof buildUpdateMonitorArgs>> {
   const fields = monitorSocialQueryFieldNames(socialSources);
   if (fields.length === 0) return updateMonitorTool;
   return {

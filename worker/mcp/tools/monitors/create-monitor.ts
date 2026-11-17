@@ -183,7 +183,7 @@ export const createMonitorTool = {
 /** `create_monitor` with the social channels the organization can use. */
 export function createMonitorToolForSources(
   socialSources: readonly SocialSource[]
-): ToolDefinition<any> {
+): ToolDefinition<ReturnType<typeof buildCreateMonitorArgs>> {
   const fields = monitorSocialQueryFieldNames(socialSources);
   if (fields.length === 0) return createMonitorTool;
   return {

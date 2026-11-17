@@ -48,6 +48,7 @@ import { registerResearchPrompts } from "./prompts";
 import {
   buildNewsToolRegisterConfig,
   buildSignalToolRegisterConfig,
+  type ToolInputSchema,
 } from "./register-tool-config";
 
 export type Props = {
@@ -252,8 +253,8 @@ export class PerigonMCP extends McpAgent<Env, unknown, Props> {
   }
 
   /** Registers a tool backed by the Perigon REST API client. */
-  private registerPerigonTool(
-    definition: ToolDefinition,
+  private registerPerigonTool<T extends ToolInputSchema>(
+    definition: ToolDefinition<T>,
     description: string,
   ): void {
     const toolName = definition.name;
