@@ -2,6 +2,7 @@ import { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { formatNewsletterMarkdown } from "./format-newsletter";
 
 import { DEFAULT_PERIGON_API_URL, normalizePerigonApiHost } from "./perigon";
+import { PERIGON_MCP_USER_AGENT } from "./user-agent";
 
 const INSIGHTS_MCP_PATH = "/v1/signal/insights/mcp";
 
@@ -27,6 +28,7 @@ export class InsightsApiClient {
   private get headers(): HeadersInit {
     return {
       ...this.telemetryHeaders(),
+      "User-Agent": PERIGON_MCP_USER_AGENT,
       Authorization: `Bearer ${this.apiKey}`,
     };
   }

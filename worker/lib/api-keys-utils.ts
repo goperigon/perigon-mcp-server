@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { PERIGON_MCP_USER_AGENT } from "./user-agent";
 
 // Define the Zod schema for API key objects
 const ApiKeySchema = z.object({
@@ -82,6 +83,7 @@ export async function fetchPerigonApiKeys(
     {
       headers: {
         Cookie: cookieHeader,
+        "User-Agent": PERIGON_MCP_USER_AGENT,
       },
     }
   );

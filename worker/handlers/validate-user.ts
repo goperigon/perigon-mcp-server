@@ -1,4 +1,5 @@
 import { handleError } from "../lib/handle-error";
+import { PERIGON_MCP_USER_AGENT } from "../lib/user-agent";
 
 const PERIGON_USER_URL = "https://api.perigon.io/v1/user";
 
@@ -20,7 +21,7 @@ export async function handleValidateUser(
     const response = await fetch(PERIGON_USER_URL, {
       headers: {
         Cookie: request.headers.get("Cookie") || "",
-        "User-Agent": request.headers.get("User-Agent") || "",
+        "User-Agent": PERIGON_MCP_USER_AGENT,
         Accept: "application/json",
       },
     });

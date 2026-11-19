@@ -8,6 +8,9 @@ import basicSsl from "@vitejs/plugin-basic-ssl";
 // https://vite.dev/config/
 export default defineConfig(() => ({
   plugins: [react(), cloudflare(), basicSsl()],
+  define: {
+    __GIT_SHA__: JSON.stringify(process.env.GITHUB_SHA ?? "unknown"),
+  },
   server: {
     //Make sure to add this to /etc/hosts - 127.0.0.1 local-mcp.perigon.io
     host: "local-mcp.perigon.io",

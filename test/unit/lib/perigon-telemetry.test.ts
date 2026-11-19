@@ -9,6 +9,7 @@ import {
   buildMcpTelemetryHeaders,
   PLAYGROUND_MCP_CLIENT,
 } from "../../../worker/lib/telemetry-headers";
+import { PERIGON_MCP_USER_AGENT } from "../../../worker/lib/user-agent";
 import {
   installFetchMock,
   jsonResponse,
@@ -42,6 +43,7 @@ describe("Perigon telemetry headers", () => {
       "search_news_articles",
     );
     expect(capturedHeaders?.get("Authorization")).toBe("Bearer test-key");
+    expect(capturedHeaders?.get("User-Agent")).toBe(PERIGON_MCP_USER_AGENT);
   });
 
   test("direct fetch includes telemetry and Authorization headers", async () => {
@@ -64,6 +66,7 @@ describe("Perigon telemetry headers", () => {
       "search_news_articles",
     );
     expect(capturedHeaders?.get("Authorization")).toBe("Bearer test-key");
+    expect(capturedHeaders?.get("User-Agent")).toBe(PERIGON_MCP_USER_AGENT);
   });
 
   test("client without provider sends no x-perigon headers on introspection", async () => {
@@ -116,5 +119,6 @@ describe("InsightsApiClient telemetry headers", () => {
       "signal_insights_search_signals",
     );
     expect(capturedHeaders?.get("Authorization")).toBe("Bearer test-key");
+    expect(capturedHeaders?.get("User-Agent")).toBe(PERIGON_MCP_USER_AGENT);
   });
 });
