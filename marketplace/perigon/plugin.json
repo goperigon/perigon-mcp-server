@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "perigon",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "description": "Search news and social posts, create news monitors that extract structured events, and analyze coverage trends.",
   "author": {
     "name": "Perigon"
@@ -11,14 +11,14 @@
       "interface": {
         "displayName": "Perigon",
         "shortDescription": "News and social research",
-        "longDescription": "Perigon helps analysts and researchers search, filter and analyze news and social data. Search news articles and stories by sentiment, journalist, publisher location, company, topic, language and date. Combine filters to find precise coverage, compare trends and produce briefings with source citations.\n\nSearch public posts on X, Reddit and LinkedIn. Explore community discussions, professional commentary and company announcements using each platform’s supported search filters. Retrieve LinkedIn person activity or company posts from a known profile or page URL. Results include available source links, authors, dates and engagement counts. Social results are samples of available coverage, not a measure of overall public opinion.\n\nCreate news monitors that track matching coverage and extract structured fields, such as funding amount, industry and funding type for AI startups raising a Series A, or severity, incident type, data exposure and affected companies for cybersecurity incidents. Explore monitor events and newsletters, then analyze results with Signal Insights exports and charts. New monitors default to drafts unless you ask to activate them. Social search does not create social monitors or publish posts.\n\nConnect your Perigon account through OAuth. Available tools and data depend on your organization permissions, including access to each social source.",
+        "longDescription": "Perigon helps analysts and researchers search, filter and analyze news and social data. Search news articles and stories by sentiment, journalist, publisher location, company, topic, language and date. Combine filters to find precise coverage, compare trends and produce briefings with source citations. Compare story coverage across publishers, rank topics, people, companies, cities, journalists and sources, and inspect journalist profiles with email addresses when your account has access.\n\nSearch public posts on X, Reddit and LinkedIn. Explore community discussions, professional commentary and company announcements using each platform’s supported search filters. Retrieve LinkedIn person activity or company posts from a known profile or page URL. Results include available source links, authors, dates and engagement counts. Social results are samples of available coverage, not a measure of overall public opinion.\n\nCreate news monitors that track matching coverage and extract structured fields, such as funding amount, industry and funding type for AI startups raising a Series A, or severity, incident type, data exposure and affected companies for cybersecurity incidents. Explore monitor events and newsletters, then analyze results with Signal Insights exports and charts. New monitors default to drafts unless you ask to activate them. Social search does not create social monitors or publish posts.\n\nConnect your Perigon account through OAuth. Available tools and data depend on your organization permissions, including access to each social source.",
         "websiteURL": "https://perigon.io/docs/api/mcp",
         "logo": "./assets/icon.png",
         "composerIcon": "./assets/icon.png",
         "brandColor": "#227C9D",
         "brandColorDark": "#34B3E2",
         "defaultPrompt": [
-          "Find negative-sentiment news coverage of electric vehicles from the past week and cite the sources.",
+          "Find the most-covered AI news stories this week across multiple publishers, then rank their journalists and sources.",
           "Compare recent news about AI agents with public discussion on X and Reddit. Cite sources and separate findings.",
           "Find LinkedIn posts about AI funding from the past week, newest first, with source links and engagement counts."
         ],
@@ -45,19 +45,19 @@
               "description": "Core article search. Use a signed-in test account with news access. Live results may vary.",
               "prompt": "Find five English-language articles about renewable energy from the last seven days and cite each source.",
               "tools_triggered": "get_api_access, search_news_articles",
-              "expected_behavior": "Check access once; search q=renewable energy, language=en, size=5 and an explicit from/to window anchored to the current date. Return at most five actual results with available title, publisher, date and URL. Explain no results or access failures without fabricating coverage."
+              "expected_behavior": "Check access once; call search_news_articles with query=renewable energy, language=[en], countries=[], size=5 and an explicit from/to window anchored to the current date. Return at most five actual results with available title, publisher, date and URL. Explain empty results or access failures without fabricating coverage."
             },
             {
               "description": "Company identity resolution and follow-up coverage. Test account requires company scope.",
               "prompt": "Find recent news about Apple, the company behind the iPhone, from the last seven days.",
               "tools_triggered": "get_api_access, search_companies, search_news_articles",
-              "expected_behavior": "Resolve Apple Inc. by profile/domain before filtering news by its returned company ID; use an explicit seven-day date window. Cite only returned articles. Do not confuse the company with the fruit or another entity; explain missing scope if unavailable."
+              "expected_behavior": "Resolve Apple Inc. by profile/domain before filtering news by its returned company ID; use an explicit seven-day date window. Cite only returned articles. Do not confuse the company with the fruit or another entity; explain missing scope if unavailable. Use countries=[] for worldwide article coverage unless a location is requested."
             },
             {
               "description": "Matched news volume and sentiment time series. Use the last seven complete UTC days within account retention.",
               "prompt": "Compare daily news article volume and sentiment for renewable energy over the last seven complete UTC days.",
               "tools_triggered": "get_api_access, get_article_counts, get_avg_sentiment",
-              "expected_behavior": "Call get_article_counts and get_avg_sentiment with identical q=renewable energy, explicit from/to boundaries covering the last seven complete UTC days, and splitBy=DAY. Report actual counts and sentiment buckets; distinguish missing data from zero. Do not treat news statistics as social statistics."
+              "expected_behavior": "Call get_article_counts and get_avg_sentiment with identical q=renewable energy, explicit from/to boundaries covering the last seven complete UTC days, and splitBy=DAY. Report actual counts and sentiment buckets; distinguish missing data from zero. Do not treat news statistics as social statistics. Keep country, label/excludeLabel and showReprints filters aligned; showReprints=false excludes syndicated reprints."
             },
             {
               "description": "Cluster history workflow. Test account requires CLUSTERS access; select an actual returned cluster.",
@@ -100,6 +100,24 @@
               "prompt": "Show recent posts and reposts from https://www.linkedin.com/in/williamhgates.",
               "tools_triggered": "get_api_access, get_linkedin_person_activity",
               "expected_behavior": "Use the supplied URL and type=POSTS. Distinguish original posts from reposts using returned data. Cite available URLs and report empty or inaccessible results honestly. Do not infer private activity."
+            },
+            {
+              "description": "Story diversity and entity ranking. Requires news, cluster and stats access; live results vary.",
+              "prompt": "Find the most-covered AI stories from the past week worldwide, then show the leading journalists and publishers for one story.",
+              "tools_triggered": "get_api_access, search_news_stories, get_top_entities",
+              "expected_behavior": "Use query=AI, countries=[], an explicit date window and minSourceDiversity=0.2 for the most-covered request. Select a returned story ID; call get_top_entities with clusterId=[that ID], entity=[journalists,sources] and matching date bounds. Report returned names, IDs/domains and counts. Do not fabricate rankings if no data or access is available."
+            },
+            {
+              "description": "Journalist profile output and email entitlement. Use reviewer account with journalist access; email access may differ.",
+              "prompt": "Find journalists covering renewable energy and show their available profile details, including email addresses if provided.",
+              "tools_triggered": "get_api_access, search_journalists",
+              "expected_behavior": "Search using supported topic or query filters. Include email only when returned; explain missing email access or unavailable values without guessing addresses. Do not send email or claim outreach."
+            },
+            {
+              "description": "Explicit worldwide geography boundary.",
+              "prompt": "Find five English-language semiconductor articles from the past week worldwide, without a country restriction.",
+              "tools_triggered": "get_api_access, search_news_articles",
+              "expected_behavior": "Use query=semiconductor, language=[en], countries=[], size=5 and explicit date bounds. Do not silently apply the default US filter. Cite actual returned results; explain empty results honestly."
             }
           ],
           "negative": [
@@ -121,14 +139,14 @@
         "commerce_description": "Paid access is not required. The underlying Perigon API has tiered access. This plugin does not provide purchasing or billing tools.",
         "demo_recording_url": "https://drive.google.com/file/d/117VJgDOHewFJDOcATQ2XODvEWSTTmyWi/view?usp=sharing",
         "prompts": [
-          "Find negative-sentiment news coverage of electric vehicles from the past week and cite the sources.",
+          "Find the most-covered AI news stories this week across multiple publishers, then rank their journalists and sources.",
           "Compare recent news about AI agents with public discussion on X and Reddit. Cite sources and separate findings.",
           "Find LinkedIn posts about AI funding from the past week, newest first, with source links and engagement counts.",
-          "Show top posts about AI in r/technology from the past week."
+          "List my active monitors and explain the delivery schedule for one without changing anything."
         ]
       },
       "publication": {
-        "release_notes": "Adds listing, research-skill guidance and review cases for X, Reddit and LinkedIn search, LinkedIn person activity and company posts. Explains social-source permissions, platform-specific filters, pagination and evidence limits. News monitoring remains supported; social tools are read-only.",
+        "release_notes": "Updates research and monitor guidance for the current tool catalog: geography defaults and explicit worldwide search, story source diversity, entity rankings, consistent news statistics, entitled journalist email fields, session-specific tool availability and social quota behavior. Refreshes review examples to match current tool parameters.",
         "countries": []
       }
     }

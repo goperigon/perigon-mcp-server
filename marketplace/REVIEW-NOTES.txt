@@ -87,3 +87,8 @@ v0.1.4: Supplied 1000x1000 PNG logomark replaces the undersized icon; verified P
 0.1.8 — 2026-10-27
 Listing, research skills and examples updated for five social tools added in 9ecb570. Added five social positive cases; retained five core positive cases and three negative cases. News analytics case now uses a rolling seven-complete-day UTC interval. Category remains Data & Analytics; endpoint and publisher assets unchanged.
 Social review cases: NOT RUN live. Reviewer and portal scan organization must have X, REDDIT and LINKEDIN access. Existing demo URL retained; existing recording demonstrates prior news/monitor workflows, not the new social tools. Social demo coverage and current reviewer entitlements are unverified. No credentials included. User will perform the server rescan.
+
+
+0.1.9 — 2026-11-17
+Prepared against c007c02. Updated listing, both packaged skills and matching root skills, prompt reference, release notes and review cases (13 positive / 3 negative). Retained identity, endpoint, icon, countries, policies and demo URL. Live review cases NOT RUN; existing demo predates the latest changes. Current reviewer access, hosted demo playback and deployed metadata remain unverified. ZIP is a local upload artifact, not a deployment or submission.
+Validation: archive integrity and all six source-file byte comparisons passed; listing lengths, case structure, skill frontmatter and icon verified. Focused server tests: 32 passed / 1 failed. Existing news-stories wire test also fails in isolation: this.telemetryHeaders is not a function in Perigon.authHeaders. Server source was not changed for this release.
