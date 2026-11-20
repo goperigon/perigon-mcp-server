@@ -6,8 +6,7 @@ export const readFileTool = {
   name: "signal_insights_read_file",
   description:
     "Read a file from the sandbox workspace. " +
-    "Internally, this reads the full file into memory. " +
-    `Use on files up to a few MB; for larger files, use ${executeCodeTool.name} directly instead.`,
+    `Loads the whole file; for files over a few MB use ${executeCodeTool.name}.`,
   parameters: readFileSchema,
   annotations: {
     title: "Read Insights file",

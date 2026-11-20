@@ -27,7 +27,7 @@ export function createSearchField(contextDescription: string) {
       return value;
     })
     .describe(
-      `Search query for ${contextDescription}. Supports Boolean operators (AND, OR, NOT), "exact phrases", and wildcards (* ?), e.g. ("AI" OR "artificial intelligence") NOT crypto. Unquoted multi-word input is auto-joined with AND.`,
+      `Query on ${contextDescription}. AND/OR/NOT, "exact phrases", wildcards * ?, e.g. ("AI" OR "machine learning") NOT crypto. Unquoted words are ANDed.`,
     );
 }
 

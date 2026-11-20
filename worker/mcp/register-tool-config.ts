@@ -17,8 +17,8 @@ export type McpRegisterToolConfig = {
   _meta?: Record<string, unknown>;
 };
 
-export function buildNewsToolRegisterConfig(
-  definition: ToolDefinition,
+export function buildNewsToolRegisterConfig<T extends ToolInputSchema>(
+  definition: ToolDefinition<T>,
   description: string,
 ): McpRegisterToolConfig {
   return {

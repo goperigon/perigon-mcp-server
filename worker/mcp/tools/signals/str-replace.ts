@@ -6,8 +6,7 @@ export const strReplaceTool = {
   name: "signal_insights_str_replace",
   description:
     "Find and replace a string in a file in the sandbox workspace. " +
-    "Internally, this reads the full file into memory. " +
-    `Use on files up to a few MB; for larger files, use ${executeCodeTool.name} directly instead.`,
+    `Loads the whole file; for files over a few MB use ${executeCodeTool.name}.`,
   parameters: strReplaceSchema,
   annotations: {
     title: "Edit Insights file",

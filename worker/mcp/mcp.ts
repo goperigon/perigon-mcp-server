@@ -1,7 +1,13 @@
 import { McpAgent } from "agents/mcp";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { Scopes, SocialSource } from "../types/types";
-import { TOOL_DEFINITIONS, type ToolDefinition, type ToolName } from "./tools";
+import {
+  TOOL_DEFINITIONS,
+  createMonitorToolForSources,
+  updateMonitorToolForSources,
+  type ToolDefinition,
+  type ToolName,
+} from "./tools";
 import { Perigon } from "../lib/perigon";
 import { buildMcpTelemetryHeaders } from "../lib/telemetry-headers";
 import { SIGNAL_TOOL_NAMES } from "./tools/selection";
@@ -42,6 +48,7 @@ import { registerResearchPrompts } from "./prompts";
 import {
   buildNewsToolRegisterConfig,
   buildSignalToolRegisterConfig,
+  type ToolInputSchema,
 } from "./register-tool-config";
 
 export type Props = {
@@ -230,7 +237,14 @@ export class PerigonMCP extends McpAgent<Env, unknown, Props> {
     toolName: ToolName,
     capabilityReport: ReturnType<typeof deriveCapabilities>,
   ): void {
-    const definition = TOOL_DEFINITIONS[toolName];
+    // `socialSources` is absent on props persisted before it existed.
+    const socialSources = this.props!.socialSources ?? [];
+    const definition =
+      toolName === "create_monitor"
+        ? createMonitorToolForSources(socialSources)
+        : toolName === "update_monitor"
+          ? updateMonitorToolForSources(socialSources)
+          : TOOL_DEFINITIONS[toolName];
     const entitlementNote = entitlementNoteForTool(toolName, capabilityReport);
     const description = entitlementNote
       ? `${definition.description} ${entitlementNote}`
@@ -239,8 +253,8 @@ export class PerigonMCP extends McpAgent<Env, unknown, Props> {
   }
 
   /** Registers a tool backed by the Perigon REST API client. */
-  private registerPerigonTool(
-    definition: ToolDefinition,
+  private registerPerigonTool<T extends ToolInputSchema>(
+    definition: ToolDefinition<T>,
     description: string,
   ): void {
     const toolName = definition.name;

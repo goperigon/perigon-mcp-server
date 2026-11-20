@@ -19,30 +19,26 @@ export const companiesArgs = z.object({
   query: createSearchField(
     "company name, alternative names, domains, and ticker symbol",
   ),
-  name: createSearchField("company name specifically"),
-  industry: createSearchField("company industry"),
-  sector: createSearchField("company sector classification"),
+  name: createSearchField("name").describe("Like query, name only."),
+  industry: createSearchField("industry").describe("Like query, on industry."),
+  sector: createSearchField("sector").describe("Like query, on sector."),
   domains: z
     .array(z.string())
     .optional()
-    .describe(
-      "Filter by company domains or websites (e.g., apple.com, microsoft.com).",
-    ),
+    .describe("Company domains (e.g. apple.com)."),
   symbol: z
     .array(z.string())
     .optional()
-    .describe("Filter by stock ticker symbols (e.g., AAPL, MSFT, GOOGL)."),
-  id: z.array(z.string()).optional().describe("Filter by Perigon company IDs."),
+    .describe("Ticker symbols (e.g. AAPL)."),
+  id: z.array(z.string()).optional().describe("Perigon company IDs."),
   country: z
     .array(z.string())
     .optional()
-    .describe(
-      "Filter by country code where the company is headquartered (e.g., us, gb).",
-    ),
+    .describe("Headquarters country codes (e.g. us, gb)."),
   exchange: z
     .array(z.string())
     .optional()
-    .describe("Filter by stock exchange (e.g., NASDAQ, NYSE)."),
+    .describe("Stock exchanges (e.g. NASDAQ, NYSE)."),
   numEmployeesFrom: z
     .number()
     .int()
@@ -57,12 +53,12 @@ export const companiesArgs = z.object({
     .string()
     .transform((str) => (str === "" ? undefined : new Date(str)))
     .optional()
-    .describe("Filter for companies that went public on or after this date."),
+    .describe("IPO on or after this date."),
   ipoTo: z
     .string()
     .transform((str) => (str === "" ? undefined : new Date(str)))
     .optional()
-    .describe("Filter for companies that went public on or before this date."),
+    .describe("IPO on or before this date."),
 });
 
 /**
@@ -180,7 +176,7 @@ export const companiesTool = {
   name: "search_companies",
   title: "Companies",
   description:
-    "Search corporations and businesses in the Perigon database. Use this to look up company information, find companies by industry/sector, or identify companies by stock ticker or domain. Filter by name, domain, ticker symbol, industry, sector, country, or stock exchange. Returns company profiles with id, domains, tickers, CEO, employee count, industry/sector classification, headquarters, and description. Feed id/domains/symbol into search_news_articles(companyId|companyDomain|companySymbol) to find coverage.",
+    "Search companies by name, domain, ticker, industry, sector, country, or exchange. Returns id, domains, tickers, CEO, employee count, industry/sector, headquarters, and description. Pass id/domains/symbol to search_news_articles(companyId|companyDomain|companySymbol) for coverage.",
   parameters: companiesArgs,
   annotations: {
     readOnlyHint: true,

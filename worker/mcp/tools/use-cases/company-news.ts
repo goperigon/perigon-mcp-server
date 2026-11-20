@@ -17,28 +17,26 @@ export const companyNewsArgs = z.object({
   companyName: z
     .string()
     .min(1)
-    .describe("Name of the company to search for news about"),
+    .describe("Company name."),
   days: z
     .number()
     .int()
     .min(1)
     .max(365)
     .default(7)
-    .describe("Number of days back to search for news (default: 7 days)"),
+    .describe("Days back to search."),
   limit: z
     .number()
     .int()
     .min(1)
     .max(100)
     .default(10)
-    .describe("Maximum number of articles to return (default: 10)"),
+    .describe("Maximum articles to return."),
   country: z
     .string()
     .length(2)
     .optional()
-    .describe(
-      "Country code to filter news sources. Defaults to us; the response starts with a note when the default is applied.",
-    ),
+    .describe("2-letter country code. Default us."),
 });
 
 /**
@@ -162,11 +160,11 @@ export const companyNewsTool = {
   name: "get_company_news",
   title: "Company news",
   description:
-    "Quick shortcut to get recent news about a specific company by name. Automatically looks up company details for context, then finds recent articles mentioning that company within a configurable time window. Use this for simple 'what's the latest news about [company]?' queries. For advanced filtering, use search_news_articles with companyDomain or companySymbol instead." +
+    "Shortcut for 'latest news about [company]': looks up the company, then returns recent articles mentioning it. For advanced filtering, use search_news_articles with companyId, companyDomain, or companySymbol." +
     " " +
     describeDefaultCountry(
       ["country"],
-      "pass country to choose another, or use search_news_articles with countries: [] for all countries",
+      "for all countries use search_news_articles with countries: []",
     ),
   parameters: companyNewsArgs,
   annotations: {

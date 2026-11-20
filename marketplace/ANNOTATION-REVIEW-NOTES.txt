@@ -157,7 +157,7 @@ destructiveHint: false — Does not overwrite or delete user data or initiate an
 openWorldHint: false — Limited to the authenticated account/workspace or the fixed Perigon topic taxonomy.
 
 create_monitor
-Behavior: Create a Perigon monitor for continuously detecting events, mentions, or scheduled topic briefings. Defaults to DRAFT; only pass ACTIVE when the user explicitly asks to start processing. ACTIVE TOPIC monitors require both a schedule and newsletter configuration. An ACTIVE monitor starts background processing and can deliver notifications to configured contact points; delivered notifications cannot be recalled.
+Behavior: Create a Perigon monitor for continuously detecting events, mentions, or scheduled topic briefings. Defaults to DRAFT; only pass ACTIVE when the user explicitly asks to start processing. ACTIVE TOPIC monitors require both a schedule and newsletter configuration. Pass xQuery, redditQuery, or linkedInQuery (shown only for sources the organization can use) to track social posts, alone or with query. EVENT and MENTIONS monitors require a dataSchema field named eventType (STRING or ENUM, required, not nullable); the server adds a required STRING eventType if it is omitted. An ACTIVE monitor starts background processing and can deliver notifications to configured contact points; delivered notifications cannot be recalled.
 readOnlyHint: false — Creates a persistent monitor and can start processing when ACTIVE.
 destructiveHint: true — ACTIVE monitors can deliver notifications to configured contact points; delivered notifications cannot be recalled. DRAFT is the default.
 openWorldHint: true — Can start monitoring public news and deliver notifications to configured recipients.

@@ -20,34 +20,32 @@ export const wikipediaVectorArgs = z.object({
   query: z
     .string()
     .describe(
-      "Natural language query for semantic search of Wikipedia content. Describe what you're looking for in conversational language. The query is converted to a vector embedding to find semantically similar Wikipedia pages and sections.",
+      "Natural-language description of what you are looking for; matched by meaning.",
     ),
   wikiCode: z
     .array(z.string())
     .optional()
     .describe(
-      "Wiki project codes (e.g., enwiki). Currently only 'enwiki' is supported.",
+      "Wiki project codes; only enwiki is supported.",
     ),
   wikidataId: z
     .array(z.string())
     .optional()
-    .describe("Filter by Wikidata entity IDs (e.g., Q42, Q937)."),
+    .describe("Wikidata IDs (e.g. Q42)."),
   wikidataInstanceOfId: z
     .array(z.string())
     .optional()
-    .describe(
-      "Filter pages whose Wikidata entities are instances of these IDs.",
-    ),
+    .describe("Pages whose Wikidata entity is an instance of these IDs."),
   wikidataInstanceOfLabel: z
     .array(z.string())
     .optional()
     .describe(
-      "Filter pages whose Wikidata entities are instances of these labels (e.g., human, city, country).",
+      "Pages whose Wikidata entity is an instance of these labels (e.g. human, city).",
     ),
   category: z
     .array(z.string())
     .optional()
-    .describe("Filter by Wikipedia categories."),
+    .describe("Wikipedia categories."),
   pageviewsFrom: z
     .number()
     .optional()
@@ -61,14 +59,14 @@ export const wikipediaVectorArgs = z.object({
     .transform(parseTime)
     .optional()
     .describe(
-      "Pages modified on Wikipedia after this date. ISO 8601 or yyyy-mm-dd.",
+      "Edited on Wikipedia after this date.",
     ),
   wikiRevisionTo: z
     .string()
     .transform(parseTime)
     .optional()
     .describe(
-      "Pages modified on Wikipedia before this date. ISO 8601 or yyyy-mm-dd.",
+      "Edited on Wikipedia before this date.",
     ),
 });
 
@@ -153,7 +151,7 @@ export const wikipediaVectorTool = {
   name: "search_vector_wikipedia",
   title: "Vector Wikipedia",
   description:
-    "Semantic search over Wikipedia pages using natural language and vector embeddings. Use this instead of search_wikipedia when the query is conceptual or conversational rather than keyword-based. Finds pages related by meaning even without exact keyword matches. Returns page summaries, Wikidata IDs, categories, and similarity scores. Filter by viewership with pageviewsFrom/pageviewsTo — there is no boolean has-pageviews filter on this endpoint (unlike search_wikipedia).",
+    "Semantic search over Wikipedia pages; use instead of search_wikipedia for conceptual or conversational queries. Returns summaries, Wikidata IDs, categories, and similarity scores. No withPageviews filter here; use pageviewsFrom/To.",
   parameters: wikipediaVectorArgs,
   annotations: {
     readOnlyHint: true,

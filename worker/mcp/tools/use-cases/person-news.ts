@@ -18,28 +18,26 @@ export const personNewsArgs = z.object({
   personName: z
     .string()
     .min(1)
-    .describe("Name of the person to search for news about"),
+    .describe("Person's name."),
   days: z
     .number()
     .int()
     .min(1)
     .max(365)
     .default(7)
-    .describe("Number of days back to search for news (default: 7 days)"),
+    .describe("Days back to search."),
   limit: z
     .number()
     .int()
     .min(1)
     .max(100)
     .default(10)
-    .describe("Maximum number of articles to return (default: 10)"),
+    .describe("Maximum articles to return."),
   country: z
     .string()
     .length(2)
     .optional()
-    .describe(
-      "Country code to filter news sources. Defaults to us; the response starts with a note when the default is applied.",
-    ),
+    .describe("2-letter country code. Default us."),
 });
 
 /**
@@ -163,11 +161,11 @@ export const personNewsTool = {
   name: "get_person_news",
   title: "Person news",
   description:
-    "Quick shortcut to get recent news about a specific person by name. Automatically looks up the person's profile for context, then finds recent articles mentioning them within a configurable time window. Use this for simple 'what's the latest news about [person]?' queries. For advanced filtering, use search_news_articles with personName instead." +
+    "Shortcut for 'latest news about [person]': looks up the person's profile, then returns recent articles mentioning them. For advanced filtering, use search_news_articles with personWikidataId or personName." +
     " " +
     describeDefaultCountry(
       ["country"],
-      "pass country to choose another, or use search_news_articles with countries: [] for all countries",
+      "for all countries use search_news_articles with countries: []",
     ),
   parameters: personNewsArgs,
   annotations: {

@@ -19,19 +19,19 @@ export const topicsArgs = z.object({
     .string()
     .optional()
     .describe(
-      "Search for topics by exact name or partial text match (no wildcards). Examples: Markets, Cryptocurrency, Climate Change.",
+      "Exact or partial topic name, no wildcards (e.g. Markets, Climate Change).",
     ),
   category: z
     .string()
     .optional()
     .describe(
-      "Filter topics by parent category: Politics, Tech, Sports, Business, Finance, Entertainment, etc.",
+      "Parent category (e.g. Politics, Tech, Sports, Business, Finance).",
     ),
   subcategory: z
     .string()
     .optional()
     .describe(
-      "Filter topics by subcategory within a category for more specific results.",
+      "Subcategory within a category.",
     ),
 });
 
@@ -114,7 +114,7 @@ export const topicsTool = {
   name: "search_topics",
   title: "Topics",
   description:
-    "Browse and search the Perigon topic taxonomy. Use this to discover available topics for use as filters in other search tools (articles, stories, journalists). Topics are more granular than categories. Filter by name, category, or subcategory. Returns topic names with their category/subcategory classification.",
+    "Browse the topic taxonomy to find exact topic names for the topic filters of other tools. Topics are more granular than categories. Returns topic names with category and subcategory.",
   parameters: topicsArgs,
   annotations: {
     readOnlyHint: true,

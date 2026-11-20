@@ -34,6 +34,8 @@
 
 Endpoint: `https://mcp.perigon.io/v1/mcp`
 
+The bare URL registers the default tool set: news search, stats, monitor tools including `create_monitor`, Signal Insights, and the social tools your organization can use. Use `https://mcp.perigon.io/v1/mcp?tools=all` to also register `update_monitor` and the platform tools (watchlists, source groups, contact points). See [Choosing tools](#choosing-tools).
+
 Try it in the [playground](https://perigon.io/mcp) (requires a signed-in [Perigon dashboard](https://perigon.io) session). Human-oriented setup: [perigon.io/docs/api/mcp](https://perigon.io/docs/api/mcp). **Install with an agent:** pass [perigon.io/mcp.md](https://perigon.io/mcp.md) to your AI client and follow the steps (OAuth sign-in, no API key in chat).
 
 #### OAuth (recommended)
@@ -175,14 +177,15 @@ Append `?tools=` to the MCP URL to limit the session. `?tool=` is an alias and w
 ```
 https://mcp.perigon.io/v1/mcp?tools=search_news_articles,search_news_stories
 https://mcp.perigon.io/v1/mcp?tools=research
-https://mcp.perigon.io/v1/mcp?tools=research,create_monitor
+https://mcp.perigon.io/v1/mcp?tools=research,monitoring
 https://mcp.perigon.io/v1/mcp?tools=all
 ```
 
 - Comma-separated tool names, profile aliases, or a mix.
+- A filter replaces the default set rather than adding to it: `?tools=update_monitor` registers only `update_monitor`. Combine profiles and names to keep more, for example `?tools=research,monitoring`.
 - The filter intersects with what your credentials allow (API key scopes or your org’s MCP access for OAuth). It cannot expand access.
-- Omit the parameter or pass an empty value → default set (opt-in tools stay off; smaller tool list for token savings).
-- Pass `all` → scope-allowed default tools plus every opt-in catalogue tool (monitor write, platform helpers, `get_source_by_id`, `get_top_topics`, `get_story_stats`, and the rest). Scope-gated search tools still require the matching permission.
+- Omit the parameter or pass an empty value → default set. Opt-in tools (`update_monitor` and the platform tools) stay off unless requested, which keeps the tool list smaller.
+- Pass `all` → scope-allowed default tools plus every opt-in catalogue tool (`update_monitor`, platform helpers, `get_source_by_id`, `get_top_topics`, `get_story_stats`, and the rest). Scope-gated search tools still require the matching permission.
 - Unknown names are dropped. If every name is unknown, the default set is used.
 
 | Profile | Tools |
@@ -191,6 +194,7 @@ https://mcp.perigon.io/v1/mcp?tools=all
 | `monitoring` | All monitor tools (including `create_monitor` / `update_monitor`) plus every Signal Insights tool. |
 | `platform` | `watchlists`, `create_watchlist`, `update_watchlist`, `source_groups`, `create_source_group`, `update_source_group`, `contact_points`, `article_refresh`, `get_api_access`. |
 | `minimal` | `search_news_articles`, the five stats tools, `get_api_access`. |
+| `social` | The five social tools your organization can use, plus `get_api_access`. |
 
 `get_story_stats` is not in any profile. Request it by name. Requires the `CLUSTERS` scope.
 
@@ -203,6 +207,7 @@ Availability:
 - **Default** — registered when `?tools=` is omitted (and the key has the listed scope, if any).
 - **Scope** — registered only when the key has that permission.
 - **Opt-in** — omitted from the default set. Request by name, profile, or `?tools=all`. Registration is not the same as API access.
+- **Social** — registered by default only when your organization has that social source.
 
 #### Search
 
@@ -231,6 +236,18 @@ Each tool looks up an entity, then searches recent articles about it.
 | `get_person_news` | Scope: `PEOPLE` | Recent articles about a person looked up by name. |
 | `get_location_news` | Scope: `LOCATIONS` | Recent articles for a city, state, or country. |
 
+#### Social
+
+Registered by default when your organization has access to the listed social source (shown by `get_api_access`). Read-only: these tools cannot publish posts or access private messages.
+
+| Tool | Availability | Description |
+|------|--------------|-------------|
+| `search_x_posts` | Social: `X` | Public X posts, with X query operators. |
+| `search_reddit_posts` | Social: `REDDIT` | Reddit posts, optionally in one subreddit. |
+| `search_linkedin_posts` | Social: `LINKEDIN` | LinkedIn keyword search with Boolean operators. |
+| `get_linkedin_person_activity` | Social: `LINKEDIN` | Posts, comments, or reactions from a supplied LinkedIn profile URL. |
+| `get_linkedin_company_posts` | Social: `LINKEDIN` | Posts from a supplied LinkedIn company page URL. |
+
 #### Stats
 
 Always on for any valid key. Prefer these over counting search results by hand.
@@ -251,7 +268,7 @@ Always on for any valid key. Prefer these over counting search results by hand.
 
 #### Monitors
 
-Read tools are default. Write tools are opt-in because the shared monitor schema is large.
+Read tools and `create_monitor` are default. `update_monitor` is opt-in because it repeats the large shared monitor schema.
 
 | Tool | Availability | Description |
 |------|--------------|-------------|
@@ -261,8 +278,10 @@ Read tools are default. Write tools are opt-in because the shared monitor schema
 | `get_monitor_newsletters` | Default | Scheduled briefings, typically from TOPIC monitors. |
 | `get_monitor_summaries` | Default | Rolling AI-generated monitor summary history. |
 | `set_monitor_status` | Default | Activate, pause, or archive a monitor. Archiving cannot be reversed through the public API. |
-| `create_monitor` | Opt-in | Create a DRAFT or ACTIVE monitor. Defaults to DRAFT. |
+| `create_monitor` | Default | Create a DRAFT or ACTIVE monitor. Defaults to DRAFT. Tracks news and, for organizations with social access, X, Reddit, or LinkedIn. |
 | `update_monitor` | Opt-in | Partial update; omitted fields are preserved. |
+
+EVENT and MENTIONS monitors need a `dataSchema` field named `eventType` (STRING or ENUM, required, not nullable) that names each event's category. If you omit it, the server adds a required STRING `eventType`. If you include it, the server marks it required and non-nullable. Any other type is rejected before the request is sent.
 
 `schedulePolicy` hours and days are wall-clock times in `timezoneId`, matching Delivery settings in the Perigon product. The public API stores those intervals in UTC; this server converts on read and write. A daily 3:00 AM America/Chicago briefing is returned and accepted as `hour: 3`, not `hour: 8`. `get_monitor` also includes a human-readable `Schedule:` line. Monthly schedules preserve configured `daysOfMonth` (including day 31). Complex monitors with more than 24 intervals fall back to a lossy weekly conversion on read so returned schedules remain updatable through MCP; writes that would exceed 24 intervals after conversion are rejected instead of approximated.
 

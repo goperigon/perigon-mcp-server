@@ -21,7 +21,7 @@ export const locationArgs = z.object({
       return countries.map((country) => country.toLowerCase());
     })
     .describe(
-      "Filter by country, 2-letter lowercase code (e.g. us, ca, mx). Defaults to us when no other geographic filter is given, and the response then starts with a note saying so; pass [] for all countries.",
+      "Country codes, 2-letter lowercase (e.g. us, gb). Defaults to us without another geographic filter; [] = all countries.",
     ),
   states: z
     .array(z.string())
@@ -31,13 +31,13 @@ export const locationArgs = z.object({
       return states.map((state) => state.toUpperCase());
     })
     .describe(
-      "Filter by US state where it plays a central role, 2-letter code (e.g. TX).",
+      "US states central to the story, 2-letter codes (e.g. TX).",
     ),
   cities: z
     .array(z.string())
     .optional()
     .describe(
-      "Filter by city where it plays a central role, e.g. Austin.",
+      "Cities central to the story (e.g. Austin).",
     ),
 });
 
@@ -49,17 +49,13 @@ export const paginationArgs = z.object({
     .number()
     .min(0)
     .default(0)
-    .describe(
-      "The specific page of results to retrieve in the paginated response. Starts at 0. (pagination uses 0 based indexing)"
-    ),
+    .describe("Page number, 0-based."),
   size: z
     .number()
     .min(1)
     .max(1000)
     .default(CONSTANTS.DEFAULT_PAGE_SIZE)
-    .describe(
-      "The number of results to return per page in the paginated response."
-    ),
+    .describe("Results per page."),
 });
 
 /**
@@ -70,15 +66,13 @@ export const defaultArgs = z.object({
     .string()
     .transform(parseTime)
     .optional()
-    .describe(
-      "Filter for articles published before this date. Accepts ISO 8601 format (e.g., 2022-02-01T23:59:59) or yyyy-mm-dd format."
-    ),
+    .describe("Published after this date (ISO 8601 or yyyy-mm-dd)."),
   to: z
     .string()
     .transform(parseTime)
     .optional()
     .describe(
-      "Filter for articles published before this date, avoid setting this field unless you are looking in the distant past and want to set an upper bound for time. Accepts ISO 8601 format (e.g., 2022-02-01T00:00:00) or yyyy-mm-dd format."
+      "Published before this date (ISO 8601 or yyyy-mm-dd). Leave unset unless bounding a past period."
     ),
 });
 
@@ -88,9 +82,7 @@ export const defaultArgs = z.object({
 export const categories = z
   .array(z.string())
   .optional()
-  .describe(
-    "Filter by the content categories (e.g., Politics, Tech, Sports, Business, Finance)"
-  );
+  .describe("Content categories (e.g. Politics, Tech, Sports, Business, Finance).");
 
 /**
  * Topics filter
@@ -98,9 +90,7 @@ export const categories = z
 export const topics = z
   .array(z.string())
   .optional()
-  .describe(
-    "Filter by specific topics such as Markets, Crime, Cryptocurrency, or College Sports. Topics are more granular than categories"
-  );
+  .describe("Topics, more granular than categories (e.g. Markets, Crime, College Sports).");
 
 /**
  * Create base search arguments by combining common schemas

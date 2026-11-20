@@ -21,35 +21,35 @@ export const topCompaniesArgs = statsFilterArgs.extend({
     .transform(parseTime)
     .optional()
     .describe(
-      "Start of the current window for spike detection. Default: 3 days ago. ISO 8601 or yyyy-mm-dd.",
+      "Start of the current window (match the user's period). Default: 3 days ago.",
     ),
   currentTo: z
     .string()
     .transform(parseTime)
     .optional()
     .describe(
-      "End of the current window for spike detection. Default: now. ISO 8601 or yyyy-mm-dd.",
+      "End of the current window. Default: now.",
     ),
   baselineFrom: z
     .string()
     .transform(parseTime)
     .optional()
     .describe(
-      "Start of the baseline window for spike detection. Default: 30 days ago. ISO 8601 or yyyy-mm-dd.",
+      "Start of the baseline window. Default: 30 days ago.",
     ),
   baselineTo: z
     .string()
     .transform(parseTime)
     .optional()
     .describe(
-      "End of the baseline window for spike detection. Default: 3 days ago. ISO 8601 or yyyy-mm-dd.",
+      "End of the baseline window. Default: currentFrom.",
     ),
   normalizeByDay: z
     .boolean()
     .optional()
     .default(true)
     .describe(
-      "If true, compares daily mention rates between current and baseline windows (adjusts for window length differences). Default: true.",
+      "Compare per-day rates so unequal windows are comparable.",
     ),
   size: z
     .number()
@@ -57,19 +57,23 @@ export const topCompaniesArgs = statsFilterArgs.extend({
     .max(100)
     .optional()
     .default(10)
-    .describe("Number of top companies to return (1–100). Default: 10."),
+    .describe("Number of companies to return."),
   minBaseline: z
     .number()
     .optional()
-    .describe("Minimum baseline mentions required to be eligible for ranking."),
+    .describe(
+      "Minimum baseline mentions to be ranked: 5 = established names only, 0 = include brand-new names. Default: 0.",
+    ),
   minCurrent: z
     .number()
     .optional()
-    .describe("Minimum current-window mentions required to be eligible for ranking."),
+    .describe(
+      "Minimum current-window mentions to be ranked; ~3–10 drops noise when minBaseline=0. Default: 0.",
+    ),
   smoothingAlpha: z
     .number()
     .optional()
-    .describe("Smoothing factor applied to the baseline rate to reduce noise from small counts."),
+    .describe("Added to both counts before comparing rates, damping small-count noise. Default: 1."),
 });
 
 export function getTopCompanies(
@@ -133,7 +137,7 @@ export const topCompaniesTool = {
   name: "get_top_companies",
   title: "Top companies",
   description:
-    "Get the companies whose news coverage is spiking — mentioned significantly more in a recent window than a prior baseline period. Use this when the user asks 'which companies are trending?', 'which companies are getting more coverage than usual?', or 'what companies are suddenly in the news?' — NOT for simple most-mentioned frequency (use get_top_entities for that). Returns a ranked list with current mention count, baseline count, and a spike score (higher = bigger relative increase). The comparison window defaults to last 3 days vs. last 30 days; override with currentFrom/To and baselineFrom/To. Supports all standard article filters to scope the analysis to a specific topic, source, or date range.",
+    "Companies whose coverage is spiking: more mentions in a current window than a baseline window — for 'which companies are trending / surging / getting more coverage than usual?'. Not for most-mentioned (get_top_entities has no baseline). Returns mention counts, per-day rates, and spike_score (smoothed current ÷ baseline rate; below ~1.1 is not trending). Set currentFrom/To to the user's period and the baseline to an equal-length window just before it. minBaseline=5 for established names on the rise; minBaseline=0 plus minCurrent ~3–10 for brand-new names. Never set from/to (it clips the baseline). Playbook: perigon://reference/chaining.",
   parameters: topCompaniesArgs,
   annotations: {
     readOnlyHint: true,

@@ -27,36 +27,36 @@ export const sourcesArgs = z.object({
     .array(z.string())
     .optional()
     .describe(
-      "Filter by exact publisher domains or subdomains. Supports wildcards (* and ?) for pattern matching (e.g., *.cnn.com).",
+      "Publisher domains or subdomains; wildcards * ? (e.g. *.cnn.com).",
     ),
   name: createSearchField("source name or alternative names"),
   sourceGroup: z
     .string()
     .optional()
     .describe(
-      "Filter by curated source bundles: top10, top25, top50, top100, top25tech, top25crypto.",
+      "Curated source bundle: top10, top25, top50, top100, top25tech, top25crypto.",
     ),
   paywall: z
     .boolean()
     .optional()
-    .describe("Filter by paywall status: true for paywalled, false for free."),
+    .describe("true = paywalled, false = free."),
   sortBy: z
     .enum(["relevance", "globalRank", "monthlyVisits", "avgMonthlyPosts"])
     .default("relevance")
     .optional()
     .describe(
-      "Sort order: relevance (best match), globalRank (traffic), monthlyVisits, or avgMonthlyPosts.",
+      "globalRank = traffic rank.",
     ),
   minMonthlyVisits: z
     .number()
     .int()
     .optional()
-    .describe("Minimum monthly visitors threshold."),
+    .describe("Minimum monthly visitors."),
   maxMonthlyVisits: z
     .number()
     .int()
     .optional()
-    .describe("Maximum monthly visitors threshold."),
+    .describe("Maximum monthly visitors."),
   minMonthlyPosts: z
     .number()
     .int()
@@ -189,7 +189,7 @@ export const sourcesTool = {
   name: "search_sources",
   title: "Sources",
   description:
-    "Search 200k+ news publications and media outlets in the Perigon database. Use this to discover or compare news sources by name, domain, location, audience size, or publishing volume. Filter by curated bundles (top10, top100), paywall status, or geographic location. Returns source profiles with domain, monthly visits, top topics covered, and publishing frequency." +
+    "Search 200k+ news publishers by name, domain, location, audience size, publishing volume, bundle, or paywall. Returns domain, monthly visits, top topics, and publishing frequency." +
     " " +
     describeDefaultCountry(["countries", "cities", "states"]),
   parameters: sourcesArgs,

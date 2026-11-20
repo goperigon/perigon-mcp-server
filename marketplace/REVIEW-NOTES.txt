@@ -7,7 +7,7 @@ Access: No paid access required; underlying API has tiered access.
 Support: https://perigon.io/contact (support@perigon.io).
 Website, support, privacy and terms pages inspected successfully on 2026-10-14.
 OAuth resource and authorization metadata verified on the hosted MCP server.
-Connection selects tools=all so the bundled skills can access opt-in monitor tools.
+Connection selects tools=all (marketplace/perigon/mcp.json) so the bundled skills can access update_monitor and the other opt-in platform tools. create_monitor is already in the default set; tools=all is still required for monitor edits.
 Actual tools remain subject to account scopes and quotas.
 
 Validation:

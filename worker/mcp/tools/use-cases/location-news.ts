@@ -14,7 +14,7 @@ export const locationNewsArgs = z.object({
     .string()
     .min(1)
     .describe(
-      "Location to search for news about: a city, a US state name or code, or a country name or code. Names are resolved to codes (France → fr, Texas → TX).",
+      "City, US state, or country, by name or code (France → fr, Texas → TX).",
     ),
   days: z
     .number()
@@ -22,18 +22,18 @@ export const locationNewsArgs = z.object({
     .min(1)
     .max(365)
     .default(7)
-    .describe("Number of days back to search for news (default: 7 days)"),
+    .describe("Days back to search."),
   limit: z
     .number()
     .int()
     .min(1)
     .max(100)
     .default(10)
-    .describe("Maximum number of articles to return (default: 10)"),
+    .describe("Maximum articles to return."),
   locationType: z
     .enum(["auto", "city", "state", "country"])
     .default("auto")
-    .describe("Type of location - 'auto' will try to detect automatically"),
+    .describe("Location type; auto detects it."),
 });
 
 /**
@@ -137,7 +137,7 @@ export const locationNewsTool = {
   name: "get_location_news",
   title: "Location news",
   description:
-    "Quick shortcut to get recent news for a geographic location (city, state, or country). Automatically detects the location type and applies appropriate geographic filters. Use this for simple 'what's happening in [location]?' queries. For advanced filtering, use search_news_articles with explicit city/state/country parameters instead.",
+    "Shortcut for 'what's happening in [city/state/country]?': detects the location type and returns recent articles. For advanced filtering, use search_news_articles with cities/states/countries.",
   parameters: locationNewsArgs,
   annotations: {
     readOnlyHint: true,

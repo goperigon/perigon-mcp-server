@@ -1,10 +1,14 @@
 import { z } from "zod";
 import {
   MonitorArrayElementSchemaProperty,
+  MonitorClassificationType,
+  MonitorDataSchema,
   MonitorDataSchemaProperty,
   MonitorPrimitiveSchemaProperty,
-  MonitorQuery
+  MonitorQuery,
+  MonitorSocialQueries
 } from "../../../types/monitors";
+import { SocialSource } from "../../../types/types";
 
 const PRIMITIVE_PROPERTY_TYPES = [
   "BOOLEAN",
@@ -291,8 +295,54 @@ export const monitorDataSchemaArgs = z.object({
           return toArrayElementProperty(value as ArrayElementPropertyFields);
         })
     )
-    .describe("Structured event field definitions keyed by output field name.")
+    .describe(
+      "Structured event field definitions keyed by output field name. EVENT and MENTIONS monitors require an eventType field (STRING or ENUM, required, not nullable) naming the event category; it is added automatically if omitted."
+    )
 });
+
+const EVENT_TYPE_FIELD = "eventType";
+
+export type EnsureEventTypeResult =
+  | { ok: true; dataSchema: MonitorDataSchema }
+  | { ok: false; error: string };
+
+/**
+ * The Perigon API rejects EVENT and MENTIONS data schemas unless `eventType`
+ * is present, required, non-nullable, and typed STRING or ENUM. Adds the
+ * field when missing and forces required/non-nullable when present; a
+ * different type is reported rather than coerced.
+ */
+export function ensureEventTypeField(
+  dataSchema: MonitorDataSchema,
+  classificationType: MonitorClassificationType | undefined
+): EnsureEventTypeResult {
+  if (classificationType !== "EVENT" && classificationType !== "MENTIONS") {
+    return { ok: true, dataSchema };
+  }
+  const existing = dataSchema.schema[EVENT_TYPE_FIELD];
+  if (existing && existing.type !== "STRING" && existing.type !== "ENUM") {
+    return {
+      ok: false,
+      error: `Error: ${classificationType} monitors require dataSchema field '${EVENT_TYPE_FIELD}' to be STRING or ENUM, but it is ${existing.type}.`
+    };
+  }
+  const eventType: MonitorDataSchemaProperty = existing
+    ? { ...existing, required: true, nullable: false }
+    : {
+        type: "STRING",
+        description:
+          "Short snake_case category for this event, e.g. funding_round.",
+        required: true,
+        nullable: false
+      };
+  return {
+    ok: true,
+    dataSchema: {
+      ...dataSchema,
+      schema: { ...dataSchema.schema, [EVENT_TYPE_FIELD]: eventType }
+    }
+  };
+}
 
 export const monitorNewsletterConfigArgs = z.object({
   citations: z
@@ -481,6 +531,179 @@ export function buildMonitorQuery(
     ...(queryAdvanced ?? {}),
     ...commonFields
   } as MonitorQuery;
+}
+
+// Must match business-api-server's X_QUERY_MAX_LENGTH.
+const X_QUERY_MAX_LENGTH = 468;
+
+export const monitorXQueryArgs = () =>
+  z.object({
+    query: z
+      .string()
+      .trim()
+      .min(1)
+      .max(X_QUERY_MAX_LENGTH)
+      .describe(
+        'X search query using X operators, e.g. ("OpenAI" OR ChatGPT) lang:en -is:retweet. Accounts: from:handle (never a URL). Do not use since:, until:, since_time:, or until_time: — the monitor sets its own time window.'
+      ),
+    searchType: z
+      .enum(["TOP", "LATEST", "MEDIA"])
+      .default("LATEST")
+      .describe(
+        "LATEST: newest posts. TOP: higher-engagement posts. MEDIA: posts with images or video."
+      )
+  });
+
+export const monitorRedditQueryArgs = () =>
+  z.object({
+    query: z
+      .string()
+      .trim()
+      .min(1)
+      .describe("Reddit search keywords. Do not use X operators."),
+    subreddit: z
+      .string()
+      .trim()
+      .min(1)
+      .optional()
+      .describe("Limit matches to one subreddit, without the r/ prefix.")
+  });
+
+const linkedInNumericIds = (description: string) =>
+  z.array(z.number().int().positive()).min(1).optional().describe(description);
+
+const linkedInMemberIds = (description: string) =>
+  z.array(z.string().trim().min(1)).min(1).optional().describe(description);
+
+export const monitorLinkedInQueryArgs = () =>
+  z
+    .object({
+      keyword: z
+        .string()
+        .trim()
+        .min(1)
+        .optional()
+        .describe(
+          'LinkedIn keyword search, not X operators. Uppercase AND, OR, NOT; quotes for exact phrases; parentheses group clauses. Example: ("OpenAI" OR "ChatGPT") AND layoffs. Optional when an author or ID filter is set.'
+        ),
+      contentType: z
+        .enum(["PHOTOS", "VIDEOS", "JOBS", "LIVE_VIDEOS", "DOCUMENTS"])
+        .optional()
+        .describe(
+          "Only posts with this content type. Omit for all posts. Does not count as a filter on its own."
+        ),
+      authorTitle: z
+        .string()
+        .trim()
+        .min(1)
+        .optional()
+        .describe(
+          'Only posts by authors whose job title matches, e.g. "CEO". Only set when the user asks.'
+        ),
+      mentionsOrganization: linkedInNumericIds(
+        "Only posts mentioning these numeric LinkedIn organization IDs."
+      ),
+      fromMember: linkedInMemberIds(
+        "Only posts by these members: LinkedIn profile IDs (ACoAA...) or profile URLs containing one."
+      ),
+      fromCompany: linkedInNumericIds(
+        "Only posts by these numeric LinkedIn company page IDs."
+      ),
+      mentionsMember: linkedInMemberIds(
+        "Only posts tagging these members: profile IDs (ACoAA...) or profile URLs containing one."
+      ),
+      authorCompany: linkedInNumericIds(
+        "Only posts by people currently at these numeric LinkedIn company IDs."
+      ),
+      authorIndustry: linkedInNumericIds(
+        "Only posts by authors in these numeric LinkedIn industry IDs."
+      )
+    })
+    .refine(hasLinkedInSearchScope, {
+      message:
+        "linkedInQuery needs a keyword or at least one of authorTitle, mentionsOrganization, fromMember, fromCompany, mentionsMember, authorCompany, authorIndustry."
+    });
+
+function hasLinkedInSearchScope(query: {
+  keyword?: string;
+  authorTitle?: string;
+  mentionsOrganization?: number[];
+  fromMember?: string[];
+  fromCompany?: number[];
+  mentionsMember?: string[];
+  authorCompany?: number[];
+  authorIndustry?: number[];
+}): boolean {
+  return Boolean(
+    query.keyword ||
+      query.authorTitle ||
+      query.mentionsOrganization?.length ||
+      query.fromMember?.length ||
+      query.fromCompany?.length ||
+      query.mentionsMember?.length ||
+      query.authorCompany?.length ||
+      query.authorIndustry?.length
+  );
+}
+
+type MonitorSocialQueryField = "xQuery" | "redditQuery" | "linkedInQuery";
+
+const SOCIAL_QUERY_FIELDS: Record<SocialSource, MonitorSocialQueryField> = {
+  [SocialSource.X]: "xQuery",
+  [SocialSource.REDDIT]: "redditQuery",
+  [SocialSource.LINKEDIN]: "linkedInQuery"
+};
+
+/** Social query fields absent from `socialSources`, as a Zod `.omit()` mask. */
+export function unavailableSocialQueryFields(
+  socialSources: readonly SocialSource[]
+): Partial<Record<MonitorSocialQueryField, true>> {
+  const mask: Partial<Record<MonitorSocialQueryField, true>> = {};
+  for (const [source, field] of Object.entries(SOCIAL_QUERY_FIELDS)) {
+    if (!socialSources.includes(source as SocialSource)) mask[field] = true;
+  }
+  return mask;
+}
+
+/** Monitor social query fields for `socialSources`, in a stable order. */
+export function monitorSocialQueryFieldNames(
+  socialSources: readonly SocialSource[]
+): MonitorSocialQueryField[] {
+  return (Object.keys(SOCIAL_QUERY_FIELDS) as SocialSource[])
+    .filter((source) => socialSources.includes(source))
+    .map((source) => SOCIAL_QUERY_FIELDS[source]);
+}
+
+export interface MonitorSocialQueryInput<Removal extends null = never> {
+  xQuery?: z.output<ReturnType<typeof monitorXQueryArgs>> | Removal;
+  redditQuery?: z.output<ReturnType<typeof monitorRedditQueryArgs>> | Removal;
+  linkedInQuery?: z.output<ReturnType<typeof monitorLinkedInQueryArgs>> | Removal;
+}
+
+/**
+ * Converts tool input into API social queries. `undefined` leaves a channel
+ * out of the request; `null` removes it.
+ */
+export function buildSocialQueries<Removal extends null = never>(
+  input: MonitorSocialQueryInput<Removal>
+): MonitorSocialQueries<Removal> {
+  const result: MonitorSocialQueries<Removal> = {};
+  if (input.xQuery !== undefined) {
+    result.xQuery = input.xQuery && { version: "V1", ...input.xQuery };
+  }
+  if (input.redditQuery !== undefined) {
+    result.redditQuery = input.redditQuery && {
+      version: "V1",
+      ...input.redditQuery
+    };
+  }
+  if (input.linkedInQuery !== undefined) {
+    result.linkedInQuery = input.linkedInQuery && {
+      version: "V1",
+      ...input.linkedInQuery
+    };
+  }
+  return result;
 }
 
 export const monitorStatus = z.enum(["DRAFT", "ACTIVE", "STOPPED", "ARCHIVED"]);

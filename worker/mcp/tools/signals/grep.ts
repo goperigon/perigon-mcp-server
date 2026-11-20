@@ -5,9 +5,8 @@ import { executeCodeTool } from "./execute-code";
 export const grepTool = {
   name: "signal_insights_grep",
   description:
-    "Search a file's contents for lines matching a regex pattern. " +
-    "Reads the file via the SDK (no shell injection risk). Returns matching lines with line numbers. " +
-    `Use on files up to a few MB; for larger files, use ${executeCodeTool.name} directly instead.`,
+    "Return a file's lines matching a regex, with line numbers. " +
+    `For files over a few MB use ${executeCodeTool.name}.`,
   parameters: grepSchema,
   annotations: {
     title: "Search Insights files",
