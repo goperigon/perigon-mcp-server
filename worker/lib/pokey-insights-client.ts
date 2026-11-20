@@ -1,5 +1,6 @@
 import { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { HttpError } from "../types/types";
+import { PERIGON_MCP_USER_AGENT } from "./user-agent";
 import { previewChartTool } from "../mcp/tools/signals/preview-chart";
 
 interface ExecuteCodeDisplayResult {
@@ -161,6 +162,7 @@ export class PokeyInsightsClient {
     return {
       Authorization: `Bearer ${this.apiKey}`,
       "Content-Type": "application/json",
+      "User-Agent": PERIGON_MCP_USER_AGENT,
     };
   }
 

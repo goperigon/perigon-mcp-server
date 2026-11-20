@@ -1,5 +1,6 @@
 import { Configuration, V1Api, type Middleware } from "@goperigon/perigon-ts";
 import { AuthIntrospectionResponse, HttpError } from "../types/types";
+import { PERIGON_MCP_USER_AGENT } from "./user-agent";
 import {
   MonitorCreateRequest,
   MonitorDto,
@@ -576,6 +577,7 @@ export class Perigon extends V1Api {
         for (const [key, value] of Object.entries(telemetryHeaders())) {
           headers.set(key, value);
         }
+        headers.set("User-Agent", PERIGON_MCP_USER_AGENT);
         return {
           url: context.url,
           init: { ...context.init, headers },
@@ -913,6 +915,7 @@ export class Perigon extends V1Api {
   private authHeaders(): HeadersInit {
     return {
       ...this.telemetryHeaders(),
+      "User-Agent": PERIGON_MCP_USER_AGENT,
       Authorization: `Bearer ${this.apiKey}`,
     };
   }
@@ -921,6 +924,7 @@ export class Perigon extends V1Api {
     for (const [key, value] of Object.entries(this.telemetryHeaders())) {
       headers.set(key, value);
     }
+    headers.set("User-Agent", PERIGON_MCP_USER_AGENT);
     headers.set("Authorization", `Bearer ${this.apiKey}`);
   }
 
