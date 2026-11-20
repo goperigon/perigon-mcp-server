@@ -19,3 +19,10 @@ MCP prompts (when the host supports them) align with these workflows: `entity_de
 - Compare news and social discussion → search each source independently, cite returned evidence, and distinguish sample themes from measured news statistics. Do not claim comprehensive social coverage or a social sentiment score that the tools did not return.
 
 Social access depends on the organization's source entitlements. Social searches consume a separate social quota if the plan has one, otherwise the news request quota; these tools cannot post or message on the user's behalf.
+
+## Updated research examples
+
+- Worldwide semiconductor articles → `search_news_articles` with `query`, `countries=[]`, explicit dates and language.
+- Most-covered AI stories, then their leading publishers → `search_news_stories` with `minSourceDiversity=0.2`, followed by `get_top_entities` with a returned `clusterId` and `entity=[sources,journalists]`.
+- Journalist profile details and available email → `search_journalists`; report only returned email addresses, subject to access.
+- Whole-range news volume → `get_article_counts` with `splitBy=NONE`; report the returned total without inventing dated buckets.

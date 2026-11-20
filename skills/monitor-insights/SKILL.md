@@ -7,14 +7,14 @@ Use this skill for **configured monitors** and **Signal Insights** analysis. New
 
 ## Session setup
 
-1. Call `get_api_access` once per session (and after 403) to confirm monitor and insights access.
+1. Call `get_api_access` once per session (and after 403) to confirm monitor and insights access. Use only tools registered in the current session; documented monitor or Insights tools may be unavailable because of permissions or tool selection.
 2. Call `signal_insights_create_workspace` **once** at the start of any conversation that will use export, code, shell, or file tools. Pass the returned workspace id to every subsequent Signal Insights tool.
 3. For chart formatting rules, read MCP resource `perigon://reference/charts` before calling `signal_insights_preview_chart`.
 
 ## Monitors (read and lifecycle)
 
 1. `list_monitors` to discover monitors; filter by name, status, or type when the user specifies.
-2. `get_monitor` for full configuration before explaining what a monitor tracks. Schedule `hour` / `minute` are wall-clock times in `timezoneId`, matching Delivery settings in the product — do not treat `hour` as UTC.
+2. Use the returned monitor UUID, not its display name, for follow-up calls. `get_monitor` for full configuration before explaining what a monitor tracks. Schedule `hour` / `minute` are wall-clock times in `timezoneId`, matching Delivery settings in the product — do not treat `hour` as UTC.
 3. By monitor type:
    - **EVENT / MENTIONS:** `get_monitor_events` for structured events, summaries, entities, and related articles.
    - **TOPIC:** `get_monitor_newsletters` for scheduled briefings; `get_monitor_summaries` for rolling AI summary history.
