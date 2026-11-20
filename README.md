@@ -85,6 +85,8 @@ url = "https://mcp.perigon.io/v1/mcp"
 
 Then run `codex mcp login perigon`.
 
+**Raycast:** Install the [Perigon extension](raycast/) from the Raycast Store (or run `npm run dev` in `raycast/`). It bundles this MCP server for Raycast AI and adds Search News, Search Stories, and My Monitors commands. See [raycast/README.md](raycast/README.md).
+
 #### API key (scripts and pinned keys)
 
 Use when the client cannot complete OAuth or you need a fixed key in config. Keys from [perigon.io/dev/keys](https://perigon.io/dev/keys).
