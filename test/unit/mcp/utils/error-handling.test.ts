@@ -108,6 +108,29 @@ describe("createErrorMessage classification guidance", () => {
     }
   });
 
+  test("403 CREDITS_EXHAUSTED appends credits guidance with the reset time", async () => {
+    const body = JSON.stringify({
+      status: 403,
+      message: "Your organization is out of credits.",
+      code: "CREDITS_EXHAUSTED",
+      resetAt: "2026-12-01T00:00:00Z",
+    });
+    const msg = await createErrorMessage(new HttpError(403, body));
+    expect(msg).toContain("out of credits — do not retry");
+    expect(msg).toContain("reset at 2026-12-01T00:00:00Z");
+    expect(msg).not.toContain("exhausted its usage quota");
+  });
+
+  test("403 CREDITS_EXHAUSTED without a reset time points to the next invoice", async () => {
+    const body = JSON.stringify({
+      status: 403,
+      message: "Your organization is out of credits.",
+      code: "CREDITS_EXHAUSTED",
+    });
+    const msg = await createErrorMessage(new HttpError(403, body));
+    expect(msg).toContain("when the next invoice is paid");
+  });
+
   test("403 with unrecognized phrasing falls back to plan-restriction guidance", async () => {
     const msg = await createErrorMessage(new HttpError(403, "Forbidden"));
     expect(msg).toContain("plan does not include");
