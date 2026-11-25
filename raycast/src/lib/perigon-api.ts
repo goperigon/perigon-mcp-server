@@ -22,8 +22,8 @@ export interface PaginatedResult<T> {
   total: number;
 }
 
-const MONITORS_PAGE_SIZE = 100;
-const MONITOR_OUTPUT_PAGE_SIZE = 25;
+export const MONITORS_PAGE_SIZE = 100;
+export const MONITOR_OUTPUT_PAGE_SIZE = 25;
 
 export class PerigonApiError extends Error {
   readonly status: number;
