@@ -46,5 +46,5 @@ DO NOT needlessly build the app for no reason
 4. Add a playground entry to `MCP_TOOLS` in `src/lib/mcp-tools.ts` (registry tools only, not social).
 5. Add or update its bullet in `worker/mcp/instructions.ts`, and only reference tools that are active in the session.
 6. State every field the Perigon API requires in the tool or parameter description; agents cannot see backend validators.
-7. Update `skills/` and `marketplace/perigon/skills/` if the tool changes a workflow.
+7. Update `skills/`, `marketplace/perigon/skills/`, and `raycast/skills/` if the tool changes a workflow.
 8. Outside this repo: update the public docs pages (perigon.io/docs/api/mcp, perigon.io/docs/signals/mcp) and `marketplace/ANNOTATION-REVIEW-NOTES.txt`, and bump `server.json` `version` if the registry listing changes.
