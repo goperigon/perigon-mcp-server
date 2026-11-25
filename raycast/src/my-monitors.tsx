@@ -2,7 +2,13 @@ import { useState } from "react";
 import { ActionPanel, Action, Color, Detail, Icon, Image, List, useNavigation } from "@raycast/api";
 import { usePromise, withAccessToken } from "@raycast/utils";
 import { LoadFailureEmptyView } from "./lib/load-failure-empty-view";
-import { listMonitorEvents, listMonitorNewsletters, listMonitors } from "./lib/perigon-api";
+import {
+  listMonitorEvents,
+  listMonitorNewsletters,
+  listMonitors,
+  showPerigonFailure,
+  type PaginatedResult,
+} from "./lib/perigon-api";
 import { perigonOAuth } from "./lib/perigon-oauth";
 import type { PerigonMonitor, PerigonMonitorEvent, PerigonMonitorNewsletter } from "./lib/types";
 
@@ -20,13 +26,86 @@ const MONITOR_GROUPS: { id: MonitorGroup; title: string }[] = [
 const ACTIVE_CHIP_COLOR: Color.Dynamic = { light: "#178D43", dark: "#22C55E", adjustContrast: false };
 const MUTED_CHIP_COLOR = Color.SecondaryText;
 
+function usePaginatedList<T>(
+  loadPage: (page: number) => Promise<PaginatedResult<T>>,
+  deps: unknown[],
+  failureToastTitle: string,
+) {
+  const [items, setItems] = useState<T[]>([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(0);
+  const [loadingMore, setLoadingMore] = useState(false);
+
+  const { isLoading, error, revalidate } = usePromise(
+    async () => {
+      const result = await loadPage(0);
+      setItems(result.items);
+      setTotal(result.total);
+      setPage(0);
+      return result;
+    },
+    deps,
+    { failureToastOptions: { title: failureToastTitle } },
+  );
+
+  const loadMore = async () => {
+    if (loadingMore || items.length >= total) {
+      return;
+    }
+    setLoadingMore(true);
+    try {
+      const nextPage = page + 1;
+      const result = await loadPage(nextPage);
+      setItems((current) => [...current, ...result.items]);
+      setTotal(result.total);
+      setPage(nextPage);
+    } catch (loadError) {
+      await showPerigonFailure(loadError);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
+
+  return {
+    items,
+    total,
+    isLoading: isLoading || loadingMore,
+    loadingMore,
+    error,
+    revalidate,
+    loadMore,
+    hasMore: total > items.length,
+  };
+}
+
+function LoadMoreListItem({ showing, total, onLoadMore }: { showing: number; total: number; onLoadMore: () => void }) {
+  return (
+    <List.Item
+      title="Load More"
+      subtitle={`Showing ${showing} of ${total}`}
+      icon={Icon.Plus}
+      actions={
+        <ActionPanel>
+          <Action title="Load More" icon={Icon.Plus} onAction={onLoadMore} />
+        </ActionPanel>
+      }
+    />
+  );
+}
+
 function MyMonitors() {
   const { push } = useNavigation();
   const [filter, setFilter] = useState<MonitorFilter>("all");
 
-  const { data, isLoading, error, revalidate } = usePromise(listMonitors, [], {
-    failureToastOptions: { title: "Could not load monitors" },
-  });
+  const {
+    items: monitors,
+    isLoading,
+    error,
+    revalidate,
+    loadMore,
+    hasMore,
+    total,
+  } = usePaginatedList(listMonitors, [], "Could not load monitors");
 
   const monitorFilter = (
     <List.Dropdown
@@ -61,7 +140,6 @@ function MyMonitors() {
     );
   }
 
-  const monitors = data ?? [];
   const grouped = groupMonitors(monitors);
   const visibleGroups = filter === "all" ? MONITOR_GROUPS : MONITOR_GROUPS.filter((group) => group.id === filter);
   const visibleCount = visibleGroups.reduce((count, group) => count + grouped[group.id].length, 0);
@@ -87,6 +165,7 @@ function MyMonitors() {
           ),
         )
       )}
+      {hasMore ? <LoadMoreListItem showing={monitors.length} total={total} onLoadMore={loadMore} /> : null}
     </List>
   );
 }
@@ -127,9 +206,15 @@ function openMonitorOutput(monitor: PerigonMonitor, push: ReturnType<typeof useN
 }
 
 function MonitorEventsView({ monitor }: { monitor: PerigonMonitor }) {
-  const { data, isLoading, error, revalidate } = usePromise(listMonitorEvents, [monitor.uuid], {
-    failureToastOptions: { title: "Could not load events" },
-  });
+  const {
+    items: events,
+    isLoading,
+    error,
+    revalidate,
+    loadMore,
+    hasMore,
+    total,
+  } = usePaginatedList((page) => listMonitorEvents(monitor.uuid, page), [monitor.uuid], "Could not load events");
 
   if (error) {
     return (
@@ -139,8 +224,6 @@ function MonitorEventsView({ monitor }: { monitor: PerigonMonitor }) {
     );
   }
 
-  const events = data ?? [];
-
   return (
     <List isLoading={isLoading} navigationTitle={monitor.name} searchBarPlaceholder="Filter events…">
       {!isLoading && events.length === 0 ? (
@@ -148,6 +231,7 @@ function MonitorEventsView({ monitor }: { monitor: PerigonMonitor }) {
       ) : (
         events.map((event) => <MonitorEventItem key={event.uuid} event={event} />)
       )}
+      {hasMore ? <LoadMoreListItem showing={events.length} total={total} onLoadMore={loadMore} /> : null}
     </List>
   );
 }
@@ -177,9 +261,19 @@ function MonitorEventItem({ event }: { event: PerigonMonitorEvent }) {
 }
 
 function MonitorNewslettersView({ monitor }: { monitor: PerigonMonitor }) {
-  const { data, isLoading, error, revalidate } = usePromise(listMonitorNewsletters, [monitor.uuid], {
-    failureToastOptions: { title: "Could not load briefings" },
-  });
+  const {
+    items: newsletters,
+    isLoading,
+    error,
+    revalidate,
+    loadMore,
+    hasMore,
+    total,
+  } = usePaginatedList(
+    (page) => listMonitorNewsletters(monitor.uuid, page),
+    [monitor.uuid],
+    "Could not load briefings",
+  );
 
   if (error) {
     return (
@@ -189,8 +283,6 @@ function MonitorNewslettersView({ monitor }: { monitor: PerigonMonitor }) {
     );
   }
 
-  const newsletters = data ?? [];
-
   return (
     <List isLoading={isLoading} navigationTitle={monitor.name} searchBarPlaceholder="Filter briefings…">
       {!isLoading && newsletters.length === 0 ? (
@@ -198,6 +290,7 @@ function MonitorNewslettersView({ monitor }: { monitor: PerigonMonitor }) {
       ) : (
         newsletters.map((newsletter) => <NewsletterListItem key={newsletter.uuid} newsletter={newsletter} />)
       )}
+      {hasMore ? <LoadMoreListItem showing={newsletters.length} total={total} onLoadMore={loadMore} /> : null}
     </List>
   );
 }

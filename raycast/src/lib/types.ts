@@ -144,6 +144,13 @@ export function parseStoriesResponse(json: unknown): PerigonStory[] {
   return stories;
 }
 
+export function readPaginatedTotal(json: unknown): number {
+  if (!isRecord(json)) {
+    return 0;
+  }
+  return readNumber(json.total);
+}
+
 export function parseMonitorsResponse(json: unknown): PerigonMonitor[] {
   if (!isRecord(json) || !Array.isArray(json.data)) {
     return [];

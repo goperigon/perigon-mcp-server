@@ -7,6 +7,7 @@ import {
   parseMonitorNewslettersResponse,
   parseMonitorsResponse,
   parseStoriesResponse,
+  readPaginatedTotal,
   type PerigonArticle,
   type PerigonMonitor,
   type PerigonMonitorEvent,
@@ -15,6 +16,14 @@ import {
 } from "./types";
 
 const API_BASE = "https://api.perigon.io/v1";
+
+export interface PaginatedResult<T> {
+  items: T[];
+  total: number;
+}
+
+const MONITORS_PAGE_SIZE = 100;
+const MONITOR_OUTPUT_PAGE_SIZE = 25;
 
 export class PerigonApiError extends Error {
   readonly status: number;
@@ -104,34 +113,43 @@ export async function searchStories(query: string, size = 20): Promise<PerigonSt
   return parseStoriesResponse(json);
 }
 
-export async function listMonitors(): Promise<PerigonMonitor[]> {
+export async function listMonitors(page = 0): Promise<PaginatedResult<PerigonMonitor>> {
   const params = new URLSearchParams({
-    page: "0",
-    size: "100",
+    page: String(page),
+    size: String(MONITORS_PAGE_SIZE),
     sortBy: "createdAt",
     sortOrder: "desc",
   });
   const response = await perigonFetch(`/api/monitors?${params.toString()}`);
   const json: unknown = await response.json();
-  return parseMonitorsResponse(json);
+  return {
+    items: parseMonitorsResponse(json),
+    total: readPaginatedTotal(json),
+  };
 }
 
-export async function listMonitorEvents(monitorUuid: string): Promise<PerigonMonitorEvent[]> {
+export async function listMonitorEvents(monitorUuid: string, page = 0): Promise<PaginatedResult<PerigonMonitorEvent>> {
   const params = new URLSearchParams({
-    page: "0",
-    size: "25",
+    page: String(page),
+    size: String(MONITOR_OUTPUT_PAGE_SIZE),
     sortBy: "eventDate",
     sortOrder: "desc",
   });
   const response = await perigonFetch(`/api/monitors/${encodeURIComponent(monitorUuid)}/events?${params.toString()}`);
   const json: unknown = await response.json();
-  return parseMonitorEventsResponse(json);
+  return {
+    items: parseMonitorEventsResponse(json),
+    total: readPaginatedTotal(json),
+  };
 }
 
-export async function listMonitorNewsletters(monitorUuid: string): Promise<PerigonMonitorNewsletter[]> {
+export async function listMonitorNewsletters(
+  monitorUuid: string,
+  page = 0,
+): Promise<PaginatedResult<PerigonMonitorNewsletter>> {
   const params = new URLSearchParams({
-    page: "0",
-    size: "25",
+    page: String(page),
+    size: String(MONITOR_OUTPUT_PAGE_SIZE),
     sortBy: "createdAt",
     sortOrder: "desc",
   });
@@ -139,5 +157,8 @@ export async function listMonitorNewsletters(monitorUuid: string): Promise<Perig
     `/api/monitors/${encodeURIComponent(monitorUuid)}/newsletters?${params.toString()}`,
   );
   const json: unknown = await response.json();
-  return parseMonitorNewslettersResponse(json);
+  return {
+    items: parseMonitorNewslettersResponse(json),
+    total: readPaginatedTotal(json),
+  };
 }
