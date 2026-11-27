@@ -103,7 +103,7 @@ function guidanceFor(
       return "This API key's plan does not include this parameter or endpoint — do not retry; call get_api_access to see what this key supports, or tell the user to upgrade their plan.";
     case "credits-exhausted": {
       const resetAt = creditsResetAt(body);
-      return `This organization is out of credits — do not retry any Perigon tool; tell the user credits reset ${resetAt ? `at ${resetAt} (utc)` : "when the next invoice is paid"}, or they can upgrade their plan at https://www.perigon.io/account/billing.`;
+      return `This organization is out of credits — do not retry news, stats, or social tools; tell the user credits reset ${resetAt ? `at ${resetAt}` : "when the next invoice is paid"}, or they can upgrade their plan at https://www.perigon.io/account/billing. get_api_access and the monitor, watchlist, source group, and contact point tools still work.`;
     }
     case "quota-exceeded":
       return "This API key has exhausted its usage quota for the current period — do not retry; call get_api_access to check remaining quota.";

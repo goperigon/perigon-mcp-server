@@ -116,7 +116,10 @@ describe("createErrorMessage classification guidance", () => {
       resetAt: "2026-12-01T00:00:00Z",
     });
     const msg = await createErrorMessage(new HttpError(403, body));
-    expect(msg).toContain("out of credits — do not retry");
+    expect(msg).toContain(
+      "out of credits — do not retry news, stats, or social tools",
+    );
+    expect(msg).toContain("get_api_access and the monitor");
     expect(msg).toContain("reset at 2026-12-01T00:00:00Z");
     expect(msg).not.toContain("exhausted its usage quota");
   });

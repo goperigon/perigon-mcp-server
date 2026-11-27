@@ -187,7 +187,7 @@ ${report.hasJournalistEmail ? "Visible for this key." : "Not visible for this ke
 ## Decision tree for errors
 - **403 "parameter is not supported by your plan"** — plan restriction, do not retry, tell the user which filter to drop.
 - **403 quota exceeded** — do not retry; report remaining quota via \`get_api_access\`.
-- **403 CREDITS_EXHAUSTED** — a credit plan is out of credits; do not retry any tool. Tell the user when credits reset (in the error, or via \`get_api_access\`) or to upgrade their plan. On credit plans each request costs credits by endpoint (\`get_api_access\` lists the rates), so prefer one well-filtered call over many broad ones.
+- **403 CREDITS_EXHAUSTED** — a credit plan is out of credits; do not retry news, stats, or social tools (\`get_api_access\` and the monitor, watchlist, source group, and contact point tools still work). Tell the user when credits reset (in the error, or via \`get_api_access\`) or to upgrade their plan. On credit plans each request costs credits by endpoint (\`get_api_access\` lists the rates), so prefer one well-filtered call over many broad ones.
 - **429** — rate limited; back off using the retry-after hint in the error message before retrying.
 - **400 pagination limit** — reduce \`page\`/\`size\` rather than retrying unchanged.
 `;
