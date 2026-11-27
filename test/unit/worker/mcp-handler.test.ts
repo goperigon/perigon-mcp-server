@@ -1,4 +1,13 @@
-import { afterEach, describe, expect, mock, test } from "bun:test";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  describe,
+  expect,
+  mock,
+  spyOn,
+  test,
+} from "bun:test";
 import type { Props } from "../../../worker/mcp/mcp";
 import {
   type AuthIntrospectionResponse,
@@ -35,18 +44,20 @@ await mock.module("../../../worker/mcp/mcp", () => ({
     }
   },
 }));
-const realPerigonModule = await import("../../../worker/lib/perigon");
-await mock.module("../../../worker/lib/perigon", () => ({
-  ...realPerigonModule,
-  Perigon: class extends realPerigonModule.Perigon {
-    override introspection() {
-      if (introspectionSucceeds) {
-        return Promise.resolve(introspectionSuccess);
-      }
-      return Promise.reject(introspectionError);
-    }
-  },
-}));
+// A spy rather than `mock.module`: module mocks outlive this file and would stub
+// introspection for every test file that runs after it.
+const { Perigon } = await import("../../../worker/lib/perigon");
+const introspectionSpy = spyOn(Perigon.prototype, "introspection");
+beforeAll(() => {
+  introspectionSpy.mockImplementation(() =>
+    introspectionSucceeds
+      ? Promise.resolve(introspectionSuccess)
+      : Promise.reject(introspectionError),
+  );
+});
+afterAll(() => {
+  introspectionSpy.mockRestore();
+});
 const { handleMCP } = await import("../../../worker/handlers/mcp");
 
 const KEYS_URL = "https://perigon.io/dev/keys";

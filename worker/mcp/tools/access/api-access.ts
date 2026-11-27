@@ -28,7 +28,20 @@ export function getApiAccess(
 
       let output = `<api_access organization_id="${introspection.organizationId}" organization_name="${limits.organizationName}">\n`;
       output += `Scopes: ${introspection.scopes.join(", ") || "none"}\n`;
-      output += `Requests Used: ${limits.requestsUsed}${limits.requestLimit != null ? ` / ${limits.requestLimit}` : " (no limit)"}\n`;
+      const credits = limits.credits;
+      if (credits) {
+        output += `Credits Remaining: ${credits.remaining}${credits.exhausted ? " (exhausted — requests are blocked until credits reset or the plan is upgraded)" : ""}\n`;
+        output += `Credits Used This Period: ${credits.periodUsed} (monthly allowance ${credits.allowanceUsed} / ${credits.allowance}, free credits left ${credits.grantBalance})\n`;
+        if (credits.resetAt) output += `Credits Reset At: ${credits.resetAt} (utc)\n`;
+        if (credits.projectedRunOutAt)
+          output += `Credits Projected To Run Out At: ${credits.projectedRunOutAt} (utc)\n`;
+        const rates = Object.entries(credits.rates ?? {});
+        if (rates.length > 0) {
+          output += `Credits Per Request: ${rates.map(([key, value]) => `${key}=${value}`).join(", ")} (cost keys are {channel}/{endpoint}; this server uses the mcp channel, * matches any channel)\n`;
+        }
+      } else {
+        output += `Requests Used: ${limits.requestsUsed}${limits.requestLimit != null ? ` / ${limits.requestLimit}` : " (no limit)"}\n`;
+      }
       output += `Max Page Size: ${limits.maxPageSize}\n`;
       output += `Pagination Limit: ${limits.paginationLimit}\n`;
       output += `Article Content Truncation: ${limits.articleContentTruncation ?? "none"}\n`;
@@ -37,10 +50,12 @@ export function getApiAccess(
         output += `Subscription Cancels At: ${limits.subscriptionCancelAt} (utc)\n`;
       const socialSources = introspection.socialSources ?? [];
       output += `Social Sources: ${socialSources.join(", ") || "none"}\n`;
-      if (limits.social?.sharedQuota) {
-        output += `Social Requests: counted against the news request quota above\n`;
-      } else if (limits.social) {
-        output += `Social Requests Used: ${limits.social.requestsUsed}${limits.social.requestLimit != null ? ` / ${limits.social.requestLimit}` : " (no limit)"} (separate from the news quota)\n`;
+      if (!credits) {
+        if (limits.social?.sharedQuota) {
+          output += `Social Requests: counted against the news request quota above\n`;
+        } else if (limits.social) {
+          output += `Social Requests Used: ${limits.social.requestsUsed}${limits.social.requestLimit != null ? ` / ${limits.social.requestLimit}` : " (no limit)"} (separate from the news quota)\n`;
+        }
       }
 
       output += `\n<capabilities>\n`;

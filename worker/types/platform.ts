@@ -118,6 +118,25 @@ export interface ApiLimitsDto {
   keyStatuses?: ApiKeyStatus[] | null;
   /** Absent when the account has no social sources. */
   social?: SocialLimits | null;
+  /** Credit plans only. The request quota fields don't apply to them. */
+  credits?: CreditLimits | null;
+}
+
+/** Credit balance of a credit-plan organization, in credits. */
+export interface CreditLimits {
+  /** Unused monthly allowance plus free credits. */
+  remaining: number;
+  allowance: number;
+  allowanceUsed: number;
+  /** Free credits that never expire, spent after the allowance. */
+  grantBalance: number;
+  periodUsed: number;
+  resetAt?: string | null;
+  exhausted: boolean;
+  dailyMonitorBurn?: number;
+  projectedRunOutAt?: string | null;
+  /** Credits per request or unit, by cost key (`{channel}/{endpoint}`, `*` for any channel). */
+  rates?: Record<string, number> | null;
 }
 
 /** Usage of the `/v1/social/*` endpoints. */

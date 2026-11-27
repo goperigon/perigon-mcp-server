@@ -46,6 +46,7 @@ function extractApiErrorMessage(status: number, body: string): string {
  */
 export type ErrorClassification =
   | "plan-restriction"
+  | "credits-exhausted"
   | "quota-exceeded"
   | "rate-limited"
   | "pagination-limit"
@@ -53,6 +54,7 @@ export type ErrorClassification =
   | "unclassified";
 
 const PLAN_RESTRICTION_PATTERN = /not supported by your plan/i;
+const CREDITS_EXHAUSTED_CODE = "CREDITS_EXHAUSTED";
 const QUOTA_PATTERNS = [
   /quota/i,
   /usage limit/i,
@@ -69,6 +71,7 @@ function classify(
   if (statusCode === 429) return "rate-limited";
   if (statusCode === 404) return "not-found";
   if (statusCode === 403) {
+    if (body.includes(CREDITS_EXHAUSTED_CODE)) return "credits-exhausted";
     if (PLAN_RESTRICTION_PATTERN.test(body)) return "plan-restriction";
     if (QUOTA_PATTERNS.some((p) => p.test(body))) return "quota-exceeded";
     return "plan-restriction";
@@ -79,14 +82,29 @@ function classify(
   return "unclassified";
 }
 
+/** `resetAt` of a CREDITS_EXHAUSTED error body, when it has one. */
+function creditsResetAt(body: string): string | null {
+  try {
+    const parsed = JSON.parse(body) as { resetAt?: unknown };
+    return typeof parsed.resetAt === "string" ? parsed.resetAt : null;
+  } catch {
+    return null;
+  }
+}
+
 /** One-clause, model-actionable guidance per classification. `null` means no extra guidance is warranted. */
 function guidanceFor(
   classification: ErrorClassification,
   retryAfterMillis?: number,
+  body = "",
 ): string | null {
   switch (classification) {
     case "plan-restriction":
       return "This API key's plan does not include this parameter or endpoint — do not retry; call get_api_access to see what this key supports, or tell the user to upgrade their plan.";
+    case "credits-exhausted": {
+      const resetAt = creditsResetAt(body);
+      return `This organization is out of credits — do not retry news, stats, or social tools; tell the user credits reset ${resetAt ? `at ${resetAt}` : "when the next invoice is paid"}, or they can upgrade their plan at https://www.perigon.io/account/billing. get_api_access and the monitor, watchlist, source group, and contact point tools still work.`;
+    }
     case "quota-exceeded":
       return "This API key has exhausted its usage quota for the current period — do not retry; call get_api_access to check remaining quota.";
     case "rate-limited":
@@ -136,7 +154,7 @@ export async function createErrorMessage(error: any): Promise<string> {
 
   if (statusCode !== undefined) {
     const classification = classify(statusCode, body);
-    const guidance = guidanceFor(classification, retryAfterMillis);
+    const guidance = guidanceFor(classification, retryAfterMillis, body);
     if (guidance) return `${msg} — ${guidance}`;
   }
 

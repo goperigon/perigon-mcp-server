@@ -163,7 +163,7 @@ ${bullet([topPeopleTool, topCompaniesTool], "trending, surging, or spiking entit
 ${bullet([storyStatsTool], "story-level volume or velocity for a cluster.")}
 ## Entitlements & Platform
 
-${bullet([apiAccessTool], "this key's scopes, org, quota, and capability report.")}\
+${bullet([apiAccessTool], "this key's scopes, org, quota, and capability report. On credit plans it shows the credit balance, reset time, and credits per request (stories cost more than articles, social posts more than stories) instead of a request quota.")}\
 ${bullet([watchlistsTool, sourceGroupsTool, contactPointsTool, articleRefreshTool], "read platform resources used to scope monitors and searches (watchlists and source groups also have create/update tools).", ", ")}
 ## Monitors
 

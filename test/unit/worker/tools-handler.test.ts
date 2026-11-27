@@ -1,5 +1,18 @@
-import { afterEach, describe, expect, mock, test } from "bun:test";
-import { HttpError } from "../../../worker/types/types";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  describe,
+  expect,
+  mock,
+  spyOn,
+  test,
+} from "bun:test";
+import { Perigon } from "../../../worker/lib/perigon";
+import {
+  type AuthIntrospectionResponse,
+  HttpError,
+} from "../../../worker/types/types";
 import { SOCIAL_TOOL_NAMES } from "../../../worker/mcp/tools/social";
 import {
   installFetchMock,
@@ -18,17 +31,19 @@ let introspectionResult: Record<string, unknown> | HttpError = {
   organizationId: 1,
 };
 
-const realPerigonModule = await import("../../../worker/lib/perigon");
-await mock.module("../../../worker/lib/perigon", () => ({
-  ...realPerigonModule,
-  Perigon: class extends realPerigonModule.Perigon {
-    override introspection() {
-      return introspectionResult instanceof HttpError
-        ? Promise.reject(introspectionResult)
-        : Promise.resolve(introspectionResult);
-    }
-  },
-}));
+// A spy rather than `mock.module`: module mocks outlive this file and would stub
+// introspection for every test file that runs after it.
+const introspectionSpy = spyOn(Perigon.prototype, "introspection");
+beforeAll(() => {
+  introspectionSpy.mockImplementation(() =>
+    introspectionResult instanceof HttpError
+      ? Promise.reject(introspectionResult)
+      : Promise.resolve(introspectionResult as AuthIntrospectionResponse),
+  );
+});
+afterAll(() => {
+  introspectionSpy.mockRestore();
+});
 const { handleTools } = await import("../../../worker/handlers/tools");
 
 interface ListedTool {
